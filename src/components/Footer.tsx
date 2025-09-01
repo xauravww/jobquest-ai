@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Footer() {
   return (
-    <footer className="bg-bg-dark bg-opacity-90 text-text-muted py-16 mt-20 shadow-lg">
+    <footer className="bg-bg-dark bg-opacity-90 text-text-muted py-16 shadow-lg">
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start gap-8">
         <div className="flex flex-col space-y-4 max-w-sm">
           <h2 className="text-2xl font-bold">Jobquest AI</h2>
