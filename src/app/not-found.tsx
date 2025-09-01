@@ -25,7 +25,7 @@ export default function NotFoundPage() {
       <div className="absolute top-40 right-20 w-16 h-16 border border-orange-400/30 rounded-full animate-reverse-spin z-0"></div>
       <div className="absolute bottom-40 left-20 w-12 h-12 border border-pink-400/30 rounded-full animate-spin-slow z-0"></div>
 
-      <section className="hero-bg-effect flex flex-col items-center justify-center px-6 py-24 pt-32 text-center relative z-10 bg-bg-dark rounded-b-3xl shadow-lg mt-5">
+      <section className="hero-bg-effect flex flex-col items-center justify-center px-6 py-24 pt-32 text-center relative z-10 bg-bg-dark shadow-lg mt-5">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.1)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-5"></div>
 
         <div className="relative z-10">

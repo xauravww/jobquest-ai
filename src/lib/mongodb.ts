@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
+import { Db } from 'mongodb';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/jobquest-ai';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/';
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -39,6 +40,11 @@ async function dbConnect() {
   }
   cached.conn = await cached.promise;
   return cached.conn;
+}
+
+export async function connectToDatabase(): Promise<{ db: Db }> {
+  await dbConnect();
+  return { db: mongoose.connection.db! };
 }
 
 export default dbConnect;

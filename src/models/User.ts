@@ -1,6 +1,34 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+interface Project {
+  name: string;
+  description: string;
+  url?: string;
+}
+
+interface Achievement {
+  title: string;
+  description: string;
+  date?: Date;
+}
+
+interface Education {
+  institution: string;
+  degree: string;
+  field: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+interface Experience {
+  company: string;
+  position: string;
+  startDate?: Date;
+  endDate?: Date;
+  description: string;
+}
+
 export interface IUser extends Document {
   _id: string;
   email: string;
@@ -17,11 +45,17 @@ export interface IUser extends Document {
     company?: string;
     location?: string;
     bio?: string;
+    summary?: string;
     skills: string[];
     experience: number;
+    experienceYears?: number;
     linkedinUrl?: string;
     githubUrl?: string;
     portfolioUrl?: string;
+    projects?: Project[];
+    achievements?: Achievement[];
+    education?: Education[];
+    workExperience?: Experience[];
   };
   preferences: {
     jobTypes: string[];
@@ -83,14 +117,40 @@ const UserSchema = new Schema<IUser>(
       company: String,
       location: String,
       bio: String,
+      summary: String,
       skills: [String],
       experience: {
         type: Number,
         default: 0,
       },
+      experienceYears: Number,
       linkedinUrl: String,
       githubUrl: String,
       portfolioUrl: String,
+      projects: [{
+        name: String,
+        description: String,
+        url: String,
+      }],
+      achievements: [{
+        title: String,
+        description: String,
+        date: Date,
+      }],
+      education: [{
+        institution: String,
+        degree: String,
+        field: String,
+        startDate: Date,
+        endDate: Date,
+      }],
+      workExperience: [{
+        company: String,
+        position: String,
+        startDate: Date,
+        endDate: Date,
+        description: String,
+      }],
     },
     preferences: {
       jobTypes: [String],
