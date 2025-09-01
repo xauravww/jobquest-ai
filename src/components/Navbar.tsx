@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import { FiMenu, FiX } from "react-icons/fi";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -27,13 +28,16 @@ export default function Navbar() {
       className={`fixed w-full z-50 transition-all duration-300 ease-in-out ${
         isScrolled
           ? "bg-slate-900/80 backdrop-blur-sm shadow-lg"
-          : "bg-transparent"
+          : "bg-transparent border-b border-slate-700/20"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main container controlling alignment and height */}
-        <div className="flex items-center justify-between h-20">
-          
+        <div
+          className={`flex items-center justify-between transition-all duration-300 ease-in-out ${
+            isScrolled ? "h-20" : "h-24"
+          }`}
+        >
           {/* Left Section (Logo) */}
           <div className="flex-1 md:flex-none">
             <Link href="/" className="text-2xl font-bold text-white">
@@ -41,54 +45,39 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Center Section (Desktop Menu) */}
-          <div className="hidden md:flex flex-1 justify-center items-center space-x-8">
-            <Link href="/" className={navLinkClasses}>
-              Home
-            </Link>
-            <Link href="/about" className={navLinkClasses}>
-              About
-            </Link>
-            <Link href="/features" className={navLinkClasses}>
-              Features
-            </Link>
-            <Link href="/contact" className={navLinkClasses}>
-              Contact
-            </Link>
-          </div>
-
-          {/* Right Section (Placeholder for balance & Mobile Menu Button) */}
-          <div className="flex-1 flex justify-end">
-            {/* Desktop placeholder */}
-            <div className="hidden md:block">
-              {/* You can add a Login button here */}
+          <div className="flex flex-1 justify-end items-center space-x-8">
+            {/* Center Section (Desktop Menu) */}
+            <div className="hidden md:flex space-x-8">
+              <Link href="/" className={navLinkClasses}>
+                Home
+              </Link>
+              <Link href="/about" className={navLinkClasses}>
+                About
+              </Link>
+              <Link href="/features" className={navLinkClasses}>
+                Features
+              </Link>
+              <Link href="/contact" className={navLinkClasses}>
+                Contact
+              </Link>
             </div>
 
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <button
-                onClick={toggleMobileMenu}
-                className="z-50 flex flex-col justify-around w-6 h-6"
-                aria-label="Toggle menu"
-              >
-                <span
-                  className={`block w-6 h-0.5 bg-white transition-transform duration-300 ease-in-out ${
-                    isMobileMenuOpen ? "transform rotate-45 translate-y-[5px]" : ""
-                  }`}
-                ></span>
-                <span
-                  className={`block w-6 h-0.5 bg-white transition-opacity duration-300 ease-in-out ${
-                    isMobileMenuOpen ? "opacity-0" : ""
-                  }`}
-                ></span>
-                <span
-                  className={`block w-6 h-0.5 bg-white transition-transform duration-300 ease-in-out ${
-                    isMobileMenuOpen
-                      ? "transform -rotate-45 -translate-y-[5px]"
-                      : ""
-                  }`}
-                ></span>
-              </button>
+            {/* Right Section (Placeholder for balance & Mobile Menu Button) */}
+            <div className="flex justify-end">
+              {/* Desktop placeholder */}
+              <div className="hidden md:block">{/* You can add a Login button here */}</div>
+
+              {/* Mobile Menu Button */}
+              <div className="md:hidden">
+                <button
+                  onClick={toggleMobileMenu}
+                  className="z-50 flex items-center justify-center w-8 h-8 rounded-md border border-white text-white"
+                  aria-label="Toggle menu"
+                  style={{ color: "white", fontSize: "1.25rem" }}
+                >
+                  <FiMenu className="w-5 h-5 text-white" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -100,6 +89,13 @@ export default function Navbar() {
           isMobileMenuOpen ? "transform translate-y-0" : "transform -translate-y-full"
         }`}
       >
+        <button
+          onClick={toggleMobileMenu}
+          aria-label="Close mobile menu"
+          className="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center hover:bg-opacity-75 transition z-50"
+        >
+          <FiX className="w-6 h-6 text-white" />
+        </button>
         <div className="flex flex-col items-center justify-center space-y-6 h-screen">
           <Link href="/" className="text-2xl text-white" onClick={toggleMobileMenu}>
             Home

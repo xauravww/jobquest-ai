@@ -400,3 +400,8 @@ input:focus, select:focus, textarea:focus {
     @apply bg-background text-foreground;
   }
 }
+
+
+/* *{
+  border: 1px solid red;
+} */
