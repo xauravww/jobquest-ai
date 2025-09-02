@@ -754,7 +754,7 @@ const UserProfilePage = () => {
                           ...prev,
                           professionalInfo: {
                             ...prev.professionalInfo,
-                            education: [...prev.professionalInfo.education, newEducation]
+                            education: [...(prev.professionalInfo.education || []), newEducation]
                           }
                         }));
                       }}
@@ -950,7 +950,7 @@ const UserProfilePage = () => {
                           ...prev,
                           professionalInfo: {
                             ...prev.professionalInfo,
-                            projects: [...prev.professionalInfo.projects, newProject]
+                            projects: [...(prev.professionalInfo.projects || []), newProject]
                           }
                         }));
                       }}
@@ -1161,7 +1161,7 @@ const UserProfilePage = () => {
                           ...prev,
                           professionalInfo: {
                             ...prev.professionalInfo,
-                            achievements: [...prev.professionalInfo.achievements, newAchievement]
+                            achievements: [...(prev.professionalInfo.achievements || []), newAchievement]
                           }
                         }));
                       }}
@@ -1309,7 +1309,7 @@ const UserProfilePage = () => {
                           ...prev,
                           professionalInfo: {
                             ...prev.professionalInfo,
-                            certifications: [...prev.professionalInfo.certifications, newCertification]
+                            certifications: [...(prev.professionalInfo.certifications || []), newCertification]
                           }
                         }));
                       }}
@@ -1426,7 +1426,7 @@ const UserProfilePage = () => {
                   <div className="text-center py-8 text-text-muted">
                     <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No certifications added yet.</p>
-                    {isEditing && <p className="text-sm">Click "Add Certification&quot; to get started.</p>}
+                    {isEditing && <p className="text-sm">Click &quot;Add Certification&quot; to get started.</p>}
                   </div>
                 )}
               </div>
