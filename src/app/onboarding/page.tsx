@@ -41,6 +41,7 @@ const OnboardingPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const [form] = Form.useForm();
+  const [formValues, setFormValues] = useState<Partial<OnboardingData>>({});
 
   const steps = [
     { title: 'Personal Info', description: 'Basic information' },
@@ -51,7 +52,8 @@ const OnboardingPage: React.FC = () => {
 
   const handleNext = async (): Promise<void> => {
     try {
-      await form.validateFields();
+      const values = await form.validateFields();
+      setFormValues((prev) => ({ ...prev, ...values }));
       if (currentStep < steps.length - 1) setCurrentStep((s) => s + 1);
     } catch {
       /* stay on current step */
@@ -62,13 +64,14 @@ const OnboardingPage: React.FC = () => {
     if (currentStep > 0) setCurrentStep((s) => s - 1);
   };
 
-  const handleComplete = async (values: OnboardingData) => {
+  const handleComplete = async () => {
+    console.log('Onboarding form values:', formValues);
     setLoading(true);
     try {
       const response = await fetch('/api/user/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(formValues),
       });
 
       const data = await response.json();

@@ -92,7 +92,7 @@ const SignUpPage: React.FC = () => {
   return (
     <>
       <Toaster position="top-right" />
-      <main className="mt-8 min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
+      <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
           {/* Header */}
           <div className="text-center">

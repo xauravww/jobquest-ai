@@ -5,104 +5,160 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   Home,
-  Briefcase,
+  User,
   FileText,
   BarChart3,
-  Users,
-  Settings,
-  User,
   Bell,
-  Search,
-  Heart,
-  Calendar,
-  BookOpen,
-  Target,
-  TrendingUp
+  Bot,
+  Zap,
+  Settings,
+  Crown,
+  ShieldCheck
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface SidebarProps {
   className?: string;
+  isCollapsed?: boolean; // Added isCollapsed prop for potential future use
 }
 
-const Sidebar = ({ className }: SidebarProps) => {
+// Reusable NavLink component with advanced styling
+const NavLink = ({ href, icon: Icon, children, pathname, isCollapsed = false }: { href: string, icon: unknown, children: React.ReactNode, pathname: string, isCollapsed?: boolean }) => {
+  const isActive = pathname === href;
+
+  return (
+    <Link href={href}>
+      <div className={`nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive ? 'nav-item-active' : ''}`}>
+        <Icon className="h-5 w-5 nav-icon" />
+        {!isCollapsed && (
+          <span className="text-sm font-medium">{children}</span>
+        )}
+      </div>
+    </Link>
+  );
+};
+
+
+const Sidebar = ({ className, isCollapsed = false }: SidebarProps) => {
   const pathname = usePathname();
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Job Search', href: '/jobs', icon: Search },
-    { name: 'My Jobs', href: '/my-jobs', icon: Briefcase },
-    { name: 'Applications', href: '/applications', icon: FileText },
-    { name: 'Saved Jobs', href: '/saved', icon: Heart },
-    { name: 'Interviews', href: '/interviews', icon: Calendar },
-    { name: 'Resume', href: '/resume', icon: BookOpen },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'Network', href: '/network', icon: Users },
-    { name: 'Goals', href: '/goals', icon: Target },
-    { name: 'Insights', href: '/insights', icon: TrendingUp },
-  ];
+  // Mocked user role logic for the badge, matching reference design
+  const getRoleInfo = (role) => {
+    switch (role) {
+      case 'owner':
+        return { label: 'Owner', icon: Crown, gradient: 'linear-gradient(135deg, #f59e0b, #d97706)', textColor: '#ffffff' };
+      case 'admin':
+        return { label: 'Admin', icon: ShieldCheck, gradient: 'linear-gradient(135deg, #ef4444, #dc2626)', textColor: '#ffffff' };
+      default:
+        return { label: 'Subscriber', icon: User, gradient: 'linear-gradient(135deg, #10b981, #059669)', textColor: '#ffffff' };
+    }
+  };
 
-  const bottomNavigation = [
-    { name: 'Profile', href: '/profile', icon: User },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
-    { name: 'Settings', href: '/settings', icon: Settings },
+  const accountType = 'subscriber'; // Example: Set your desired mock role here
+  const roleInfo = getRoleInfo(accountType);
+  const IconComponent = roleInfo.icon;
+
+  // Jobquest AI navigation items
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/user-profile', label: 'Profile', icon: User },
+    { href: '/resume-management', label: 'Resumes', icon: FileText },
+    { href: '/latex-resume', label: 'LaTeX Resume', icon: FileText },
+    { href: '/application-tracking', label: 'Applications', icon: BarChart3 },
+    { href: '/reminders', label: 'Reminders', icon: Bell },
+    { href: '/ai-filtering-v2', label: 'AI Jobs', icon: Bot },
+    { href: '/naukri-automation', label: 'Auto Apply', icon: Zap },
+    { href: '/admin/job-actions', label: 'Job Actions', icon: Settings },
   ];
 
   return (
-    <div className={cn('flex flex-col h-full bg-white border-r border-gray-200', className)}>
-      <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-        <div className="flex-1 px-3 space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                  isActive
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    'mr-3 flex-shrink-0 h-5 w-5',
-                    isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
-                  )}
-                />
-                {item.name}
-              </Link>
-            );
-          })}
+    <>
+      <style jsx>{`
+        /* Modern sidebar styling matching reference design */
+        .nav-item {
+          position: relative;
+          overflow: hidden;
+          border-radius: 8px;
+          min-width: 0;
+          flex-shrink: 0;
+          margin: 2px 0;
+        }
+
+        .nav-item-active {
+          position: relative;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+          border-left: 3px solid #ffffff !important;
+        }
+
+        .nav-item-active p,
+        .nav-item-active .nav-icon {
+          color: #ffffff !important;
+          font-weight: 600 !important;
+        }
+
+        .nav-item:not(.nav-item-active):hover {
+          background: rgba(16, 185, 129, 0.1) !important;
+          border-left: 3px solid rgba(16, 185, 129, 0.5) !important;
+        }
+
+        /* Section headers */
+        .section-header {
+            margin: 20px 0 12px 0;
+            padding: 0;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+      `}</style>
+      <div className={cn('flex flex-col h-full bg-sidebar border-r border-sidebar-border', className)}
+           style={{ width: '256px' }}>
+
+        {/* Logo and Role Badge Section */}
+        <div className="flex flex-col items-start p-6 border-b border-sidebar-border">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">J</span>
+            </div>
+            <div className="text-white font-semibold text-lg">Jobquest AI</div>
+          </div>
+          
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium"
+               style={{
+                 background: roleInfo.gradient,
+                 color: roleInfo.textColor,
+               }}>
+            <IconComponent size={12} />
+            <span>{roleInfo.label}</span>
+          </div>
         </div>
 
-        <div className="px-3 space-y-1 border-t border-gray-200 pt-4">
-          {bottomNavigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                  isActive
-                    ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    'mr-3 flex-shrink-0 h-5 w-5',
-                    isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
-                  )}
-                />
-                {item.name}
-              </Link>
-            );
-          })}
+        <div className="flex-1 flex flex-col py-6 overflow-y-auto">
+          {/* Main Navigation */}
+          <div className="px-6">
+            <div className="space-y-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.label}
+                  href={item.href}
+                  icon={item.icon}
+                  pathname={pathname}
+                  isCollapsed={isCollapsed}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

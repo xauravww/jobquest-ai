@@ -16,41 +16,53 @@ export default function LandingPage() {
 
         {/* Animated Dots */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-cyan-400 rounded-full opacity-70 animate-ping"></div>
-          <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-orange-400 rounded-full opacity-50 animate-pulse"></div>
-          <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full opacity-60 animate-bounce"></div>
-          <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-cyan-300 rounded-full opacity-80 animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-orange-300 rounded-full opacity-60 animate-ping"></div>
+          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full opacity-70 animate-ping"></div>
+          <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-secondary rounded-full opacity-50 animate-pulse"></div>
+          <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-primary rounded-full opacity-60 animate-bounce"></div>
+          <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-success rounded-full opacity-80 animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-secondary rounded-full opacity-60 animate-ping"></div>
         </div>
 
         {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 border border-cyan-400/30 rounded-full animate-spin-slow z-0"></div>
-        <div className="absolute top-40 right-20 w-16 h-16 border border-orange-400/30 rounded-full animate-reverse-spin z-0"></div>
-        <div className="absolute bottom-40 left-20 w-12 h-12 border border-pink-400/30 rounded-full animate-spin-slow z-0"></div>
-        <section className="hero-bg-effect flex flex-col items-center justify-center flex-grow px-6 py-24 pt-32 text-center relative z-10 bg-bg-dark rounded-b-3xl shadow-lg mt-5">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.1)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-5"></div>
-          <h1 className="text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-6">
-            Jobquest <span className="text-cyan-400">AI</span>
-          </h1>
-          <p className="text-lg md:text-2xl max-w-2xl text-gray-300 mb-10">
-            Find your dream job faster with AI-powered job matching, automated
-            applications, and personalized career insights.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 z-5">
-            <a href="/auth/signup" className="button-primary">
-              Get Started
-            </a>
-            <a href="/auth/signin" className="button-secondary text-text">
-              Sign In
-            </a>
+        <div className="absolute top-20 left-10 w-20 h-20 border border-primary/30 rounded-full animate-spin-slow z-0"></div>
+        <div className="absolute top-40 right-20 w-16 h-16 border border-secondary/30 rounded-full animate-reverse-spin z-0"></div>
+        <div className="absolute bottom-40 left-20 w-12 h-12 border border-success/30 rounded-full animate-spin-slow z-0"></div>
+        <section className="hero-bg-effect flex flex-col items-center justify-center flex-grow px-6 py-32 pt-40 text-center relative z-10 bg-gradient-hero">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-5"></div>
+          
+          <div className="relative z-10 max-w-4xl mx-auto">
+            <h1 className="text-6xl md:text-8xl font-black leading-tight tracking-tight mb-8 bg-gradient-to-r from-white via-gray-100 to-emerald-200 bg-clip-text text-transparent">
+              Find Your Dream Job
+            </h1>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+              with AI-Powered Job Search
+            </h2>
+            <p className="text-xl md:text-2xl max-w-3xl mx-auto text-gray-300 mb-12 leading-relaxed">
+              Leverage AI-driven job matching, automated applications, and personalized career insights 
+              to accelerate your job search and land your dream position faster than ever.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center z-10">
+              <a href="/auth/signup" className="button-primary text-lg px-8 py-4">
+                Get Started Today
+              </a>
+              <a href="/auth/signin" className="button-secondary text-lg px-8 py-4">
+                Learn More
+              </a>
+            </div>
           </div>
         </section>
 
-        <section className="bg-bg text-text py-24 mt-16 rounded-t-3xl relative z-20">
-          <div className="max-w-6xl mx-auto px-6">
-            <h2 className="text-4xl font-bold mb-10 text-center">
-              Why Choose Jobquest AI?
-            </h2>
+        <section className="bg-bg text-text py-32 mt-0 relative z-20">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">
+                Powerful Dashboard for Your Career
+              </h2>
+              <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Our intuitive dashboard gives you complete control over your job search 
+                with real-time application tracking, AI-powered job matching, and career insights.
+              </p>
+            </div>
             <CardCarousel
               autoplayDelay={2000}
               showPagination={true}

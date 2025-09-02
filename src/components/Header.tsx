@@ -27,23 +27,23 @@ const Header = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Jobs', href: '/jobs', icon: Briefcase },
-    { name: 'Applications', href: '/applications', icon: FileText },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'Network', href: '/network', icon: Users },
+    { name: 'Profile', href: '/user-profile', icon: User },
+    { name: 'Applications', href: '/application-tracking', icon: BarChart3 },
+    { name: 'AI Jobs', href: '/ai-filtering-v2', icon: Briefcase },
+    { name: 'Auto Apply', href: '/naukri-automation', icon: Users },
   ];
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-bg-dark border-b border-border sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">J</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">Jobquest AI</span>
+              <span className="text-xl font-bold text-white">Jobquest AI</span>
             </Link>
           </div>
 
@@ -53,7 +53,7 @@ const Header = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+                className="text-text-muted hover:text-white px-3 py-2 text-sm font-medium transition-colors"
               >
                 {item.name}
               </Link>

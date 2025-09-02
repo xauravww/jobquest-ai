@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
 
     const data: OnboardingData = await request.json();
 
+    console.log('Onboarding POST data:', data);
+
     // Validate required fields
     const requiredFields = ['name', 'email', 'title', 'location', 'skills', 'experienceYears', 'summary', 'jobTypes', 'locations', 'industries'];
     for (const field of requiredFields) {

@@ -11,9 +11,10 @@ interface AppLayoutProps {
   children: React.ReactNode;
   requireAuth?: boolean;
   showSidebar?: boolean;
+  showFooter?: boolean;
 }
 
-const AppLayout = ({ children, requireAuth = false, showSidebar = true }: AppLayoutProps) => {
+const AppLayout = ({ children, requireAuth = false, showSidebar = true, showFooter = true }: AppLayoutProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -36,24 +37,19 @@ const AppLayout = ({ children, requireAuth = false, showSidebar = true }: AppLay
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-
+    <div className="min-h-screen bg-bg">
       <div className="flex">
         {showSidebar && session && (
-          <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:pt-16">
+          <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40">
             <Sidebar className="flex-1" />
           </div>
         )}
 
-        <main className={`flex-1 ${showSidebar && session ? 'lg:pl-64' : ''} pt-16`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {children}
-          </div>
+        <main className={`flex-1 ${showSidebar && session ? 'lg:pl-64' : ''}`}>
+          {children}
         </main>
       </div>
-
-      <Footer />
+      {showFooter !== false && <Footer />}
     </div>
   );
 };

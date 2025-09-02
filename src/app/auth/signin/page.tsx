@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 import { Form, Input, Checkbox } from 'antd';
 import { useRouter } from 'next/navigation';
+import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -11,37 +12,6 @@ import { FaBriefcase, FaLock, FaEye, FaEyeSlash, FaExclamationCircle } from "rea
 import { MdEmail } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import { FaTwitter } from "react-icons/fa";
-
-// --- Real signin function ---
-const signIn = async (
-  provider: string,
-  {
-    email,
-    password,
-    redirect,
-  }: { email: string; password: string; redirect: boolean }
-): Promise<{ ok: boolean; error: string | null }> => {
-  try {
-    const response = await fetch('/api/auth/signin', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      return { ok: true, error: null };
-    } else {
-      return { ok: false, error: data.error || 'Sign in failed' };
-    }
-  } catch (error) {
-    console.error('Signin error:', error);
-    return { ok: false, error: 'Network error. Please try again.' };
-  }
-};
 
 const getSession = async (): Promise<{ user: { name: string } } | null> =>
   null; // Not implemented yet
@@ -62,11 +32,24 @@ const Button = ({
   </button>
 );
 
-// --- SignInPage ---
+
 const SignInPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const [form] = Form.useForm();
+
+  const { data: session, status } = useSession();
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
 
   const handleSubmit = async (values: { email: string; password: string }) => {
     if (!values.email || !values.password) {
@@ -84,7 +67,8 @@ const SignInPage: React.FC = () => {
 
       if (result?.error) {
         toast.error(result.error);
-      } else {
+      } else if (result?.ok) {
+        // Check onboarding status
         const onboardingResponse = await fetch('/api/user/onboarding');
         const onboardingData = await onboardingResponse.json();
         if (onboardingResponse.ok && !onboardingData.user?.onboardingCompleted) {
@@ -101,10 +85,18 @@ const SignInPage: React.FC = () => {
     }
   };
 
+  if (!isMounted || status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Toaster position="top-right" />
-      <main className="mt-8 min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
+      <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
           {/* Header */}
           <div className="text-center">
