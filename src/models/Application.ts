@@ -1,106 +1,168 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose from 'mongoose';
 
-export interface IApplication extends Document {
-  _id: string;
-  userId: mongoose.Types.ObjectId;
-  jobId: mongoose.Types.ObjectId;
-  status: 'saved' | 'applied' | 'interviewing' | 'offered' | 'rejected' | 'withdrawn';
-  applicationDate: Date;
-  notes?: string;
-  followUpDate?: Date;
-  resumeVersion?: string;
-  coverLetter?: string;
-  appliedThrough: string;
-  responseDate?: Date;
-  interviewDates: Date[];
-  feedback?: string;
-  rating?: number; // 1-5 stars
-  timeline: {
-    date: Date;
-    action: string;
-    notes?: string;
-  }[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const ApplicationSchema = new Schema<IApplication>(
-  {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'User ID is required'],
-    },
-    jobId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Job',
-      required: [true, 'Job ID is required'],
-    },
-    status: {
-      type: String,
-      enum: ['saved', 'applied', 'interviewing', 'offered', 'rejected', 'withdrawn'],
-      default: 'saved',
-    },
-    applicationDate: {
-      type: Date,
-      default: Date.now,
-    },
-    notes: {
-      type: String,
-      maxlength: [1000, 'Notes cannot exceed 1000 characters'],
-    },
-    followUpDate: Date,
-    resumeVersion: String,
-    coverLetter: String,
-    appliedThrough: {
-      type: String,
-      default: 'manual',
-    },
-    responseDate: Date,
-    interviewDates: [Date],
-    feedback: {
-      type: String,
-      maxlength: [500, 'Feedback cannot exceed 500 characters'],
-    },
-    rating: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-    timeline: [{
-      date: { type: Date, default: Date.now },
-      action: { type: String, required: true },
-      notes: String,
-    }],
+const ApplicationSchema = new mongoose.Schema({
+  // User Reference
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  {
-    timestamps: true,
-  }
-);
-
-// Indexes for better performance
-ApplicationSchema.index({ userId: 1, jobId: 1 }, { unique: true });
-ApplicationSchema.index({ userId: 1, status: 1 });
-ApplicationSchema.index({ userId: 1, applicationDate: -1 });
-ApplicationSchema.index({ followUpDate: 1 });
-
-// Prevent duplicate applications for the same job by the same user
-ApplicationSchema.pre('save', async function (next) {
-  const application = this as IApplication;
-
-  if (application.isNew) {
-    const existingApplication = await mongoose.models.Application.findOne({
-      userId: application.userId,
-      jobId: application.jobId,
-    });
-
-    if (existingApplication) {
-      const error = new Error('Application already exists for this job');
-      return next(error);
+  
+  // Job Reference
+  jobId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job',
+    required: true
+  },
+  
+  // Application Details
+  applicationId: {
+    type: String,
+    unique: true,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: [
+      'draft',
+      'submitted',
+      'under_review',
+      'phone_screening',
+      'technical_interview',
+      'final_interview',
+      'offer_received',
+      'accepted',
+      'rejected',
+      'withdrawn'
+    ],
+    default: 'submitted'
+  },
+  
+  // Application Timeline
+  appliedDate: {
+    type: Date,
+    default: Date.now
+  },
+  lastStatusUpdate: {
+    type: Date,
+    default: Date.now
+  },
+  expectedResponseDate: {
+    type: Date
+  },
+  
+  // Application Method
+  applicationMethod: {
+    type: String,
+    enum: ['manual', 'auto_apply', 'referral', 'direct'],
+    default: 'manual'
+  },
+  platform: {
+    type: String,
+    enum: ['naukri', 'linkedin', 'indeed', 'company_website', 'other'],
+    required: true
+  },
+  
+  // Documents Used
+  resumeUsed: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Resume'
+  },
+  coverLetterUsed: {
+    type: String
+  },
+  
+  // Communication History
+  communications: [{
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    type: {
+      type: String,
+      enum: ['email', 'phone', 'message', 'interview', 'other']
+    },
+    direction: {
+      type: String,
+      enum: ['incoming', 'outgoing']
+    },
+    subject: String,
+    content: String,
+    contactPerson: String
+  }],
+  
+  // Interview Details
+  interviews: [{
+    scheduledDate: Date,
+    type: {
+      type: String,
+      enum: ['phone', 'video', 'in_person', 'technical', 'hr']
+    },
+    duration: Number, // in minutes
+    interviewer: String,
+    notes: String,
+    feedback: String,
+    result: {
+      type: String,
+      enum: ['passed', 'failed', 'pending']
     }
+  }],
+  
+  // Offer Details
+  offer: {
+    salary: Number,
+    currency: {
+      type: String,
+      default: 'INR'
+    },
+    benefits: [String],
+    startDate: Date,
+    responseDeadline: Date,
+    negotiationNotes: String
+  },
+  
+  // Tracking & Notes
+  notes: String,
+  tags: [String],
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
+  },
+  
+  // Reminders
+  reminders: [{
+    date: Date,
+    message: String,
+    type: {
+      type: String,
+      enum: ['follow_up', 'interview_prep', 'deadline', 'other']
+    },
+    completed: {
+      type: Boolean,
+      default: false
+    }
+  }],
+  
+  // Automation Data
+  automationData: {
+    isAutomated: {
+      type: Boolean,
+      default: false
+    },
+    automationScript: String,
+    lastAutomationRun: Date,
+    automationStatus: String
   }
-
-  next();
+}, {
+  timestamps: true
 });
 
-export default mongoose.models.Application || mongoose.model<IApplication>('Application', ApplicationSchema);
+// Indexes
+ApplicationSchema.index({ userId: 1, status: 1 });
+ApplicationSchema.index({ userId: 1, appliedDate: -1 });
+ApplicationSchema.index({ userId: 1, priority: 1 });
+ApplicationSchema.index({ applicationId: 1 }, { unique: true });
+
+export const Application = mongoose.models.Application || mongoose.model('Application', ApplicationSchema);
+export default Application;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState ,useEffect } from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Checkbox } from 'antd';
 import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
@@ -8,13 +8,10 @@ import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 
 // react-icons
-import { FaBriefcase, FaLock, FaEye, FaEyeSlash, FaExclamationCircle } from "react-icons/fa";
+import { FaBriefcase, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import { FaTwitter } from "react-icons/fa";
-
-const getSession = async (): Promise<{ user: { name: string } } | null> =>
-  null; // Not implemented yet
 
 // --- Button Component ---
 const Button = ({
@@ -39,7 +36,7 @@ const SignInPage: React.FC = () => {
   const router = useRouter();
   const [form] = Form.useForm();
 
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -87,8 +84,15 @@ const SignInPage: React.FC = () => {
 
   if (!isMounted || status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-indigo-600 mx-auto mb-4"></div>
+            <div className="animate-ping absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-4 w-4 bg-indigo-600 rounded-full opacity-75"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Loading...</h3>
+          <p className="text-gray-400">Please wait while we prepare your experience</p>
+        </div>
       </div>
     );
   }

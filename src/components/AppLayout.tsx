@@ -37,19 +37,24 @@ const AppLayout = ({ children, requireAuth = false, showSidebar = true, showFoot
   }
 
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="flex">
+    <div className="flex flex-col min-h-screen">
+      <div className="flex flex-1">
         {showSidebar && session && (
-          <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40">
+          <div className="hidden lg:flex lg:w-80 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40" style={{ top: '64px', height: 'calc(100vh - 64px)' }}>
             <Sidebar className="flex-1" />
           </div>
         )}
 
-        <main className={`flex-1 ${showSidebar && session ? 'lg:pl-64' : ''}`}>
+        <div className={`flex-1 ${showSidebar && session ? 'lg:pl-80' : ''}`}>
           {children}
-        </main>
+        </div>
       </div>
-      {showFooter !== false && <Footer />}
+      
+      {showFooter === true && (
+        <div className={`${showSidebar && session ? 'lg:pl-80' : ''}`}>
+          <Footer />
+        </div>
+      )}
     </div>
   );
 };

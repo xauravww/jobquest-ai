@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ContactUsForm from "../components/ContactUsForm";
 import { CardCarousel } from "@/components/ui/card-carousel";
 import { AiOutlineRobot, AiOutlineSetting, AiOutlineBarChart } from "react-icons/ai";
+import Footer from "@/components/Footer";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -154,6 +155,7 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </>
   );
 }

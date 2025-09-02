@@ -48,7 +48,6 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           <main className="pt-16 flex-grow">{children}</main>
-          <Footer />
         </Providers>
       </body>
     </html>

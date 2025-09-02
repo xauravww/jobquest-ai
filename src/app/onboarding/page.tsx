@@ -266,7 +266,7 @@ const OnboardingPage: React.FC = () => {
             </Form.Item>
 
             <Form.Item name="remote" valuePropName="checked">
-              <Checkbox className="text-gray-300">I'm open to remote work opportunities</Checkbox>
+              <Checkbox className="text-gray-300">I&apos;m open to remote work opportunities</Checkbox>
             </Form.Item>
 
             <div className="grid grid-cols-2 gap-4">
@@ -374,7 +374,7 @@ const OnboardingPage: React.FC = () => {
           </div>
 
           {/* Step Content */}
-          <Card className="bg-gray-800/70 border-gray-700" bodyStyle={{ padding: '2rem' }}>
+          <Card className="bg-gray-800/70 border-gray-700" styles={{ body: { padding: '2rem' } }}>
             <Form
               form={form}
               onFinish={currentStep === steps.length - 1 ? handleComplete : handleNext}

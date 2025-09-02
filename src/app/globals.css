@@ -373,4 +373,99 @@ input:focus, select:focus, textarea:focus {
   body {
     @apply bg-background text-foreground;
   }
+}/* Ant Design Input Placeholder Styling */
+.ant-input::placeholder,
+.ant-input-number input::placeholder,
+.ant-picker input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+.ant-input::-webkit-input-placeholder,
+.ant-input-number input::-webkit-input-placeholder,
+.ant-picker input::-webkit-input-placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+.ant-input::-moz-placeholder,
+.ant-input-number input::-moz-placeholder,
+.ant-picker input::-moz-placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+.ant-input:-ms-input-placeholder,
+.ant-input-number input:-ms-input-placeholder,
+.ant-picker input:-ms-input-placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Regular HTML input placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1 !important;
+}
+
+/*
+* Auth pages specific styling */
+.ant-input.placeholder-gray-500::placeholder,
+.ant-input.placeholder-gray-500 input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.ant-input.placeholder-gray-500::-webkit-input-placeholder,
+.ant-input.placeholder-gray-500 input::-webkit-input-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.ant-input.placeholder-gray-500::-moz-placeholder,
+.ant-input.placeholder-gray-500 input::-moz-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+.ant-input.placeholder-gray-500:-ms-input-placeholder,
+.ant-input.placeholder-gray-500 input:-ms-input-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Social buttons styling */
+.social-btn {
+  background: rgba(55, 65, 81, 0.5);
+  border: 1px solid #374151;
+  color: #d1d5db;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.social-btn:hover {
+  background: rgba(75, 85, 99, 0.7);
+  border-color: #6366f1;
+  transform: translateY(-1px);
 }

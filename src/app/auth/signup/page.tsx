@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Input } from 'antd';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 
 // react-icons
-import { FaBriefcase, FaLock, FaEye, FaEyeSlash, FaExclamationCircle, FaUser } from "react-icons/fa";
+import { FaBriefcase, FaLock, FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import { FaTwitter } from "react-icons/fa";
@@ -57,8 +58,20 @@ const Button = ({
 // --- SignUpPage ---
 const SignUpPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const [form] = Form.useForm();
+  const { status } = useSession();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [status, router]);
 
   const handleSubmit = async (values: { name: string; email: string; password: string; confirmPassword: string }) => {
     if (values.password !== values.confirmPassword) {
@@ -88,6 +101,21 @@ const SignUpPage: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  if (!isMounted || status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-indigo-600 mx-auto mb-4"></div>
+            <div className="animate-ping absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-4 w-4 bg-indigo-600 rounded-full opacity-75"></div>
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Loading...</h3>
+          <p className="text-gray-400">Please wait while we prepare your experience</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
