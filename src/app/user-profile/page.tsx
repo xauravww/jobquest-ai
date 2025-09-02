@@ -136,7 +136,43 @@ const UserProfilePage = () => {
       const response = await fetch('/api/user/profile');
       if (response.ok) {
         const data = await response.json();
-        setProfile(data);
+        
+        // Transform API response to match frontend structure
+        const transformedProfile: UserProfile = {
+          personalInfo: {
+            fullName: `${data.firstName || ''} ${data.lastName || ''}`.trim() || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            location: data.location || '',
+            website: data.website || '',
+            linkedin: data.linkedin || '',
+            github: data.github || ''
+          },
+          professionalInfo: {
+            currentRole: data.targetRole || '',
+            experience: data.experienceYears?.toString() || '',
+            skills: data.skills || [],
+            bio: data.bio || '',
+            workExperience: data.workExperience || [],
+            education: data.education || [],
+            projects: data.projects || [],
+            achievements: data.achievements || [],
+            certifications: data.certifications || []
+          },
+          preferences: {
+            jobTypes: data.preferences?.jobTypes || [],
+            locations: data.preferences?.locations || [],
+            salaryRange: {
+              min: data.preferences?.salaryRange?.min || 0,
+              max: data.preferences?.salaryRange?.max || 0
+            },
+            remoteWork: data.preferences?.remoteWork || false,
+            targetRole: data.targetRole || '',
+            targetCompanies: data.preferences?.targetCompanies || []
+          }
+        };
+        
+        setProfile(transformedProfile);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -262,7 +298,7 @@ const UserProfilePage = () => {
                       placeholder="Enter your full name"
                     />
                   ) : (
-                    <p className="text-text">{profile.personalInfo.fullName || 'Not provided'}</p>
+                    <p className="text-text">{profile.personalInfo?.fullName || 'Not provided'}</p>
                   )}
                 </div>
 

@@ -166,6 +166,77 @@ export class MongoDBService {
     }
   }
 
+  async saveApplicationsFromAI(applications: any[]) {
+    try {
+      await connectDB();
+      
+      const savedApplications = [];
+      
+      for (const appData of applications) {
+        try {
+          // First, create or find the job
+          let job = null;
+          
+          if (appData.jobUrl) {
+            // Try to find existing job by URL
+            job = await Job.findOne({ url: appData.jobUrl });
+          }
+          
+          if (!job) {
+            // Create a new job entry
+            job = new Job({
+              jobId: `job-${Date.now()}-${Math.random()}`,
+              title: appData.jobTitle,
+              company: appData.company,
+              location: appData.location,
+              description: appData.description || '',
+              url: appData.jobUrl || '',
+              datePosted: new Date(),
+              isActive: true,
+              isBookmarked: false,
+              isSkipped: false,
+              source: 'ai-filtered'
+            });
+            
+            await job.save();
+          }
+
+          // Create the application
+          const application = new Application({
+            userId: appData.userId,
+            jobId: job._id,
+            applicationId: `app-${Date.now()}-${Math.random()}`,
+            status: appData.status || 'submitted',
+            appliedDate: new Date(),
+            lastStatusUpdate: new Date(),
+            applicationMethod: appData.applicationMethod || 'manual',
+            platform: appData.platform || 'other',
+            notes: appData.notes || '',
+            priority: appData.priority || 'medium',
+            communications: [],
+            interviews: []
+          });
+
+          await application.save();
+          
+          // Populate the jobId for the response
+          await application.populate('jobId');
+          savedApplications.push(application);
+          
+        } catch (appError) {
+          console.error('Error saving individual application:', appError);
+        }
+      }
+
+      console.log(`Saved ${savedApplications.length} applications from AI filtering to database`);
+      return savedApplications;
+      
+    } catch (error) {
+      console.error('Error saving applications from AI:', error);
+      throw error;
+    }
+  }
+
   async skipJobs(jobIds: string[]) {
     try {
       await connectDB();
@@ -186,6 +257,23 @@ export class MongoDBService {
     } catch (error) {
       console.error('Error skipping jobs:', error);
       throw error;
+    }
+  }
+
+  async getApplications(userId?: string) {
+    try {
+      await connectDB();
+      
+      const query = userId ? { userId } : {};
+      const applications = await Application.find(query)
+        .populate('jobId')
+        .sort({ appliedDate: -1 });
+
+      return applications;
+      
+    } catch (error) {
+      console.error('Error getting applications:', error);
+      return [];
     }
   }
 

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+
 import AppLayout from '@/components/AppLayout';
-import { Card, Modal, Select, DatePicker, message, Tag } from 'antd';
+import { Card, Modal, Select, message, Tag } from 'antd';
 import { 
   Briefcase, 
   Plus, 
@@ -16,7 +16,6 @@ import {
   XCircle,
   AlertCircle,
   Eye,
-  Edit3,
   Trash2,
   Phone,
   Video,
@@ -68,7 +67,6 @@ interface Application {
 }
 
 const ApplicationTrackingPage = () => {
-  const { data: session } = useSession();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
@@ -90,11 +88,15 @@ const ApplicationTrackingPage = () => {
       const response = await fetch('/api/applications');
       if (response.ok) {
         const data = await response.json();
-        setApplications(data);
+        // Ensure data is always an array
+        setApplications(Array.isArray(data) ? data : []);
+      } else {
+        setApplications([]);
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
       message.error('Failed to fetch applications');
+      setApplications([]);
     } finally {
       setLoading(false);
     }
@@ -191,13 +193,13 @@ const ApplicationTrackingPage = () => {
   });
 
   const stats = {
-    total: applications.length,
-    submitted: applications.filter(a => a.status === 'submitted').length,
-    interviewing: applications.filter(a => 
+    total: applications?.length || 0,
+    submitted: applications?.filter(a => a.status === 'submitted').length || 0,
+    interviewing: applications?.filter(a => 
       ['phone_screening', 'technical_interview', 'final_interview'].includes(a.status)
-    ).length,
-    offers: applications.filter(a => a.status === 'offer_received').length,
-    rejected: applications.filter(a => a.status === 'rejected').length
+    ).length || 0,
+    offers: applications?.filter(a => a.status === 'offer_received').length || 0,
+    rejected: applications?.filter(a => a.status === 'rejected').length || 0
   };
 
   if (loading) {
@@ -486,7 +488,7 @@ const ApplicationTrackingPage = () => {
 };
 
 // Application Detail Modal Component
-const ApplicationDetailModal = ({ visible, application, onClose, onUpdate }: {
+const ApplicationDetailModal = ({ visible, application, onClose }: {
   visible: boolean;
   application: Application | null;
   onClose: () => void;
@@ -494,17 +496,35 @@ const ApplicationDetailModal = ({ visible, application, onClose, onUpdate }: {
 }) => {
   if (!application) return null;
 
-    function getStatusColor(status: string): import("antd/es/_util/type").LiteralUnion<"success" | "error" | "warning" | "default" | import("antd/es/_util/colors").PresetColorType | "processing"> | undefined {
-        throw new Error('Function not implemented.');
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'submitted': return 'blue';
+      case 'under_review': return 'orange';
+      case 'phone_screening': return 'purple';
+      case 'technical_interview': return 'cyan';
+      case 'final_interview': return 'magenta';
+      case 'offer_received': return 'green';
+      case 'accepted': return 'success';
+      case 'rejected': return 'red';
+      case 'withdrawn': return 'default';
+      default: return 'default';
     }
+  };
 
-    function formatStatus(status: string): React.ReactNode {
-        throw new Error('Function not implemented.');
-    }
+  const formatStatus = (status: string) => {
+    return status.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
 
-    function getPriorityColor(priority: string) {
-        throw new Error('Function not implemented.');
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'text-danger';
+      case 'medium': return 'text-warning';
+      case 'low': return 'text-success';
+      default: return 'text-text-muted';
     }
+  };
 
   return (
     <Modal
@@ -631,7 +651,7 @@ const ApplicationDetailModal = ({ visible, application, onClose, onUpdate }: {
                   <label className="block text-xs text-text-muted mb-1">Benefits</label>
                   <div className="flex flex-wrap gap-1">
                     {application.offer.benefits.map((benefit, index) => (
-                      <Tag key={index} color="green" size="small">{benefit}</Tag>
+                      <Tag key={index} color="green">{benefit}</Tag>
                     ))}
                   </div>
                 </div>

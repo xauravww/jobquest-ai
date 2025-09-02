@@ -130,18 +130,16 @@ const ApplicationSchema = new mongoose.Schema({
     default: 'medium'
   },
   
-  // Reminders
+  // Reminders (references to Reminder model)
   reminders: [{
-    date: Date,
-    message: String,
-    type: {
-      type: String,
-      enum: ['follow_up', 'interview_prep', 'deadline', 'other']
-    },
-    completed: {
-      type: Boolean,
-      default: false
-    }
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Reminder'
+  }],
+  
+  // Calendar Events (references to CalendarEvent model)
+  calendarEvents: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CalendarEvent'
   }],
   
   // Automation Data

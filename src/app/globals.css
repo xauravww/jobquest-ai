@@ -253,6 +253,7 @@ input:focus, select:focus, textarea:focus {
 .text-warning { color: var(--warning); }
 .text-success { color: var(--success); }
 .text-info { color: var(--info); }
+.text-dark {color: var(--bg-dark)}
 
 .border-border { border-color: var(--border); }
 .border-border-muted { border-color: var(--border-muted); }
@@ -468,4 +469,186 @@ textarea:-ms-input-placeholder {
   background: rgba(75, 85, 99, 0.7);
   border-color: #6366f1;
   transform: translateY(-1px);
+}/* Pr
+event horizontal overflow globally */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Dashboard specific overflow fixes */
+.react-grid-layout {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.react-grid-item {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Responsive grid layout fixes */
+@media (max-width: 768px) {
+  .react-grid-layout {
+    margin: 0 !important;
+  }
+  
+  .react-grid-item {
+    margin: 8px 0 !important;
+  }
+}
+/*
+ Ant Design Dark Theme Overrides */
+
+/* Search Input */
+.ant-input-search {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+}
+
+.ant-input-search .ant-input {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-input-search .ant-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.ant-input-search:hover {
+  border-color: var(--primary) !important;
+}
+
+.ant-input-search:hover .ant-input {
+  border-color: var(--primary) !important;
+}
+
+.ant-input-search.ant-input-search-focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-input-search .ant-input-search-button {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: white !important;
+}
+
+.ant-input-search .ant-input-search-button:hover {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  opacity: 0.8;
+}
+
+.ant-select-dark .ant-select-selector {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-select-dark .ant-select-selection-item {
+  color: var(--text) !important;
+}
+
+.ant-select-dark .ant-select-selection-placeholder {
+  color: var(--text-muted) !important;
+}
+
+.ant-select-dark:hover .ant-select-selector {
+  border-color: var(--primary) !important;
+}
+
+.ant-select-dark.ant-select-focused .ant-select-selector {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-select-dropdown-dark {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+}
+
+.ant-select-dropdown-dark .ant-select-item {
+  color: var(--text) !important;
+}
+
+.ant-select-dropdown-dark .ant-select-item:hover {
+  background-color: var(--bg-light) !important;
+}
+
+.ant-select-dropdown-dark .ant-select-item-option-selected {
+  background-color: var(--primary) !important;
+  color: white !important;
+}
+
+/* DatePicker Dark Theme */
+.ant-picker {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-picker:hover {
+  border-color: var(--primary) !important;
+}
+
+.ant-picker.ant-picker-focused {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-picker-input > input {
+  color: var(--text) !important;
+}
+
+.ant-picker-input > input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* TextArea Dark Theme */
+.ant-input {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-input:hover {
+  border-color: var(--primary) !important;
+}
+
+.ant-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* InputNumber Dark Theme */
+.ant-input-number {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border) !important;
+}
+
+.ant-input-number:hover {
+  border-color: var(--primary) !important;
+}
+
+.ant-input-number.ant-input-number-focused {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-input-number .ant-input-number-input {
+  color: var(--text) !important;
+}
+
+.ant-input-number .ant-input-number-input::placeholder {
+  color: var(--text-muted) !important;
 }

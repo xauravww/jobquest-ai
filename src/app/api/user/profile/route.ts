@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -18,23 +18,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Return user profile data
+    // Return simplified profile data for dashboard
     const profileData = {
-      personalInfo: {
-        fullName: user.name || '',
-        email: user.email || '',
-        phone: user.profile?.phone || '',
-        location: user.profile?.location || '',
-        website: user.profile?.portfolioUrl || '',
-        linkedin: user.profile?.linkedinUrl || '',
-        github: user.profile?.githubUrl || ''
-      },
-      professionalInfo: {
-        currentRole: user.profile?.title || '',
-        experience: user.profile?.experienceYears?.toString() || '',
-        skills: user.profile?.skills || [],
-        bio: user.profile?.bio || ''
-      },
+      firstName: user.name?.split(' ')[0] || '',
+      lastName: user.name?.split(' ').slice(1).join(' ') || '',
+      email: user.email || '',
+      targetRole: user.profile?.title || 'Software Developer',
+      location: user.profile?.location || 'Remote',
+      skills: user.profile?.skills || [],
+      experienceYears: user.profile?.experienceYears || 0,
+      bio: user.profile?.bio || '',
       preferences: {
         jobTypes: user.preferences?.jobTypes || [],
         locations: user.preferences?.locations || [],

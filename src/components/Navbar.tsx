@@ -6,7 +6,7 @@ import { FiMenu, FiX, FiLogOut } from "react-icons/fi";
 import { useSession, signOut } from "next-auth/react";
 
 export default function Navbar() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -47,62 +47,60 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <div className="flex flex-1 justify-end items-center space-x-8">
-            {/* Center Section (Desktop Menu) */}
-            <div className="hidden md:flex space-x-8">
-              <Link href="/" className={navLinkClasses}>
-                Features
-              </Link>
-              <Link href="/pricing" className={navLinkClasses}>
-                Pricing
-              </Link>
-              <Link href="/about" className={navLinkClasses}>
-                About
-              </Link>
-              <Link href="/contact" className={navLinkClasses}>
-                Contact
-              </Link>
+          {/* Center Section (Desktop Menu) */}
+          <div className="hidden md:flex flex-1 justify-center space-x-8">
+            <Link href="/" className={navLinkClasses}>
+              Features
+            </Link>
+            <Link href="/pricing" className={navLinkClasses}>
+              Pricing
+            </Link>
+            <Link href="/about" className={navLinkClasses}>
+              About
+            </Link>
+            <Link href="/contact" className={navLinkClasses}>
+              Contact
+            </Link>
+          </div>
+
+          {/* Right Section (Auth Buttons & Mobile Menu Button) */}
+          <div className="flex flex-1 md:flex-none justify-end items-center gap-4">
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex items-center gap-4">
+              {session ? (
+                <>
+                  <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors font-medium">
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => signOut()}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 rounded-lg text-red-400 hover:text-red-300 transition-all duration-200 font-medium"
+                  >
+                    <FiLogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors font-medium">
+                    Sign In
+                  </Link>
+                  <Link href="/auth/signup" className="button-primary">
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
 
-            {/* Right Section (Auth Buttons & Mobile Menu Button) */}
-            <div className="flex justify-end items-center gap-4">
-              {/* Desktop Auth Buttons */}
-              <div className="hidden md:flex items-center gap-4">
-                {session ? (
-                  <>
-                    <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors font-medium">
-                      Dashboard
-                    </Link>
-                    <button
-                      onClick={() => signOut()}
-                      className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors font-medium"
-                    >
-                      <FiLogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/auth/signin" className="text-gray-300 hover:text-white transition-colors font-medium">
-                      Sign In
-                    </Link>
-                    <Link href="/auth/signup" className="button-primary">
-                      Get Started
-                    </Link>
-                  </>
-                )}
-              </div>
-
-              {/* Mobile Menu Button */}
-              <div className="md:hidden">
-                <button
-                  onClick={toggleMobileMenu}
-                  className="z-50 flex items-center justify-center w-10 h-10 rounded-lg bg-bg-card border border-border text-white hover:bg-bg-light transition-colors"
-                  aria-label="Toggle menu"
-                >
-                  <FiMenu className="w-5 h-5" />
-                </button>
-              </div>
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                onClick={toggleMobileMenu}
+                className="z-50 flex items-center justify-center w-10 h-10 rounded-lg bg-bg-card border border-border text-white hover:bg-bg-light transition-colors"
+                aria-label="Toggle menu"
+              >
+                <FiMenu className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
