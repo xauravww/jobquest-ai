@@ -3,7 +3,50 @@ import { Job } from '@/models/Job';
 import { Application } from '@/models/Application';
 
 export class MongoDBService {
-  
+
+  // Helper method to normalize status values to valid enum values
+  private normalizeStatus(status: string): string {
+    const validStatuses = [
+      'draft',
+      'submitted',
+      'under_review',
+      'phone_screening',
+      'technical_interview',
+      'final_interview',
+      'offer_received',
+      'accepted',
+      'rejected',
+      'withdrawn'
+    ];
+
+    // Map common invalid statuses to valid ones
+    const statusMapping: { [key: string]: string } = {
+      'interested': 'submitted',
+      'applied': 'submitted',
+      'pending': 'submitted',
+      'in_progress': 'under_review',
+      'review': 'under_review',
+      'interview': 'technical_interview',
+      'offered': 'offer_received',
+      'hired': 'accepted',
+      'declined': 'rejected',
+      'cancelled': 'withdrawn'
+    };
+
+    const normalized = status?.toLowerCase().replace(/\s+/g, '_');
+    if (statusMapping[normalized]) {
+      return statusMapping[normalized];
+    }
+
+    // If status is already valid, return it
+    if (validStatuses.includes(status)) {
+      return status;
+    }
+
+    // Default to 'submitted' for unknown statuses
+    return 'submitted';
+  }
+
   async saveJobResults(jobs: any[], query: string, filters: any = {}) {
     try {
       await connectDB();
@@ -135,7 +178,7 @@ export class MongoDBService {
           const application = new Application({
             jobId: job._id,
             applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: appData.status || 'interested',
+            status: this.normalizeStatus(appData.status) || 'submitted',
             appliedDate: new Date(),
             lastStatusUpdate: new Date(),
             applicationMethod: appData.applicationMethod || 'online',
@@ -206,7 +249,7 @@ export class MongoDBService {
             userId: appData.userId,
             jobId: job._id,
             applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: appData.status || 'submitted',
+            status: this.normalizeStatus(appData.status) || 'submitted',
             appliedDate: new Date(),
             lastStatusUpdate: new Date(),
             applicationMethod: appData.applicationMethod || 'manual',
@@ -282,14 +325,14 @@ export class MongoDBService {
       await connectDB();
       
       const totalApplications = await Application.countDocuments();
-      const activeApplications = await Application.countDocuments({ 
-        status: { $in: ['applied', 'interviewing', 'offered'] }
+      const activeApplications = await Application.countDocuments({
+        status: { $in: ['submitted', 'under_review', 'phone_screening', 'technical_interview', 'final_interview', 'offer_received'] }
       });
-      const interviews = await Application.countDocuments({ 
-        status: 'interviewing'
+      const interviews = await Application.countDocuments({
+        status: { $in: ['phone_screening', 'technical_interview', 'final_interview'] }
       });
-      const offers = await Application.countDocuments({ 
-        status: 'offered'
+      const offers = await Application.countDocuments({
+        status: 'offer_received'
       });
 
       const responseRate = totalApplications > 0 

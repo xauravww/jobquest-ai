@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { mongodbService } from '@/lib/mongodb-service';
+import { connectDB } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,9 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Connect to DB before querying
+    await connectDB();
 
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
@@ -52,6 +56,9 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Connect to DB before querying
+    await connectDB();
 
     // Find user first to get userId
     const User = (await import('@/models/User')).default;

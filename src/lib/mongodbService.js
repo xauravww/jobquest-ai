@@ -27,6 +27,57 @@ class MongoDBService {
   }
 
   /**
+   * Get jobs for a specific user
+   */
+  async getJobsByUser(userId) {
+    try {
+      await this.connect();
+      const Job = require('../models/Job').Job || require('../models/Job').default;
+      const jobs = await Job.find({ userId }).sort({ datePosted: -1 });
+      return jobs;
+    } catch (error) {
+      console.error('Error fetching jobs by user:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a job for a specific user
+   */
+  async updateJobForUser(userId, jobId, updateData) {
+    try {
+      await this.connect();
+      const Job = require('../models/Job').Job || require('../models/Job').default;
+      const job = await Job.findOne({ _id: jobId, userId });
+      if (!job) {
+        return null;
+      }
+      Object.assign(job, updateData);
+      job.lastUpdated = new Date();
+      await job.save();
+      return job;
+    } catch (error) {
+      console.error('Error updating job:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a job for a specific user
+   */
+  async deleteJobForUser(userId, jobId) {
+    try {
+      await this.connect();
+      const Job = require('../models/Job').Job || require('../models/Job').default;
+      const result = await Job.deleteOne({ _id: jobId, userId });
+      return result.deletedCount > 0;
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Health check for MongoDB connection
    */
   async healthCheck() {
@@ -77,40 +128,41 @@ class MongoDBService {
             ]
           });
 
-          if (!existingJob) {
-            const job = new Job({
-              jobId: jobData.id || `job-${Date.now()}-${Math.random()}`,
-              title: jobData.title,
-              company: jobData.company,
-              location: jobData.location,
-              description: jobData.description || jobData.content || jobData.snippet,
-              salary: jobData.salary,
-              jobType: jobData.jobType || 'full-time',
-              experienceLevel: jobData.experienceLevel || 'mid',
-              skills: jobData.skills || [],
-              source: jobData.source || 'api-search',
-              url: jobData.link || jobData.url,
-              datePosted: this.parsePublishedDate(jobData),
-              isActive: true,
-              isBookmarked: false,
-              isSkipped: false,
-              // AI fields
-              aiScore: jobData.aiScore,
-              aiReasons: jobData.aiReason ? [jobData.aiReason] : [],
-              matchingSkills: jobData.matchingSkills || []
-            });
+            if (!existingJob) {
+              const job = new Job({
+                userId: jobData.userId,  // Added userId here to link job to user
+                jobId: jobData.id || `job-${Date.now()}-${Math.random()}`,
+                title: jobData.title,
+                company: jobData.company,
+                location: jobData.location,
+                description: jobData.description || jobData.content || jobData.snippet,
+                salary: jobData.salary,
+                jobType: jobData.jobType || 'full-time',
+                experienceLevel: jobData.experienceLevel || 'mid',
+                skills: jobData.skills || [],
+                source: jobData.source || 'api-search',
+                url: jobData.link || jobData.url,
+                datePosted: this.parsePublishedDate(jobData),
+                isActive: true,
+                isBookmarked: false,
+                isSkipped: false,
+                // AI fields
+                aiScore: jobData.aiScore,
+                aiReasons: jobData.aiReason ? [jobData.aiReason] : [],
+                matchingSkills: jobData.matchingSkills || []
+              });
 
-            await job.save();
-            savedJobs.push(job);
-          } else {
-            // Update existing job with new AI data if available
-            if (jobData.aiScore) {
-              existingJob.aiScore = jobData.aiScore;
-              existingJob.aiReasons = jobData.aiReason ? [jobData.aiReason] : existingJob.aiReasons;
-              await existingJob.save();
+              await job.save();
+              savedJobs.push(job);
+            } else {
+              // Update existing job with new AI data if available
+              if (jobData.aiScore) {
+                existingJob.aiScore = jobData.aiScore;
+                existingJob.aiReasons = jobData.aiReason ? [jobData.aiReason] : existingJob.aiReasons;
+                await existingJob.save();
+              }
+              savedJobs.push(existingJob);
             }
-            savedJobs.push(existingJob);
-          }
         } catch (jobError) {
           console.error('Error saving individual job:', jobError);
         }
@@ -278,7 +330,7 @@ class MongoDBService {
           const application = new Application({
             jobId: job._id,
             applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: 'interested',
+            status: 'saved', 
             appliedDate: new Date(),
             lastStatusUpdate: new Date(),
             applicationMethod: 'ai-filtered',
@@ -306,5 +358,40 @@ class MongoDBService {
     }
   }
 }
+
+  /**
+   * Save applications from AI filtered jobs
+   */
+  saveApplicationsFromAI = async (applications) => {
+    try {
+      await this.connect();
+
+      // Reuse saveFilteredJobs logic by mapping applications to jobs format
+      const jobs = applications.map(app => ({
+        id: app.jobId || '',
+        title: app.jobTitle || '',
+        company: app.company || '',
+        location: app.location || '',
+        description: app.description || '',
+        url: app.jobUrl || '',
+        salary: '',
+        jobType: 'full-time',
+        source: 'ai-filtered',
+        aiScore: app.aiScore,
+        aiReason: app.aiReason,
+        userId: app.userId
+      }));
+
+      // Save jobs and create applications
+      const savedApplications = await this.saveFilteredJobs(jobs);
+
+      return savedApplications;
+    } catch (error) {
+      console.error('Error saving applications from AI:', error);
+      return [];
+    }
+}
+
+module.exports = MongoDBService;
 
 module.exports = MongoDBService;
