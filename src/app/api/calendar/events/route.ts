@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { CalendarEvent } from '@/models/CalendarEvent';
+import { Job } from '@/models/Job';
+import { Application } from '@/models/Application';
+import { Reminder } from '@/models/Reminder';
 
 // GET - Fetch calendar events
 export async function GET(request: NextRequest) {
@@ -20,7 +23,7 @@ export async function GET(request: NextRequest) {
     const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
     
     // Build query
-    const query: unknown = {
+    const query: any = {
       userId // Filter by user
     };
     
@@ -116,7 +119,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    
+
     const body = await request.json();
     const {
       title,
@@ -139,7 +142,7 @@ export async function POST(request: NextRequest) {
       color,
       priority
     } = body;
-    
+
     // Validation
     if (!title || !startDate || !endDate || !type) {
       return NextResponse.json(
@@ -147,10 +150,41 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // TODO: Get userId from session
     const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
-    
+
+    // Validate application, job, and reminder associations
+    if (applicationId) {
+      const application = await Application.findOne({ _id: applicationId, userId });
+      if (!application) {
+        return NextResponse.json(
+          { error: 'Invalid application ID or access denied' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (jobId) {
+      const job = await Job.findOne({ _id: jobId, userId });
+      if (!job) {
+        return NextResponse.json(
+          { error: 'Invalid job ID or access denied' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (reminderId) {
+      const reminder = await Reminder.findOne({ _id: reminderId, userId });
+      if (!reminder) {
+        return NextResponse.json(
+          { error: 'Invalid reminder ID or access denied' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create event
     const event = new CalendarEvent({
       userId,
@@ -174,19 +208,19 @@ export async function POST(request: NextRequest) {
       color: color || '#3b82f6',
       priority: priority || 'medium'
     });
-    
+
     await event.save();
-    
+
     // Populate references for response
     await event.populate('applicationId', 'status jobId');
     await event.populate('jobId', 'title company');
     await event.populate('reminderId', 'title type');
-    
+
     return NextResponse.json({
       success: true,
       event
     }, { status: 201 });
-    
+
   } catch (error) {
     console.error('Error creating calendar event:', error);
     return NextResponse.json(

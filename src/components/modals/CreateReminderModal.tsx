@@ -38,8 +38,8 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
     });
 
     const [loading, setLoading] = useState(false);
-    const [applications, setApplications] = useState([]);
-    const [jobs, setJobs] = useState([]);
+    const [applications, setApplications] = useState<any[]>([]);
+    const [jobs, setJobs] = useState<any[]>([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -228,13 +228,13 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 required
                             />
 
-                            <FormInput
-                                label="Due Time"
-                                type="time"
-                                value={formData.dueTime}
-                                onChange={(value) => setFormData({ ...formData, dueTime: value })}
-                                required
-                            />
+                        <FormInput
+                            label="Due Time"
+                            type="time"
+                            value={formData.dueTime}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, dueTime: e.target.value })}
+                            required
+                        />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,13 +258,17 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
                     {/* Associations */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Associations</h3>
+                        <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                            <Tag className="w-5 h-5" />
+                            Associations
+                        </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormSelect
-                                label="Related Application"
-                                value={formData.applicationId}
-                                onChange={(value) => setFormData({ ...formData, applicationId: value })}
+                            <div className="space-y-2">
+                                <FormSelect
+                                    label="Related Application"
+                                    value={formData.applicationId}
+                                    onChange={(value) => setFormData({ ...formData, applicationId: value })}
                                 options={[
                                     { value: '', label: 'None' },
                                     ...applications.map((app: any) => ({
@@ -273,19 +277,58 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                     }))
                                 ]}
                             />
+                            {formData.applicationId && (
+                                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                        <span className="text-primary font-medium">Linked to Application</span>
+                                    </div>
+                                    {(() => {
+                                        const selectedApp = applications.find((app: any) => app._id === formData.applicationId);
+                                        return selectedApp ? (
+                                            <div className="mt-2 text-xs text-text-muted">
+                                                <div>Job: {selectedApp.jobId?.title || 'Unknown'}</div>
+                                                <div>Company: {selectedApp.jobId?.company || 'Unknown'}</div>
+                                                <div>Status: {selectedApp.status}</div>
+                                            </div>
+                                        ) : null;
+                                    })()}
+                                </div>
+                            )}
+                        </div>
 
-                            <FormSelect
-                                label="Related Job"
-                                value={formData.jobId}
-                                onChange={(value) => setFormData({ ...formData, jobId: value })}
-                                options={[
-                                    { value: '', label: 'None' },
-                                    ...jobs.map((job: unknown) => ({
-                                        value: job._id,
-                                        label: `${job.title} at ${job.company}`
-                                    }))
-                                ]}
-                            />
+                            <div className="space-y-2">
+                                <FormSelect
+                                    label="Related Job"
+                                    value={formData.jobId}
+                                    onChange={(value) => setFormData({ ...formData, jobId: value })}
+                                    options={[
+                                        { value: '', label: 'None' },
+                                        ...jobs.map((job: any) => ({
+                                            value: job._id,
+                                            label: `${job.title} at ${job.company}`
+                                        }))
+                                    ]}
+                                />
+                                {formData.jobId && (
+                                    <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <div className="w-2 h-2 bg-success rounded-full"></div>
+                                            <span className="text-success font-medium">Linked to Job</span>
+                                        </div>
+                                        {(() => {
+                                            const selectedJob = jobs.find((job: any) => job._id === formData.jobId);
+                                            return selectedJob ? (
+                                                <div className="mt-2 text-xs text-text-muted">
+                                                    <div>Title: {selectedJob.title}</div>
+                                                    <div>Company: {selectedJob.company}</div>
+                                                    <div>Location: {selectedJob.location || 'Not specified'}</div>
+                                                </div>
+                                            ) : null;
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <FormInput
@@ -302,7 +345,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             <input
                                 type="color"
                                 value={formData.color}
-                                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, color: e.target.value })}
                                 className="w-16 h-10 rounded border border-border bg-bg-light"
                             />
                         </div>
@@ -315,7 +358,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 type="checkbox"
                                 id="isRecurring"
                                 checked={formData.isRecurring}
-                                onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, isRecurring: e.target.checked })}
                                 className="w-4 h-4 text-primary"
                             />
                             <label htmlFor="isRecurring" className="text-sm font-medium text-white flex items-center gap-2">

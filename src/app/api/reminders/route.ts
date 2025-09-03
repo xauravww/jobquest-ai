@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Reminder } from '@/models/Reminder';
+import { Job } from '@/models/Job';
+import { Application } from '@/models/Application';
 import { getServerSession } from 'next-auth';
 
 // GET - Fetch reminders with filtering and pagination
@@ -118,7 +120,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    
+
     const body = await request.json();
     const {
       title,
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
       recurrenceInterval,
       recurrenceEndDate
     } = body;
-    
+
     // Validation
     if (!title || !dueDate || !type) {
       return NextResponse.json(
@@ -145,10 +147,31 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // TODO: Get userId from session
     const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
-    
+
+    // Validate application and job associations
+    if (applicationId) {
+      const application = await Application.findOne({ _id: applicationId, userId });
+      if (!application) {
+        return NextResponse.json(
+          { error: 'Invalid application ID or access denied' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (jobId) {
+      const job = await Job.findOne({ _id: jobId, userId });
+      if (!job) {
+        return NextResponse.json(
+          { error: 'Invalid job ID or access denied' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create reminder
     const reminder = new Reminder({
       userId,
@@ -168,18 +191,18 @@ export async function POST(request: NextRequest) {
       recurrenceInterval,
       recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate) : null
     });
-    
+
     await reminder.save();
-    
+
     // Populate references for response
     await reminder.populate('applicationId', 'status jobId');
     await reminder.populate('jobId', 'title company');
-    
+
     return NextResponse.json({
       success: true,
       reminder
     }, { status: 201 });
-    
+
   } catch (error) {
     console.error('Error creating reminder:', error);
     return NextResponse.json(
