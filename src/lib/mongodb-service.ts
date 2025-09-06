@@ -320,6 +320,124 @@ export class MongoDBService {
     }
   }
 
+  async getApplicationsWithFilters(userId: string, filters: any = {}) {
+    try {
+      await connectDB();
+      
+      const query: any = { userId };
+      
+      // Status filter
+      if (filters.status) {
+        query.status = this.normalizeStatus(filters.status);
+      }
+      
+      // Priority filter
+      if (filters.priority) {
+        query.priority = filters.priority;
+      }
+      
+      // Platform filter
+      if (filters.platform) {
+        query.platform = filters.platform;
+      }
+      
+      // Date range filter
+      if (filters.dateFrom || filters.dateTo) {
+        query.appliedDate = {};
+        if (filters.dateFrom) {
+          query.appliedDate.$gte = new Date(filters.dateFrom);
+        }
+        if (filters.dateTo) {
+          query.appliedDate.$lte = new Date(filters.dateTo);
+        }
+      }
+      
+      let applications = await Application.find(query)
+        .populate('jobId')
+        .sort({ appliedDate: -1 });
+      
+      // Text search filter (applied after population)
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        applications = applications.filter(app => {
+          const job = app.jobId as any;
+          return (
+            job?.title?.toLowerCase().includes(searchTerm) ||
+            job?.company?.toLowerCase().includes(searchTerm) ||
+            job?.location?.toLowerCase().includes(searchTerm) ||
+            job?.description?.toLowerCase().includes(searchTerm) ||
+            app.notes?.toLowerCase().includes(searchTerm)
+          );
+        });
+      }
+
+      return applications;
+      
+    } catch (error) {
+      console.error('Error getting applications with filters:', error);
+      return [];
+    }
+  }
+
+  async getApplicationById(applicationId: string, userId?: string) {
+    try {
+      await connectDB();
+      
+      const query: any = { _id: applicationId };
+      if (userId) {
+        query.userId = userId;
+      }
+      
+      const application = await Application.findOne(query).populate('jobId');
+      return application;
+      
+    } catch (error) {
+      console.error('Error getting application by ID:', error);
+      return null;
+    }
+  }
+
+  async updateApplication(applicationId: string, userId: string, updateData: unknown) {
+    try {
+      await connectDB();
+      
+      // Normalize status if provided
+      if (updateData.status) {
+        updateData.status = this.normalizeStatus(updateData.status);
+        updateData.lastStatusUpdate = new Date();
+      }
+      
+      const application = await Application.findOneAndUpdate(
+        { _id: applicationId, userId },
+        { $set: updateData },
+        { new: true }
+      ).populate('jobId');
+      
+      return application;
+      
+    } catch (error) {
+      console.error('Error updating application:', error);
+      return null;
+    }
+  }
+
+  async deleteApplication(applicationId: string, userId: string) {
+    try {
+      await connectDB();
+      
+      const result = await Application.findOneAndDelete({
+        _id: applicationId,
+        userId
+      });
+      
+      return result !== null;
+      
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      return false;
+    }
+  }
+
   async getApplicationStats() {
     try {
       await connectDB();

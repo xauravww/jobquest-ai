@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Card, Modal, Select, message, Tag, Table, Popconfirm } from 'antd';
+import { Modal, Select, message, Tag, Table, Popconfirm, Input, DatePicker, Button } from 'antd';
 import {
-  Briefcase, Plus, Bell, Eye, Trash2, Calendar, Clock
+  Briefcase, Plus, Search, RefreshCw, Edit
 } from 'lucide-react';
+import { RiDeleteBin6Line } from 'react-icons/ri';
 import dayjs from 'dayjs';
-import CreateReminderModal from '@/components/modals/CreateReminderModal';
 import CreateEventModal from '@/components/modals/CreateEventModal';
+
+const { Search: AntSearch } = Input;
+const { RangePicker } = DatePicker;
 
 // I've defined these mock interfaces for a clear example,
 // you would use your actual interfaces.
@@ -26,81 +29,190 @@ interface Job {
   notes?: string;
 }
 
-interface Reminder {
+interface PopulatedJob {
   _id: string;
   title: string;
-  dueDate: string;
-  type: string;
-  priority: string;
+  company: string;
+  location: string;
+  description: string;
+  datePosted: string;
+}
+
+interface ApiApplication {
+  _id: string;
+  jobId?: string | PopulatedJob;
+  jobTitle?: string;
+  title?: string;
+  company?: string;
+  location?: string;
+  status?: string;
+  createdAt?: string;
+  appliedDate?: string;
+  datePosted?: string;
+  description?: string;
+  priority?: string;
+  platform?: string;
+  notes?: string;
 }
 
 const ApplicationTrackingPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [reminderModalVisible, setReminderModalVisible] = useState(false);
   const [eventModalVisible, setEventModalVisible] = useState(false);
+  
+  // Filter states
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('');
+  const [platformFilter, setPlatformFilter] = useState<string>('');
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
 
   // Fetch jobs from API
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await fetch('/api/applications');
-        if (!response.ok) {
-          throw new Error('Failed to fetch applications');
-        }
-        const applications = await response.json();
+  const fetchJobs = useCallback(async () => {
+    try {
+      const response = await fetch('/api/applications');
+      if (!response.ok) {
+        throw new Error('Failed to fetch applications');
+      }
+      const applications = await response.json();
 
-        // Transform API response to match the Job interface
-        const transformedJobs: Job[] = applications.map((app: any) => ({
+      // Transform API response to match the Job interface
+      const transformedJobs: Job[] = applications.map((app: ApiApplication) => {
+        const jobData = typeof app.jobId === 'object' ? app.jobId : {};
+        return {
           _id: app._id,
-          jobId: app.jobId || app._id,
-          title: app.jobTitle || app.title || 'Unknown Title',
-          company: app.company || 'Unknown Company',
-          location: app.location || 'Unknown Location',
+          jobId: typeof app.jobId === 'object' ? app.jobId?._id || app._id : app.jobId || app._id,
+          title: (jobData as PopulatedJob)?.title || app.jobTitle || app.title || 'Unknown Title',
+          company: (jobData as PopulatedJob)?.company || app.company || 'Unknown Company',
+          location: (jobData as PopulatedJob)?.location || app.location || 'Unknown Location',
           status: app.status || 'submitted',
-          datePosted: app.createdAt || app.datePosted || new Date().toISOString(),
-          description: app.description || '',
+          datePosted: app.appliedDate || (jobData as PopulatedJob)?.datePosted || app.createdAt || app.datePosted || new Date().toISOString(),
+          description: (jobData as PopulatedJob)?.description || app.description || '',
           priority: app.priority || 'medium',
           platform: app.platform || 'other',
           notes: app.notes || ''
-        }));
+        };
+      });
 
-        setJobs(transformedJobs);
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-        message.error('Failed to load applications');
-        setJobs([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+      setJobs(transformedJobs);
+      setFilteredJobs(transformedJobs);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      message.error('Failed to load applications');
+      setJobs([]);
+      setFilteredJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchJobs();
 
     // Mock API call to get reminders (keeping as is since task only mentioned jobs)
-    const mockReminders: Reminder[] = [
-      { _id: 'r1', title: 'Follow-up with recruiter at Data Solutions Co.', dueDate: dayjs().add(1, 'day').toISOString(), type: 'follow-up', priority: 'high' },
-      { _id: 'r2', title: 'Prepare for interview with Tech Innovators', dueDate: dayjs().add(3, 'day').toISOString(), type: 'interview', priority: 'high' },
-    ];
+    // const mockReminders: Reminder[] = [
+    //   { _id: 'r1', title: 'Follow-up with recruiter at Data Solutions Co.', dueDate: dayjs().add(1, 'day').toISOString(), type: 'follow-up', priority: 'high' },
+    //   { _id: 'r2', title: 'Prepare for interview with Tech Innovators', dueDate: dayjs().add(3, 'day').toISOString(), type: 'interview', priority: 'high' },
+    // ];
 
-    setReminders(mockReminders);
+    // setReminders(mockReminders);
   }, []);
 
-  const handleStatusUpdate = async (jobId: string, newStatus: string) => {
-    // Implement your API call here
-    console.log(`Updating job ${jobId} to status ${newStatus}`);
-    // On success:
-    // message.success('Status updated successfully');
-  };
+  // Filter jobs based on search and filter criteria
+  useEffect(() => {
+    let filtered = [...jobs];
 
-  const handleDelete = async (jobId: string) => {
-    // Implement your API call here
-    console.log(`Deleting job ${jobId}`);
-    // On success:
-    // message.success('Job deleted successfully');
+    // Text search
+    if (searchText) {
+      filtered = filtered.filter(job => 
+        job.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        job.company.toLowerCase().includes(searchText.toLowerCase()) ||
+        job.location.toLowerCase().includes(searchText.toLowerCase()) ||
+        job.description.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter) {
+      filtered = filtered.filter(job => job.status === statusFilter);
+    }
+
+    // Priority filter
+    if (priorityFilter) {
+      filtered = filtered.filter(job => job.priority === priorityFilter);
+    }
+
+    // Platform filter
+    if (platformFilter) {
+      filtered = filtered.filter(job => job.platform === platformFilter);
+    }
+
+    // Date range filter
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      filtered = filtered.filter(job => {
+        const jobDate = dayjs(job.datePosted);
+        return jobDate.isAfter(dateRange[0]) && jobDate.isBefore(dateRange[1]);
+      });
+    }
+
+    setFilteredJobs(filtered);
+  }, [jobs, searchText, statusFilter, priorityFilter, platformFilter, dateRange]);
+
+  const handleStatusUpdate = useCallback(async (jobId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/applications/${jobId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      // Update local state
+      const updatedJobs = jobs.map(job => 
+        job._id === jobId ? { ...job, status: newStatus } : job
+      );
+      setJobs(updatedJobs);
+      message.success('Status updated successfully');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      message.error('Failed to update status');
+    }
+  }, [jobs]);
+
+  const handleDelete = useCallback(async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/applications/${jobId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete application');
+      }
+
+      // Update local state
+      const updatedJobs = jobs.filter(job => job._id !== jobId);
+      setJobs(updatedJobs);
+      message.success('Application deleted successfully');
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      message.error('Failed to delete application');
+    }
+  }, [jobs]);
+
+  const clearFilters = () => {
+    setSearchText('');
+    setStatusFilter('');
+    setPriorityFilter('');
+    setPlatformFilter('');
+    setDateRange(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -150,8 +262,22 @@ const ApplicationTrackingPage = () => {
           {status}
         </Tag>
       ),
-    filters: [...new Set(jobs.map(j => j.status))].map(status => ({ text: status, value: status })),
-    onFilter: (value: boolean | React.Key, record: Job) => record.status === value,
+    },
+    {
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      sorter: (a: Job, b: Job) => a.location.localeCompare(b.location),
+    },
+    {
+      title: 'Platform',
+      dataIndex: 'platform',
+      key: 'platform',
+      render: (platform: string) => (
+        <Tag color="blue" className="uppercase text-xs tracking-wider">
+          {platform}
+        </Tag>
+      ),
     },
     {
       title: 'Priority',
@@ -162,8 +288,6 @@ const ApplicationTrackingPage = () => {
           {priority}
         </Tag>
       ),
-    filters: [...new Set(jobs.map(j => j.priority))].map(p => ({ text: p, value: p })),
-    onFilter: (value: boolean | React.Key, record: Job) => record.priority === value,
     },
     {
       title: 'Date Posted',
@@ -175,7 +299,7 @@ const ApplicationTrackingPage = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: Job) => (
+      render: (_: unknown, record: Job) => (
         <div className="flex items-center gap-2">
           <Select
             value={record.status}
@@ -197,17 +321,17 @@ const ApplicationTrackingPage = () => {
             className="text-white"
           >
             <button
-              className="flex items-center justify-center w-8 h-8 bg-danger/20 hover:bg-danger/30 text-danger rounded-lg transition-all duration-200"
-              title="Delete Job"
+              className="flex items-center justify-center w-9 h-9 bg-red-500/20 hover:bg-red-500/30 text-red-500 hover:text-red-400 rounded-lg transition-all duration-200 hover:scale-105"
+              title="Delete Application"
               aria-label="Delete job application"
             >
-              <Trash2 className="w-4 h-4" />
+              <RiDeleteBin6Line className="w-5 h-5" />
             </button>
           </Popconfirm>
         </div>
       ),
     },
-  ], [jobs]);
+  ], [handleDelete, handleStatusUpdate]);
 
   return (
     <AppLayout showFooter={false}>
@@ -228,41 +352,6 @@ const ApplicationTrackingPage = () => {
             </button>
           </div>
 
-          {/* Upcoming Reminders Section */}
-          <div>
-            <h2 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
-              <Bell className="w-6 h-6 text-primary" />
-              Upcoming Reminders
-            </h2>
-            <div className="space-y-4">
-              {reminders.length > 0 ? (
-                reminders.map((reminder) => (
-                  <Card key={reminder._id} className="bg-bg-card border-l-4 border-primary/50 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-medium text-white mb-1">{reminder.title}</h3>
-                        <div className="flex items-center gap-2 text-text-muted text-sm">
-                          <Calendar className="w-4 h-4" />
-                          <span>Due: {dayjs(reminder.dueDate).format('MMM DD, YYYY')}</span>
-                          <span className="bg-bg-light px-2 py-0.5 rounded-full text-xs capitalize">{reminder.type}</span>
-                        </div>
-                      </div>
-                      <Tag color={getPriorityTagColor(reminder.priority)} className="uppercase text-xs tracking-wider">
-                        {reminder.priority} Priority
-                      </Tag>
-                    </div>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-8 bg-bg-card rounded-lg border border-border">
-                  <div className="w-16 h-16 bg-bg-light rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bell className="w-8 h-8 text-text-muted" />
-                  </div>
-                  <p className="text-text-muted">No upcoming reminders.</p>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Jobs List - Main Content */}
           <div>
@@ -270,15 +359,170 @@ const ApplicationTrackingPage = () => {
               <Briefcase className="w-6 h-6 text-primary" />
               Job Applications
             </h2>
-            <Table
-              loading={loading}
-              dataSource={jobs}
-              rowKey="_id"
-              pagination={{ pageSize: 10, position: ['bottomCenter'] }}
-              scroll={{ x: 'max-content' }}
-              className="custom-dark-table" // Custom class for styling
-              columns={jobColumns}
-            />
+
+            {/* Filters and Search */}
+            <div className="mb-6 p-6 filter-panel rounded-xl">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="p-3 bg-gradient-to-r from-primary to-primary/80 rounded-lg">
+                  <Search className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-white">Search & Filters</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-white mb-3">Search</label>
+                <AntSearch
+                  placeholder="Search jobs, companies, locations..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full"
+                  allowClear
+                  size="large"
+                  enterButton={<Search className="w-5 h-5 text-white bg-primary rounded-r-lg p-1" />}
+                />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-white mb-3">Status</label>
+                  <Select
+                    placeholder="All Statuses"
+                    value={statusFilter || undefined}
+                    onChange={setStatusFilter}
+                    className="w-full"
+                    allowClear
+                    size="large"
+                  >
+                    <Select.Option value="saved">Saved</Select.Option>
+                    <Select.Option value="applied">Applied</Select.Option>
+                    <Select.Option value="interviewing">Interviewing</Select.Option>
+                    <Select.Option value="offered">Offered</Select.Option>
+                    <Select.Option value="rejected">Rejected</Select.Option>
+                    <Select.Option value="submitted">Submitted</Select.Option>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-white mb-3">Priority</label>
+                  <Select
+                    placeholder="All Priorities"
+                    value={priorityFilter || undefined}
+                    onChange={setPriorityFilter}
+                    className="w-full"
+                    allowClear
+                    size="large"
+                  >
+                    <Select.Option value="high">High</Select.Option>
+                    <Select.Option value="medium">Medium</Select.Option>
+                    <Select.Option value="low">Low</Select.Option>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-white mb-3">Platform</label>
+                  <Select
+                    placeholder="All Platforms"
+                    value={platformFilter || undefined}
+                    onChange={setPlatformFilter}
+                    className="w-full"
+                    allowClear
+                    size="large"
+                  >
+                    <Select.Option value="linkedin">LinkedIn</Select.Option>
+                    <Select.Option value="indeed">Indeed</Select.Option>
+                    <Select.Option value="glassdoor">Glassdoor</Select.Option>
+                    <Select.Option value="company-website">Company Website</Select.Option>
+                    <Select.Option value="referral">Referral</Select.Option>
+                    <Select.Option value="other">Other</Select.Option>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                <div className="flex-1 space-y-2">
+                  <label className="block text-sm font-semibold text-white mb-3">Date Range</label>
+                  <RangePicker
+                    value={dateRange}
+                    onChange={setDateRange}
+                    className="w-full max-w-sm"
+                    format="MMM DD, YYYY"
+                    size="large"
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button
+                    onClick={clearFilters}
+                    icon={<RefreshCw className="w-4 h-4" />}
+                    className="flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 border-0 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
+                    size="large"
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-white font-medium">
+                    Showing {filteredJobs.length} of {jobs.length} applications
+                  </span>
+                  {(searchText || statusFilter || priorityFilter || platformFilter || dateRange) && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      <span className="text-primary font-medium">Filters applied</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+          <Table
+            loading={loading}
+            dataSource={filteredJobs}
+            rowKey="_id"
+            pagination={{ 
+              pageSize: 10, 
+              position: ['bottomCenter'],
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} applications`,
+              pageSizeOptions: ['5', '10', '20', '50'],
+              size: 'default'
+            }}
+            scroll={{ x: 'max-content' }}
+            className="custom-dark-table"
+            columns={[
+              ...jobColumns.slice(0, -1),
+              {
+                title: 'Actions',
+                key: 'actions',
+                render: (_: unknown, record: Job) => (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedJob(record);
+                        setDetailModalVisible(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
+                      title="Edit"
+                    >
+                      <Edit className="w-5 h-5" />
+                      <span className="sr-only">Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(record._id)}
+                      className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105"
+                      title="Delete"
+                    >
+                      <RiDeleteBin6Line className="w-5 h-5" />
+                      <span className="sr-only">Delete</span>
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
           </div>
 
           {/* Detail Modal */}
@@ -292,32 +536,222 @@ const ApplicationTrackingPage = () => {
               className="custom-dark-modal" // Custom class for styling
             >
               <div className="space-y-6 text-text">
-                {/* ... (Existing modal content) */}
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    {/* Removed Related Job dropdown as per user feedback */}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Job Title</label>
+                    <Input
+                      value={selectedJob?.title || ''}
+                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, title: e.target.value } : null)}
+                      placeholder="Job Title"
+                      size="large"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Company</label>
+                    <Input
+                      value={selectedJob?.company || ''}
+                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, company: e.target.value } : null)}
+                      placeholder="Company"
+                      size="large"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Location</label>
+                    <Input
+                      value={selectedJob?.location || ''}
+                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, location: e.target.value } : null)}
+                      placeholder="Location"
+                      size="large"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Status</label>
+                    <Select
+                      value={selectedJob?.status || ''}
+                      onChange={(value) => setSelectedJob(prev => prev ? { ...prev, status: value } : null)}
+                      size="large"
+                      className="w-full"
+                    >
+                      <Select.Option value="saved">Saved</Select.Option>
+                      <Select.Option value="applied">Applied</Select.Option>
+                      <Select.Option value="interviewing">Interviewing</Select.Option>
+                      <Select.Option value="offered">Offered</Select.Option>
+                      <Select.Option value="rejected">Rejected</Select.Option>
+                      <Select.Option value="submitted">Submitted</Select.Option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Priority</label>
+                    <Select
+                      value={selectedJob?.priority || ''}
+                      onChange={(value) => setSelectedJob(prev => prev ? { ...prev, priority: value } : null)}
+                      size="large"
+                      className="w-full"
+                    >
+                      <Select.Option value="high">High</Select.Option>
+                      <Select.Option value="medium">Medium</Select.Option>
+                      <Select.Option value="low">Low</Select.Option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Platform</label>
+                    <Select
+                      value={selectedJob?.platform || ''}
+                      onChange={(value) => setSelectedJob(prev => prev ? { ...prev, platform: value } : null)}
+                      size="large"
+                      className="w-full"
+                    >
+                      <Select.Option value="linkedin">LinkedIn</Select.Option>
+                      <Select.Option value="indeed">Indeed</Select.Option>
+                      <Select.Option value="glassdoor">Glassdoor</Select.Option>
+                      <Select.Option value="company-website">Company Website</Select.Option>
+                      <Select.Option value="referral">Referral</Select.Option>
+                      <Select.Option value="other">Other</Select.Option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Date Posted</label>
+                    <DatePicker
+                      value={selectedJob ? dayjs(selectedJob.datePosted) : null}
+                      onChange={(date) => setSelectedJob(prev => prev && date ? { ...prev, datePosted: date.toISOString() } : prev)}
+                      size="large"
+                      className="w-full"
+                      format="MMM DD, YYYY"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Description</label>
+                    <Input.TextArea
+                      value={selectedJob?.description || ''}
+                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, description: e.target.value } : null)}
+                      placeholder="Description"
+                      rows={4}
+                      size="large"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-white mb-1">Notes</label>
+                    <Input.TextArea
+                      value={selectedJob?.notes || ''}
+                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, notes: e.target.value } : null)}
+                      placeholder="Notes"
+                      rows={3}
+                      size="large"
+                    />
+                  </div>
+                </div>
                 <div className="flex justify-end gap-4">
-                  <button
-                    onClick={() => setDetailModalVisible(false)}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
+                  <Button
+                    type="primary"
+                      onClick={async () => {
+                        if (!selectedJob) return;
+                        try {
+                          console.log('Saving job:', selectedJob);
+                          // Sanitize payload to exclude nested objects like jobId
+                          const {
+                            _id,
+                            jobId,
+                            title,
+                            company,
+                            location,
+                            status,
+                            datePosted,
+                            description,
+                            priority,
+                            platform,
+                            notes
+                          } = selectedJob;
+                          const payload = {
+                            _id,
+                            title,
+                            company,
+                            location,
+                            status,
+                            datePosted: datePosted ? new Date(datePosted).toISOString() : null,
+                            description,
+                            priority,
+                            platform,
+                            notes
+                          };
+                          console.log('Payload sent:', payload);
+                          const response = await fetch(`/api/applications/${_id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                          });
+                          if (!response.ok) throw new Error('Failed to update application');
+                          const updatedJob = await response.json();
+
+                          // Transform updatedJob to match Job interface
+                          const jobData = typeof updatedJob.jobId === 'object' ? updatedJob.jobId : {};
+                          const transformedUpdatedJob: Job = {
+                            _id: updatedJob._id,
+                            jobId: typeof updatedJob.jobId === 'object' ? updatedJob.jobId?._id || updatedJob._id : updatedJob.jobId || updatedJob._id,
+                            title: (jobData as PopulatedJob)?.title || updatedJob.jobTitle || updatedJob.title || 'Unknown Title',
+                            company: (jobData as PopulatedJob)?.company || updatedJob.company || 'Unknown Company',
+                            location: (jobData as PopulatedJob)?.location || updatedJob.location || 'Unknown Location',
+                            status: updatedJob.status || 'submitted',
+                            datePosted: updatedJob.appliedDate || (jobData as PopulatedJob)?.datePosted || updatedJob.createdAt || updatedJob.datePosted || new Date().toISOString(),
+                            description: (jobData as PopulatedJob)?.description || updatedJob.description || '',
+                            priority: updatedJob.priority || 'medium',
+                            platform: updatedJob.platform || 'other',
+                            notes: updatedJob.notes || ''
+                          };
+
+                          setJobs(prev => prev.map(job => job._id === transformedUpdatedJob._id ? transformedUpdatedJob : job));
+                          setFilteredJobs(prev => prev.map(job => job._id === transformedUpdatedJob._id ? transformedUpdatedJob : job));
+                          setSelectedJob(transformedUpdatedJob);
+                          message.success('Application updated successfully');
+                          setDetailModalVisible(false);
+                        } catch (error) {
+                          console.error(error);
+                          message.error('Failed to update application');
+                        }
+                      }}
                   >
-                    Close
-                  </button>
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => setDetailModalVisible(false)}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
             </Modal>
           )}
 
           {/* Reminder & Event Modals */}
-          <CreateReminderModal
-            isOpen={reminderModalVisible}
-            onClose={() => setReminderModalVisible(false)}
-            onSuccess={() => { /* ... */ }}
-            editingReminder={null}
-          />
-          <CreateEventModal
-            isOpen={eventModalVisible}
-            onClose={() => setEventModalVisible(false)}
-            onSuccess={() => { /* ... */ }}
-            editingEvent={null}
-          />
+          {/* Reminder Modal */}
+          <Modal
+            open={false} // Control visibility as needed
+            onCancel={() => {}}
+            footer={null}
+            width={600}
+            className="custom-dark-modal"
+            bodyStyle={{ backgroundColor: '#000000' }}
+          >
+            {/* Import and render reminders page or component here */}
+            {/* For example, you can import RemindersPage and render it */}
+            {/* <RemindersPage /> */}
+          </Modal>
+
+          {/* Event Modal */}
+          <Modal
+            open={eventModalVisible}
+            onCancel={() => setEventModalVisible(false)}
+            footer={null}
+            width={800}
+            className="custom-dark-modal"
+            bodyStyle={{ backgroundColor: '#000000' }}
+          >
+            {/* Import and render events page or component here */}
+            {/* For example, you can import EventsPage and render it */}
+            {/* <EventsPage /> */}
+          </Modal>
         </div>
       </div>
     </AppLayout>

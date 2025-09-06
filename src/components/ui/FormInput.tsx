@@ -54,8 +54,13 @@ export const FormInput: React.FC<FormInputProps> = ({
   error, 
   className = '',
   required = false,
+  onChange,
   ...props 
 }) => {
+  const handleChange = (value: string) => {
+    onChange?.(value);
+  };
+
   return (
     <div className={`w-full ${className}`}>
       {label && (
@@ -72,12 +77,7 @@ export const FormInput: React.FC<FormInputProps> = ({
           borderColor: error ? '#ef4444' : 'var(--border)',
           color: 'var(--text)',
         }}
-        styles={{
-          input: {
-            backgroundColor: 'var(--bg-card)',
-            color: 'var(--text)',
-          }
-        }}
+        onChange={(e) => handleChange(e.target.value)}
       />
       {error && (
         <span className="text-red-500 text-xs mt-1">{error}</span>

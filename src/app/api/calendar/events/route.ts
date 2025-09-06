@@ -5,7 +5,6 @@ import { Job } from '@/models/Job';
 import { Application } from '@/models/Application';
 import { Reminder } from '@/models/Reminder';
 
-// GET - Fetch calendar events
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -18,6 +17,8 @@ export async function GET(request: NextRequest) {
     const applicationId = searchParams.get('applicationId');
     const jobId = searchParams.get('jobId');
     const view = searchParams.get('view') || 'month'; // month, week, day
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
     
     // TODO: Get userId from session
     const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
@@ -54,12 +55,17 @@ export async function GET(request: NextRequest) {
       }
     }
     
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    
     // Fetch events
     const events = await CalendarEvent.find(query)
       .populate('applicationId', 'status jobId')
       .populate('jobId', 'title company')
       .populate('reminderId', 'title type')
-      .sort({ startDate: 1 });
+      .sort({ startDate: 1 })
+      .skip(skip)
+      .limit(limit);
     
     // Get upcoming events (next 7 days)
     const upcomingQuery = {
@@ -103,7 +109,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       events,
       upcomingEvents,
-      stats: statusStats
+      stats: statusStats,
+      pagination: {
+        page,
+        limit,
+        total: await CalendarEvent.countDocuments(query),
+        pages: Math.ceil(await CalendarEvent.countDocuments(query) / limit)
+      }
     });
     
   } catch (error) {

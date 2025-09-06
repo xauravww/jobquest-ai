@@ -115,7 +115,8 @@ const JobSchema = new mongoose.Schema({
 JobSchema.index({ userId: 1, status: 1 });
 JobSchema.index({ userId: 1, datePosted: -1 });
 JobSchema.index({ userId: 1, aiScore: -1 });
-JobSchema.index({ jobId: 1 }, { unique: true });
+// Removed duplicate index on jobId to fix warning
+// JobSchema.index({ jobId: 1 }, { unique: true });
 
 export const Job = mongoose.models.Job || mongoose.model('Job', JobSchema);
 export default Job;

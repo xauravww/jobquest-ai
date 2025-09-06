@@ -160,7 +160,8 @@ const ApplicationSchema = new mongoose.Schema({
 ApplicationSchema.index({ userId: 1, status: 1 });
 ApplicationSchema.index({ userId: 1, appliedDate: -1 });
 ApplicationSchema.index({ userId: 1, priority: 1 });
-ApplicationSchema.index({ applicationId: 1 }, { unique: true });
+// Removed duplicate index on applicationId to fix warning
+// ApplicationSchema.index({ applicationId: 1 }, { unique: true });
 
 export const Application = mongoose.models.Application || mongoose.model('Application', ApplicationSchema);
 export default Application;

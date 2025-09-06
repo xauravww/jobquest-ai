@@ -263,73 +263,44 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             Associations
                         </h3>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <FormSelect
-                                    label="Related Application"
-                                    value={formData.applicationId}
-                                    onChange={(value) => setFormData({ ...formData, applicationId: value })}
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                            <FormSelect
+                                label="Related Job"
+                                value={formData.jobId}
+                                onChange={(value) => setFormData({ ...formData, jobId: value })}
                                 options={[
                                     { value: '', label: 'None' },
-                                    ...applications.map((app: any) => ({
-                                        value: app._id,
-                                        label: `${app.jobId?.title || 'Unknown Job'} - ${app.status}`
+                                    ...jobs.map((job: any) => ({
+                                        value: job._id,
+                                        label: `${job.title} at ${job.company}`
                                     }))
                                 ]}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                }
                             />
-                            {formData.applicationId && (
-                                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                            {formData.jobId && (
+                                <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
                                     <div className="flex items-center gap-2 text-sm">
-                                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                                        <span className="text-primary font-medium">Linked to Application</span>
+                                        <div className="w-2 h-2 bg-success rounded-full"></div>
+                                        <span className="text-success font-medium">Linked to Job</span>
                                     </div>
                                     {(() => {
-                                        const selectedApp = applications.find((app: any) => app._id === formData.applicationId);
-                                        return selectedApp ? (
+                                        const selectedJob = jobs.find((job: any) => job._id === formData.jobId);
+                                        return selectedJob ? (
                                             <div className="mt-2 text-xs text-text-muted">
-                                                <div>Job: {selectedApp.jobId?.title || 'Unknown'}</div>
-                                                <div>Company: {selectedApp.jobId?.company || 'Unknown'}</div>
-                                                <div>Status: {selectedApp.status}</div>
+                                                <div>Title: {selectedJob.title}</div>
+                                                <div>Company: {selectedJob.company}</div>
+                                                <div>Location: {selectedJob.location || 'Not specified'}</div>
                                             </div>
                                         ) : null;
                                     })()}
                                 </div>
                             )}
                         </div>
-
-                            <div className="space-y-2">
-                                <FormSelect
-                                    label="Related Job"
-                                    value={formData.jobId}
-                                    onChange={(value) => setFormData({ ...formData, jobId: value })}
-                                    options={[
-                                        { value: '', label: 'None' },
-                                        ...jobs.map((job: any) => ({
-                                            value: job._id,
-                                            label: `${job.title} at ${job.company}`
-                                        }))
-                                    ]}
-                                />
-                                {formData.jobId && (
-                                    <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <div className="w-2 h-2 bg-success rounded-full"></div>
-                                            <span className="text-success font-medium">Linked to Job</span>
-                                        </div>
-                                        {(() => {
-                                            const selectedJob = jobs.find((job: any) => job._id === formData.jobId);
-                                            return selectedJob ? (
-                                                <div className="mt-2 text-xs text-text-muted">
-                                                    <div>Title: {selectedJob.title}</div>
-                                                    <div>Company: {selectedJob.company}</div>
-                                                    <div>Location: {selectedJob.location || 'Not specified'}</div>
-                                                </div>
-                                            ) : null;
-                                        })()}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                    </div>
 
                         <FormInput
                             label="Tags"

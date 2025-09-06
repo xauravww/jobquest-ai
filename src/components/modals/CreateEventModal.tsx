@@ -575,6 +575,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             <h3 className="text-lg font-medium text-white">Associations</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Related Application */}
               <FormSelect
                 label="Related Application"
                 value={formData.applicationId}
@@ -586,8 +587,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     label: `${app.jobId?.title || 'Unknown Job'} - ${app.status}`
                   }))
                 ]}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
               />
 
+              {/* Related Job */}
               <FormSelect
                 label="Related Job"
                 value={formData.jobId}
@@ -599,8 +605,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     label: `${job.title} at ${job.company}`
                   }))
                 ]}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
               />
 
+              {/* Related Reminder */}
               <FormSelect
                 label="Related Reminder"
                 value={formData.reminderId}
@@ -612,6 +623,10 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     label: reminder.title
                   }))
                 ]}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
               />
             </div>
 
