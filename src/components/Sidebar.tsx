@@ -41,10 +41,10 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, disabled = false
   const isDashboard = href === '/dashboard';
   const isActive = ((isDashboard ? pathname === href : (pathname.startsWith(href) && href !== '/')) && !disabled);
   
-  const linkClasses = `nav-item flex items-center transition-all duration-300 ease-in-out ${
+  const linkClasses = `nav-item flex gap-2 items-center transition-all duration-300 ease-in-out ${
     isActive ? 'nav-item-active' : ''
   } ${
-    isCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-4 py-3'
+    isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-3'
   } ${
     disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer group'
   }`;
@@ -68,7 +68,11 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, disabled = false
           color: isActive ? '#ffffff' : 'var(--text-muted)',
           fontSize: '18px',
           zIndex: 4,
-          position: 'relative'
+          position: 'relative',
+          minWidth: '24px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
         }}
       >
         {icon}
@@ -82,7 +86,9 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, disabled = false
             letterSpacing: isActive ? '0.025em' : '0',
             zIndex: 4,
             position: 'relative',
-            fontWeight: isActive ? '700' : '500'
+            fontWeight: isActive ? '700' : '500',
+            margin: 0,
+            flexGrow: 1
           }}
         >
           {children}
@@ -507,7 +513,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
         <Toaster position="top-right" />
         
         <div
-          className={`logo-container flex flex-col items-center justify-center mb-4 w-full rounded-lg transition-all duration-300 ${
+          className={`logo-container flex mt-2 flex-col items-center justify-center mb-4 w-full rounded-lg transition-all duration-300 ${
             isCollapsed ? 'p-2' : 'p-4'
           }`}
           style={{
@@ -530,7 +536,6 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
                 </div>
               </div>
               <div className="text-center w-full">
-                <h2 className="text-lg font-bold text-white mb-2">Jobquest AI</h2>
                 <div className="flex items-center justify-center w-full px-2">
                   <div
                     className="role-badge inline-flex items-center gap-2 px-3 py-2 rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-105 mx-auto text-sm"
@@ -569,9 +574,10 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
               <div className="mt-1 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
             </div>
           )}
-          <NavLink href="/job-search" icon={<Search />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+          {/* <NavLink href="/job-search" icon={<Search />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             Job Search
-          </NavLink>
+          </NavLink> */}
+          {/* commented out this feature as we dont need it now */}
           <NavLink href="/ai-filtering" icon={<Brain />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             AI Filtering
           </NavLink>

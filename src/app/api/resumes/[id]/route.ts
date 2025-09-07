@@ -8,7 +8,7 @@ import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,7 @@ export async function GET(
     }
 
     await dbConnect();
-    
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -25,10 +25,12 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const resume = await Resume.findOne({ 
-      _id: params.id, 
+    const { id } = await params;
+
+    const resume = await Resume.findOne({
+      _id: id,
       userId: user._id,
-      isActive: true 
+      isActive: true
     });
 
     if (!resume) {
@@ -47,7 +49,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -56,9 +58,9 @@ export async function PUT(
     }
 
     const body = await request.json();
-    
+
     await dbConnect();
-    
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -66,8 +68,10 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const { id } = await params;
+
     const resume = await Resume.findOneAndUpdate(
-      { _id: params.id, userId: user._id },
+      { _id: id, userId: user._id },
       { ...body, updatedAt: new Date() },
       { new: true }
     );
@@ -88,7 +92,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,7 +101,7 @@ export async function DELETE(
     }
 
     await dbConnect();
-    
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -105,9 +109,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const resume = await Resume.findOne({ 
-      _id: params.id, 
-      userId: user._id 
+    const { id } = await params;
+
+    const resume = await Resume.findOne({
+      _id: id,
+      userId: user._id
     });
 
     if (!resume) {
@@ -124,7 +130,7 @@ export async function DELETE(
     }
 
     // Soft delete - mark as inactive
-    await Resume.findByIdAndUpdate(params.id, { 
+    await Resume.findByIdAndUpdate(id, {
       isActive: false,
       updatedAt: new Date()
     });
@@ -134,7 +140,7 @@ export async function DELETE(
       const nextResume = await Resume.findOne({
         userId: user._id,
         isActive: true,
-        _id: { $ne: params.id }
+        _id: { $ne: id }
       }).sort({ updatedAt: -1 });
 
       if (nextResume) {

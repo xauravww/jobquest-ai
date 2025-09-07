@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Modal, Select, message, Tag, Table, Popconfirm, Input, DatePicker, Button } from 'antd';
+import { Modal, Select, Tag, Table, Popconfirm, Input, DatePicker, Button } from 'antd';
 import {
   Briefcase, Plus, Search, RefreshCw, Edit
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import dayjs from 'dayjs';
+import toast from 'react-hot-toast';
 import CreateEventModal from '@/components/modals/CreateEventModal';
+import CreateJobModal from '@/components/modals/CreateJobModal';
 
 const { Search: AntSearch } = Input;
 const { RangePicker } = DatePicker;
@@ -59,9 +61,11 @@ const ApplicationTrackingPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addingJob, setAddingJob] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [eventModalVisible, setEventModalVisible] = useState(false);
+  const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
   
   // Filter states
   const [searchText, setSearchText] = useState('');
@@ -101,7 +105,7 @@ const ApplicationTrackingPage = () => {
       setFilteredJobs(transformedJobs);
     } catch (error) {
       console.error('Error fetching applications:', error);
-      message.error('Failed to load applications');
+      toast.error('Failed to load applications');
       setJobs([]);
       setFilteredJobs([]);
     } finally {
@@ -176,14 +180,14 @@ const ApplicationTrackingPage = () => {
       }
 
       // Update local state
-      const updatedJobs = jobs.map(job => 
+      const updatedJobs = jobs.map(job =>
         job._id === jobId ? { ...job, status: newStatus } : job
       );
       setJobs(updatedJobs);
-      message.success('Status updated successfully');
+      toast.success('Status updated successfully');
     } catch (error) {
       console.error('Error updating status:', error);
-      message.error('Failed to update status');
+      toast.error('Failed to update status');
     }
   }, [jobs]);
 
@@ -200,10 +204,10 @@ const ApplicationTrackingPage = () => {
       // Update local state
       const updatedJobs = jobs.filter(job => job._id !== jobId);
       setJobs(updatedJobs);
-      message.success('Application deleted successfully');
+      toast.success('Application deleted successfully');
     } catch (error) {
       console.error('Error deleting application:', error);
-      message.error('Failed to delete application');
+      toast.error('Failed to delete application');
     }
   }, [jobs]);
 
@@ -338,13 +342,13 @@ const ApplicationTrackingPage = () => {
       <div className="p-8 bg-bg min-h-screen">
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Header */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mt-5">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Application Tracking</h1>
+              <div className="text-4xl font-bold text-white mb-2">Application Tracking</div>
               <p className="text-text-muted text-lg">Track and manage your job applications</p>
             </div>
             <button
-              onClick={() => { /* Open create job modal */ }}
+              onClick={() => setCreateJobModalVisible(true)}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <Plus className="w-5 h-5" />
@@ -478,7 +482,7 @@ const ApplicationTrackingPage = () => {
             </div>
 
           <Table
-            loading={loading}
+            loading={loading || addingJob}
             dataSource={filteredJobs}
             rowKey="_id"
             pagination={{ 
@@ -510,14 +514,23 @@ const ApplicationTrackingPage = () => {
                       <Edit className="w-5 h-5" />
                       <span className="sr-only">Edit</span>
                     </button>
-                    <button
-                      onClick={() => handleDelete(record._id)}
-                      className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105"
-                      title="Delete"
+                    <Popconfirm
+                      title="Are you sure you want to delete this application?"
+                      onConfirm={() => {
+                        handleDelete(record._id);
+                        toast.success('Application deleted successfully');
+                      }}
+                      okText="Yes"
+                      cancelText="No"
                     >
-                      <RiDeleteBin6Line className="w-5 h-5" />
-                      <span className="sr-only">Delete</span>
-                    </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-3 bg-danger text-white border border-danger rounded-lg transition-all duration-200 hover:scale-105"
+                        title="Delete"
+                      >
+                        <RiDeleteBin6Line className="w-5 h-5" />
+                        <span className="sr-only">Delete</span>
+                      </button>
+                    </Popconfirm>
                   </div>
                 ),
               },
@@ -704,11 +717,11 @@ const ApplicationTrackingPage = () => {
                           setJobs(prev => prev.map(job => job._id === transformedUpdatedJob._id ? transformedUpdatedJob : job));
                           setFilteredJobs(prev => prev.map(job => job._id === transformedUpdatedJob._id ? transformedUpdatedJob : job));
                           setSelectedJob(transformedUpdatedJob);
-                          message.success('Application updated successfully');
+                          toast.success('Application updated successfully');
                           setDetailModalVisible(false);
                         } catch (error) {
                           console.error(error);
-                          message.error('Failed to update application');
+                          toast.error('Failed to update application');
                         }
                       }}
                   >
@@ -752,6 +765,35 @@ const ApplicationTrackingPage = () => {
             {/* For example, you can import EventsPage and render it */}
             {/* <EventsPage /> */}
           </Modal>
+
+          {/* Create Job Modal */}
+          <CreateJobModal
+            visible={createJobModalVisible}
+            onClose={() => setCreateJobModalVisible(false)}
+            onJobCreated={(newJob) => {
+              if (!newJob) return;
+              setAddingJob(true);
+              // Transform newJob to match Job interface
+              const jobData = typeof newJob.jobId === 'object' ? newJob.jobId : {};
+              const transformedJob: Job = {
+                _id: newJob._id || '',
+                jobId: typeof newJob.jobId === 'object' ? newJob.jobId?._id || newJob._id || '' : newJob.jobId || newJob._id || '',
+                title: (jobData as PopulatedJob)?.title || newJob.jobTitle || newJob.title || 'Unknown Title',
+                company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
+                location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
+                status: newJob.status || 'submitted',
+                datePosted: newJob.appliedDate || (jobData as PopulatedJob)?.datePosted || newJob.createdAt || newJob.datePosted || new Date().toISOString(),
+                description: (jobData as PopulatedJob)?.description || newJob.description || '',
+                priority: newJob.priority || 'medium',
+                platform: newJob.platform || 'other',
+                notes: newJob.notes || ''
+              };
+              setJobs(prev => [transformedJob, ...prev]);
+              setFilteredJobs(prev => [transformedJob, ...prev]);
+              toast.success('Job application added successfully');
+              setAddingJob(false);
+            }}
+          />
         </div>
       </div>
     </AppLayout>

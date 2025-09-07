@@ -6,7 +6,7 @@ import { connectDB } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -19,12 +19,13 @@ export async function GET(
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
-    
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const application = await mongodbService.getApplicationById(params.id, user._id);
+    const { id } = await params;
+    const application = await mongodbService.getApplicationById(id, user._id);
     
     if (!application) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
@@ -43,7 +44,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -56,18 +57,19 @@ export async function PATCH(
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
-    
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const { id } = await params;
     const body = await request.json();
 
     // Handle job-related updates
     if (body.title || body.company || body.location || body.description) {
       // Find the application first to get the jobId
       const Application = (await import('@/models/Application')).default;
-      const application = await Application.findOne({ _id: params.id, userId: user._id });
+      const application = await Application.findOne({ _id: id, userId: user._id });
 
       if (application) {
         // Find the associated job and update it
@@ -90,8 +92,8 @@ export async function PATCH(
       }
     }
 
-    const updatedApplication = await mongodbService.updateApplication(params.id, user._id, body);
-    
+    const updatedApplication = await mongodbService.updateApplication(id, user._id, body);
+
     if (!updatedApplication) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
@@ -100,7 +102,7 @@ export async function PATCH(
     await updatedApplication.populate('jobId');
 
     return NextResponse.json(updatedApplication);
-    
+
   } catch (error) {
     console.error('Error updating application:', error);
     return NextResponse.json(
@@ -112,7 +114,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -125,19 +127,20 @@ export async function DELETE(
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
-    
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const deleted = await mongodbService.deleteApplication(params.id, user._id);
-    
+    const { id } = await params;
+    const deleted = await mongodbService.deleteApplication(id, user._id);
+
     if (!deleted) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, message: 'Application deleted successfully' });
-    
+
   } catch (error) {
     console.error('Error deleting application:', error);
     return NextResponse.json(

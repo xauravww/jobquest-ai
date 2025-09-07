@@ -892,13 +892,13 @@ const JobSearchPage = () => {
     <AppLayout showFooter={false}>
       <div className="p-6">
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex mt-4 items-center justify-center gap-3 mb-4">
             <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/30">
               <Bot className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <div className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               AI-Powered Job Search
-            </h1>
+            </div>
           </div>
           <p className="text-text-muted text-lg max-w-2xl mx-auto leading-relaxed">
             Discover opportunities with intelligent filtering, AI analysis, and advanced search capabilities. 

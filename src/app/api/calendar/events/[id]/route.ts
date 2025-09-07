@@ -5,12 +5,13 @@ import { CalendarEvent } from '@/models/CalendarEvent';
 // GET - Fetch single calendar event
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
-    const event = await CalendarEvent.findById(params.id)
+
+    const { id } = await params;
+    const event = await CalendarEvent.findById(id)
       .populate('applicationId', 'status jobId')
       .populate('jobId', 'title company')
       .populate('reminderId', 'title type');
@@ -36,11 +37,12 @@ export async function GET(
 // PUT - Update calendar event
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
+
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
@@ -97,7 +99,7 @@ export async function PUT(
     if (followUpNotes !== undefined) updateData.followUpNotes = followUpNotes;
     
     const event = await CalendarEvent.findByIdAndUpdate(
-      params.id,
+      id,
       updateData,
       { new: true, runValidators: true }
     )
@@ -129,12 +131,13 @@ export async function PUT(
 // DELETE - Delete calendar event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
-    const event = await CalendarEvent.findByIdAndDelete(params.id);
+
+    const { id } = await params;
+    const event = await CalendarEvent.findByIdAndDelete(id);
     
     if (!event) {
       return NextResponse.json(

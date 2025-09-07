@@ -7,12 +7,13 @@ import { Job } from '@/models/Job';
 // GET - Get reminders for a specific application
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
-    const application = await Application.findById(params.id)
+
+    const { id } = await params;
+    const application = await Application.findById(id)
       .populate('reminders')
       .populate('calendarEvents');
     

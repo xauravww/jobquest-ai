@@ -5,12 +5,13 @@ import { Reminder } from '@/models/Reminder';
 // GET - Fetch single reminder
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
-    const reminder = await Reminder.findById(params.id)
+
+    const { id } = await params;
+    const reminder = await Reminder.findById(id)
       .populate('applicationId', 'status jobId')
       .populate('jobId', 'title company');
     
@@ -35,11 +36,12 @@ export async function GET(
 // PUT - Update reminder
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
+
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
@@ -92,7 +94,7 @@ export async function PUT(
     if (recurrenceEndDate !== undefined) updateData.recurrenceEndDate = recurrenceEndDate ? new Date(recurrenceEndDate) : null;
     
     const reminder = await Reminder.findByIdAndUpdate(
-      params.id,
+      id,
       updateData,
       { new: true, runValidators: true }
     )
@@ -123,12 +125,13 @@ export async function PUT(
 // DELETE - Delete reminder
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
-    const reminder = await Reminder.findByIdAndDelete(params.id);
+
+    const { id } = await params;
+    const reminder = await Reminder.findByIdAndDelete(id);
     
     if (!reminder) {
       return NextResponse.json(

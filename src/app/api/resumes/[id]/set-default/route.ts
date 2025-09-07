@@ -6,7 +6,7 @@ import Resume from '@/models/Resume';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +15,7 @@ export async function PUT(
     }
 
     await dbConnect();
-    
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -23,11 +23,13 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    const { id } = await params;
+
     // Check if resume exists and belongs to user
-    const resume = await Resume.findOne({ 
-      _id: params.id, 
+    const resume = await Resume.findOne({
+      _id: id,
       userId: user._id,
-      isActive: true 
+      isActive: true
     });
 
     if (!resume) {
@@ -41,7 +43,7 @@ export async function PUT(
     );
 
     // Set this resume as default
-    await Resume.findByIdAndUpdate(params.id, { 
+    await Resume.findByIdAndUpdate(id, {
       isDefault: true,
       updatedAt: new Date()
     });

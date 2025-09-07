@@ -150,7 +150,6 @@ a.button {
 
 button:hover,
 a.button:hover {
-  background-color: var(--highlight);
   box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
   transform: translateY(-1px);
 }
@@ -732,6 +731,8 @@ body {
 
 .ant-select-dark:hover .ant-select-selector {
   border-color: var(--primary) !important;
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .ant-select-dark.ant-select-focused .ant-select-selector {
@@ -749,7 +750,9 @@ body {
 }
 
 .ant-select-dropdown-dark .ant-select-item:hover {
-  background-color: var(--bg-light) !important;
+  background-color: var(--primary) !important;
+  color: white !important;
+  opacity: 1 !important;
 }
 
 .ant-select-dropdown-dark .ant-select-item-option-selected {
@@ -828,27 +831,51 @@ body {
 .ant-table {
   background-color: var(--bg-card) !important;
   color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
 .ant-table-thead>tr>th {
-  background-color: var(--bg-light) !important;
+  background-color: var(--bg) !important; /* lighter background for header */
   color: var(--text) !important;
-  border-bottom: 1px solid var(--border) !important;
-  font-weight: 600;
+  border-bottom: 2px solid var(--primary) !important;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.ant-table-thead>tr>th .ant-table-column-sorter,
+.ant-table-thead>tr>th .ant-table-filter-trigger {
+  color: var(--text) !important;
+  opacity: 0.8;
+}
+
+.ant-table-thead>tr>th .ant-table-column-sorter:hover,
+.ant-table-thead>tr>th .ant-table-filter-trigger:hover {
+  color: var(--primary) !important;
+  opacity: 1;
 }
 
 .ant-table-tbody>tr>td {
   background-color: var(--bg-card) !important;
   color: var(--text) !important;
   border-bottom: 1px solid var(--border) !important;
+  font-weight: 500;
 }
 
 .ant-table-tbody>tr:hover>td {
-  background-color: var(--bg-light) !important;
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: var(--primary) !important;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .ant-table-tbody>tr.ant-table-row-selected>td {
-  background-color: rgba(16, 185, 129, 0.1) !important;
+  background-color: rgba(16, 185, 129, 0.25) !important;
+  color: var(--primary) !important;
+  font-weight: 700;
+  box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 /* Table Pagination Dark Theme */
@@ -1057,7 +1084,11 @@ body {
   color: var(--text) !important;
 }
 
+
 .ant-select .ant-select-selection-placeholder {
+  color: var(--text-muted) !important;
+}
+.ant-select .ant-select-selection-search-input {
   color: var(--text-muted) !important;
 }
 
@@ -1101,16 +1132,9 @@ body {
 }
 
 .ant-select-dropdown .ant-select-item:hover {
-  background-color: var(--bg-light) !important;
-}
-
-.ant-select-dropdown .ant-select-item-option-selected {
   background-color: var(--primary) !important;
   color: white !important;
-}
-
-.ant-select-dropdown .ant-select-item-option-active {
-  background-color: var(--bg-light) !important;
+  opacity: 1 !important;
 }
 
 /* Button Dark Theme - Enhanced */
@@ -1149,9 +1173,11 @@ body {
 .ant-modal .ant-modal-content {
   background-color: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
+  
 }
 
 .ant-modal .ant-modal-header {
+  margin-bottom: 15px;
   background-color: var(--bg-card) !important;
   border-bottom: 1px solid var(--border) !important;
 }
@@ -1166,12 +1192,20 @@ body {
 }
 
 .ant-modal .ant-modal-footer {
+  margin-top: 15px;
   background-color: var(--bg-card) !important;
   border-top: 1px solid var(--border) !important;
 }
 
-.ant-modal .ant-modal-close {
+.ant-modal .ant-modal-footer button {
+  margin-top: 15px;
+}
+
+.ant-modal .ant-modal-close  {
   color: var(--text-muted) !important;
+}
+.ant-modal button{
+  box-shadow: none;
 }
 
 .ant-modal .ant-modal-close:hover {
@@ -1190,16 +1224,20 @@ body {
 .ant-popover .ant-popover-inner {
   background-color: var(--bg-card) !important;
   border: 1px solid var(--border) !important;
-  color: var(--text) !important;
+  color: var(--text) !important; /* Changed back to white */
 }
 
 .ant-popover .ant-popover-title {
-  color: var(--text) !important;
+  color: var(--text) !important; /* Changed back to white */
   border-bottom: 1px solid var(--border) !important;
 }
 
-.ant-popover .ant-popover-inner-content {
-  color: var(--text) !important;
+.ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title {
+  color: var(--text) !important; /* Override inline style to force white color */
+}
+.ant-popover .ant-popover-inner-content,
+.ant-popover .ant-popover-message {
+  color: var(--text) !important; /* Ensure popconfirm text is white */
 }
 
 .ant-popover .ant-popover-arrow::before {
@@ -1269,4 +1307,14 @@ body {
 
 .recharts-tooltip-cursor {
   fill: rgba(110, 118, 140, 0.1) !important;
+}
+
+/* Override delete button hover color */
+button.bg-danger:hover {
+  background-color: #b91c1c !important; /* Tailwind's red-700 */
+}
+
+
+.ant-popconfirm-title{
+  color:white !important;
 }
