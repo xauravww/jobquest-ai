@@ -1254,3 +1254,12 @@ body {
 .filter-panel .anticon:hover {
   color: var(--primary) !important;
 }
+
+/* Recharts Dark Theme Styles */
+.recharts-legend-item-text {
+  color: var(--text-muted) !important;
+}
+
+.recharts-tooltip-cursor {
+  fill: rgba(110, 118, 140, 0.1) !important;
+}

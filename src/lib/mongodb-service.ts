@@ -1,6 +1,8 @@
 import { connectDB } from './db';
 import { Job } from '@/models/Job';
 import { Application } from '@/models/Application';
+import mongoose from 'mongoose';
+
 
 export class MongoDBService {
 
@@ -397,7 +399,7 @@ export class MongoDBService {
     }
   }
 
-  async updateApplication(applicationId: string, userId: string, updateData: unknown) {
+  async updateApplication(applicationId: string, userId: string, updateData: any) {
     try {
       await connectDB();
       
@@ -438,44 +440,113 @@ export class MongoDBService {
     }
   }
 
-  async getApplicationStats() {
+  async getApplicationStats(userId: string) {
     try {
-      await connectDB();
-      
-      const totalApplications = await Application.countDocuments();
-      const activeApplications = await Application.countDocuments({
-        status: { $in: ['submitted', 'under_review', 'phone_screening', 'technical_interview', 'final_interview', 'offer_received'] }
-      });
-      const interviews = await Application.countDocuments({
-        status: { $in: ['phone_screening', 'technical_interview', 'final_interview'] }
-      });
-      const offers = await Application.countDocuments({
-        status: 'offer_received'
-      });
+        await connectDB();
 
-      const responseRate = totalApplications > 0 
-        ? Math.round((activeApplications / totalApplications) * 100)
-        : 0;
+        const matchQuery = { userId: new mongoose.Types.ObjectId(userId) };
 
-      return {
-        totalApplications,
-        activeApplications,
-        interviews,
-        offers,
-        responseRate
-      };
-      
+        const totalApplications = await Application.countDocuments(matchQuery);
+
+        const activeStatuses = ['submitted', 'under_review', 'phone_screening', 'technical_interview', 'final_interview'];
+        const activeApplications = await Application.countDocuments({ ...matchQuery, status: { $in: activeStatuses } });
+
+        const interviewStatuses = ['phone_screening', 'technical_interview', 'final_interview'];
+        const interviews = await Application.countDocuments({ ...matchQuery, status: { $in: interviewStatuses } });
+
+        const offerStatuses = ['offer_received', 'accepted'];
+        const offers = await Application.countDocuments({ ...matchQuery, status: { $in: offerStatuses } });
+
+        const respondedStatuses = activeStatuses.filter(s => s !== 'submitted');
+        const respondedCount = await Application.countDocuments({ ...matchQuery, status: { $in: respondedStatuses } });
+
+        const responseRate = totalApplications > 0
+            ? Math.round((respondedCount / totalApplications) * 100)
+            : 0;
+        
+        const statusCountsData = await Application.aggregate([
+            { $match: matchQuery },
+            { $group: { _id: '$status', value: { $sum: 1 } } },
+            { $project: { name: '$_id', value: 1, _id: 0 } }
+        ]);
+
+        const statusColors: { [key: string]: string } = {
+            submitted: '#3b82f6',
+            under_review: '#f59e0b',
+            phone_screening: '#8b5cf6',
+            technical_interview: '#d946ef',
+            final_interview: '#ec4899',
+            offer_received: '#10b981',
+            accepted: '#22c55e',
+            rejected: '#ef4444',
+            withdrawn: '#737373',
+            draft: '#a3a3a3'
+        };
+
+        const statusCounts = statusCountsData.map(item => ({
+            ...item,
+            color: statusColors[item.name] || '#6b7280'
+        }));
+
+        return {
+            stats: {
+                totalApplications,
+                activeApplications,
+                interviews,
+                offers,
+                responseRate
+            },
+            statusCounts
+        };
+
     } catch (error) {
-      console.error('Error getting application stats:', error);
-      return {
-        totalApplications: 0,
-        activeApplications: 0,
-        interviews: 0,
-        offers: 0,
-        responseRate: 0
-      };
+        console.error('Error getting application stats:', error);
+        return {
+            stats: {
+                totalApplications: 0,
+                activeApplications: 0,
+                interviews: 0,
+                offers: 0,
+                responseRate: 0
+            },
+            statusCounts: []
+        };
     }
   }
+  
+  async getApplicationTrend(userId: string, startDate: Date, endDate: Date) {
+        try {
+            await connectDB();
+            
+            const results = await Application.aggregate([
+                {
+                    $match: {
+                        userId: new mongoose.Types.ObjectId(userId),
+                        appliedDate: { $gte: startDate, $lte: endDate }
+                    }
+                },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$appliedDate" } },
+                        applications: { $sum: 1 },
+                        interviews: {
+                            $sum: {
+                                $cond: [{ $in: ['$status', ['phone_screening', 'technical_interview', 'final_interview']] }, 1, 0]
+                            }
+                        }
+                    }
+                },
+                { $sort: { _id: 1 } },
+                { $project: { date: '$_id', applications: 1, interviews: 1, _id: 0 } }
+            ]);
+
+            return results;
+        } catch (error) {
+            console.error('Error fetching application trend data:', error);
+            return [];
+        }
+    }
+
 }
 
 export const mongodbService = new MongoDBService();
