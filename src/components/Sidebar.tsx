@@ -25,15 +25,17 @@ import Image from 'next/image';
 interface SidebarProps {
   className?: string;
   isCollapsed?: boolean;
+  onLinkClick?: () => void;
 }
 
-const NavLink = ({ href, icon, children, pathname, isCollapsed, disabled = false }: { 
-  href: string, 
-  icon: React.ReactNode, 
-  children: React.ReactNode, 
-  pathname: string, 
+const NavLink = ({ href, icon, children, pathname, isCollapsed, disabled = false, onLinkClick }: {
+  href: string,
+  icon: React.ReactNode,
+  children: React.ReactNode,
+  pathname: string,
   isCollapsed?: boolean,
-  disabled?: boolean 
+  disabled?: boolean,
+  onLinkClick?: () => void
 }) => {
   // Special case for dashboard links: only active on exact match
   const isDashboard = href === '/dashboard';
@@ -189,7 +191,7 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, disabled = false
   );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLinkClick }) => {
   const pathname = usePathname();
   const [accountType, setAccountType] = useState('job-seeker');
   const sidebarRef = useRef<HTMLElement>(null);
@@ -493,14 +495,14 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false }) => 
       <aside
         ref={sidebarRef}
         id="sidebar"
-        className={`flex-shrink-0 flex flex-col gap-4 p-4 transition-all duration-500 ease-in-out ${
-          isCollapsed ? 'w-20 collapsed' : 'w-80'
-        } h-full overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin ${className || ''}`}
-        style={{
-          background: 'var(--bg-dark)',
-          borderRight: '1px solid var(--border)',
-          width: isCollapsed ? '80px' : '320px'
-        }}
+      className={`flex-shrink-0 flex flex-col gap-4 p-4 transition-all duration-500 ease-in-out h-full overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin ${className || ''}`}
+      style={{
+        background: 'var(--bg-dark)',
+        borderRight: '1px solid var(--border)',
+        width: '100%',
+        minWidth: isCollapsed ? '80px' : '320px',
+        minHeight: 'calc(100vh - 64px)'
+      }}
       >
         <Toaster position="top-right" />
         
@@ -510,7 +512,8 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false }) => 
           }`}
           style={{
             background: 'var(--bg-light)',
-            minHeight: isCollapsed ? '80px' : '160px'
+            minHeight: isCollapsed ? '80px' : '160px',
+            width: '100%'
           }}
         >
           {isCollapsed ? (
@@ -521,12 +524,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false }) => 
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center w-full space-y-3 transition-opacity duration-300">
-              <div className="logo-image-container p-1 rounded-full">
-                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-300">
+              <div className="logo-image-container p-1 rounded-full" style={{ minWidth: '80px', minHeight: '80px' }}>
+                <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-300 w-full mx-auto" style={{ minWidth: '80px', minHeight: '80px' }}>
                   <span className="text-white font-bold text-2xl">J</span>
                 </div>
               </div>
-              <div className="text-center">
+              <div className="text-center w-full">
                 <h2 className="text-lg font-bold text-white mb-2">Jobquest AI</h2>
                 <div className="flex items-center justify-center w-full px-2">
                   <div
@@ -553,7 +556,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false }) => 
 
         <nav className="flex flex-col gap-1">
           {/* Main Dashboard */}
-          <NavLink href="/dashboard" icon={<Home />} pathname={pathname} isCollapsed={isCollapsed}>
+          <NavLink href="/dashboard" icon={<Home />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             Dashboard
           </NavLink>
 
@@ -566,10 +569,10 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false }) => 
               <div className="mt-1 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
             </div>
           )}
-          <NavLink href="/job-search" icon={<Search />} pathname={pathname} isCollapsed={isCollapsed}>
+          <NavLink href="/job-search" icon={<Search />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             Job Search
           </NavLink>
-          <NavLink href="/ai-filtering" icon={<Brain />} pathname={pathname} isCollapsed={isCollapsed}>
+          <NavLink href="/ai-filtering" icon={<Brain />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             AI Filtering
           </NavLink>
 

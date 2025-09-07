@@ -69,6 +69,13 @@
   --sidebar-ring: #10b981;
 }
 
+/* Override Ant Design Drawer Header background for dark mode */
+.ant-drawer-dark .ant-drawer-header {
+  background-color: var(--bg-dark) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--text);

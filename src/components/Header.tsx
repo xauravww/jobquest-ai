@@ -133,19 +133,21 @@ const Header = () => {
             )}
 
             {/* Mobile menu button */}
-            <Button
+            {/* Removed to avoid duplicate hamburger menu */}
+            {/* <Button
               variant="ghost"
               size="icon"
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </Button>
+            </Button> */}
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        {isMenuOpen && (
+        {/* Removed to avoid duplicate mobile navigation */}
+        {/* {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <nav className="flex flex-col space-y-2">
               {navigation.map((item) => (
@@ -160,7 +162,7 @@ const Header = () => {
               ))}
             </nav>
           </div>
-        )}
+        )} */}
       </div>
     </header>
   );
