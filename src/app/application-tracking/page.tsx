@@ -63,7 +63,6 @@ const ApplicationTrackingPage = () => {
   const [loading, setLoading] = useState(true);
   const [addingJob, setAddingJob] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [eventModalVisible, setEventModalVisible] = useState(false);
   const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
   
@@ -246,7 +245,7 @@ const ApplicationTrackingPage = () => {
       key: 'title',
       sorter: (a: Job, b: Job) => a.title.localeCompare(b.title),
       render: (text: string, record: Job) => (
-        <span className="font-semibold text-text-light cursor-pointer hover:underline" onClick={() => { setSelectedJob(record); setDetailModalVisible(true); }}>
+        <span className="font-semibold text-text-light cursor-pointer hover:underline" onClick={() => { setSelectedJob(record); setCreateJobModalVisible(true); }}>
           {text}
         </span>
       ),
@@ -348,7 +347,10 @@ const ApplicationTrackingPage = () => {
               <p className="text-text-muted text-lg">Track and manage your job applications</p>
             </div>
             <button
-              onClick={() => setCreateJobModalVisible(true)}
+              onClick={() => {
+                setSelectedJob(null);
+                setCreateJobModalVisible(true);
+              }}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               <Plus className="w-5 h-5" />
@@ -383,7 +385,7 @@ const ApplicationTrackingPage = () => {
                   className="w-full"
                   allowClear
                   size="large"
-                  enterButton={<Search className="w-5 h-5 text-white bg-primary rounded-r-lg p-1" />}
+                  enterButton={<Search className="w-5 h-5 text-white" />}
                 />
                 </div>
 
@@ -445,13 +447,15 @@ const ApplicationTrackingPage = () => {
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                 <div className="flex-1 space-y-2">
                   <label className="block text-sm font-semibold text-white mb-3">Date Range</label>
-                  <RangePicker
-                    value={dateRange}
-                    onChange={setDateRange}
-                    className="w-full max-w-sm"
-                    format="MMM DD, YYYY"
-                    size="large"
-                  />
+              <RangePicker
+                value={dateRange}
+                onChange={setDateRange}
+                className="w-full max-w-sm"
+                format="MMM DD, YYYY"
+                size="large"
+                popupClassName="custom-dark-datepicker"
+                suffixIcon={<Search className="w-5 h-5 text-white" />}
+              />
                 </div>
                 
                 <div className="flex gap-3">
@@ -506,7 +510,7 @@ const ApplicationTrackingPage = () => {
                     <button
                       onClick={() => {
                         setSelectedJob(record);
-                        setDetailModalVisible(true);
+                        setCreateJobModalVisible(true);
                       }}
                       className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
                       title="Edit"
@@ -538,204 +542,7 @@ const ApplicationTrackingPage = () => {
           />
           </div>
 
-          {/* Detail Modal */}
-          {selectedJob && (
-            <Modal
-              title={<span className="text-white">{selectedJob.title} at {selectedJob.company}</span>}
-              open={detailModalVisible}
-              onCancel={() => setDetailModalVisible(false)}
-              footer={null}
-              width={800}
-              className="custom-dark-modal" // Custom class for styling
-            >
-              <div className="space-y-6 text-text">
-                <div className="grid grid-cols-1 gap-6">
-                  <div>
-                    {/* Removed Related Job dropdown as per user feedback */}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Job Title</label>
-                    <Input
-                      value={selectedJob?.title || ''}
-                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, title: e.target.value } : null)}
-                      placeholder="Job Title"
-                      size="large"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Company</label>
-                    <Input
-                      value={selectedJob?.company || ''}
-                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, company: e.target.value } : null)}
-                      placeholder="Company"
-                      size="large"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Location</label>
-                    <Input
-                      value={selectedJob?.location || ''}
-                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, location: e.target.value } : null)}
-                      placeholder="Location"
-                      size="large"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Status</label>
-                    <Select
-                      value={selectedJob?.status || ''}
-                      onChange={(value) => setSelectedJob(prev => prev ? { ...prev, status: value } : null)}
-                      size="large"
-                      className="w-full"
-                    >
-                      <Select.Option value="saved">Saved</Select.Option>
-                      <Select.Option value="applied">Applied</Select.Option>
-                      <Select.Option value="interviewing">Interviewing</Select.Option>
-                      <Select.Option value="offered">Offered</Select.Option>
-                      <Select.Option value="rejected">Rejected</Select.Option>
-                      <Select.Option value="submitted">Submitted</Select.Option>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Priority</label>
-                    <Select
-                      value={selectedJob?.priority || ''}
-                      onChange={(value) => setSelectedJob(prev => prev ? { ...prev, priority: value } : null)}
-                      size="large"
-                      className="w-full"
-                    >
-                      <Select.Option value="high">High</Select.Option>
-                      <Select.Option value="medium">Medium</Select.Option>
-                      <Select.Option value="low">Low</Select.Option>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Platform</label>
-                    <Select
-                      value={selectedJob?.platform || ''}
-                      onChange={(value) => setSelectedJob(prev => prev ? { ...prev, platform: value } : null)}
-                      size="large"
-                      className="w-full"
-                    >
-                      <Select.Option value="linkedin">LinkedIn</Select.Option>
-                      <Select.Option value="indeed">Indeed</Select.Option>
-                      <Select.Option value="glassdoor">Glassdoor</Select.Option>
-                      <Select.Option value="company-website">Company Website</Select.Option>
-                      <Select.Option value="referral">Referral</Select.Option>
-                      <Select.Option value="other">Other</Select.Option>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Date Posted</label>
-                    <DatePicker
-                      value={selectedJob ? dayjs(selectedJob.datePosted) : null}
-                      onChange={(date) => setSelectedJob(prev => prev && date ? { ...prev, datePosted: date.toISOString() } : prev)}
-                      size="large"
-                      className="w-full"
-                      format="MMM DD, YYYY"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Description</label>
-                    <Input.TextArea
-                      value={selectedJob?.description || ''}
-                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, description: e.target.value } : null)}
-                      placeholder="Description"
-                      rows={4}
-                      size="large"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-white mb-1">Notes</label>
-                    <Input.TextArea
-                      value={selectedJob?.notes || ''}
-                      onChange={(e) => setSelectedJob(prev => prev ? { ...prev, notes: e.target.value } : null)}
-                      placeholder="Notes"
-                      rows={3}
-                      size="large"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-4">
-                  <Button
-                    type="primary"
-                      onClick={async () => {
-                        if (!selectedJob) return;
-                        try {
-                          console.log('Saving job:', selectedJob);
-                          // Sanitize payload to exclude nested objects like jobId
-                          const {
-                            _id,
-                            jobId,
-                            title,
-                            company,
-                            location,
-                            status,
-                            datePosted,
-                            description,
-                            priority,
-                            platform,
-                            notes
-                          } = selectedJob;
-                          const payload = {
-                            _id,
-                            title,
-                            company,
-                            location,
-                            status,
-                            datePosted: datePosted ? new Date(datePosted).toISOString() : null,
-                            description,
-                            priority,
-                            platform,
-                            notes
-                          };
-                          console.log('Payload sent:', payload);
-                          const response = await fetch(`/api/applications/${_id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload),
-                          });
-                          if (!response.ok) throw new Error('Failed to update application');
-                          const updatedJob = await response.json();
 
-                          // Transform updatedJob to match Job interface
-                          const jobData = typeof updatedJob.jobId === 'object' ? updatedJob.jobId : {};
-                          const transformedUpdatedJob: Job = {
-                            _id: updatedJob._id,
-                            jobId: typeof updatedJob.jobId === 'object' ? updatedJob.jobId?._id || updatedJob._id : updatedJob.jobId || updatedJob._id,
-                            title: (jobData as PopulatedJob)?.title || updatedJob.jobTitle || updatedJob.title || 'Unknown Title',
-                            company: (jobData as PopulatedJob)?.company || updatedJob.company || 'Unknown Company',
-                            location: (jobData as PopulatedJob)?.location || updatedJob.location || 'Unknown Location',
-                            status: updatedJob.status || 'submitted',
-                            datePosted: updatedJob.appliedDate || (jobData as PopulatedJob)?.datePosted || updatedJob.createdAt || updatedJob.datePosted || new Date().toISOString(),
-                            description: (jobData as PopulatedJob)?.description || updatedJob.description || '',
-                            priority: updatedJob.priority || 'medium',
-                            platform: updatedJob.platform || 'other',
-                            notes: updatedJob.notes || ''
-                          };
-
-                          setJobs(prev => prev.map(job => job._id === transformedUpdatedJob._id ? transformedUpdatedJob : job));
-                          setFilteredJobs(prev => prev.map(job => job._id === transformedUpdatedJob._id ? transformedUpdatedJob : job));
-                          setSelectedJob(transformedUpdatedJob);
-                          toast.success('Application updated successfully');
-                          setDetailModalVisible(false);
-                        } catch (error) {
-                          console.error(error);
-                          toast.error('Failed to update application');
-                        }
-                      }}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    onClick={() => setDetailModalVisible(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </Modal>
-          )}
 
           {/* Reminder & Event Modals */}
           {/* Reminder Modal */}
@@ -778,7 +585,7 @@ const ApplicationTrackingPage = () => {
               const transformedJob: Job = {
                 _id: newJob._id || '',
                 jobId: typeof newJob.jobId === 'object' ? newJob.jobId?._id || newJob._id || '' : newJob.jobId || newJob._id || '',
-                title: (jobData as PopulatedJob)?.title || newJob.jobTitle || newJob.title || 'Unknown Title',
+                title: (jobData as PopulatedJob)?.title || newJob.title || 'Unknown Title',
                 company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
                 location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
                 status: newJob.status || 'submitted',
@@ -793,6 +600,7 @@ const ApplicationTrackingPage = () => {
               toast.success('Job application added successfully');
               setAddingJob(false);
             }}
+            job={selectedJob}
           />
         </div>
       </div>

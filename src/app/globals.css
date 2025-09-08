@@ -1318,3 +1318,25 @@ button.bg-danger:hover {
 .ant-popconfirm-title{
   color:white !important;
 }
+
+.ant-picker{
+box-shadow: none;
+}
+
+.ant-picker .ant-picker-suffix .anticon {
+  color: white;
+}
+
+.ant-picker-dropdown 
+  .ant-picker-header 
+  button {
+  box-shadow: none !important;
+}
+
+
+/* Remove green glow on calendar header buttons */
+.ant-picker-dropdown .ant-picker-header button:focus,
+.ant-picker-dropdown .ant-picker-header button:active {
+  box-shadow: none !important;
+  outline: none !important;
+}
