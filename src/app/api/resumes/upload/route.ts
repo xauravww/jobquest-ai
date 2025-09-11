@@ -3,8 +3,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     await dbConnect();
-    
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -45,40 +51,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Create upload directory
-    const uploadDir = path.join(process.cwd(), 'uploads', 'resumes', user._id.toString());
-    await mkdir(uploadDir, { recursive: true });
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = path.extname(file.name);
-    const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    // Save file
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+
+    // Upload to Cloudinary
+    const uploadResult = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'raw',
+          folder: `resumes/${user._id}`,
+          public_id: `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          overwrite: true,
+          format: 'pdf', // force pdf format or keep original? Here we keep original
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result as any);
+        }
+      );
+      stream.end(buffer);
+    });
 
     // Create resume record
-    const resumeData = {
+    const resumeData: any = {
       userId: user._id,
       title,
       description: description || '',
       database,
       type: type || 'standard',
       fileName: file.name,
-      filePath: `/uploads/resumes/${user._id}/${fileName}`,
+      filePath: uploadResult.secure_url,
       fileSize: file.size,
       mimeType: file.type,
       isActive: true,
-      usageCount: 0
+      usageCount: 0,
+      cloudinaryPublicId: uploadResult.public_id,
     };
 
     // If this is the first resume, make it default
     const existingResumes = await Resume.countDocuments({ userId: user._id, isActive: true });
     if (existingResumes === 0) {
-      resumeData.isDefault = true;
+      (resumeData as any).isDefault = true;
     }
 
     const resume = new Resume(resumeData);

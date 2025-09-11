@@ -82,7 +82,8 @@ const ResumeManagementPage = () => {
         fetchResumes();
         setUploadModalVisible(false);
       } else {
-        message.error('Failed to upload resume');
+        const errorData = await response.json();
+        message.error(errorData.error || 'Failed to upload resume');
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -382,21 +383,21 @@ const ResumeManagementPage = () => {
         </div>
 
         {/* Upload Modal */}
-        <UploadModal
-          visible={uploadModalVisible}
-          onClose={() => setUploadModalVisible(false)}
-          onUpload={handleUpload}
-        />
+          <UploadModalComponent
+            visible={uploadModalVisible}
+            onClose={() => setUploadModalVisible(false)}
+            onUpload={handleUpload}
+          />
 
-        {/* Preview Modal */}
-        <PreviewModal
-          visible={previewModalVisible}
-          resume={selectedResume}
-          onClose={() => {
-            setPreviewModalVisible(false);
-            setSelectedResume(null);
-          }}
-        />
+          {/* Preview Modal */}
+          <PreviewModalComponent
+            visible={previewModalVisible}
+            resume={selectedResume}
+            onClose={() => {
+              setPreviewModalVisible(false);
+              setSelectedResume(null);
+            }}
+          />
       </div>
     </AppLayout>
   );
@@ -531,6 +532,169 @@ const formatFileSize = (bytes: number) => {
 
 // Preview Modal Component
 const PreviewModal = ({ visible, resume, onClose }: {
+  visible: boolean;
+  resume: Resume | null;
+  onClose: () => void;
+}) => {
+  if (!resume) return null;
+
+  return (
+    <Modal
+      title={`Preview: ${resume.title}`}
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+      width={800}
+      className="preview-modal"
+    >
+      <div className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-bg-light rounded-lg">
+          <div>
+            <h3 className="font-semibold text-white">{resume.title}</h3>
+            <p className="text-text-muted text-sm">{getTypeLabel(resume.type)} • {formatFileSize(resume.fileSize)}</p>
+          </div>
+          <a
+            href={`/api/resumes/${resume._id}/download`}
+            className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </a>
+        </div>
+
+        <div className="bg-bg-light rounded-lg p-4 min-h-96 flex items-center justify-center">
+          <div className="text-center">
+            <FileText className="w-16 h-16 text-text-muted mx-auto mb-4" />
+            <p className="text-text-muted">
+              Resume preview will be available soon
+            </p>
+            <p className="text-text-secondary text-sm mt-2">
+              For now, you can download the file to view it
+            </p>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+
+const UploadModalComponent = ({ visible, onClose, onUpload }: {
+  visible: boolean;
+  onClose: () => void;
+  onUpload: (file: File, data: { title: string; description: string; database: string; type: string }) => void;
+}) => {
+  const [form, setForm] = React.useState({
+    title: '',
+    description: '',
+    database: 'default',
+    type: 'standard'
+  });
+  const [file, setFile] = React.useState<File | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+
+  const handleSubmit = async () => {
+    if (!file || !form.title) {
+      message.error('Please provide a title and select a file');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      await onUpload(file, form);
+      setForm({ title: '', description: '', database: 'default', type: 'standard' });
+      setFile(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Modal
+      title="Upload Resume"
+      open={visible}
+      onCancel={onClose}
+      onOk={handleSubmit}
+      okText={uploading ? 'Uploading...' : 'Upload'}
+      okButtonProps={{ disabled: uploading, loading: uploading }}
+      className="upload-modal"
+    >
+      <div className="space-y-4">
+        <FormInput
+          label="Title *"
+          value={form.title}
+          onChange={(value) => setForm({ ...form, title: value })}
+          placeholder="e.g., Software Engineer Resume"
+          icon={<FileText className="w-4 h-4" />}
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            rows={3}
+            className="w-full px-3 py-2 bg-bg-light border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
+            placeholder="Brief description of this resume version..."
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">Database</label>
+          <Select
+            value={form.database}
+            onChange={(value) => setForm({ ...form, database: value })}
+            className="w-full"
+            placeholder="Select resume database"
+          >
+            <Select.Option value="default">Default Database</Select.Option>
+            <Select.Option value="database1">Database 1</Select.Option>
+            <Select.Option value="database2">Database 2</Select.Option>
+            <Select.Option value="database3">Database 3</Select.Option>
+          </Select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">Type</label>
+          <select
+            value={form.type}
+            onChange={(e) => setForm({ ...form, type: e.target.value })}
+            className="w-full px-3 py-2 bg-bg-light border border-border rounded-lg text-text focus:border-primary focus:outline-none"
+          >
+            <option value="standard">Standard</option>
+            <option value="ats_optimized">ATS Optimized</option>
+            <option value="latex">LaTeX</option>
+            <option value="creative">Creative</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">File *</label>
+          <Upload
+            beforeUpload={(file) => {
+              setFile(file);
+              return false;
+            }}
+            accept=".pdf,.doc,.docx"
+            showUploadList={false}
+          >
+            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+              <UploadIcon className="w-8 h-8 text-text-muted mx-auto mb-2" />
+              <p className="text-text-muted">
+                {file ? file.name : 'Click or drag file to upload'}
+              </p>
+              <p className="text-xs text-text-secondary mt-1">
+                Supports PDF, DOC, DOCX (Max 10MB)
+              </p>
+            </div>
+          </Upload>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const PreviewModalComponent = ({ visible, resume, onClose }: {
   visible: boolean;
   resume: Resume | null;
   onClose: () => void;

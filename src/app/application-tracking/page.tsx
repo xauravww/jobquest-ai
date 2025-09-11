@@ -668,9 +668,18 @@ const ApplicationTrackingPage = () => {
                 createdAt: newJob.createdAt || new Date().toISOString(),
                 appliedDate: newJob.appliedDate || new Date().toISOString()
               };
-              setJobs(prev => [transformedJob, ...prev]);
-              setFilteredJobs(prev => [transformedJob, ...prev]);
-              toast.success('Job application added successfully');
+
+              if (selectedJob) {
+                // Update existing job
+                setJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
+                setFilteredJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
+                toast.success('Job application updated successfully');
+              } else {
+                // Add new job
+                setJobs(prev => [transformedJob, ...prev]);
+                setFilteredJobs(prev => [transformedJob, ...prev]);
+                toast.success('Job application added successfully');
+              }
               setAddingJob(false);
             }}
             job={selectedJob}
