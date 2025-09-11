@@ -183,6 +183,29 @@ const ApplicationTrackingPage = () => {
     }
   }, [jobs]);
 
+  const handleDelete = useCallback(async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/applications/${jobId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete application');
+      }
+
+      // Update local state
+      const updatedJobs = jobs.filter(job => job._id !== jobId);
+      setJobs(updatedJobs);
+      setFilteredJobs(updatedJobs);
+      toast.success('Application deleted successfully');
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      toast.error('Failed to delete application');
+    }
+  }, [jobs]);
+
+
+
 
   const clearFilters = () => {
     setSearchText('');
@@ -496,7 +519,6 @@ const ApplicationTrackingPage = () => {
                       title="Are you sure you want to delete this application?"
                       onConfirm={() => {
                         handleDelete(record._id);
-                        toast.success('Application deleted successfully');
                       }}
                       okText="Yes"
                       cancelText="No"

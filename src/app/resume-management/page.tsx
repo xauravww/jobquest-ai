@@ -290,7 +290,7 @@ const ResumeManagementPage = () => {
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
                         <span className="text-text-muted">Database:</span>
-                        <span className="text-text capitalize">{resume.database.replace('_', ' ')}</span>
+                        <span className="text-text capitalize">{resume.database ? resume.database.replace('_', ' ') : ''}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-text-muted">File Size:</span>
