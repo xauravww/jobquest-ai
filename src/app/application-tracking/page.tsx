@@ -60,6 +60,19 @@ interface ApiApplication {
   resumeUsed?: string;
 }
 
+interface UserProfile {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  location?: string;
+  bio?: string;
+  skills?: string[] | string;
+  experienceYears?: number | string;
+  targetRole?: string;
+  education?: any[];
+  workExperience?: any[];
+}
+
 const ApplicationTrackingPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
@@ -71,34 +84,53 @@ const ApplicationTrackingPage = () => {
   const [coverLetterModalVisible, setCoverLetterModalVisible] = useState(false);
   const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
 
-  // Pagination states
+  // New state for user profile
+  const [userProfile, setUserProfile] = useState<UserProfile>({});
+
+  // Pagination and filter states
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
-
-  // Filter states
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [priorityFilter, setPriorityFilter] = useState<string>('');
-  const [platformFilter, setPlatformFilter] = useState<string>('');
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [platformFilter, setPlatformFilter] = useState('');
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
 
+  // Fetch user profile on mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch('/api/user/profile');
+        if (!response.ok) {
+          throw new Error('Failed to fetch user profile');
+        }
+        const data = await response.json();
+        setUserProfile(data);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        toast.error('Failed to load user profile');
+      }
+    };
+    fetchUserProfile();
+  }, []);
 
+  // ... rest of the component code unchanged ...
 
-  // Fetch jobs from API
-  const fetchJobs = useCallback(async (page: number = 1, limit: number = 10, search: string = searchText, status: string = statusFilter, priority: string = priorityFilter, platform: string = platformFilter, dateRangeParam: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null = dateRange) => {
+  // Function to fetch jobs with filters and pagination
+  const fetchJobs = useCallback(async (page: number, limit: number) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', limit.toString());
-      if (search) params.append('search', search);
-      if (status) params.append('status', status);
-      if (priority) params.append('priority', priority);
-      if (platform) params.append('platform', platform);
-      if (dateRangeParam && dateRangeParam[0] && dateRangeParam[1]) {
-        params.append('dateFrom', dateRangeParam[0].toISOString());
-        params.append('dateTo', dateRangeParam[1].toISOString());
+      if (searchText) params.append('search', searchText);
+      if (statusFilter) params.append('status', statusFilter);
+      if (priorityFilter) params.append('priority', priorityFilter);
+      if (platformFilter) params.append('platform', platformFilter);
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        params.append('dateFrom', dateRange[0].toISOString());
+        params.append('dateTo', dateRange[1].toISOString());
       }
 
       const response = await fetch(`/api/applications?${params.toString()}`);
@@ -144,7 +176,6 @@ const ApplicationTrackingPage = () => {
     }
   }, [searchText, statusFilter, priorityFilter, platformFilter, dateRange]);
 
-
   useEffect(() => {
     fetchJobs(currentPage, pageSize);
 
@@ -155,8 +186,7 @@ const ApplicationTrackingPage = () => {
     // ];
 
     // setReminders(mockReminders);
-  }, []);
-
+  }, [fetchJobs, currentPage, pageSize]);
 
   // Filter jobs based on search and filter criteria
   useEffect(() => {
@@ -164,10 +194,8 @@ const ApplicationTrackingPage = () => {
     setFilteredJobs(jobs);
   }, [jobs]);
 
-  // Refetch jobs when pagination changes
-  useEffect(() => {
-    fetchJobs(currentPage, pageSize);
-  }, [currentPage, pageSize]);
+
+
 
 
   const handleStatusUpdate = useCallback(async (jobId: string, newStatus: string) => {
@@ -748,7 +776,7 @@ const ApplicationTrackingPage = () => {
             visible={coverLetterModalVisible}
             onClose={() => setCoverLetterModalVisible(false)}
             job={selectedJobForCoverLetter}
-            userProfile={{}}
+            userProfile={userProfile}
           />
         </div>
       </div>

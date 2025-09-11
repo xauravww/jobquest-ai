@@ -316,7 +316,7 @@ Please respond with a JSON array where each object has:
               }
             ],
             temperature: 0.7,
-            max_tokens: 1500
+            max_tokens: 1000
           };
           break;
 
@@ -329,7 +329,7 @@ Please respond with a JSON array where each object has:
             }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 1500,
+              maxOutputTokens: 1000,
             }
           };
           headers = {

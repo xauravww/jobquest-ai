@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Card, Spin, Alert, Divider, Input } from 'antd';
+import { Modal, Button, Card, Spin, Alert, Divider, Input, Checkbox } from 'antd';
 import { FileText, Sparkles, User, Briefcase, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,11 +22,38 @@ interface Job {
   appliedDate: string;
 }
 
+interface Education {
+  degree: string;
+  field: string;
+  institution: string;
+}
+
+interface WorkExperience {
+  position: string;
+  company: string;
+  startDate?: string;
+  endDate?: string;
+  description: string;
+}
+
+interface UserProfile {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  location?: string;
+  bio?: string;
+  skills?: string[] | string;
+  experienceYears?: number | string;
+  targetRole?: string;
+  education?: Education[];
+  workExperience?: WorkExperience[];
+}
+
 interface CoverLetterModalProps {
   visible: boolean;
   onClose: () => void;
   job: Job | undefined;
-  userProfile: any;
+  userProfile: UserProfile;
 }
 
 const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterModalProps) => {
@@ -35,15 +62,31 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState('');
   const [profileDetails, setProfileDetails] = useState('');
+  const [includeUrlContent, setIncludeUrlContent] = useState(true);
+  const [extractedJobContent, setExtractedJobContent] = useState('');
 
   useEffect(() => {
-    if (!visible) {
+    if (visible) {
+      const profileText = `
+Name: ${userProfile.firstName || ''} ${userProfile.lastName || ''}
+Email: ${userProfile.email || ''}
+Location: ${userProfile.location || ''}
+Bio: ${userProfile.bio || ''}
+Skills: ${Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills || ''}
+Experience: ${userProfile.experienceYears || ''} years
+Current Role: ${userProfile.targetRole || ''}
+Education: ${Array.isArray(userProfile.education) ? userProfile.education.map((edu: Education) => edu.degree + ' in ' + edu.field + ' from ' + edu.institution).join('; ') : ''}
+Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workExperience.slice(0, 2).map((exp: WorkExperience) => exp.position + ' at ' + exp.company + ' (' + (exp.startDate ? new Date(exp.startDate).getFullYear() : 'Present') + ' - ' + (exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present') + '): ' + exp.description).join('; ') : ''}
+      `.trim();
+      setProfileDetails(profileText);
+    } else {
       setCoverLetter('');
       setError('');
       setGenerating(false);
       setProfileDetails('');
+      setExtractedJobContent('');
     }
-  }, [visible]);
+  }, [visible, userProfile]);
 
   const handleGenerateCoverLetter = async () => {
     if (!job) return;
@@ -78,6 +121,7 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
           location: job.location,
           profileDetails: profileDetails || JSON.stringify(userProfile),
           aiConfig: aiConfig,
+          jobUrl: includeUrlContent ? job.url : null,
         }),
       });
 
@@ -178,15 +222,62 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
         <Card
           className="bg-bg-card border border-border"
           bodyStyle={{ padding: '16px' }}
-          title="Your Profile Details (optional)"
+          title={<span className="text-white">Your Profile Details (optional)</span>}
         >
           <Input.TextArea
             value={profileDetails}
             onChange={(e) => setProfileDetails(e.target.value)}
             placeholder="Add or edit your profile details to customize the cover letter"
             rows={6}
-            className="bg-bg-light text-text"
+            className="bg-bg-light text-white"
+            style={{ color: 'white', backgroundColor: '#1a1a1a' }}
           />
+        </Card>
+
+        {/* URL Content Extraction */}
+        <Card
+          className="bg-bg-card border border-border"
+          bodyStyle={{ padding: '16px' }}
+          title={<span className="text-white">Extract Job Posting Content</span>}
+        >
+          <Input.TextArea
+            value={extractedJobContent}
+            onChange={(e) => setExtractedJobContent(e.target.value)}
+            placeholder="Extracted job posting content will appear here. You can edit it before generating the cover letter."
+            rows={6}
+            className="bg-bg-light text-white"
+            style={{ color: 'white', backgroundColor: '#1a1a1a' }}
+          />
+          <Button
+            type="default"
+            onClick={async () => {
+              if (!job?.url) {
+                toast.error('No job URL available to extract content');
+                return;
+              }
+              setGenerating(true);
+              try {
+                const response = await fetch('/api/ai/extract-job-url-content', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ url: job.url }),
+                });
+                if (!response.ok) {
+                  throw new Error('Failed to extract content');
+                }
+                const data = await response.json();
+                setExtractedJobContent(data.content);
+                toast.success('Job posting content extracted');
+              } catch (error) {
+                toast.error('Failed to extract job posting content');
+              } finally {
+                setGenerating(false);
+              }
+            }}
+            className="w-full mt-2"
+          >
+            Extract Job Posting Content
+          </Button>
         </Card>
 
         {/* Action Buttons */}
@@ -242,7 +333,7 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
             >
               <div className="space-y-4">
                 <div className="bg-bg-light p-4 rounded-lg border border-border">
-                  <pre className="text-text whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  <pre className="text-white whitespace-pre-wrap font-sans text-sm leading-relaxed" style={{ color: 'white' }}>
                     {coverLetter}
                   </pre>
                 </div>
