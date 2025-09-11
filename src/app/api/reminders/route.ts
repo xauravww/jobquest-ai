@@ -20,12 +20,13 @@ export async function GET(request: NextRequest) {
     const dateTo = searchParams.get('dateTo');
     const applicationId = searchParams.get('applicationId');
     const jobId = searchParams.get('jobId');
+    const search = searchParams.get('search');
     
     // TODO: Get userId from session
     const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
     
     // Build query
-    const query: unknown = {
+    const query: any = {
       userId // Filter by user
     };
     
@@ -47,6 +48,15 @@ export async function GET(request: NextRequest) {
     
     if (jobId) {
       query.jobId = jobId;
+    }
+    
+    // Add search functionality to the query
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } }
+      ];
     }
     
     // Date filtering

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input, Pagination } from 'antd';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -20,7 +20,6 @@ import {
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
-
 const { Search: AntSearch } = Input;
 
 interface Reminder {
@@ -59,38 +58,65 @@ const RemindersPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
 
-  const fetchData = useCallback(async (page = 1) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/reminders?page=${page}&limit=${itemsPerPage}`);
-      if (response.ok) {
-        const data = await response.json();
-        setReminders(data.reminders || []);
-        setTotalPages(data.pagination.pages || 1);
-      }
-    } catch (error) {
-      console.error('Error fetching reminders:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [itemsPerPage]);
-
+  // Debounce effect to update the search query after user stops typing
   useEffect(() => {
-    fetchData(currentPage);
-  }, [fetchData, currentPage]);
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setCurrentPage(1); // Reset to page 1 whenever the search query changes
+    }, 500); // 500ms delay
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  // Effect to fetch data when the page or the debounced query changes
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(itemsPerPage),
+      });
+      if (debouncedQuery) {
+        params.append('search', debouncedQuery);
+      }
+
+      try {
+        const response = await fetch(`/api/reminders?${params.toString()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setReminders(data.reminders || []);
+          setTotalPages(data.pagination.pages || 1);
+        } else {
+           setReminders([]);
+           setTotalPages(1);
+        }
+      } catch (error) {
+        console.error('Error fetching reminders:', error);
+        setReminders([]);
+        setTotalPages(1);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [debouncedQuery, currentPage, itemsPerPage]);
 
   const handleCompleteReminder = async (reminderId: string) => {
     try {
-      const response = await fetch(`/api/reminders/${reminderId}`, {
+      await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed' })
       });
-      if (response.ok) {
-        fetchData(currentPage);
-      }
+      // Refetch data after action
+      const event = new Event('refetchReminders');
+      window.dispatchEvent(event);
     } catch (error) {
       console.error('Error completing reminder:', error);
     }
@@ -98,7 +124,7 @@ const RemindersPage = () => {
 
   const handleSnoozeReminder = async (reminderId: string, snoozeUntil: Date) => {
     try {
-      const response = await fetch(`/api/reminders/${reminderId}`, {
+      await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -106,9 +132,9 @@ const RemindersPage = () => {
           snoozedUntil: snoozeUntil.toISOString()
         })
       });
-      if (response.ok) {
-        fetchData(currentPage);
-      }
+      // Refetch data after action
+      const event = new Event('refetchReminders');
+      window.dispatchEvent(event);
     } catch (error) {
       console.error('Error snoozing reminder:', error);
     }
@@ -116,29 +142,21 @@ const RemindersPage = () => {
 
   const handleDeleteReminder = async (id: string) => {
     try {
-      const response = await fetch(`/api/reminders/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        fetchData(currentPage);
-      }
+      await fetch(`/api/reminders/${id}`, { method: 'DELETE' });
+      // Refetch data after action
+      const event = new Event('refetchReminders');
+      window.dispatchEvent(event);
     } catch (error) {
       console.error('Error deleting reminder:', error);
     }
   };
 
-  // Filter reminders based on active filter and search
+  // Client-side filtering for date ranges is still useful
   const getFilteredReminders = () => {
     let filtered = reminders;
-
-    if (searchQuery) {
-      filtered = filtered.filter(r =>
-        r.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
-
     switch (activeFilter) {
       case 'today':
         filtered = filtered.filter(r => {
@@ -159,7 +177,6 @@ const RemindersPage = () => {
         });
         break;
     }
-
     return filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   };
 
@@ -170,7 +187,6 @@ const RemindersPage = () => {
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
-
     if (isToday) {
       return `Today at ${reminder.dueTime || date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else if (isTomorrow) {
@@ -200,18 +216,39 @@ const RemindersPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <AppLayout>
-        <div className="p-8 bg-bg min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <p className="text-text-muted">Loading reminders...</p>
-          </div>
-        </div>
-      </AppLayout>
-    );
-  }
+  // Add an effect to listen for the refetch event
+  useEffect(() => {
+    const refetchData = () => {
+      const fetchData = async () => {
+        setLoading(true);
+        const params = new URLSearchParams({
+          page: String(currentPage),
+          limit: String(itemsPerPage),
+        });
+        if (debouncedQuery) {
+          params.append('search', debouncedQuery);
+        }
+        try {
+          const response = await fetch(`/api/reminders?${params.toString()}`);
+          if (response.ok) {
+            const data = await response.json();
+            setReminders(data.reminders || []);
+            setTotalPages(data.pagination.pages || 1);
+          }
+        } catch (error) {
+          console.error('Error refetching reminders:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    };
+
+    window.addEventListener('refetchReminders', refetchData);
+    return () => {
+      window.removeEventListener('refetchReminders', refetchData);
+    };
+  }, [currentPage, debouncedQuery, itemsPerPage]);
 
   return (
     <AppLayout showFooter={false}>
@@ -271,9 +308,10 @@ const RemindersPage = () => {
                   <button
                     key={key}
                     onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${activeFilter === key
-                      ? 'bg-primary text-white shadow-lg'
-                      : 'bg-bg-light hover:bg-bg-card text-text-secondary hover:text-white'
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                      activeFilter === key
+                        ? 'bg-primary text-white shadow-lg'
+                        : 'bg-bg-light hover:bg-bg-card text-text-secondary hover:text-white'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -294,9 +332,9 @@ const RemindersPage = () => {
               {activeFilter === 'upcoming' && `Upcoming (${filteredReminders.length})`}
               {activeFilter === 'overdue' && `Overdue (${filteredReminders.length})`}
             </h2>
-            {searchQuery && (
+            {debouncedQuery && (
               <span className="text-text-muted text-sm">
-                Searching for "{searchQuery}"
+                Searching for "{debouncedQuery}"
               </span>
             )}
           </div>
@@ -304,7 +342,14 @@ const RemindersPage = () => {
 
         {/* Reminders List */}
         <div className="max-w-4xl mx-auto">
-          {filteredReminders.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-20">
+              <LoadingSpinner size="lg" className="mx-auto mb-4" />
+              <p className="text-text-muted">
+                {searchQuery ? `Searching for "${searchQuery}"...` : 'Loading reminders...'}
+              </p>
+            </div>
+           ) : filteredReminders.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/30">
                 {activeFilter === 'overdue' ? (
@@ -314,17 +359,17 @@ const RemindersPage = () => {
                 )}
               </div>
               <h3 className="text-2xl font-bold text-white mb-4">
-                {searchQuery ? 'No matches found' :
+                {debouncedQuery ? 'No matches found' :
                   activeFilter === 'today' ? 'Nothing scheduled for today' :
                     activeFilter === 'upcoming' ? 'No upcoming items' :
                       activeFilter === 'overdue' ? 'No overdue items' :
                         'No reminders yet'}
               </h3>
               <p className="text-text-muted text-lg max-w-md mx-auto leading-relaxed mb-6">
-                {searchQuery ? 'Try adjusting your search terms' :
+                {debouncedQuery ? 'Try adjusting your search terms' :
                   'Start by adding your first reminder to stay organized'}
               </p>
-              {!searchQuery && (
+              {!debouncedQuery && (
                 <div className="flex justify-center gap-4">
                   <button
                     onClick={() => {
@@ -344,10 +389,11 @@ const RemindersPage = () => {
               {filteredReminders.map((reminder) => (
                 <div
                   key={reminder._id}
-                  className={`bg-gradient-to-r from-bg-card to-bg-card/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${reminder.status === 'completed' ? 'border-green-500/30 bg-green-500/5' :
+                  className={`bg-gradient-to-r from-bg-card to-bg-card/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
+                    reminder.status === 'completed' ? 'border-green-500/30 bg-green-500/5' :
                     activeFilter === 'overdue' && new Date(reminder.dueDate) < new Date() ? 'border-red-500/50 bg-red-500/10' :
-                      'border-border hover:border-primary/50'
-                    }`}
+                    'border-border hover:border-primary/50'
+                  }`}
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 mt-1">
@@ -356,8 +402,7 @@ const RemindersPage = () => {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className={`text-lg font-semibold ${reminder.status === 'completed' ? 'line-through text-text-muted' : 'text-white'
-                          }`}>
+                        <h3 className={`text-lg font-semibold ${reminder.status === 'completed' ? 'line-through text-text-muted' : 'text-white'}`}>
                           {reminder.title}
                         </h3>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(reminder.priority)}`}>
@@ -377,7 +422,6 @@ const RemindersPage = () => {
                           <Clock className="w-4 h-4 text-primary" />
                           <span className="font-medium">{getTimeDisplay(reminder)}</span>
                         </div>
-
                         {reminder.jobId && (
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4 text-blue-500" />
@@ -386,7 +430,6 @@ const RemindersPage = () => {
                         )}
                       </div>
                     </div>
-
                     <div className="flex items-center gap-2">
                       {reminder.status === 'pending' && (
                         <>
@@ -406,7 +449,6 @@ const RemindersPage = () => {
                           </button>
                         </>
                       )}
-
                       <button
                         onClick={() => {
                           setEditingReminder(reminder);
@@ -432,8 +474,10 @@ const RemindersPage = () => {
               ))}
             </div>
           )}
+        </div>
 
-          {/* Pagination Controls */}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
           <div className="flex justify-center mt-8">
             <Pagination
               current={currentPage}
@@ -445,24 +489,26 @@ const RemindersPage = () => {
               className="rounded-lg p-4"
             />
           </div>
+        )}
 
-          {/* Modals */}
-          {showCreateModal && (
-            <CreateReminderModal
-              isOpen={showCreateModal}
-              onClose={() => {
-                setShowCreateModal(false);
-                setEditingReminder(null);
-              }}
-              onSuccess={() => {
-                fetchData();
-                setEditingReminder(null);
-              }}
-              editingReminder={editingReminder}
-            />
-          )}
+        {/* Modals */}
+        {showCreateModal && (
+          <CreateReminderModal
+            isOpen={showCreateModal}
+            onClose={() => {
+              setShowCreateModal(false);
+              setEditingReminder(null);
+            }}
+            onSuccess={() => {
+              // Instead of direct fetch, dispatch event
+              const event = new Event('refetchReminders');
+              window.dispatchEvent(event);
+              setEditingReminder(null);
+            }}
+            editingReminder={editingReminder}
+          />
+        )}
       </div>
-    </div>
     </AppLayout>
   );
 };

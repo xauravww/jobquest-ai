@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Tag, AlertCircle, Repeat } from 'lucide-react';
-import { FormInput, FormTextarea, FormSelect, FormDateInput } from '@/components/ui/FormInput';
+import { FormInput, FormTextarea, FormSelect, FormDateInput } from '../ui/FormInput';
+import { Modal, Button } from 'antd';
 
 interface CreateReminderModalProps {
     isOpen: boolean;
@@ -36,7 +37,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
             { type: 'in_app', timing: 'on_time' }
         ]
     });
-
     const [loading, setLoading] = useState(false);
     const [applications, setApplications] = useState<any[]>([]);
     const [jobs, setJobs] = useState<any[]>([]);
@@ -87,26 +87,25 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
     const fetchApplicationsAndJobs = async () => {
         try {
-            // Fetch applications
+            // Fetch applications, which contain the necessary job data
             const appsResponse = await fetch('/api/applications');
             if (appsResponse.ok) {
                 const appsData = await appsResponse.json();
-                setApplications(appsData.applications || []);
-            }
+                const validApps = Array.isArray(appsData) ? appsData : [];
+                setApplications(validApps);
 
-            // Fetch jobs
-            const jobsResponse = await fetch('/api/jobs/search');
-            if (jobsResponse.ok) {
-                const jobsData = await jobsResponse.json();
-                setJobs(jobsData.jobs || []);
+                // Extract the job details from each application
+                const jobsFromApps = validApps
+                  .map((app: any) => app.jobId)
+                  .filter((job: any) => job && job._id && job.title); // Ensure job exists and has key properties
+                setJobs(jobsFromApps);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         setLoading(true);
 
         try {
@@ -121,13 +120,11 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
             const url = editingReminder ? `/api/reminders/${editingReminder._id}` : '/api/reminders';
             const method = editingReminder ? 'PUT' : 'POST';
-
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
             if (response.ok) {
                 onSuccess();
                 onClose();
@@ -153,26 +150,22 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         { value: 'job_search', label: 'Job Search' },
         { value: 'custom', label: 'Custom' }
     ];
-
     const priorityOptions = [
         { value: 'low', label: 'Low' },
         { value: 'medium', label: 'Medium' },
         { value: 'high', label: 'High' },
         { value: 'urgent', label: 'Urgent' }
     ];
-
     const recurrenceOptions = [
         { value: 'daily', label: 'Daily' },
         { value: 'weekly', label: 'Weekly' },
         { value: 'monthly', label: 'Monthly' }
     ];
-
     const notificationTypes = [
         { value: 'in_app', label: 'In-App' },
         { value: 'email', label: 'Email' },
         { value: 'push', label: 'Push' }
     ];
-
     const notificationTimings = [
         { value: 'on_time', label: 'On Time' },
         { value: '15_min_before', label: '15 minutes before' },
@@ -181,29 +174,36 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         { value: '1_week_before', label: '1 week before' }
     ];
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-bg-card rounded-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-primary" />
-                        {editingReminder ? 'Edit Reminder' : 'Create New Reminder'}
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="p-2 text-text-muted hover:text-text hover:bg-bg-light rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+        <Modal
+            title={
+                <div className="flex items-center gap-2 text-white">
+                    <AlertCircle className="w-5 h-5 text-primary" />
+                    {editingReminder ? 'Edit Reminder' : 'Create New Reminder'}
                 </div>
-
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            }
+            open={isOpen}
+            onCancel={onClose}
+            width={672}
+            className="custom-dark-modal"
+            maskStyle={{
+                backdropFilter: 'blur(3px)',
+                backgroundColor: 'rgba(10, 15, 28, 0.7)'
+            }}
+            footer={[
+                <Button key="back" onClick={onClose}>
+                    Cancel
+                </Button>,
+                <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
+                    {editingReminder ? 'Update Reminder' : 'Create Reminder'}
+                </Button>,
+            ]}
+        >
+            <div className="max-h-[65vh] overflow-y-auto pr-4 -mr-4">
+                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
                     {/* Basic Information */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-white">Basic Information</h3>
-
                         <FormInput
                             label="Title"
                             value={formData.title}
@@ -211,7 +211,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             placeholder="Enter reminder title"
                             required
                         />
-
                         <FormTextarea
                             label="Description"
                             value={formData.description}
@@ -219,7 +218,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             placeholder="Enter reminder description (optional)"
                             rows={3}
                         />
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormDateInput
                                 label="Due Date"
@@ -227,16 +225,14 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 onChange={(value) => setFormData({ ...formData, dueDate: value })}
                                 required
                             />
-
-                        <FormInput
-                            label="Due Time"
-                            type="time"
-                            value={formData.dueTime}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, dueTime: e.target.value })}
-                            required
-                        />
+                            <FormInput
+                                label="Due Time"
+                                type="time"
+                                value={formData.dueTime}
+                                onChange={(value) => setFormData({ ...formData, dueTime: value })}
+                                required
+                            />
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormSelect
                                 label="Type"
@@ -245,7 +241,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 options={reminderTypes}
                                 required
                             />
-
                             <FormSelect
                                 label="Priority"
                                 value={formData.priority}
@@ -262,53 +257,50 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             <Tag className="w-5 h-5" />
                             Associations
                         </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                        <div className="space-y-2">
-                            <FormSelect
-                                label="Related Job"
-                                value={formData.jobId}
-                                onChange={(value) => setFormData({ ...formData, jobId: value })}
-                                options={[
-                                    { value: '', label: 'None' },
-                                    ...jobs.map((job: any) => ({
-                                        value: job._id,
-                                        label: `${job.title} at ${job.company}`
-                                    }))
-                                ]}
-                                showSearch
-                                filterOption={(input, option) =>
-                                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                                }
-                            />
-                            {formData.jobId && (
-                                <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <div className="w-2 h-2 bg-success rounded-full"></div>
-                                        <span className="text-success font-medium">Linked to Job</span>
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            <div className="space-y-2">
+                                <FormSelect
+                                    label="Related Job"
+                                    value={formData.jobId}
+                                    onChange={(value) => setFormData({ ...formData, jobId: value })}
+                                    options={[
+                                        { value: '', label: 'None' },
+                                        ...jobs.map((job: any) => ({
+                                            value: job._id,
+                                            label: `${job.title} at ${job.company}`
+                                        }))
+                                    ]}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (String(option?.label) ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                />
+                                {formData.jobId && (
+                                    <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <div className="w-2 h-2 bg-success rounded-full"></div>
+                                            <span className="text-success font-medium">Linked to Job</span>
+                                        </div>
+                                        {(() => {
+                                            const selectedJob = jobs.find((job: any) => job._id === formData.jobId);
+                                            return selectedJob ? (
+                                                <div className="mt-2 text-xs text-text-muted">
+                                                    <div>Title: {selectedJob.title}</div>
+                                                    <div>Company: {selectedJob.company}</div>
+                                                    <div>Location: {selectedJob.location || 'Not specified'}</div>
+                                                </div>
+                                            ) : null;
+                                        })()}
                                     </div>
-                                    {(() => {
-                                        const selectedJob = jobs.find((job: any) => job._id === formData.jobId);
-                                        return selectedJob ? (
-                                            <div className="mt-2 text-xs text-text-muted">
-                                                <div>Title: {selectedJob.title}</div>
-                                                <div>Company: {selectedJob.company}</div>
-                                                <div>Location: {selectedJob.location || 'Not specified'}</div>
-                                            </div>
-                                        ) : null;
-                                    })()}
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
-
                         <FormInput
                             label="Tags"
                             value={formData.tags}
                             onChange={(value) => setFormData({ ...formData, tags: value })}
                             placeholder="Enter tags separated by commas"
                         />
-
                         <div>
                             <label className="block text-sm font-medium text-text-muted mb-2">
                                 Color
@@ -337,7 +329,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 Make this a recurring reminder
                             </label>
                         </div>
-
                         {formData.isRecurring && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
                                 <FormSelect
@@ -346,7 +337,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                     onChange={(value) => setFormData({ ...formData, recurrencePattern: value })}
                                     options={recurrenceOptions}
                                 />
-
                                 <FormInput
                                     label="Interval"
                                     type="number"
@@ -354,7 +344,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                     onChange={(value) => setFormData({ ...formData, recurrenceInterval: parseInt(value) || 1 })}
                                     min="1"
                                 />
-
                                 <FormDateInput
                                     label="End Date"
                                     value={formData.recurrenceEndDate}
@@ -367,7 +356,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     {/* Notifications */}
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium text-white">Notifications</h3>
-
                         {formData.notifications.map((notification, index) => (
                             <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-bg-light rounded-lg">
                                 <FormSelect
@@ -380,7 +368,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                     }}
                                     options={notificationTypes}
                                 />
-
                                 <FormSelect
                                     label="Timing"
                                     value={notification.timing}
@@ -393,7 +380,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 />
                             </div>
                         ))}
-
                         <button
                             type="button"
                             onClick={() => {
@@ -407,28 +393,9 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             + Add Notification
                         </button>
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center justify-end gap-4 pt-6 border-t border-border">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-dark border border-border hover:border-border-light rounded-lg transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-6 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                            {loading && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                            {editingReminder ? 'Update Reminder' : 'Create Reminder'}
-                        </button>
-                    </div>
                 </form>
             </div>
-        </div>
+        </Modal>
     );
 };
 

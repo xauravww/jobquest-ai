@@ -129,7 +129,7 @@ a {
 }
 
 /* Global button styles */
-button,
+.btn,
 a.button {
   background-color: var(--primary);
   color: var(--primary-foreground);

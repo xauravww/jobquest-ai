@@ -5,11 +5,12 @@ import dayjs from 'dayjs';
 
 const { TextArea } = Input;
 
-interface FormInputProps extends Omit<InputProps, 'prefix'> {
+interface FormInputProps extends Omit<InputProps, 'onChange' | 'prefix'> {
   icon?: React.ReactNode;
   label?: string;
   error?: string;
   required?: boolean;
+  onChange?: (value: string) => void;
 }
 
 interface FormInputNumberProps extends Omit<InputNumberProps, 'prefix'> {
@@ -58,8 +59,8 @@ export const FormInput: React.FC<FormInputProps> = ({
   onChange,
   ...props 
 }) => {
-  const handleChange = (value: string) => {
-    onChange?.(value);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange?.(e.target.value);
   };
 
   return (
@@ -80,7 +81,7 @@ export const FormInput: React.FC<FormInputProps> = ({
           borderColor: error ? '#ef4444' : 'var(--border)',
           color: 'var(--text)',
         }}
-        onChange={(e) => handleChange(e.target.value)}
+        onChange={handleChange}
       />
       {error && (
         <span className="text-red-500 text-xs mt-1">{error}</span>
