@@ -45,6 +45,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         if (isOpen) {
             fetchApplicationsAndJobs();
             if (editingReminder) {
+                console.log('Editing Reminder jobId:', editingReminder.jobId);
                 setFormData({
                     title: editingReminder.title || '',
                     description: editingReminder.description || '',
@@ -53,7 +54,51 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     type: editingReminder.type || 'follow_up',
                     priority: editingReminder.priority || 'medium',
                     applicationId: editingReminder.applicationId?._id || '',
-                    jobId: editingReminder.jobId?._id || '',
+                    jobId: typeof editingReminder.jobId === 'string' ? editingReminder.jobId : editingReminder.jobId?._id || '',
+                    tags: editingReminder.tags?.join(', ') || '',
+                    color: editingReminder.color || '#3b82f6',
+                    isRecurring: editingReminder.isRecurring || false,
+                    recurrencePattern: editingReminder.recurrencePattern || 'weekly',
+                    recurrenceInterval: editingReminder.recurrenceInterval || 1,
+                    recurrenceEndDate: editingReminder.recurrenceEndDate ? new Date(editingReminder.recurrenceEndDate).toISOString().split('T')[0] : '',
+                    notifications: editingReminder.notifications || [{ type: 'in_app', timing: 'on_time' }]
+                });
+            } else {
+                // Reset form for new reminder
+                setFormData({
+                    title: '',
+                    description: '',
+                    dueDate: '',
+                    dueTime: '09:00',
+                    type: 'follow_up',
+                    priority: 'medium',
+                    applicationId: '',
+                    jobId: '',
+                    tags: '',
+                    color: '#3b82f6',
+                    isRecurring: false,
+                    recurrencePattern: 'weekly',
+                    recurrenceInterval: 1,
+                    recurrenceEndDate: '',
+                    notifications: [{ type: 'in_app', timing: 'on_time' }]
+                });
+            }
+        }
+    }, [isOpen, editingReminder]);
+    useEffect(() => {
+        if (isOpen) {
+            fetchApplicationsAndJobs();
+            if (editingReminder) {
+                console.log('Editing Reminder jobId:', editingReminder.jobId);
+                setFormData({
+                    title: editingReminder.title || '',
+                    description: editingReminder.description || '',
+                    dueDate: editingReminder.dueDate ? new Date(editingReminder.dueDate).toISOString().split('T')[0] : '',
+                    dueTime: editingReminder.dueTime || '09:00',
+                    type: editingReminder.type || 'follow_up',
+                    priority: editingReminder.priority || 'medium',
+                    applicationId: editingReminder.applicationId?._id || '',
+                    jobId: typeof editingReminder.jobId === 'string' ? editingReminder.jobId : editingReminder.jobId?._id || '',
                     tags: editingReminder.tags?.join(', ') || '',
                     color: editingReminder.color || '#3b82f6',
                     isRecurring: editingReminder.isRecurring || false,
@@ -85,21 +130,40 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         }
     }, [isOpen, editingReminder]);
 
-    const fetchApplicationsAndJobs = async () => {
+    useEffect(() => {
+        console.log('Jobs list:', jobs);
+    }, [jobs]);
+
+const fetchApplicationsAndJobs = async () => {
         try {
             // Fetch applications, which contain the necessary job data
             const appsResponse = await fetch('/api/applications');
+            const jobsResponse = await fetch('/api/jobs');
+            let jobsFromApps: any[] = [];
+            let jobsFromApi: any[] = [];
             if (appsResponse.ok) {
                 const appsData = await appsResponse.json();
-                const validApps = Array.isArray(appsData) ? appsData : [];
+                const validApps = Array.isArray(appsData.applications) ? appsData.applications : [];
                 setApplications(validApps);
 
                 // Extract the job details from each application
-                const jobsFromApps = validApps
+                jobsFromApps = validApps
                   .map((app: any) => app.jobId)
                   .filter((job: any) => job && job._id && job.title); // Ensure job exists and has key properties
-                setJobs(jobsFromApps);
             }
+            if (jobsResponse.ok) {
+                const jobsData = await jobsResponse.json();
+                jobsFromApi = Array.isArray(jobsData) ? jobsData : [];
+            }
+            // Merge and deduplicate jobs from applications and jobs API
+            const mergedJobsMap = new Map<string, any>();
+            [...jobsFromApps, ...jobsFromApi].forEach(job => {
+                if (job && job._id) {
+                    mergedJobsMap.set(job._id, job);
+                }
+            });
+            const mergedJobs = Array.from(mergedJobsMap.values());
+            setJobs(mergedJobs);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
