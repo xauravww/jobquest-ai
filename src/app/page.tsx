@@ -1,159 +1,271 @@
+// src/app/page.tsx
+
 "use client";
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import ContactUsForm from "../components/ContactUsForm";
-import { CardCarousel } from "@/components/ui/card-carousel";
-import { AiOutlineRobot, AiOutlineSetting, AiOutlineBarChart } from "react-icons/ai";
 import Footer from "@/components/Footer";
+import { ArrowRight, CheckCircle, BrainCircuit, BarChart3, Briefcase, CalendarCheck, FileText } from "lucide-react";
 
-export default function LandingPage() {
-  const router = useRouter();
+// --- START: Reusable UI Components for the Landing Page ---
+
+// A card for showcasing a specific feature with a visual mockup
+const FeatureCard = ({ title, description, icon: Icon, visual, reverse = false }: {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  visual: React.ReactNode;
+  reverse?: boolean;
+}) => (
+  <div className="grid md:grid-cols-2 gap-12 items-center">
+    <div className={`rounded-lg bg-bg-light p-4 border border-border shadow-2xl ${reverse ? 'md:order-2' : 'md:order-1'}`}>
+      {visual}
+    </div>
+    <div className={reverse ? 'md:order-1' : 'md:order-2'}>
+      <div className="inline-flex items-center gap-3 mb-4">
+        <Icon className="w-7 h-7 text-primary" />
+        <h3 className="text-2xl font-bold text-white">{title}</h3>
+      </div>
+      <p className="text-lg text-gray-300 leading-relaxed">
+        {description}
+      </p>
+    </div>
+  </div>
+);
+
+// A card for displaying user testimonials
+const TestimonialCard = ({ quote, name, role }: { quote: string; name: string; role: string; }) => (
+  <figure className="rounded-2xl bg-gradient-card shadow-lg ring-1 ring-white/10 p-8 h-full flex flex-col">
+    <blockquote className="text-gray-200 flex-grow">
+      <p>{`“${quote}”`}</p>
+    </blockquote>
+    <figcaption className="mt-6 flex items-center gap-x-4">
+      <div className="font-semibold text-white">{name}</div>
+      <div className="text-gray-400">| {role}</div>
+    </figcaption>
+  </figure>
+);
+
+
+// --- START: Section Components ---
+
+const HeroSection = () => (
+  <section className="relative bg-gradient-hero text-center px-6 py-32 pt-40 z-10">
+    <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-0"></div>
+    <div className="relative z-10 max-w-4xl mx-auto">
+      <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-6 bg-gradient-to-r from-white via-gray-200 to-emerald-300 bg-clip-text text-transparent">
+        Stop Searching, Start Interviewing
+      </h1>
+      <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300 mb-12 leading-relaxed">
+        Jobquest AI is your career co-pilot. We use intelligent automation to find your perfect job, optimize your resume, and manage your applications—so you can focus on acing the interview.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+        <a href="/auth/signup" className="button-primary text-lg px-8 py-4 flex items-center gap-2">
+          Get Started for Free <ArrowRight className="w-5 h-5" />
+        </a>
+        <a href="#features" className="button-secondary text-lg px-8 py-4">
+          See Features
+        </a>
+      </div>
+    </div>
+  </section>
+);
+
+const ProblemSolutionSection = () => (
+  <section className="bg-bg py-24 sm:py-32">
+    <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto lg:mx-0 text-center lg:text-left">
+        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          The modern job hunt is overwhelming.
+        </h2>
+        <p className="mt-6 text-lg leading-8 text-gray-300">
+          You're tired of endlessly scrolling, customizing resumes for ATS bots, and tracking applications in spreadsheets. There's a smarter way.
+        </p>
+      </div>
+      <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-2">
+        <TestimonialCard 
+          quote="The AI filtering saved me hours scrolling through irrelevant jobs. I found my current role in less than a week!" 
+          name="Alex Johnson" 
+          role="Software Engineer" 
+        />
+        <TestimonialCard 
+          quote="Finally, all my applications, reminders, and interview notes in one place. Jobquest AI brought order to my chaotic job search." 
+          name="Maria Garcia" 
+          role="Product Manager" 
+        />
+      </div>
+    </div>
+  </section>
+);
+
+const FeatureShowcase = () => (
+  <section id="features" className="bg-bg-dark py-24 sm:py-32">
+    <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-24">
+      <div className="text-center">
+        <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">
+          Your All-in-One Career Command Center
+        </h2>
+        <p className="mt-4 max-w-3xl mx-auto text-xl text-gray-400">
+          Everything you need to accelerate your job search, powered by AI.
+        </p>
+      </div>
+
+      <FeatureCard
+        title="Intelligent Job Filtering"
+        description="Our AI doesn't just match keywords; it understands context. It scans thousands of listings to eliminate spam and find genuine hiring posts, scored for relevance to your unique profile."
+        icon={BrainCircuit}
+        visual={
+          <div className="w-full h-64 bg-bg-card flex items-center justify-center overflow-hidden rounded-lg border border-border shadow-lg">
+            <img
+              src="/ai-filtered-job-results.png"
+              alt="AI Filtered Job Results"
+              className="object-cover w-full h-full"
+              loading="lazy"
+            />
+          </div>
+        }
+      />
+      <FeatureCard
+        title="Unified Application Tracking"
+        description="From 'Saved' to 'Offer Received,' manage every application's lifecycle in one place. Add notes, link reminders, and see your entire pipeline at a glance, just like a professional project manager."
+        icon={Briefcase}
+        visual={
+          <div className="w-full h-64 bg-bg-card flex items-center justify-center overflow-hidden rounded-lg border border-border shadow-lg">
+            <img
+              src="/unified-application-tracking.png"
+              alt="Unified Application Tracking"
+              className="object-cover w-full h-full"
+              loading="lazy"
+            />
+          </div>
+        }
+        reverse
+      />
+      <FeatureCard
+        title="Resume & ATS Optimization"
+        description="Manage multiple resume versions and see how they stack up. Our platform can analyze your resume's effectiveness with an ATS score, helping you tailor it for each application."
+        icon={FileText}
+        visual={
+          <div className="w-full h-64 bg-bg-card flex items-center justify-center overflow-hidden rounded-lg border border-border shadow-lg">
+            <img
+              src="/resume-and-ats-optimization.png"
+              alt="Resume and ATS Optimization"
+              className="object-cover w-full h-full"
+              loading="lazy"
+            />
+          </div>
+        }
+      />
+      <FeatureCard
+        title="Automated Calendar & Reminders"
+        description="Never miss a deadline or a follow-up. Automatically create reminders for applications and schedule interviews directly into your calendar. Your personal assistant for the job search."
+        icon={CalendarCheck}
+        visual={
+          <div className="w-full h-64 bg-bg-card flex items-center justify-center overflow-hidden rounded-lg border border-border shadow-lg">
+            <img
+              src="/automated-calendar-and-reminders.png"
+              alt="Automated Calendar and Reminders"
+              className="object-cover w-full h-full"
+              loading="lazy"
+            />
+          </div>
+        }
+        reverse
+      />
+    </div>
+  </section>
+);
+
+const SkillsMarquee = () => {
+  const logos = ["amazon.svg", "apple.svg", "google.svg", "meta.svg", "microsoft.svg", "netflix.svg", "telegram.svg"];
+  // Duplicate the array for a seamless loop effect
+  const marqueeLogos = [...logos, ...logos];
 
   return (
-    <>
-      <main className="min-h-screen bg-gradient-to-b from-bg-dark via-bg-dark/90 to-bg-dark bg-opacity-90 text-text flex flex-col relative overflow-hidden">
-        {/* Animated Grid Background */}
-
-        {/* Animated Dots */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-primary rounded-full opacity-70 animate-ping"></div>
-          <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-secondary rounded-full opacity-50 animate-pulse"></div>
-          <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-primary rounded-full opacity-60 animate-bounce"></div>
-          <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-success rounded-full opacity-80 animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-secondary rounded-full opacity-60 animate-ping"></div>
+    <section className="bg-bg py-24">
+      <div className="max-w-7xl mx-auto px-6 text-center">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white">Powering Careers at Top Tech Companies</h2>
+        <p className="mt-4 text-lg text-gray-300 max-w-3xl mx-auto">Our AI is trusted by professionals at leading companies worldwide, helping them find their next opportunity.</p>
+        <div className="mt-12 marquee-container overflow-hidden relative w-full">
+          <div className="marquee-content flex animate-marquee">
+            {marqueeLogos.map((logo, index) => (
+              <div key={index} className="mx-4 px-6 py-3 bg-bg-light border border-border rounded-full shrink-0 flex items-center justify-center">
+                <img src={`/${logo}`} alt={logo.replace('.svg', '')} className="w-8 h-8" />
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+    </section>
+  );
+};
 
-        {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 border border-primary/30 rounded-full animate-spin-slow z-0"></div>
-        <div className="absolute top-40 right-20 w-16 h-16 border border-secondary/30 rounded-full animate-reverse-spin z-0"></div>
-        <div className="absolute bottom-40 left-20 w-12 h-12 border border-success/30 rounded-full animate-spin-slow z-0"></div>
-        <section className="hero-bg-effect flex flex-col items-center justify-center flex-grow px-6 py-32 pt-40 text-center relative z-10 bg-gradient-hero">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-5"></div>
-          
-          <div className="relative z-10 max-w-4xl mx-auto">
-            <h1 className="text-6xl md:text-8xl font-black leading-tight tracking-tight mb-8 bg-gradient-to-r from-white via-gray-100 to-emerald-200 bg-clip-text text-transparent">
-              Find Your Dream Job
-            </h1>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              with AI-Powered Job Search
-            </h2>
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto text-gray-300 mb-12 leading-relaxed">
-              Leverage AI-driven job matching, automated applications, and personalized career insights 
-              to accelerate your job search and land your dream position faster than ever.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center z-10">
-              <a href="/auth/signup" className="button-primary text-lg px-8 py-4">
-                Get Started Today
-              </a>
-              <a href="/auth/signin" className="button-secondary text-lg px-8 py-4">
-                Learn More
-              </a>
-            </div>
+const DataDrivenSection = () => (
+  <section className="bg-bg-dark py-24 sm:py-32">
+    <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+      <div className="md:order-2">
+        <div className="inline-flex items-center gap-3 mb-4">
+          <BarChart3 className="w-7 h-7 text-primary" />
+          <h2 className="text-3xl font-bold text-white">Make Data-Driven Decisions</h2>
+        </div>
+        <p className="text-lg text-gray-300 mb-6 leading-relaxed">
+          Stop guessing what works. Jobquest AI provides clear analytics on your job search performance, helping you refine your strategy and land a job faster. This is a feature already supported by your dashboard's API.
+        </p>
+        <ul className="space-y-4">
+          <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Track your application response rate over time to see what's working.</span></li>
+          <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Identify which of your skills are most in-demand based on job descriptions.</span></li>
+          <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Visualize your application pipeline from submitted to offer.</span></li>
+        </ul>
+      </div>
+      <div className="md:order-1">
+        <div className="rounded-lg bg-bg-card p-4 border border-border shadow-2xl">
+          <div className="w-full h-80 bg-bg flex items-center justify-center overflow-hidden rounded-lg">
+            <img
+              src="/make-data-drive-analytics.png"
+              alt="Make Data Drive Analytics"
+              className="object-cover w-full h-full"
+              loading="lazy"
+            />
           </div>
-        </section>
+        </div>
+      </div>
+    </div>
+  </section>
+);
 
-        <section className="bg-bg text-text py-32 mt-0 relative z-20">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">
-                Powerful Dashboard for Your Career
-              </h2>
-              <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-                Our intuitive dashboard gives you complete control over your job search 
-                with real-time application tracking, AI-powered job matching, and career insights.
-              </p>
-            </div>
-            <CardCarousel
-              autoplayDelay={2000}
-              showPagination={true}
-              showNavigation={true}
-            >
-              <div className="p-6 rounded-lg shadow-lg bg-gradient-card hover:bg-highlight transition cursor-pointer flex flex-col items-center text-center">
-                <AiOutlineRobot className="text-5xl mb-4 text-text" />
-                <h3 className="text-xl font-semibold mb-3 text-text">
-                  AI-Powered Matching
-                </h3>
-                <p className="text-text-muted">
-                  Our advanced AI algorithms match you with the best job
-                  opportunities tailored to your skills and preferences.
-                </p>
-              </div>
-              <div className="p-6 rounded-lg shadow-lg bg-gradient-card hover:bg-highlight transition cursor-pointer flex flex-col items-center text-center">
-                <AiOutlineSetting className="text-5xl mb-4 text-text" />
-                <h3 className="text-xl font-semibold mb-3 text-text">
-                  Automated Applications
-                </h3>
-                <p className="text-text-muted">
-                  Save time by automating your job applications with our
-                  seamless integration and smart tracking.
-                </p>
-              </div>
-              <div className="p-6 rounded-lg shadow-lg bg-gradient-card hover:bg-highlight transition cursor-pointer flex flex-col items-center text-center">
-                <AiOutlineBarChart className="text-5xl mb-4 text-text" />
-                <h3 className="text-xl font-semibold mb-3 text-text">
-                  Personalized Insights
-                </h3>
-                <p className="text-text-muted">
-                  Get personalized career advice and salary negotiation tips
-                  powered by AI.
-                </p>
-              </div>
-            </CardCarousel>
-          </div>
-        </section>
+const FinalCTA = () => {
+  const router = useRouter();
+  return (
+    <section className="bg-bg text-text py-24">
+      <div className="max-w-4xl mx-auto px-6 text-center">
+        <h2 className="text-4xl font-bold mb-6 text-white">Take Control of Your Career Journey</h2>
+        <p className="mb-12 max-w-2xl mx-auto text-gray-300 text-lg">
+          Sign up for free and let your AI co-pilot do the heavy lifting. Your dream job is closer than you think.
+        </p>
+        <button
+          onClick={() => router.push("/auth/signup")}
+          className="button-primary text-xl px-10 py-5"
+        >
+          Start Winning Your Job Search
+        </button>
+      </div>
+    </section>
+  );
+};
 
-        <section className="bg-bg-dark bg-opacity-90 text-text py-24 relative z-10">
-          <div className="max-w-6xl mx-auto px-6 text-center">
-            <h2 className="text-4xl font-bold mb-8">Trusted by Thousands</h2>
-            <p className="mb-12 max-w-3xl mx-auto text-gray-300">
-              Join thousands of job seekers who have found success with Jobquest
-              AI.
-            </p>
-            <div className="marquee-container overflow-hidden relative bg-white/10 rounded-lg p-4">
-              <div className="marquee-content flex animate-marquee">
-                <img src="/google.svg" alt="Google" className="h-14 mx-8" />
-                <img src="/microsoft.svg" alt="Microsoft" className="h-14 mx-8" />
-                <img src="/amazon.svg" alt="Amazon" className="h-14 mx-8" />
-                <img src="/meta.svg" alt="Meta" className="h-14 mx-8" />
-                <img src="/apple.svg" alt="Apple" className="h-14 mx-8" />
-                <img src="/netflix.svg" alt="Netflix" className="h-14 mx-8" />
-                <img src="/telegram.svg" alt="Telegram" className="h-14 mx-8" />
-                {/* Duplicate for seamless loop */}
-                <img src="/google.svg" alt="Google" className="h-14 mx-8" />
-                <img src="/microsoft.svg" alt="Microsoft" className="h-14 mx-8" />
-                <img src="/amazon.svg" alt="Amazon" className="h-14 mx-8" />
-                <img src="/meta.svg" alt="Meta" className="h-14 mx-8" />
-                <img src="/apple.svg" alt="Apple" className="h-14 mx-8" />
-                <img src="/netflix.svg" alt="Netflix" className="h-14 mx-8" />
-                <img src="/telegram.svg" alt="Telegram" className="h-14 mx-8" />
-                <img src="/next.svg" alt="Next.js" className="h-14 mx-8" />
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="bg-bg-dark bg-opacity-90 text-text py-24 relative z-10">
-          <div className="max-w-4xl mx-auto px-6">
-            <ContactUsForm />
-          </div>
-        </section>
+// --- Main Page Component ---
 
-        <section className="bg-bg text-text py-24 relative z-10">
-          <div className="max-w-6xl mx-auto px-6 text-center">
-            <h2 className="text-4xl font-bold mb-8">Get Started Today</h2>
-            <p className="mb-12 max-w-3xl mx-auto text-gray-300">
-              Sign up now and take the first step towards your dream career with
-              Jobquest AI.
-            </p>
-            <button
-              onClick={() => router.push("/auth/signup")}
-              className="button-primary"
-            >
-              Explore Jobs
-            </button>
-          </div>
-        </section>
+export default function RedesignedLandingPage() {
+  return (
+    <>
+      <main className="min-h-screen bg-bg-dark text-text flex flex-col overflow-hidden">
+        <HeroSection />
+        <ProblemSolutionSection />
+        <FeatureShowcase />
+        <SkillsMarquee />
+        <DataDrivenSection />
+        <FinalCTA />
       </main>
       <Footer />
     </>
