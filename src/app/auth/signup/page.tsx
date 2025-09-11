@@ -231,15 +231,17 @@ const SignUpPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12">
+              {/* Disabled Google and Twitter sign-up buttons */}
+              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12 opacity-50 cursor-not-allowed" disabled>
                 <FcGoogle size={20} />
-                <span>Google</span>
+                <span>Google (Disabled)</span>
               </button>
-              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12">
+              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12 opacity-50 cursor-not-allowed" disabled>
                 <FaTwitter size={20} className="text-sky-400" />
-                <span>Twitter</span>
+                <span>Twitter (Disabled)</span>
               </button>
             </div>
+            {/* Mobile sidebar design note: Use the same design as the dashboard drawer/sidebar for mobile */}
           </div>
 
           {/* Already have account */}

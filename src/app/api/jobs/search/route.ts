@@ -53,7 +53,9 @@ export async function GET(request: NextRequest) {
       const dateCandidates = [
         job.publishedDate,
         job.postedDate,
-        job.metadata?.publishedDate
+        job.metadata?.publishedDate,
+        job.date,
+        job.postedDate
       ].filter(Boolean).map((d: string) => new Date(d));
 
       // Filter out invalid dates
@@ -285,7 +287,10 @@ export async function GET(request: NextRequest) {
         const jobDate = getJobDate(job);
         if (!jobDate || isNaN(jobDate.getTime())) return false;
         const filterDate = new Date(postedAfter!);
-        return jobDate >= filterDate;
+        // Normalize both dates to midnight UTC for accurate comparison ignoring time
+        const jobDateUTC = Date.UTC(jobDate.getUTCFullYear(), jobDate.getUTCMonth(), jobDate.getUTCDate());
+        const filterDateUTC = Date.UTC(filterDate.getUTCFullYear(), filterDate.getUTCMonth(), filterDate.getUTCDate());
+        return jobDateUTC > filterDateUTC;
       });
       additionalFilters.postedAfter = postedAfter;
     }

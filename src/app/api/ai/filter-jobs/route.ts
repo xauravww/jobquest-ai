@@ -120,49 +120,94 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try to connect to the original local AI server first
-    const aiServerUrl = process.env.AI_SERVER_URL || 'http://localhost:1234';
+    // Import the AI service dynamically to avoid SSR issues
+    const { default: AiFilterService } = await import('@/lib/aiFilterService');
+    const aiService = new AiFilterService();
+
     let analyzedJobs = [];
 
     try {
-      // Use the original AI filtering logic
+      // Use the configured AI provider
       const aiPromises = jobs.map(async (job) => {
         try {
           const prompt = buildAIPrompt(job, criteria);
-          
-          const aiResponse = await fetch(`${aiServerUrl}/v1/chat/completions`, {
+          const { provider, apiUrl, model, apiKey } = aiService.getConfig();
+
+          let response;
+          let requestBody;
+          let headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+
+          switch (provider) {
+            case 'lm-studio':
+            case 'ollama':
+              requestBody = {
+                model: model,
+                messages: [
+                  {
+                    role: 'system',
+                    content: `You are a job matching AI. Analyze if this job matches the user's criteria and provide a score from 0-100.
+
+                    Consider:
+                    - Job title relevance to target role
+                    - Location preferences
+                    - Salary requirements
+                    - Required skills match
+                    - Experience level fit
+                    - Company preferences
+
+                    Respond with JSON: {"score": number, "reason": "explanation", "isMatch": boolean}`
+                  },
+                  { role: 'user', content: prompt }
+                ],
+                temperature: 0.3,
+                max_tokens: 200
+              };
+              break;
+
+            case 'gemini':
+              requestBody = {
+                contents: [{
+                  parts: [{
+                    text: `${prompt}\n\nRespond with JSON: {"score": number, "reason": "explanation", "isMatch": boolean}`
+                  }]
+                }],
+                generationConfig: {
+                  temperature: 0.3,
+                  maxOutputTokens: 200,
+                }
+              };
+              headers = {
+                ...headers,
+                'x-goog-api-key': apiKey
+              };
+              break;
+
+            default:
+              throw new Error(`Unsupported provider: ${provider}`);
+          }
+
+          const endpoint = provider === 'gemini'
+            ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+            : `${apiUrl}/v1/chat/completions`;
+
+          response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'qwen2.5-coder-3b-instruct',
-              messages: [
-                { 
-                  role: 'system', 
-                  content: `You are a job matching AI. Analyze if this job matches the user's criteria and provide a score from 0-100.
-                  
-                  Consider:
-                  - Job title relevance to target role
-                  - Location preferences
-                  - Salary requirements
-                  - Required skills match
-                  - Experience level fit
-                  - Company preferences
-                  
-                  Respond with JSON: {"score": number, "reason": "explanation", "isMatch": boolean}`
-                },
-                { role: 'user', content: prompt }
-              ],
-              temperature: 0.3,
-              max_tokens: 200
-            }),
+            headers,
+            body: JSON.stringify(requestBody)
           });
 
-          if (aiResponse.ok) {
-            const aiData = await aiResponse.json();
-            const content = aiData.choices?.[0]?.message?.content;
-            
+          if (response.ok) {
+            const aiData = await response.json();
+            let content;
+
+            if (provider === 'gemini') {
+              content = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+            } else {
+              content = aiData.choices?.[0]?.message?.content;
+            }
+
             try {
               const analysis = JSON.parse(content);
               return {
@@ -176,7 +221,7 @@ export async function POST(request: NextRequest) {
               return analyzeJobFallback(job, criteria);
             }
           } else {
-            throw new Error('AI server response not ok');
+            throw new Error(`AI server response not ok: ${response.status}`);
           }
         } catch (jobError) {
           console.warn('AI analysis failed for job, using fallback:', jobError);
@@ -185,11 +230,11 @@ export async function POST(request: NextRequest) {
       });
 
       analyzedJobs = await Promise.all(aiPromises);
-      console.log('AI filtering completed using local AI server');
+      console.log(`AI filtering completed using ${aiService.getConfig().provider}`);
 
     } catch (aiServerError) {
-      console.warn('Local AI server not available, using fallback analysis:', aiServerError);
-      
+      console.warn('AI provider not available, using fallback analysis:', aiServerError);
+
       // Fallback to simple analysis
       analyzedJobs = jobs.map(job => analyzeJobFallback(job, criteria));
     }

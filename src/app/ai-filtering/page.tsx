@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Bot, Building, ExternalLink, LoaderCircle, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bot, Building, ExternalLink, LoaderCircle, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye, Cog, Lock, Link } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
-import { FormInput, FormInputNumber, FormDateInput } from '@/components/ui/FormInput';
+import { FormInput, FormInputNumber, FormDateInput, FormSelect } from '@/components/ui/FormInput';
 
 // Define types for Job and Props
 interface AIAnalysis {
@@ -354,6 +354,176 @@ const InitialPrompt = () => (
   </div>
 );
 
+const AI_PROVIDERS = [
+  { label: 'LM Studio', value: 'lm-studio' },
+  { label: 'Ollama', value: 'ollama' },
+  { label: 'Gemini', value: 'gemini' }
+];
+
+// AI Provider Configuration Component
+const AIProviderConfig = ({
+  aiProvider,
+  setAiProvider,
+  apiKey,
+  setApiKey,
+  apiUrl,
+  setApiUrl,
+  model,
+  setModel,
+  showConfig,
+  setShowConfig
+}: {
+  aiProvider: string;
+  setAiProvider: (value: string) => void;
+  apiKey: string;
+  setApiKey: (value: string) => void;
+  apiUrl: string;
+  setApiUrl: (value: string) => void;
+  model: string;
+  setModel: (value: string) => void;
+  showConfig: boolean;
+  setShowConfig: (value: boolean) => void;
+}) => {
+  const requiresApiKey = aiProvider === 'gemini';
+  const requiresUrlAndModel = aiProvider === 'lm-studio' || aiProvider === 'ollama';
+
+  return (
+    <div className="ai-config-panel rounded-xl p-6 mb-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-primary/20 rounded-lg">
+            <Cog className="w-5 h-5 text-primary" />
+          </div>
+          <div className="text-xl font-semibold text-white">AI Provider Configuration</div>
+        </div>
+        <div
+          onClick={() => setShowConfig(false)}
+          className="w-8 h-8 cursor-pointer"
+        >
+          ×
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* AI Provider Selection */}
+        <FormSelect
+          label="AI Provider"
+          value={aiProvider}
+          onChange={setAiProvider}
+          options={AI_PROVIDERS}
+          required
+        />
+
+        {/* API Key (for Gemini) */}
+        {requiresApiKey && (
+          <FormInput
+            label="API Key"
+            value={apiKey}
+            onChange={setApiKey}
+            placeholder="Enter your Gemini API key"
+            icon={<Lock className="w-4 h-4" />}
+            type="password"
+            required
+          />
+        )}
+
+        {/* API URL (for LM Studio and Ollama) */}
+        {requiresUrlAndModel && (
+          <FormInput
+            label="API URL"
+            value={apiUrl}
+            onChange={setApiUrl}
+            placeholder="http://localhost:1234"
+            icon={<Link className="w-4 h-4" />}
+            required
+          />
+        )}
+
+        {/* Model Name */}
+        {requiresUrlAndModel && (
+          <FormInput
+            label="Model Name"
+            value={model}
+            onChange={setModel}
+            placeholder="local-model"
+            icon={<Bot className="w-4 h-4" />}
+            required
+          />
+        )}
+
+        {/* Gemini Model Selection */}
+        {aiProvider === 'gemini' && (
+          <FormSelect
+            label="Gemini Model"
+            value={model}
+            onChange={setModel}
+            options={[
+              { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash-exp' },
+              { label: 'Gemini Pro', value: 'gemini-pro' },
+              { label: 'Gemini Pro Vision', value: 'gemini-pro-vision' }
+            ]}
+            required
+          />
+        )}
+
+        {/* Info Section */}
+        <div className="md:col-span-2">
+          <div className="p-4 bg-bg-light/50 rounded-lg border border-border/50">
+            <h4 className="text-sm font-semibold text-white mb-2">Provider Information</h4>
+            <div className="text-xs text-text-muted space-y-1">
+              {aiProvider === 'lm-studio' && (
+                <>
+                  <p>• LM Studio: Local AI server for running models like Llama, Mistral, etc.</p>
+                  <p>• Default URL: http://localhost:1234</p>
+                  <p>• No API key required - runs locally</p>
+                </>
+              )}
+              {aiProvider === 'ollama' && (
+                <>
+                  <p>• Ollama: Local AI model runner</p>
+                  <p>• Default URL: http://localhost:11434</p>
+                  <p>• No API key required - runs locally</p>
+                </>
+              )}
+              {aiProvider === 'gemini' && (
+                <>
+                  <p>• Google Gemini: Cloud AI service</p>
+                  <p>• Requires API key from Google AI Studio</p>
+                  <p>• Model will be set automatically (gemini-pro)</p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          onClick={(e) => {
+            const config = { provider: aiProvider, apiKey, apiUrl, model, enabled: true };
+            localStorage.setItem('ai-provider-config', JSON.stringify(config));
+            console.log('AI config manually saved to localStorage:', config);
+            // Show temporary success message
+            const button = e.target as HTMLButtonElement;
+            if (button) {
+              const originalText = button.textContent;
+              button.textContent = '✓ Saved!';
+              button.classList.add('bg-green-500');
+              setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-green-500');
+              }, 2000);
+            }
+          }}
+          className="bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200"
+        >
+          Save Configuration
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const JobSearchPage = () => {
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -383,97 +553,48 @@ const JobSearchPage = () => {
   // New filter state for hasDate
   const [hasDate, setHasDate] = useState<boolean | undefined>(undefined);
 
+  // AI provider config state
+  const [aiProvider, setAiProvider] = useState('lm-studio');
+  const [apiKey, setApiKey] = useState('');
+  const [apiUrl, setApiUrl] = useState('http://localhost:1234');
+  const [model, setModel] = useState('local-model');
+  const [showAIConfig, setShowAIConfig] = useState(false);
+
+  // Load saved AI config from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedConfig = localStorage.getItem('ai-provider-config');
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig);
+          if (config.provider) setAiProvider(config.provider);
+          if (config.apiKey) setApiKey(config.apiKey);
+          if (config.apiUrl) setApiUrl(config.apiUrl);
+          if (config.model) setModel(config.model);
+          console.log('AI config loaded from localStorage:', config);
+        } catch (e) {
+          console.warn('Failed to parse saved AI config');
+        }
+      }
+    }
+  }, []);
+
+  // Save AI config to localStorage on change (debounced)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const config = { provider: aiProvider, apiKey, apiUrl, model, enabled: true };
+      localStorage.setItem('ai-provider-config', JSON.stringify(config));
+      console.log('AI config saved to localStorage:', config);
+    }
+  }, [aiProvider, apiKey, apiUrl, model]);
+
   // Generate unique ID for job
   const generateJobId = (job: Job): string => {
     return `${job.url}-${job.title}-${job.company}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
   };
 
-  // Handle marking job to track
-  const handleTrackJob = (job: Job) => {
-    const jobId = generateJobId(job);
-    
-    // Update job in chunks
-    setChunks(prev => prev.map(chunk => ({
-      ...chunk,
-      jobs: chunk.jobs.map(j => generateJobId(j) === jobId ? { ...j, userAction: 'track' as const } : j),
-      filteredJobs: chunk.filteredJobs.map(j => generateJobId(j) === jobId ? { ...j, userAction: 'track' as const } : j)
-    })));
-
-    // Update pending changes
-    setPendingChanges(prev => ({
-      toTrack: [...prev.toTrack.filter(j => generateJobId(j) !== jobId), job],
-      toSkip: prev.toSkip.filter(j => generateJobId(j) !== jobId)
-    }));
-  };
-
-  // Handle marking job to skip
-  const handleSkipJob = (job: Job) => {
-    const jobId = generateJobId(job);
-    
-    // Update job in chunks
-    setChunks(prev => prev.map(chunk => ({
-      ...chunk,
-      jobs: chunk.jobs.map(j => generateJobId(j) === jobId ? { ...j, userAction: 'skip' as const } : j),
-      filteredJobs: chunk.filteredJobs.map(j => generateJobId(j) === jobId ? { ...j, userAction: 'skip' as const } : j)
-    })));
-
-    // Update pending changes
-    setPendingChanges(prev => ({
-      toTrack: prev.toTrack.filter(j => generateJobId(j) !== jobId),
-      toSkip: [...prev.toSkip.filter(j => generateJobId(j) !== jobId), job]
-    }));
-  };
-
-  // Handle bulk track all visible jobs in a chunk
-  const handleTrackAllInChunk = (chunkId: number) => {
-    const chunk = chunks.find(c => c.id === chunkId);
-    if (!chunk) return;
-
-    const visibleJobs = chunk.filteredJobs.filter(job => !job.userAction);
-    if (visibleJobs.length === 0) {
-      alert('No visible jobs to track in this chunk.');
-      return;
-    }
-
-    visibleJobs.forEach(job => {
-      handleTrackJob(job);
-    });
-  };
-
-  // Handle bulk skip all visible jobs in a chunk
-  const handleSkipAllInChunk = (chunkId: number) => {
-    const chunk = chunks.find(c => c.id === chunkId);
-    if (!chunk) return;
-
-    const visibleJobs = chunk.filteredJobs.filter(job => !job.userAction);
-    if (visibleJobs.length === 0) {
-      alert('No visible jobs to skip in this chunk.');
-      return;
-    }
-
-    visibleJobs.forEach(job => {
-      handleSkipJob(job);
-    });
-  };
-
-  // Function to chunk results into groups of 5
-  const chunkResults = (results: Job[], chunkSize = 5): Chunk[] => {
-    const chunks: Chunk[] = [];
-    for (let i = 0; i < results.length; i += chunkSize) {
-      const chunkJobs = results.slice(i, i + chunkSize);
-      chunks.push({
-        id: chunks.length + 1,
-        jobs: chunkJobs,
-        isFiltered: false,
-        isLoading: false,
-        error: null,
-        filteredJobs: chunkJobs
-      });
-    }
-    return chunks;
-  };
-
-  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handle search function
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
@@ -482,58 +603,131 @@ const JobSearchPage = () => {
     setHasSearched(true);
 
     try {
-      // Call your original server API exactly like in the reference
-      const searchParams: Record<string, string | number> = {
-        q: query,
-        filter: 'none', // Get all results initially
-        maxPages: parseInt(filters.maxPages) || 3,
-        store: 'false' // Don't auto-store search results - we'll handle this manually
-      };
-
-      // Add advanced filters to search parameters
-      if (filters.location) searchParams.location = filters.location;
-      if (filters.company) searchParams.company = filters.company;
-      if (filters.minSalary) searchParams.minSalary = filters.minSalary;
-      if (filters.maxSalary) searchParams.maxSalary = filters.maxSalary;
-      if (filters.postedAfter) searchParams.postedAfter = filters.postedAfter;
-      if (filters.postedBefore) searchParams.postedBefore = filters.postedBefore;
-      if (filters.searchEngine) searchParams.searchEngine = filters.searchEngine;
-      if (hasDate !== undefined) searchParams.hasDate = hasDate.toString();
-
-      console.log('Searching with params:', searchParams);
-
-      // Build the URL with query parameters for the integrated API
-      const searchUrl = new URL('/api/jobs/search', window.location.origin);
-      Object.entries(searchParams).forEach(([key, value]) => {
-        searchUrl.searchParams.append(key, value.toString());
+      const params = new URLSearchParams({
+        q: query.trim(),
+        maxPages: (parseInt(filters.maxPages.toString()) || 3).toString(),
+        ...(hasDate !== undefined && { hasDate: hasDate.toString() }),
+        ...(filters.postedAfter && { postedAfter: filters.postedAfter }),
+        ...(filters.postedBefore && { postedBefore: filters.postedBefore }),
+        ...(filters.location && { location: filters.location }),
+        ...(filters.company && { company: filters.company }),
+        ...(filters.minSalary && { minSalary: filters.minSalary.toString() }),
+        ...(filters.maxSalary && { maxSalary: filters.maxSalary.toString() }),
+        ...(filters.searchEngine && { engine: filters.searchEngine }),
       });
 
-      console.log('Final search URL:', searchUrl.toString());
-
-      const response = await fetch(searchUrl.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(`/api/jobs/search?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error('Failed to search jobs');
+        throw new Error('Search failed');
       }
 
       const data = await response.json();
-      console.log("Response data:", data);
 
-      // Get jobs from response
-      const allJobs = data.data || [];
-      
-      setChunks(chunkResults(allJobs));
+      // Process jobs and create chunks
+      const processedJobs = data.data.map((job: any) => ({
+        ...job,
+        id: generateJobId(job)
+      }));
+
+      const chunkSize = 20;
+      const newChunks: Chunk[] = [];
+
+      for (let i = 0; i < processedJobs.length; i += chunkSize) {
+        const chunkJobs = processedJobs.slice(i, i + chunkSize);
+        newChunks.push({
+          id: Math.floor(i / chunkSize) + 1,
+          jobs: chunkJobs,
+          isFiltered: false,
+          isLoading: false,
+          error: null,
+          filteredJobs: chunkJobs
+        });
+      }
+
+      setChunks(newChunks);
     } catch (err) {
-      console.error('Error fetching jobs:', err);
-      setError('Failed to load job results. Please check your internet connection and ensure the search API is accessible.');
+      console.error('Search error:', err);
+      setError('Failed to search jobs. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle track job
+  const handleTrackJob = (job: Job) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      toTrack: [...prev.toTrack, job]
+    }));
+
+    // Update job userAction in chunks
+    setChunks(prev => prev.map(chunk => ({
+      ...chunk,
+      jobs: chunk.jobs.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j),
+      filteredJobs: chunk.filteredJobs.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j)
+    })));
+  };
+
+  // Handle skip job
+  const handleSkipJob = (job: Job) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      toSkip: [...prev.toSkip, job]
+    }));
+
+    // Update job userAction in chunks
+    setChunks(prev => prev.map(chunk => ({
+      ...chunk,
+      jobs: chunk.jobs.map(j => j.id === job.id ? { ...j, userAction: 'skip' } : j),
+      filteredJobs: chunk.filteredJobs.map(j => j.id === job.id ? { ...j, userAction: 'skip' } : j)
+    })));
+  };
+
+  // Handle track all in chunk
+  const handleTrackAllInChunk = (chunkId: number) => {
+    const chunk = chunks.find(c => c.id === chunkId);
+    if (!chunk) return;
+
+    const jobsToTrack = chunk.filteredJobs.filter(job => !job.userAction);
+    setPendingChanges(prev => ({
+      ...prev,
+      toTrack: [...prev.toTrack, ...jobsToTrack]
+    }));
+
+    // Update all jobs in chunk
+    setChunks(prev => prev.map(chunk =>
+      chunk.id === chunkId
+        ? {
+            ...chunk,
+            jobs: chunk.jobs.map(j => ({ ...j, userAction: 'track' })),
+            filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: 'track' }))
+          }
+        : chunk
+    ));
+  };
+
+  // Handle skip all in chunk
+  const handleSkipAllInChunk = (chunkId: number) => {
+    const chunk = chunks.find(c => c.id === chunkId);
+    if (!chunk) return;
+
+    const jobsToSkip = chunk.filteredJobs.filter(job => !job.userAction);
+    setPendingChanges(prev => ({
+      ...prev,
+      toSkip: [...prev.toSkip, ...jobsToSkip]
+    }));
+
+    // Update all jobs in chunk
+    setChunks(prev => prev.map(chunk =>
+      chunk.id === chunkId
+        ? {
+            ...chunk,
+            jobs: chunk.jobs.map(j => ({ ...j, userAction: 'skip' })),
+            filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: 'skip' }))
+          }
+        : chunk
+    ));
   };
 
   const handleChunkFilter = async (chunkId: number) => {
@@ -720,7 +914,7 @@ const JobSearchPage = () => {
         <FormInput
           label="Location"
           value={filters.location}
-          onChange={(e) => handleFilterChange('location', e.target.value)}
+          onChange={(value) => handleFilterChange('location', value)}
           placeholder="e.g., Remote, New York"
           icon={<MapPin className="w-4 h-4" />}
         />
@@ -729,7 +923,7 @@ const JobSearchPage = () => {
         <FormInput
           label="Company"
           value={filters.company}
-          onChange={(e) => handleFilterChange('company', e.target.value)}
+          onChange={(value) => handleFilterChange('company', value)}
           placeholder="e.g., Google, Microsoft"
           icon={<Building2 className="w-4 h-4" />}
         />
@@ -738,7 +932,7 @@ const JobSearchPage = () => {
         <FormInputNumber
           label="Min Salary ($)"
           value={filters.minSalary}
-          onChange={(value) => handleFilterChange('minSalary', value)}
+          onChange={(value) => handleFilterChange('minSalary', value !== null ? value : '')}
           placeholder="e.g., 80000"
           icon={<DollarSign className="w-4 h-4" />}
           min={0}
@@ -747,7 +941,7 @@ const JobSearchPage = () => {
         <FormInputNumber
           label="Max Salary ($)"
           value={filters.maxSalary}
-          onChange={(value) => handleFilterChange('maxSalary', value)}
+          onChange={(value) => handleFilterChange('maxSalary', value !== null ? value : '')}
           placeholder="e.g., 150000"
           icon={<DollarSign className="w-4 h-4" />}
           min={0}
@@ -758,7 +952,7 @@ const JobSearchPage = () => {
         <FormInputNumber
           label="Min Confidence (%)"
           value={filters.minConfidence}
-          onChange={(value) => handleFilterChange('minConfidence', value || 60)}
+          onChange={(value) => handleFilterChange('minConfidence', value !== null ? value : 60)}
           min={0}
           max={100}
           step={1}
@@ -768,7 +962,7 @@ const JobSearchPage = () => {
         <FormInputNumber
           label="Max Pages"
           value={filters.maxPages}
-          onChange={(value) => handleFilterChange('maxPages', value)}
+          onChange={(value) => handleFilterChange('maxPages', value !== null ? value : '3')}
           placeholder="1-10"
           icon={<Search className="w-4 h-4" />}
           min={1}
@@ -974,10 +1168,26 @@ const JobSearchPage = () => {
             {/* Filter and Save Controls */}
             <div className="flex gap-3 flex-wrap items-center">
               <button
+                onClick={() => setShowAIConfig(!showAIConfig)}
+                className={`flex items-center gap-2 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 ${
+                  showAIConfig
+                    ? 'bg-primary text-white shadow-lg'
+                    : 'bg-bg-card hover:bg-bg-light text-text border border-border'
+                }`}
+              >
+                <Cog size={18} />
+                <div className="flex flex-col items-start">
+                  <span>{showAIConfig ? 'Hide AI Config' : 'AI Config'}</span>
+                  <span className="text-xs opacity-75 capitalize">
+                    {aiProvider.replace('-', ' ')} {apiKey || apiUrl ? '✓' : '⚠'}
+                  </span>
+                </div>
+              </button>
+              <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 ${
-                  showFilters 
-                    ? 'bg-primary text-white shadow-lg' 
+                  showFilters
+                    ? 'bg-primary text-white shadow-lg'
                     : 'bg-bg-card hover:bg-bg-light text-text border border-border'
                 }`}
               >
@@ -1024,6 +1234,22 @@ const JobSearchPage = () => {
               )}
             </div>
           </div>
+
+          {/* AI Config Panel */}
+          {showAIConfig && (
+            <AIProviderConfig
+              aiProvider={aiProvider}
+              setAiProvider={setAiProvider}
+              apiKey={apiKey}
+              setApiKey={setApiKey}
+              apiUrl={apiUrl}
+              setApiUrl={setApiUrl}
+              model={model}
+              setModel={setModel}
+              showConfig={showAIConfig}
+              setShowConfig={setShowAIConfig}
+            />
+          )}
 
           {/* Filter Panel */}
           {showFilters && <FilterPanel />}
