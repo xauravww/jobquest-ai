@@ -15,6 +15,8 @@ class AiFilterService {
   }
 
   loadConfig() {
+    // On server side, always use default config
+    // Config will be set via saveConfig() method when called from API
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('ai-provider-config');
       if (saved) {
@@ -28,6 +30,7 @@ class AiFilterService {
         this.config = { ...this.defaultConfig };
       }
     } else {
+      // Server-side: don't try to load from localStorage
       this.config = { ...this.defaultConfig };
     }
   }
@@ -281,6 +284,95 @@ Please respond with a JSON array where each object has:
         aiReason: 'AI analysis failed, using fallback',
         isHiring: true
       }));
+    }
+  }
+
+  /**
+   * Generate cover letter using AI
+   */
+  async generateCoverLetter(systemPrompt, userPrompt) {
+    try {
+      const { provider, apiUrl, model, apiKey } = this.config;
+
+      let response;
+      let requestBody;
+      let headers = {
+        'Content-Type': 'application/json',
+      };
+
+      switch (provider) {
+        case 'lm-studio':
+        case 'ollama':
+          requestBody = {
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt
+              },
+              {
+                role: 'user',
+                content: userPrompt
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500
+          };
+          break;
+
+        case 'gemini':
+          requestBody = {
+            contents: [{
+              parts: [{
+                text: `${systemPrompt}\n\n${userPrompt}`
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1500,
+            }
+          };
+          headers = {
+            ...headers,
+            'x-goog-api-key': apiKey
+          };
+          break;
+
+        default:
+          throw new Error(`Unsupported provider: ${provider}`);
+      }
+
+      const endpoint = provider === 'gemini'
+        ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+        : `${apiUrl}/v1/chat/completions`;
+
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI server error: ${response.status} - ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      let aiResponse;
+
+      if (provider === 'gemini') {
+        aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      } else {
+        aiResponse = data.choices?.[0]?.message?.content;
+      }
+
+      if (!aiResponse) {
+        throw new Error('No AI response received');
+      }
+
+      return aiResponse.trim();
+    } catch (error) {
+      console.error('Cover letter generation error:', error);
+      throw error;
     }
   }
 

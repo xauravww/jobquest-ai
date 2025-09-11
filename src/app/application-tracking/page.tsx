@@ -4,12 +4,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Modal, Select, Tag, Table, Popconfirm, Input, DatePicker, Button } from 'antd';
 import {
-  Briefcase, Plus, Search, RefreshCw, Edit
+  Briefcase, Plus, Search, RefreshCw, Edit, Sparkles
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
+import CoverLetterModal from '@/components/modals/CoverLetterModal';
 
 const { Search: AntSearch } = Input;
 const { RangePicker } = DatePicker;
@@ -67,6 +68,8 @@ const ApplicationTrackingPage = () => {
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const [eventModalVisible, setEventModalVisible] = useState(false);
   const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
+  const [coverLetterModalVisible, setCoverLetterModalVisible] = useState(false);
+  const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -308,39 +311,50 @@ const ApplicationTrackingPage = () => {
       sorter: (a: Job, b: Job) => dayjs(a.datePosted).unix() - dayjs(b.datePosted).unix(),
     },
     {
-      title: 'Actions',
-      key: 'actions',
-      render: (_: unknown, record: Job) => (
-        <div className="flex items-center gap-2">
-          <Select
-            value={record.status}
-            onChange={(value) => handleStatusUpdate(record._id, value)}
-            className="w-32"
-            size="small"
-          >
-            <Select.Option value="saved">Saved</Select.Option>
-            <Select.Option value="applied">Applied</Select.Option>
-            <Select.Option value="interviewing">Interviewing</Select.Option>
-            <Select.Option value="offered">Offered</Select.Option>
-            <Select.Option value="rejected">Rejected</Select.Option>
-          </Select>
-          <Popconfirm
-            title="Are you sure?"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Yes"
-            cancelText="No"
-            className="text-white"
-          >
-            <button
-              className="flex items-center justify-center w-9 h-9 bg-red-500/20 hover:bg-red-500/30 text-red-500 hover:text-red-400 rounded-lg transition-all duration-200 hover:scale-105"
-              title="Delete Application"
-              aria-label="Delete job application"
-            >
-              <RiDeleteBin6Line className="w-5 h-5" />
-            </button>
-          </Popconfirm>
-        </div>
-      ),
+                  title: 'Actions',
+                  key: 'actions',
+                  render: (_: unknown, record: Job) => (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedJobForCoverLetter(record);
+                          setCoverLetterModalVisible(true);
+                        }}
+                        className="flex items-center justify-center w-9 h-9 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 hover:text-purple-400 rounded-lg transition-all duration-200 hover:scale-105"
+                        title="Generate Cover Letter"
+                        aria-label="Generate cover letter"
+                      >
+                        <Sparkles className="w-5 h-5" />
+                      </button>
+                      <Select
+                        value={record.status}
+                        onChange={(value) => handleStatusUpdate(record._id, value)}
+                        className="w-32"
+                        size="small"
+                      >
+                        <Select.Option value="saved">Saved</Select.Option>
+                        <Select.Option value="applied">Applied</Select.Option>
+                        <Select.Option value="interviewing">Interviewing</Select.Option>
+                        <Select.Option value="offered">Offered</Select.Option>
+                        <Select.Option value="rejected">Rejected</Select.Option>
+                      </Select>
+                      <Popconfirm
+                        title="Are you sure?"
+                        onConfirm={() => handleDelete(record._id)}
+                        okText="Yes"
+                        cancelText="No"
+                        className="text-white"
+                      >
+                        <button
+                          className="flex items-center justify-center w-9 h-9 bg-red-500/20 hover:bg-red-500/30 text-red-500 hover:text-red-400 rounded-lg transition-all duration-200 hover:scale-105"
+                          title="Delete Application"
+                          aria-label="Delete job application"
+                        >
+                          <RiDeleteBin6Line className="w-5 h-5" />
+                        </button>
+                      </Popconfirm>
+                    </div>
+                  ),
     },
   ], [handleDelete, handleStatusUpdate]);
 
@@ -611,6 +625,17 @@ const ApplicationTrackingPage = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
+                          setSelectedJobForCoverLetter(record);
+                          setCoverLetterModalVisible(true);
+                        }}
+                        className="flex items-center justify-center w-9 h-9 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 hover:text-purple-400 rounded-lg transition-all duration-200 hover:scale-105"
+                        title="Generate Cover Letter"
+                        aria-label="Generate cover letter"
+                      >
+                        <Sparkles className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => {
                           setSelectedJob(record);
                           setCreateJobModalVisible(true);
                         }}
@@ -716,6 +741,14 @@ const ApplicationTrackingPage = () => {
                 setAddingJob(false);
               }}
             job={selectedJob}
+          />
+
+          {/* Cover Letter Modal */}
+          <CoverLetterModal
+            visible={coverLetterModalVisible}
+            onClose={() => setCoverLetterModalVisible(false)}
+            job={selectedJobForCoverLetter}
+            userProfile={{}}
           />
         </div>
       </div>

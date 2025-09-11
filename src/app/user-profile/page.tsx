@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '@/components/AppLayout';
 import { Card, Input, Button, Collapse, Tag, Space, Divider } from 'antd';
-import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog } from 'lucide-react';
 import { FormInput, FormInputNumber, FormDateInput } from '@/components/ui/FormInput';
+import AIProviderConfig from '@/components/AIProviderConfig';
 
 interface WorkExperience {
   id: string;
@@ -126,6 +127,7 @@ const UserProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showAIConfig, setShowAIConfig] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -136,7 +138,7 @@ const UserProfilePage = () => {
       const response = await fetch('/api/user/profile');
       if (response.ok) {
         const data = await response.json();
-        
+
         // Transform API response to match frontend structure
         const transformedProfile: UserProfile = {
           personalInfo: {
@@ -144,9 +146,9 @@ const UserProfilePage = () => {
             email: data.email || '',
             phone: data.phone || '',
             location: data.location || '',
-            website: data.website || '',
-            linkedin: data.linkedin || '',
-            github: data.github || ''
+            website: data.portfolioUrl || '',
+            linkedin: data.linkedinUrl || '',
+            github: data.githubUrl || ''
           },
           professionalInfo: {
             currentRole: data.targetRole || '',
@@ -171,7 +173,7 @@ const UserProfilePage = () => {
             targetCompanies: data.preferences?.targetCompanies || []
           }
         };
-        
+
         setProfile(transformedProfile);
       }
     } catch (error) {
@@ -242,6 +244,17 @@ const UserProfilePage = () => {
             </div>
 
             <div className="flex gap-3">
+              <button
+                onClick={() => setShowAIConfig(!showAIConfig)}
+                className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
+                  showAIConfig
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-bg-card hover:bg-bg-light text-text border-border'
+                }`}
+              >
+                <Cog className="w-4 h-4" />
+                AI Config
+              </button>
               {isEditing ? (
                 <>
                   <button
@@ -272,6 +285,14 @@ const UserProfilePage = () => {
             </div>
           </div>
 
+          {/* AI Configuration Panel */}
+          {showAIConfig && (
+            <AIProviderConfig
+              showConfig={showAIConfig}
+              setShowConfig={setShowAIConfig}
+            />
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Personal Information */}
             <Card
@@ -293,7 +314,7 @@ const UserProfilePage = () => {
                   {isEditing ? (
                     <FormInput
                       value={profile.personalInfo.fullName}
-                      onChange={(e) => handleInputChange('personalInfo', 'fullName', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'fullName', value)}
                       icon={<User className="w-4 h-4 text-text-muted" />}
                       placeholder="Enter your full name"
                     />
@@ -308,7 +329,7 @@ const UserProfilePage = () => {
                     <FormInput
                       type="email"
                       value={profile.personalInfo.email}
-                      onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'email', value)}
                       icon={<Mail className="w-4 h-4 text-text-muted" />}
                       placeholder="Enter your email"
                     />
@@ -326,7 +347,7 @@ const UserProfilePage = () => {
                     <FormInput
                       type="tel"
                       value={profile.personalInfo.phone}
-                      onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'phone', value)}
                       icon={<Phone className="w-4 h-4 text-text-muted" />}
                       placeholder="Enter your phone number"
                     />
@@ -343,7 +364,7 @@ const UserProfilePage = () => {
                   {isEditing ? (
                     <FormInput
                       value={profile.personalInfo.location}
-                      onChange={(e) => handleInputChange('personalInfo', 'location', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'location', value)}
                       icon={<MapPin className="w-4 h-4 text-text-muted" />}
                       placeholder="Enter your location"
                     />
