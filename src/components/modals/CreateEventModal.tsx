@@ -20,10 +20,46 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState<any[]>([]);
   const isVirtual = Form.useWatch(['location', 'isVirtual'], form);
+
+  const fetchApplicationsAndJobs = async () => {
+    try {
+      // Fetch applications, which contain the necessary job data
+      const appsResponse = await fetch('/api/applications');
+      const jobsResponse = await fetch('/api/jobs');
+      let jobsFromApps: any[] = [];
+      let jobsFromApi: any[] = [];
+      if (appsResponse.ok) {
+        const appsData = await appsResponse.json();
+        const validApps = Array.isArray(appsData.applications) ? appsData.applications : [];
+
+        // Extract the job details from each application
+        jobsFromApps = validApps
+          .map((app: any) => app.jobId)
+          .filter((job: any) => job && job._id && job.title); // Ensure job exists and has key properties
+      }
+      if (jobsResponse.ok) {
+        const jobsData = await jobsResponse.json();
+        jobsFromApi = Array.isArray(jobsData) ? jobsData : [];
+      }
+      // Merge and deduplicate jobs from applications and jobs API
+      const mergedJobsMap = new Map<string, any>();
+      [...jobsFromApps, ...jobsFromApi].forEach(job => {
+        if (job && job._id) {
+          mergedJobsMap.set(job._id, job);
+        }
+      });
+      const mergedJobs = Array.from(mergedJobsMap.values());
+      setJobs(mergedJobs);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
+      fetchApplicationsAndJobs();
       if (editingEvent) {
         // Populate form for editing
         form.setFieldsValue({
@@ -33,6 +69,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           endDate: editingEvent.endDate ? dayjs(editingEvent.endDate) : null,
           endTime: editingEvent.endDate ? dayjs(editingEvent.endDate).format('HH:mm') : '10:00',
           tags: editingEvent.tags?.join(', '),
+          jobId: editingEvent.jobId?._id || editingEvent.jobId || '',
         });
       } else {
         // Reset form for creating a new event
@@ -49,6 +86,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           startTime: now.format('HH:mm'),
           endDate: oneHourLater,
           endTime: oneHourLater.format('HH:mm'),
+          jobId: '',
         });
       }
     }
@@ -224,6 +262,47 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
               </div>
             )}
           </Form.List>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2"><FileText className="w-5 h-5" />Associations</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Form.Item name="jobId" label="Related Job">
+                <Select
+                  placeholder="Select a job (optional)"
+                  allowClear
+                  showSearch
+                  filterOption={(input, option) =>
+                    (String(option?.label) ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={[
+                    { value: '', label: 'None' },
+                    ...jobs.map((job: any) => ({
+                      value: job._id,
+                      label: `${job.title} at ${job.company}`
+                    }))
+                  ]}
+                />
+              </Form.Item>
+              {form.getFieldValue('jobId') && (() => {
+                const selectedJob = jobs.find((job: any) => job._id === form.getFieldValue('jobId'));
+                return selectedJob ? (
+                  <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-success rounded-full"></div>
+                      <span className="text-success font-medium">Linked to Job</span>
+                    </div>
+                    <div className="mt-2 text-xs text-text-muted">
+                      <div>Title: {selectedJob.title}</div>
+                      <div>Company: {selectedJob.company}</div>
+                      <div>Location: {selectedJob.location || 'Not specified'}</div>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+            </div>
+          </div>
         </section>
 
         <section>

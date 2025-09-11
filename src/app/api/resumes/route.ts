@@ -20,10 +20,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const resumes = await Resume.find({ 
-      userId: user._id,
-      isActive: true 
-    }).sort({ updatedAt: -1 });
+    // Aggregate resumes with usage count from applications
+    const resumes = await Resume.aggregate([
+      { $match: { userId: user._id, isActive: true } },
+      {
+        $lookup: {
+          from: 'applications',
+          localField: '_id',
+          foreignField: 'resumeUsed',
+          as: 'applications'
+        }
+      },
+      {
+        $addFields: {
+          usageCount: { $size: '$applications' }
+        }
+      },
+      { $sort: { updatedAt: -1 } }
+    ]);
 
     return NextResponse.json(resumes);
   } catch (error) {
