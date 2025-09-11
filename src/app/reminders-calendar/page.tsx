@@ -87,7 +87,7 @@ interface CalendarEvent {
 }
 
 const RemindersCalendarPage = () => {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [reminders, setReminders] = useState<(Reminder & { tags: string[] })[]>([]);
   const [remindersPage, setRemindersPage] = useState(1);
   const [remindersTotalPages, setRemindersTotalPages] = useState(1);
 
@@ -99,12 +99,12 @@ const RemindersCalendarPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<'reminder' | 'event'>('reminder');
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [editingReminder, setEditingReminder] = useState<(Reminder & { tags: string[] }) | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const itemsPerPage = 10;
 
   const fetchData = useCallback(async (page = 1) => {
     try {
@@ -196,7 +196,7 @@ const RemindersCalendarPage = () => {
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -496,13 +496,13 @@ const RemindersCalendarPage = () => {
                         )}
 
                         {'attendees' in item && item.attendees && item.attendees.length > 0 && (
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-purple-400" />
-                            <span>{item.attendees.length} attendee{item.attendees.length > 1 ? 's' : ''}</span>
-                          </div>
-                        )}
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-purple-400" />
+                        <span>{Array.isArray(item.attendees) ? item.attendees.length : 0} attendee{Array.isArray(item.attendees) && item.attendees.length > 1 ? 's' : ''}</span>
                       </div>
-                    </div>
+                    )}
+                  </div>
+                </div>
 
                     <div className="flex items-center gap-2">
                       {item.type === 'reminder' && item.status === 'pending' && (
@@ -531,7 +531,7 @@ const RemindersCalendarPage = () => {
                                 const fixedReminder = {
                                   ...item,
                                   title: typeof item.title === 'object' ? JSON.stringify(item.title) : item.title,
-                                  tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? item.tags.split(',').map((tag) => tag.trim()) : [])
+                              tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? (item.tags as string).split(',').map((tag: string) => tag.trim()) : [])
                                 };
                                 setEditingReminder(fixedReminder as Reminder);
                                 setCreateType('reminder');
@@ -564,17 +564,17 @@ const RemindersCalendarPage = () => {
 
           {/* Pagination Controls */}
           <div className="flex justify-center mt-8">
-            <Pagination
-              current={currentPage}
-              total={totalPages * 10}
-              pageSize={10}
-              onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
-              showQuickJumper
-              className="bg-bg-card rounded-lg p-4"
-            />
+          <Pagination
+            current={currentPage}
+            total={totalPages * 10}
+            pageSize={10}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+            showQuickJumper
+            className="bg-bg-card rounded-lg p-4"
+            disabled={totalPages <= 1}
+          />
           </div>
-=======
           {filteredItems.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/30">
@@ -713,22 +713,22 @@ const RemindersCalendarPage = () => {
                             const fixedReminder = {
                               ...item,
                               title: typeof item.title === 'object' ? JSON.stringify(item.title) : item.title,
-                              tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? item.tags.split(',').map((tag: string) => tag.trim()) : [])
-                            };
-                            setEditingReminder(fixedReminder as Reminder);
-                            setCreateType('reminder');
-                          } else {
-                            setEditingEvent(item as CalendarEvent);
-                            setCreateType('event');
-                          }
-                          setShowCreateModal(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
-                        title="Edit"
-                      >
-                        <Edit className="w-5 h-5" />
-                        <span className="sr-only">Edit</span>
-                      </button>
+                              tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? (item.tags as string).split(',').map((tag: string) => tag.trim()) : [])
+                             } as Reminder;
+                             setEditingReminder(fixedReminder);
+                             setCreateType('reminder');
+                           } else {
+                             setEditingEvent(item as CalendarEvent);
+                             setCreateType('event');
+                           }
+                           setShowCreateModal(true);
+                         }}
+                         className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
+                         title="Edit"
+                       >
+                         <Edit className="w-5 h-5" />
+                         <span className="sr-only">Edit</span>
+                       </button>
                       <button
                         onClick={() => handleDeleteItem(item._id, item.type)}
                         className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105"
