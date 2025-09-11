@@ -51,7 +51,7 @@ interface Reminder {
 const RemindersPage = () => {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [itemsPerPage] = useState(10);
 
   const [loading, setLoading] = useState(true);
@@ -90,15 +90,15 @@ const RemindersPage = () => {
         if (response.ok) {
           const data = await response.json();
           setReminders(data.reminders || []);
-          setTotalPages(data.pagination.pages || 1);
+          setTotal(data.pagination.total || 0);
         } else {
            setReminders([]);
-           setTotalPages(1);
+           setTotal(0);
         }
       } catch (error) {
         console.error('Error fetching reminders:', error);
         setReminders([]);
-        setTotalPages(1);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
@@ -233,7 +233,7 @@ const RemindersPage = () => {
           if (response.ok) {
             const data = await response.json();
             setReminders(data.reminders || []);
-            setTotalPages(data.pagination.pages || 1);
+            setTotal(data.pagination.total || 0);
           }
         } catch (error) {
           console.error('Error refetching reminders:', error);
@@ -477,19 +477,17 @@ const RemindersPage = () => {
         </div>
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <Pagination
-              current={currentPage}
-              total={totalPages * 10}
-              pageSize={10}
-              onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
-              showQuickJumper
-              className="rounded-lg p-4"
-            />
-          </div>
-        )}
+        <div className="flex justify-center mt-8">
+          <Pagination
+            current={currentPage}
+            total={total}
+            pageSize={itemsPerPage}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+            showQuickJumper
+            className="rounded-lg p-4"
+          />
+        </div>
 
         {/* Modals */}
         {showCreateModal && (

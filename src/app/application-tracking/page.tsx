@@ -26,6 +26,7 @@ interface Job {
   description: string;
   priority: string;
   platform: string;
+  url: string;
   notes?: string;
   createdAt: string;
   appliedDate: string;
@@ -55,6 +56,7 @@ interface ApiApplication {
   priority?: string;
   platform?: string;
   notes?: string;
+  resumeUsed?: string;
 }
 
 const ApplicationTrackingPage = () => {
@@ -69,6 +71,7 @@ const ApplicationTrackingPage = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Filter states
   const [searchText, setSearchText] = useState('');
@@ -78,8 +81,9 @@ const ApplicationTrackingPage = () => {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
 
 
+
   // Fetch jobs from API
-  const fetchJobs = useCallback(async (page = 1, limit = 10, search = searchText, status = statusFilter, priority = priorityFilter, platform = platformFilter, dateRangeParam = dateRange) => {
+  const fetchJobs = useCallback(async (page: number = 1, limit: number = 10, search: string = searchText, status: string = statusFilter, priority: string = priorityFilter, platform: string = platformFilter, dateRangeParam: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null = dateRange) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -114,9 +118,11 @@ const ApplicationTrackingPage = () => {
           description: (jobData as PopulatedJob)?.description || app.description || '',
           priority: app.priority || 'medium',
           platform: app.platform || 'other',
+          url: (jobData as any)?.url || '',
           notes: app.notes || '',
           createdAt: app.createdAt || new Date().toISOString(),
-          appliedDate: app.appliedDate || new Date().toISOString()
+          appliedDate: app.appliedDate || new Date().toISOString(),
+          resumeUsed: app.resumeUsed || undefined
         };
       });
 
@@ -124,6 +130,7 @@ const ApplicationTrackingPage = () => {
       setFilteredJobs(transformedJobs);
       setCurrentPage(page);
       setPageSize(limit);
+      setTotalCount(data.totalCount || 0);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
@@ -153,6 +160,11 @@ const ApplicationTrackingPage = () => {
     // Remove client-side filtering since backend handles it now
     setFilteredJobs(jobs);
   }, [jobs]);
+
+  // Refetch jobs when pagination changes
+  useEffect(() => {
+    fetchJobs(currentPage, pageSize);
+  }, [currentPage, pageSize]);
 
 
   const handleStatusUpdate = useCallback(async (jobId: string, newStatus: string) => {
@@ -486,15 +498,21 @@ const ApplicationTrackingPage = () => {
               loading={loading || addingJob}
               dataSource={filteredJobs}
               rowKey="_id"
-              pagination={{
-                pageSize: 10,
-                position: ['bottomCenter'],
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} applications`,
-                pageSizeOptions: ['5', '10', '20', '50'],
-                size: 'default'
-              }}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalCount,
+              position: ['bottomCenter'],
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} applications`,
+              pageSizeOptions: ['5', '10', '20', '50'],
+              size: 'default',
+              onChange: (page, pageSize) => {
+                setCurrentPage(page);
+                setPageSize(pageSize);
+              }
+            }}
               scroll={{ x: 'max-content' }}
               className="custom-dark-table"
               columns={[
@@ -573,6 +591,20 @@ const ApplicationTrackingPage = () => {
                   width: 120,
                 },
                 {
+                  title: 'URL',
+                  dataIndex: 'url',
+                  key: 'url',
+                  render: (url: string) => url ? (
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      Link
+                    </a>
+                  ) : (
+                    <span className="text-gray-500">N/A</span>
+                  ),
+                  responsive: ['lg', 'xl', 'xxl'],
+                  width: 150,
+                },
+                {
                   title: 'Actions',
                   key: 'actions',
                   render: (_: unknown, record: Job) => (
@@ -648,40 +680,41 @@ const ApplicationTrackingPage = () => {
           <CreateJobModal
             visible={createJobModalVisible}
             onClose={() => setCreateJobModalVisible(false)}
-            onJobCreated={(newJob) => {
-              if (!newJob) return;
-              setAddingJob(true);
-              // Transform newJob to match Job interface
-              const jobData = typeof newJob.jobId === 'object' ? newJob.jobId : {};
-              const transformedJob: Job = {
-                _id: newJob._id || '',
-                jobId: newJob._id || '',
-                title: (jobData as PopulatedJob)?.title || newJob.title || 'Unknown Title',
-                company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
-                location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
-                status: newJob.status || 'submitted',
-                datePosted: newJob.appliedDate || (jobData as PopulatedJob)?.datePosted || newJob.createdAt || newJob.datePosted || new Date().toISOString(),
-                description: (jobData as PopulatedJob)?.description || newJob.description || '',
-                priority: newJob.priority || 'medium',
-                platform: newJob.platform || 'other',
-                notes: newJob.notes || '',
-                createdAt: newJob.createdAt || new Date().toISOString(),
-                appliedDate: newJob.appliedDate || new Date().toISOString()
-              };
+              onJobCreated={(newJob) => {
+                if (!newJob) return;
+                setAddingJob(true);
+                // Transform newJob to match Job interface
+                const jobData = typeof newJob.jobId === 'object' ? newJob.jobId : {};
+                const transformedJob: Job = {
+                  _id: newJob._id || '',
+                  jobId: newJob._id || '',
+                  title: (jobData as PopulatedJob)?.title || newJob.title || 'Unknown Title',
+                  company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
+                  location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
+                  status: newJob.status || 'submitted',
+                  datePosted: newJob.appliedDate || (jobData as PopulatedJob)?.datePosted || newJob.createdAt || newJob.datePosted || new Date().toISOString(),
+                  description: (jobData as PopulatedJob)?.description || newJob.description || '',
+                  priority: newJob.priority || 'medium',
+                  platform: newJob.platform || 'other',
+                  url: newJob.jobUrl || (jobData as any)?.url || '',
+                  notes: newJob.notes || '',
+                  createdAt: newJob.createdAt || new Date().toISOString(),
+                  appliedDate: newJob.appliedDate || new Date().toISOString()
+                };
 
-              if (selectedJob) {
-                // Update existing job
-                setJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
-                setFilteredJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
-                toast.success('Job application updated successfully');
-              } else {
-                // Add new job
-                setJobs(prev => [transformedJob, ...prev]);
-                setFilteredJobs(prev => [transformedJob, ...prev]);
-                toast.success('Job application added successfully');
-              }
-              setAddingJob(false);
-            }}
+                if (selectedJob) {
+                  // Update existing job
+                  setJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
+                  setFilteredJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
+                  toast.success('Job application updated successfully');
+                } else {
+                  // Add new job
+                  setJobs(prev => [transformedJob, ...prev]);
+                  setFilteredJobs(prev => [transformedJob, ...prev]);
+                  toast.success('Job application added successfully');
+                }
+                setAddingJob(false);
+              }}
             job={selectedJob}
           />
         </div>

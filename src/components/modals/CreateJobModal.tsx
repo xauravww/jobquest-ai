@@ -14,6 +14,7 @@ interface Job {
   title: string;
   company: string;
   location?: string;
+  url?: string;
   jobUrl?: string;
   status: string;
   datePosted: string;
@@ -82,7 +83,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
       setTitle(job.title || '');
       setCompany(job.company || '');
       setLocation(job.location || '');
-      setJobUrl(job.jobUrl || '');
+      setJobUrl(job.url || job.jobUrl || '');
       setStatus(job.status || 'saved');
       setPriority(job.priority || 'medium');
       setPlatform(job.platform || 'other');
@@ -429,7 +430,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
             size="large"
             className="w-full"
             filterOption={(input: string, option?: DefaultOptionType) => {
-              if (option && typeof option.children === 'string') {
+              if (option && option.children && typeof option.children === 'string') {
                 return option.children.toLowerCase().includes(input.toLowerCase());
               }
               return false;

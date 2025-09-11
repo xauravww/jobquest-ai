@@ -52,6 +52,7 @@ const EventsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   // Debounce search input
   useEffect(() => {
@@ -62,7 +63,7 @@ const EventsPage = () => {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Fetch data from backend on page load, search, or page change
+  // Fetch data from backend on page load, search, page change, or refreshCounter change
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -92,11 +93,11 @@ const EventsPage = () => {
       }
     };
     fetchData();
-  }, [currentPage, debouncedQuery, itemsPerPage]);
+  }, [currentPage, debouncedQuery, itemsPerPage, refreshCounter]);
 
   const refetchData = () => {
-    // A simple way to trigger the fetch useEffect
-    setDebouncedQuery(prev => prev + ''); 
+    // Increment refreshCounter to trigger fetch useEffect
+    setRefreshCounter(prev => prev + 1);
   };
 
   // Add an effect to listen for the refetch event
@@ -262,7 +263,12 @@ const EventsPage = () => {
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 mt-1"><Calendar className="w-5 h-5 text-blue-600" /></div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`text-lg font-semibold ${event.status === 'completed' ? 'line-through text-text-muted' : 'text-white'}`}>{event.title}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className={`text-lg font-semibold ${event.status === 'completed' ? 'line-through text-text-muted' : 'text-white'}`}>{event.title}</h3>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(event.status)}`}>
+                          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-6 text-sm text-text-muted mt-2">
                         <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-blue-600" /><span className="font-medium">{getTimeDisplay(event)}</span></div>
                         {event.jobId && <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-blue-500" /><span>{event.jobId.title} at {event.jobId.company}</span></div>}
@@ -294,7 +300,7 @@ const EventsPage = () => {
                 onChange={(page) => setCurrentPage(page)}
                 showSizeChanger={false}
                 showQuickJumper
-                className="bg-bg-card rounded-lg p-4"
+                className="rounded-lg p-4"
                 style={{ display: 'block' }}
               />
             </div>

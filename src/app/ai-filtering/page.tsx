@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Bot, Building, ExternalLink, LoaderCircle, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye, Cog, Lock, Link } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { FormInput, FormInputNumber, FormDateInput, FormSelect } from '@/components/ui/FormInput';
