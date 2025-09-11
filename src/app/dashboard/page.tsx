@@ -219,7 +219,7 @@ const DashboardPage = () => {
   return (
     <AppLayout showFooter={false}>
       <div className="p-4 md:p-8 bg-bg min-h-screen">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 mt-8" >
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               Welcome back, {data?.userProfile.firstName || 'User'}!

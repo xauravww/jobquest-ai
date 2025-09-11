@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, Select, DatePicker, Button } from 'antd';
+import type { DefaultOptionType } from 'antd/es/select';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
 
@@ -20,6 +21,7 @@ interface Job {
   priority: string;
   platform: string;
   notes?: string;
+  resumeUsed?: string | { _id: string };
 }
 
 interface CreateJobModalProps {
@@ -282,10 +284,10 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
           {job ? "Update Job" : "Add Job"}
         </Button>,
       ]}
-      width={700}
-      className="custom-dark-modal"
-      bodyStyle={{ backgroundColor: '#000000' }}
-    >
+    style={{ maxWidth: '700px', width: '90vw' }}
+    className="custom-dark-modal"
+    bodyStyle={{ backgroundColor: '#000000' }}
+  >
       <div className="space-y-4 text-text">
         <div>
           <label className="block text-sm font-semibold text-white mb-1">
@@ -426,17 +428,20 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
             onChange={(value) => setSelectedResumeId(value)}
             size="large"
             className="w-full"
-            filterOption={(input, option) =>
-              (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-            allowClear
-          >
-            {resumes.map((resume) => (
-              <Select.Option key={resume._id} value={resume._id}>
-                {resume.title}
-              </Select.Option>
-            ))}
-          </Select>
+            filterOption={(input: string, option?: DefaultOptionType) => {
+              if (option && typeof option.children === 'string') {
+                return option.children.toLowerCase().includes(input.toLowerCase());
+              }
+              return false;
+            }}
+            allowClear={true}
+            >
+              {resumes.map((resume: { _id: string; title: string }) => (
+                <Select.Option key={resume._id} value={resume._id}>
+                  {resume.title}
+                </Select.Option>
+              ))}
+            </Select>
         </div>
       </div>
     </Modal>

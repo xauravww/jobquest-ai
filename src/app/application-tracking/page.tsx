@@ -14,8 +14,7 @@ import CreateJobModal from '@/components/modals/CreateJobModal';
 const { Search: AntSearch } = Input;
 const { RangePicker } = DatePicker;
 
-// I've defined these mock interfaces for a clear example,
-// you would use your actual interfaces.
+
 interface Job {
   _id: string;
   jobId: string;

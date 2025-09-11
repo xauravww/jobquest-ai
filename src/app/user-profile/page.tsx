@@ -235,7 +235,7 @@ const UserProfilePage = () => {
       <div className="p-8 bg-bg min-h-screen">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-8 mt-8">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">User Profile</h1>
               <p className="text-text-muted text-lg">Manage your personal and professional information</p>

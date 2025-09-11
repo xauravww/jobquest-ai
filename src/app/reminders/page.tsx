@@ -254,7 +254,7 @@ const RemindersPage = () => {
     <AppLayout showFooter={false}>
       <div className="p-8 bg-bg min-h-screen">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 mt-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/30">
               <Bell className="w-8 h-8 text-primary" />

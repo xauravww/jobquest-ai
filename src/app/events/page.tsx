@@ -179,7 +179,7 @@ const EventsPage = () => {
     <AppLayout showFooter={false}>
       <div className="p-8 bg-bg min-h-screen">
         {/* Header and Search/Filter controls are now always visible */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 mt-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="p-3 bg-gradient-to-br from-blue-600/20 to-blue-600/10 rounded-xl border border-blue-600/30">
                 <Calendar className="w-8 h-8 text-blue-600" />
