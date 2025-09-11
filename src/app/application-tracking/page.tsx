@@ -552,7 +552,6 @@ const ApplicationTrackingPage = () => {
             footer={null}
             width={600}
             className="custom-dark-modal"
-            bodyStyle={{ backgroundColor: '#000000' }}
           >
             {/* Import and render reminders page or component here */}
             {/* For example, you can import RemindersPage and render it */}

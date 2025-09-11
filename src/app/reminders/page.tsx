@@ -442,7 +442,7 @@ const RemindersPage = () => {
               onChange={(page) => setCurrentPage(page)}
               showSizeChanger={false}
               showQuickJumper
-              className="bg-bg-card rounded-lg p-4"
+              className="rounded-lg p-4"
             />
           </div>
 

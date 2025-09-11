@@ -15,61 +15,90 @@ class ApiSearchService {
    * Single page search without storage
    */
   async search(query, options = {}) {
-    try {
-      // Build search parameters based on your API structure
-      const searchParams = {
-        q: query,
-        format: 'json',
-        pageno: options.pageno || 1,
-        time_range: options.time_range || 'month',
-        categories: 'it,news',
-        engines: 'duckduckgo,bing,google,wikipedia,brave',
-        enabled_engines: 'google',
-        disabled_engines: '',
-        language: 'en',
-        safesearch: '1',
-        autocomplete: 'duckduckgo',
-        image_proxy: 'True',
-        results_on_new_tab: '0',
-        theme: 'simple',
-        enabled_plugins: 'Hash_plugin,Self_Information,Tracker_URL_remover,Ahmia_blacklist',
-        disabled_plugins: '',
-        ...options
-      };
+    const MAX_RETRIES = 2;
+    const TIMEOUT_MS = 10000; // 10 seconds
 
-      // Use POST method with form data as per your curl example
-      const formData = new URLSearchParams();
-      Object.keys(searchParams).forEach(key => {
-        formData.append(key, searchParams[key]);
+    const fetchWithTimeout = (url, fetchOptions, timeout) => {
+      return new Promise((resolve, reject) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        fetchOptions.signal = controller.signal;
+
+        fetch(url, fetchOptions)
+          .then(response => {
+            clearTimeout(id);
+            resolve(response);
+          })
+          .catch(err => {
+            clearTimeout(id);
+            reject(err);
+          });
       });
+    };
 
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Search API error: ${response.status}`);
-      }
+    let attempt = 0;
+    while (attempt <= MAX_RETRIES) {
+      try {
+        // Build search parameters based on your API structure
+        const searchParams = {
+          q: query,
+          format: 'json',
+          pageno: options.pageno || 1,
+          time_range: options.time_range || 'month',
+          categories: 'it,news',
+          engines: 'duckduckgo,bing,google,wikipedia,brave',
+          enabled_engines: 'google',
+          disabled_engines: '',
+          language: 'en',
+          safesearch: '1',
+          autocomplete: 'duckduckgo',
+          image_proxy: 'True',
+          results_on_new_tab: '0',
+          theme: 'simple',
+          enabled_plugins: 'Hash_plugin,Self_Information,Tracker_URL_remover,Ahmia_blacklist',
+          disabled_plugins: '',
+          ...options
+        };
 
-      const data = await response.json();
-      
-      return {
-        success: true,
-        data: {
-          number_of_results: data.number_of_results || data.results?.length || 0,
-          results: this.transformResults(data.results || [])
+        // Use POST method with form data as per your curl example
+        const formData = new URLSearchParams();
+        Object.keys(searchParams).forEach(key => {
+          formData.append(key, searchParams[key]);
+        });
+
+        const response = await fetchWithTimeout(this.baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: formData
+        }, TIMEOUT_MS);
+        
+        if (!response.ok) {
+          throw new Error(`Search API error: ${response.status}`);
         }
-      };
-    } catch (error) {
-      console.error('Search error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
+
+        const data = await response.json();
+        
+        return {
+          success: true,
+          data: {
+            number_of_results: data.number_of_results || data.results?.length || 0,
+            results: this.transformResults(data.results || [])
+          }
+        };
+      } catch (error) {
+        attempt++;
+        console.error(`Search error on attempt ${attempt}:`, error);
+        if (attempt > MAX_RETRIES) {
+          return {
+            success: false,
+            error: error.message
+          };
+        }
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
     }
   }
 

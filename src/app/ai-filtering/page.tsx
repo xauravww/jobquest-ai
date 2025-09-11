@@ -682,14 +682,14 @@ const JobSearchPage = () => {
           <div className="p-2 bg-primary/20 rounded-lg">
             <Filter className="w-5 h-5 text-primary" />
           </div>
-          <h3 className="text-xl font-semibold text-white">Advanced Filters</h3>
+          <div className="text-xl font-semibold text-white">Advanced Filters</div>
         </div>
-        <button
+        <div
           onClick={() => setShowFilters(false)}
-          className="w-8 h-8 flex items-center justify-center bg-bg-light hover:bg-red-500/20 text-text-muted hover:text-red-400 rounded-lg transition-all duration-200"
+          className="w-8 h-8 cursor-pointer"
         >
           ×
-        </button>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Date Filters - Your Core Feature */}
@@ -912,7 +912,7 @@ const JobSearchPage = () => {
               <div className="flex-grow">
                 <FormInput
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(value: string) => setQuery(value)}
                   placeholder="e.g., React Developer, MERN Stack, Full Stack Engineer"
                   icon={<Search className="w-5 h-5" />}
                   className="text-lg py-4"

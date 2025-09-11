@@ -54,6 +54,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   error, 
   className = '',
   required = false,
+  value = '',
   onChange,
   ...props 
 }) => {
@@ -70,6 +71,8 @@ export const FormInput: React.FC<FormInputProps> = ({
       )}
       <Input
         {...props}
+        value={value}
+        allowClear
         prefix={icon && <span className="text-primary">{icon}</span>}
         className={`bg-bg-card border-border hover:border-primary focus:border-primary ${error ? 'border-red-500' : ''}`}
         style={{
