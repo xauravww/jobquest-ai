@@ -481,60 +481,137 @@ const ApplicationTrackingPage = () => {
               </div>
             </div>
 
-          <Table
-            loading={loading || addingJob}
-            dataSource={filteredJobs}
-            rowKey="_id"
-            pagination={{ 
-              pageSize: 10, 
-              position: ['bottomCenter'],
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} applications`,
-              pageSizeOptions: ['5', '10', '20', '50'],
-              size: 'default'
-            }}
-            scroll={{ x: 'max-content' }}
-            className="custom-dark-table"
-            columns={[
-              ...jobColumns.slice(0, -1),
-              {
-                title: 'Actions',
-                key: 'actions',
-                render: (_: unknown, record: Job) => (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedJob(record);
-                        setCreateJobModalVisible(true);
-                      }}
-                      className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
-                      title="Edit"
-                    >
-                      <Edit className="w-5 h-5" />
-                      <span className="sr-only">Edit</span>
-                    </button>
-                    <Popconfirm
-                      title="Are you sure you want to delete this application?"
-                      onConfirm={() => {
-                        handleDelete(record._id);
-                      }}
-                      okText="Yes"
-                      cancelText="No"
-                    >
+          <div className="overflow-x-auto">
+            <Table
+              loading={loading || addingJob}
+              dataSource={filteredJobs}
+              rowKey="_id"
+              pagination={{
+                pageSize: 10,
+                position: ['bottomCenter'],
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} applications`,
+                pageSizeOptions: ['5', '10', '20', '50'],
+                size: 'default'
+              }}
+              scroll={{ x: 'max-content' }}
+              className="custom-dark-table"
+              columns={[
+                {
+                  title: 'Job Title',
+                  dataIndex: 'title',
+                  key: 'title',
+                  sorter: (a: Job, b: Job) => a.title.localeCompare(b.title),
+                  render: (text: string, record: Job) => (
+                    <span className="font-semibold text-text-light cursor-pointer hover:underline" onClick={() => { setSelectedJob(record); setCreateJobModalVisible(true); }}>
+                      {text}
+                    </span>
+                  ),
+                  responsive: ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'],
+                  width: 150,
+                },
+                {
+                  title: 'Company',
+                  dataIndex: 'company',
+                  key: 'company',
+                  sorter: (a: Job, b: Job) => a.company.localeCompare(b.company),
+                  responsive: ['sm', 'md', 'lg', 'xl', 'xxl'],
+                  width: 120,
+                },
+                {
+                  title: 'Status',
+                  dataIndex: 'status',
+                  key: 'status',
+                  render: (status: string) => (
+                    <Tag color={getStatusColor(status)} className="uppercase text-xs tracking-wider">
+                      {status}
+                    </Tag>
+                  ),
+                  responsive: ['sm', 'md', 'lg', 'xl', 'xxl'],
+                  width: 100,
+                },
+                {
+                  title: 'Location',
+                  dataIndex: 'location',
+                  key: 'location',
+                  sorter: (a: Job, b: Job) => a.location.localeCompare(b.location),
+                  responsive: ['md', 'lg', 'xl', 'xxl'],
+                  width: 120,
+                },
+                {
+                  title: 'Platform',
+                  dataIndex: 'platform',
+                  key: 'platform',
+                  render: (platform: string) => (
+                    <Tag color="blue" className="uppercase text-xs tracking-wider">
+                      {platform}
+                    </Tag>
+                  ),
+                  responsive: ['lg', 'xl', 'xxl'],
+                  width: 100,
+                },
+                {
+                  title: 'Priority',
+                  dataIndex: 'priority',
+                  key: 'priority',
+                  render: (priority: string) => (
+                    <Tag color={getPriorityTagColor(priority)} className="uppercase text-xs tracking-wider">
+                      {priority}
+                    </Tag>
+                  ),
+                  responsive: ['lg', 'xl', 'xxl'],
+                  width: 100,
+                },
+                {
+                  title: 'Date Posted',
+                  dataIndex: 'datePosted',
+                  key: 'datePosted',
+                  render: (date: string) => dayjs(date).format('MMM DD, YYYY'),
+                  sorter: (a: Job, b: Job) => dayjs(a.datePosted).unix() - dayjs(b.datePosted).unix(),
+                  responsive: ['xl', 'xxl'],
+                  width: 120,
+                },
+                {
+                  title: 'Actions',
+                  key: 'actions',
+                  render: (_: unknown, record: Job) => (
+                    <div className="flex items-center gap-2">
                       <button
-                        className="flex items-center gap-2 px-4 py-3 bg-danger text-white border border-danger rounded-lg transition-all duration-200 hover:scale-105"
-                        title="Delete"
+                        onClick={() => {
+                          setSelectedJob(record);
+                          setCreateJobModalVisible(true);
+                        }}
+                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
+                        title="Edit"
                       >
-                        <RiDeleteBin6Line className="w-5 h-5" />
-                        <span className="sr-only">Delete</span>
+                        <Edit className="w-5 h-5" />
+                        <span className="sr-only">Edit</span>
                       </button>
-                    </Popconfirm>
-                  </div>
-                ),
-              },
-            ]}
-          />
+                      <Popconfirm
+                        title="Are you sure you want to delete this application?"
+                        onConfirm={() => {
+                          handleDelete(record._id);
+                        }}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <button
+                          className="flex items-center gap-2 px-4 py-3 bg-danger text-white border border-danger rounded-lg transition-all duration-200 hover:scale-105"
+                          title="Delete"
+                        >
+                          <RiDeleteBin6Line className="w-5 h-5" />
+                          <span className="sr-only">Delete</span>
+                        </button>
+                      </Popconfirm>
+                    </div>
+                  ),
+                  responsive: ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'],
+                  width: 150,
+                },
+              ]}
+            />
+          </div>
           </div>
 
 
