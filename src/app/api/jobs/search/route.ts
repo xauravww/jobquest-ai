@@ -41,9 +41,44 @@ export async function GET(request: NextRequest) {
   try {
     // Initialize services
     await initServices();
-    
+
     const searchService = new ApiSearchService();
     const aiFilterService = new AiFilterService();
+    const mongoService = new MongoDBService();
+
+    // Helper function to get job date
+    // Enhanced date extraction to handle cases where date fields are overwritten with current date
+    const getJobDate = (job: Record<string, any>) => {
+      // Try to parse date fields first
+      const dateCandidates = [
+        job.publishedDate,
+        job.postedDate,
+        job.metadata?.publishedDate
+      ].filter(Boolean).map((d: string) => new Date(d));
+
+      // Filter out invalid dates
+      const validDates = dateCandidates.filter(d => !isNaN(d.getTime()));
+
+      // If multiple valid dates, pick the earliest (original post date)
+      if (validDates.length > 0) {
+        const earliestDate = validDates.reduce((a, b) => a < b ? a : b);
+
+        // Heuristic: if earliestDate is very recent (e.g., within last 2 days) but content mentions older date, fallback to content parsing
+        const now = new Date();
+        const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+        if ((now.getTime() - earliestDate.getTime()) < twoDaysMs) {
+          // Try to parse date from content
+          const parsedDate = mongoService.parsePublishedDate(job);
+          if (parsedDate && !isNaN(parsedDate.getTime()) && parsedDate < earliestDate) {
+            return parsedDate;
+          }
+        }
+        return earliestDate;
+      }
+
+      // If no valid date fields, parse from content
+      return mongoService.parsePublishedDate(job);
+    };
     
     const { searchParams } = new URL(request.url);
     
@@ -63,6 +98,7 @@ export async function GET(request: NextRequest) {
     const postedAfter = searchParams.get('postedAfter');
     const postedBefore = searchParams.get('postedBefore');
     const searchEngine = searchParams.get('engine'); // New: search engine filter
+    const hasDate = searchParams.get('hasDate'); // New: filter for jobs with/without dates
 
     if (!query) {
       return NextResponse.json({ error: 'Query parameter "q" is required.' }, { status: 400 });
@@ -170,7 +206,7 @@ export async function GET(request: NextRequest) {
 
     // Apply additional filters
     const additionalFilters: Record<string, any> = {};
-    
+
     if (location) {
       filteredResults = filteredResults.filter((job: Record<string, any>) => {
         const jobLocation = job.location || extractFieldFromContent(job, 'location');
@@ -180,7 +216,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (jobType) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => 
+      filteredResults = filteredResults.filter((job: Record<string, any>) =>
         job.title && job.title.toLowerCase().includes(jobType.toLowerCase())
       );
       additionalFilters.jobType = jobType;
@@ -204,48 +240,51 @@ export async function GET(request: NextRequest) {
     }
 
     if (searchEngine) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => 
-        job.engine && job.engine.toLowerCase().includes(searchEngine.toLowerCase())
+      filteredResults = filteredResults.filter((job: Record<string, any>) =>
+        job.engine && job.engine.toLowerCase().includes(searchEngine!)
       );
       additionalFilters.searchEngine = searchEngine;
     }
 
-    if (minSalary) {
+    if (hasDate) {
+      const hasDateFilter = hasDate.toLowerCase() === 'true';
+      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+        // Strictly check publishedDate field for null or invalid
+        if (hasDateFilter) {
+          if (!job.publishedDate) return false;
+          const pubDate = new Date(job.publishedDate);
+          if (isNaN(pubDate.getTime())) return false;
+          return true;
+        } else {
+          return true; // If filter is false, show all jobs
+        }
+      });
+      additionalFilters.hasDate = hasDateFilter;
+    }
+
+    if (minSalary !== null) {
       filteredResults = filteredResults.filter((job: Record<string, any>) => {
         const jobSalary = job.salary || extractFieldFromContent(job, 'salary');
-        return jobSalary && jobSalary.min >= minSalary;
+        return jobSalary && jobSalary.min >= minSalary!;
       });
       additionalFilters.minSalary = minSalary;
     }
 
-    if (maxSalary) {
+    if (maxSalary !== null) {
       filteredResults = filteredResults.filter((job: Record<string, any>) => {
         const jobSalary = job.salary || extractFieldFromContent(job, 'salary');
-        return jobSalary && jobSalary.max <= maxSalary;
+        return jobSalary && jobSalary.max <= maxSalary!;
       });
       additionalFilters.maxSalary = maxSalary;
     }
 
-    // Helper function to get job date
-    const mongoService = new MongoDBService();
-    const getJobDate = (job: Record<string, any>) => {
-      if (job.publishedDate) {
-        return new Date(job.publishedDate);
-      } else if (job.postedDate) {
-        return new Date(job.postedDate);
-      } else if (job.metadata && job.metadata.publishedDate) {
-        return new Date(job.metadata.publishedDate);
-      } else {
-        // Parse date from content using MongoDB service logic
-        return mongoService.parsePublishedDate(job);
-      }
-    };
+
 
     if (postedAfter) {
       filteredResults = filteredResults.filter((job: Record<string, any>) => {
         const jobDate = getJobDate(job);
         if (!jobDate || isNaN(jobDate.getTime())) return false;
-        const filterDate = new Date(postedAfter);
+        const filterDate = new Date(postedAfter!);
         return jobDate >= filterDate;
       });
       additionalFilters.postedAfter = postedAfter;
@@ -255,7 +294,7 @@ export async function GET(request: NextRequest) {
       filteredResults = filteredResults.filter((job: Record<string, unknown>) => {
         const jobDate = getJobDate(job);
         if (!jobDate || isNaN(jobDate.getTime())) return false;
-        const filterDate = new Date(postedBefore);
+        const filterDate = new Date(postedBefore!);
         return jobDate <= filterDate;
       });
       additionalFilters.postedBefore = postedBefore;

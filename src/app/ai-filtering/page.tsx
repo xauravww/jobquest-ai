@@ -380,6 +380,9 @@ const JobSearchPage = () => {
     toSkip: Job[];
   }>({ toTrack: [], toSkip: [] });
 
+  // New filter state for hasDate
+  const [hasDate, setHasDate] = useState<boolean | undefined>(undefined);
+
   // Generate unique ID for job
   const generateJobId = (job: Job): string => {
     return `${job.url}-${job.title}-${job.company}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
@@ -495,6 +498,7 @@ const JobSearchPage = () => {
       if (filters.postedAfter) searchParams.postedAfter = filters.postedAfter;
       if (filters.postedBefore) searchParams.postedBefore = filters.postedBefore;
       if (filters.searchEngine) searchParams.searchEngine = filters.searchEngine;
+      if (hasDate !== undefined) searchParams.hasDate = hasDate.toString();
 
       console.log('Searching with params:', searchParams);
 
@@ -789,6 +793,28 @@ const JobSearchPage = () => {
               </span>
               <div className="text-xs text-text-muted mt-1">
                 AI detects: job titles, "hiring", "apply", salary mentions, and other hiring indicators
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* Date Filter */}
+        <div className="md:col-span-2 lg:col-span-3">
+          <div className="flex items-center gap-3 p-4 bg-bg-light/50 rounded-lg border border-border/50">
+            <input
+              type="checkbox"
+              id="hasDate"
+              checked={hasDate === true}
+              onChange={(e) => setHasDate(e.target.checked ? true : undefined)}
+              className="w-5 h-5 text-primary bg-bg-card border-border rounded focus:ring-primary focus:ring-2"
+            />
+            <label htmlFor="hasDate" className="text-sm text-white font-medium cursor-pointer">
+              <span className="flex items-center gap-2">
+                <span>Show jobs with dates only</span>
+                <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded font-bold">FILTER</span>
+              </span>
+              <div className="text-xs text-text-muted mt-1">
+                When checked, only shows jobs that have valid publication dates. Unchecked shows all jobs.
               </div>
             </label>
           </div>

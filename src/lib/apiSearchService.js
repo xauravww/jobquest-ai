@@ -39,7 +39,6 @@ class ApiSearchService {
     let attempt = 0;
     while (attempt <= MAX_RETRIES) {
       try {
-        // Build search parameters based on your API structure
         const searchParams = {
           q: query,
           format: 'json',
@@ -59,13 +58,10 @@ class ApiSearchService {
           disabled_plugins: '',
           ...options
         };
-
-        // Use POST method with form data as per your curl example
         const formData = new URLSearchParams();
         Object.keys(searchParams).forEach(key => {
           formData.append(key, searchParams[key]);
         });
-
         const response = await fetchWithTimeout(this.baseUrl, {
           method: 'POST',
           headers: {
@@ -73,13 +69,11 @@ class ApiSearchService {
           },
           body: formData
         }, TIMEOUT_MS);
-        
         if (!response.ok) {
           throw new Error(`Search API error: ${response.status}`);
         }
 
         const data = await response.json();
-        
         return {
           success: true,
           data: {
@@ -96,7 +90,6 @@ class ApiSearchService {
             error: error.message
           };
         }
-        // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
     }
@@ -108,7 +101,6 @@ class ApiSearchService {
   async searchAndStore(query, options = {}) {
     try {
       const searchResult = await this.search(query, options);
-      
       if (!searchResult.success) {
         return searchResult;
       }
@@ -118,7 +110,6 @@ class ApiSearchService {
         searchResult.data.results,
         query
       );
-
       return {
         ...searchResult,
         storageStats: {
@@ -147,7 +138,6 @@ class ApiSearchService {
         const searchResult = await this.search(query, { 
           pageno: page 
         });
-        
         if (!searchResult.success) {
           console.error(`Page ${page} search failed:`, searchResult.error);
           continue;
@@ -155,7 +145,6 @@ class ApiSearchService {
 
         allResults = allResults.concat(searchResult.data.results);
         totalResults = searchResult.data.number_of_results;
-        
         // Small delay between requests
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -167,7 +156,6 @@ class ApiSearchService {
         maxPages,
         results: allResults
       };
-
       if (store) {
         const storageStats = await this.mongoService.saveJobResults(
           allResults,
@@ -201,29 +189,32 @@ class ApiSearchService {
       return [];
     }
 
-    return results.map((result, index) => ({
-      id: result.url ? this.generateIdFromUrl(result.url) : `job_${Date.now()}_${index}`,
-      title: result.title || 'Unknown Title',
-      company: this.extractCompany(result.title, result.content),
-      location: this.extractLocation(result.content) || 'Remote',
-      content: result.content || '',
-      description: result.content || '',
-      link: result.url || '',
-      url: result.url || '',
-      date: this.extractDate(result.content) || new Date().toISOString(),
-      publishedDate: this.extractDate(result.content) || new Date().toISOString(),
-      postedDate: this.extractDate(result.content) || new Date().toISOString(),
-      salary: this.extractSalary(result.content),
-      jobType: this.extractJobType(result.content) || 'full-time',
-      source: this.extractSource(result.url || result.engine || 'Unknown'),
-      engine: result.engine || 'google',
-      snippet: result.content || '',
-      metadata: {
-        publishedDate: this.extractDate(result.content) || new Date().toISOString(),
-        source: result.engine || 'Unknown',
-        score: result.score || 0
+    return results.map((result, index) => {
+      const extractedDate = this.extractDate(result.content) || null; // [!code --] const extractedDate = this.extractDate(result.content) || new Date().toISOString();
+      return {
+        id: result.url ? this.generateIdFromUrl(result.url) : `job_${Date.now()}_${index}`,
+        title: result.title || 'Unknown Title',
+        company: this.extractCompany(result.title, result.content),
+        location: this.extractLocation(result.content) || 'Remote',
+        content: result.content || '',
+        description: result.content || '',
+        link: result.url || '',
+        url: result.url || '',
+        date: extractedDate,
+        publishedDate: extractedDate,
+        postedDate: extractedDate,
+        salary: this.extractSalary(result.content),
+        jobType: this.extractJobType(result.content) || 'full-time',
+        source: this.extractSource(result.url || result.engine || 'Unknown'),
+        engine: result.engine || 'google',
+        snippet: result.content || '',
+        metadata: {
+          publishedDate: extractedDate,
+          source: result.engine || 'Unknown',
+          score: result.score || 0
+        }
       }
-    }));
+    });
   }
 
   /**
@@ -237,18 +228,14 @@ class ApiSearchService {
    * Extract company name from title or content
    */
   extractCompany(title, content) {
-    // Look for company patterns in title
     const titleCompanyMatch = title.match(/at\s+([A-Za-z\s&\.]+?)(?:\s|$|-|,)/i);
     if (titleCompanyMatch) {
       return titleCompanyMatch[1].trim();
     }
-
-    // Look for company patterns in content
     const contentCompanyMatch = content.match(/(?:company|at|join)\s*[:]?\s*([A-Za-z\s&\.]+?)(?:\s|$|,|\.|!)/i);
     if (contentCompanyMatch) {
       return contentCompanyMatch[1].trim();
     }
-
     return 'Unknown Company';
   }
 
@@ -261,14 +248,12 @@ class ApiSearchService {
       /based\s+in\s+([A-Za-z\s,]+?)(?:\s|$|,|\.|!)/i,
       /(?:remote|hybrid|onsite|office)/i
     ];
-
     for (const pattern of locationPatterns) {
       const match = content.match(pattern);
       if (match) {
         return match[1] ? match[1].trim() : match[0];
       }
     }
-
     return null;
   }
 
@@ -276,45 +261,52 @@ class ApiSearchService {
    * Extract date from content
    */
   extractDate(content) {
-    const datePatterns = [
-      /(\d{1,2}\/\d{1,2}\/\d{4})/,
-      /(\d{4}-\d{2}-\d{2})/,
-      /(\d{1,2}\s+(?:days?|weeks?|months?)\s+ago)/i,
+    if (!content) return null;
+    
+    // Logic to parse relative dates like "X hours/days/weeks ago"
+    const relativeMatch = content.match(/(\d+)\s+(hour|day|week|month)s?\s+ago/i);
+    if (relativeMatch) {
+      const value = parseInt(relativeMatch[1]);
+      const unit = relativeMatch[2].toLowerCase();
+      const date = new Date();
+      
+      if (unit.startsWith('hour')) {
+        date.setHours(date.getHours() - value);
+      } else if (unit.startsWith('day')) {
+        date.setDate(date.getDate() - value);
+      } else if (unit.startsWith('week')) {
+        date.setDate(date.getDate() - value * 7);
+      } else if (unit.startsWith('month')) {
+        date.setMonth(date.getMonth() - value);
+      }
+      return date.toISOString();
+    }
+    
+    const absolutePatterns = [
+      // "Sep 1, 2025"
+      /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}/i,
+      // "today" or "yesterday"
       /(today|yesterday)/i
     ];
 
-    for (const pattern of datePatterns) {
+    for (const pattern of absolutePatterns) {
       const match = content.match(pattern);
-      if (match) {
-        const dateStr = match[1];
-        
-        if (dateStr.toLowerCase() === 'today') {
-          return new Date().toISOString();
-        }
-        if (dateStr.toLowerCase() === 'yesterday') {
-          const yesterday = new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          return yesterday.toISOString();
-        }
-        
-        const daysAgoMatch = dateStr.match(/(\d+)\s+days?\s+ago/i);
-        if (daysAgoMatch) {
-          const daysAgo = parseInt(daysAgoMatch[1]);
-          const date = new Date();
-          date.setDate(date.getDate() - daysAgo);
-          return date.toISOString();
-        }
-
-        const weeksAgoMatch = dateStr.match(/(\d+)\s+weeks?\s+ago/i);
-        if (weeksAgoMatch) {
-          const weeksAgo = parseInt(weeksAgoMatch[1]);
-          const date = new Date();
-          date.setDate(date.getDate() - (weeksAgo * 7));
-          return date.toISOString();
-        }
-
+      if (match && match[0]) {
         try {
-          return new Date(dateStr).toISOString();
+          // Handle "today" and "yesterday" specifically
+          if (match[0].toLowerCase() === 'today') {
+            return new Date().toISOString();
+          }
+          if (match[0].toLowerCase() === 'yesterday') {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return yesterday.toISOString();
+          }
+
+          const date = new Date(match[0]);
+          if (!isNaN(date.getTime())) {
+            return date.toISOString();
+          }
         } catch (e) {
           continue;
         }
@@ -334,14 +326,12 @@ class ApiSearchService {
       /(\d+(?:,\d+)?)\s*(?:LPA|per\s+annum|annually)/i,
       /(\d+(?:,\d+)?)\s*(?:k|thousand)\s*(?:per\s+month|monthly)/i
     ];
-
     for (const pattern of salaryPatterns) {
       const match = content.match(pattern);
       if (match) {
         return match[0];
       }
     }
-
     return null;
   }
 
@@ -350,7 +340,6 @@ class ApiSearchService {
    */
   extractJobType(content) {
     const text = content.toLowerCase();
-    
     if (text.includes('full-time') || text.includes('full time')) return 'full-time';
     if (text.includes('part-time') || text.includes('part time')) return 'part-time';
     if (text.includes('contract') || text.includes('freelance')) return 'contract';
