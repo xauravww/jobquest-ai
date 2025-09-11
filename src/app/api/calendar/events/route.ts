@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const applicationId = searchParams.get('applicationId');
     const jobId = searchParams.get('jobId');
+    const search = searchParams.get('search'); // Added search param
     const view = searchParams.get('view') || 'month'; // month, week, day
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -42,6 +43,14 @@ export async function GET(request: NextRequest) {
     
     if (jobId) {
       query.jobId = jobId;
+    }
+    
+    // Add search functionality to the database query
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
     
     // Date filtering
@@ -117,6 +126,7 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(await CalendarEvent.countDocuments(query) / limit)
       }
     });
+    
     
   } catch (error) {
     console.error('Error fetching calendar events:', error);
