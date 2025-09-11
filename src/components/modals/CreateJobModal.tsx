@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 const { TextArea } = Input;
 
 interface Job {
+  createdAt: string;
+  appliedDate: string;
   _id: string;
   jobId?: string;
   title: string;

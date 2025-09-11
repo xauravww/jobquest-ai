@@ -124,7 +124,7 @@ const EventsPage = () => {
   };
 
   const getFilteredEvents = () => {
-    let filtered = events;
+    const filtered = events;
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);

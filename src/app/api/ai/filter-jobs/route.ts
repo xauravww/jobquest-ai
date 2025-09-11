@@ -23,7 +23,7 @@ interface FilterCriteria {
 // Simple AI filtering logic (in a real app, this would use an actual AI service)
 function analyzeJob(job: Job, criteria: FilterCriteria) {
   let score = 50; // Base score
-  let reasons: string[] = [];
+  const reasons: string[] = [];
 
   // Title matching
   if (criteria.userQuery) {

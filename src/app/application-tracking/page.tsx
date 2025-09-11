@@ -9,7 +9,6 @@ import {
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
-import CreateEventModal from '@/components/modals/CreateEventModal';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 
 const { Search: AntSearch } = Input;
@@ -29,6 +28,8 @@ interface Job {
   priority: string;
   platform: string;
   notes?: string;
+  createdAt: string;
+  appliedDate: string;
 }
 
 interface PopulatedJob {
@@ -62,14 +63,13 @@ const ApplicationTrackingPage = () => {
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingJob, setAddingJob] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
   const [eventModalVisible, setEventModalVisible] = useState(false);
   const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalApplications, setTotalApplications] = useState(0);
 
   // Filter states
   const [searchText, setSearchText] = useState('');
@@ -115,13 +115,14 @@ const ApplicationTrackingPage = () => {
           description: (jobData as PopulatedJob)?.description || app.description || '',
           priority: app.priority || 'medium',
           platform: app.platform || 'other',
-          notes: app.notes || ''
+          notes: app.notes || '',
+          createdAt: app.createdAt || new Date().toISOString(),
+          appliedDate: app.appliedDate || new Date().toISOString()
         };
       });
 
       setJobs(transformedJobs);
       setFilteredJobs(transformedJobs);
-      setTotalApplications(data.totalCount || 0);
       setCurrentPage(page);
       setPageSize(limit);
     } catch (error) {
@@ -129,7 +130,6 @@ const ApplicationTrackingPage = () => {
       toast.error('Failed to load applications');
       setJobs([]);
       setFilteredJobs([]);
-      setTotalApplications(0);
     } finally {
       setLoading(false);
     }
@@ -345,7 +345,7 @@ const ApplicationTrackingPage = () => {
             </div>
             <button
               onClick={() => {
-                setSelectedJob(null);
+                setSelectedJob(undefined);
                 setCreateJobModalVisible(true);
               }}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -579,7 +579,7 @@ const ApplicationTrackingPage = () => {
               const jobData = typeof newJob.jobId === 'object' ? newJob.jobId : {};
               const transformedJob: Job = {
                 _id: newJob._id || '',
-                jobId: typeof newJob.jobId === 'object' ? newJob.jobId?._id || newJob._id || '' : newJob.jobId || newJob._id || '',
+                jobId: newJob._id || '',
                 title: (jobData as PopulatedJob)?.title || newJob.title || 'Unknown Title',
                 company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
                 location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
@@ -588,7 +588,9 @@ const ApplicationTrackingPage = () => {
                 description: (jobData as PopulatedJob)?.description || newJob.description || '',
                 priority: newJob.priority || 'medium',
                 platform: newJob.platform || 'other',
-                notes: newJob.notes || ''
+                notes: newJob.notes || '',
+                createdAt: newJob.createdAt || new Date().toISOString(),
+                appliedDate: newJob.appliedDate || new Date().toISOString()
               };
               setJobs(prev => [transformedJob, ...prev]);
               setFilteredJobs(prev => [transformedJob, ...prev]);
