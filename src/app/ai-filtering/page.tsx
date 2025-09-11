@@ -98,6 +98,14 @@ const JobCard = ({ job, onTrack, onSkip }: {
                 <span>{job.location}</span>
               </div>
             )}
+            {job.publishedDate && (
+              <div className="flex items-center text-text-muted text-sm">
+                <div className="p-1 bg-yellow-500/20 rounded mr-3">
+                  <Calendar size={14} className="text-yellow-400" />
+                </div>
+                <span>{new Date(job.publishedDate).toLocaleDateString()}</span>
+              </div>
+            )}
           </div>
           {job.aiAnalysis && (
             <div className={`mt-3 p-3 rounded-lg text-sm ${getAIAnalysisColor()}`}>
