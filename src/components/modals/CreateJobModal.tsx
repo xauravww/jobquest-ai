@@ -50,6 +50,28 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
+  // New states for resumes
+  const [resumes, setResumes] = useState<{ _id: string; title: string }[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<string | undefined>(undefined);
+
+  // Fetch resumes when modal opens
+  useEffect(() => {
+    if (visible) {
+      fetchResumes();
+    }
+  }, [visible]);
+
+  const fetchResumes = async () => {
+    try {
+      const response = await fetch('/api/resumes');
+      if (!response.ok) throw new Error('Failed to fetch resumes');
+      const data = await response.json();
+      setResumes(data);
+    } catch (error) {
+      console.error('Error fetching resumes:', error);
+    }
+  };
+
   // Pre-populate form when editing
   useEffect(() => {
     if (job && visible) {
@@ -64,8 +86,18 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
       setDescription(job.description || '');
       setNotes(job.notes || '');
       setErrors({});
+
+      // Pre-select resume if available
+      if (job.resumeUsed && typeof job.resumeUsed === 'string') {
+        setSelectedResumeId(job.resumeUsed);
+      } else if (job.resumeUsed && typeof job.resumeUsed === 'object' && job.resumeUsed._id) {
+        setSelectedResumeId(job.resumeUsed._id);
+      } else {
+        setSelectedResumeId(undefined);
+      }
     } else if (!job && visible) {
       resetForm();
+      setSelectedResumeId(undefined);
     }
   }, [job, visible]);
 
@@ -81,6 +113,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
     setDescription('');
     setNotes('');
     setErrors({});
+    setSelectedResumeId(undefined);
   };
 
   const validateField = (field: string, value: string): string | undefined => {
@@ -196,6 +229,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
         description: description.trim(),
         notes: notes.trim(),
         applicationMethod: 'manual',
+        resumeUsed: selectedResumeId || null,
       };
 
       const response = await fetch(job ? `/api/applications/${job._id}` : '/api/applications', {
@@ -379,6 +413,28 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
           />
           {errors.notes && <div className="text-red-500 text-sm mt-1">{errors.notes}</div>}
           <div className="text-gray-400 text-xs mt-1">{notes.length}/500 characters</div>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-white mb-1">Resume</label>
+          <Select
+            showSearch
+            placeholder="Select a resume"
+            optionFilterProp="children"
+            value={selectedResumeId}
+            onChange={(value) => setSelectedResumeId(value)}
+            size="large"
+            className="w-full"
+            filterOption={(input, option) =>
+              (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            allowClear
+          >
+            {resumes.map((resume) => (
+              <Select.Option key={resume._id} value={resume._id}>
+                {resume.title}
+              </Select.Option>
+            ))}
+          </Select>
         </div>
       </div>
     </Modal>

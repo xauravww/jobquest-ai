@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const type = formData.get('type') as string;
+    const database = formData.get('database') as string || 'default';
 
     if (!file || !title) {
       return NextResponse.json({ error: 'File and title are required' }, { status: 400 });
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
       userId: user._id,
       title,
       description: description || '',
+      database,
       type: type || 'standard',
       fileName: file.name,
       filePath: `/uploads/resumes/${user._id}/${fileName}`,

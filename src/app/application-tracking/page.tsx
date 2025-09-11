@@ -65,7 +65,12 @@ const ApplicationTrackingPage = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [eventModalVisible, setEventModalVisible] = useState(false);
   const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
-  
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalApplications, setTotalApplications] = useState(0);
+
   // Filter states
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -73,17 +78,31 @@ const ApplicationTrackingPage = () => {
   const [platformFilter, setPlatformFilter] = useState<string>('');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
 
+
   // Fetch jobs from API
-  const fetchJobs = useCallback(async () => {
+  const fetchJobs = useCallback(async (page = 1, limit = 10, search = searchText, status = statusFilter, priority = priorityFilter, platform = platformFilter, dateRangeParam = dateRange) => {
     try {
-      const response = await fetch('/api/applications');
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+      if (search) params.append('search', search);
+      if (status) params.append('status', status);
+      if (priority) params.append('priority', priority);
+      if (platform) params.append('platform', platform);
+      if (dateRangeParam && dateRangeParam[0] && dateRangeParam[1]) {
+        params.append('dateFrom', dateRangeParam[0].toISOString());
+        params.append('dateTo', dateRangeParam[1].toISOString());
+      }
+
+      const response = await fetch(`/api/applications?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch applications');
       }
-      const applications = await response.json();
+      const data = await response.json();
 
       // Transform API response to match the Job interface
-      const transformedJobs: Job[] = applications.map((app: ApiApplication) => {
+      const transformedJobs: Job[] = data.applications.map((app: ApiApplication) => {
         const jobData = typeof app.jobId === 'object' ? app.jobId : {};
         return {
           _id: app._id,
@@ -102,18 +121,23 @@ const ApplicationTrackingPage = () => {
 
       setJobs(transformedJobs);
       setFilteredJobs(transformedJobs);
+      setTotalApplications(data.totalCount || 0);
+      setCurrentPage(page);
+      setPageSize(limit);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
       setJobs([]);
       setFilteredJobs([]);
+      setTotalApplications(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchText, statusFilter, priorityFilter, platformFilter, dateRange]);
+
 
   useEffect(() => {
-    fetchJobs();
+    fetchJobs(currentPage, pageSize);
 
     // Mock API call to get reminders (keeping as is since task only mentioned jobs)
     // const mockReminders: Reminder[] = [
@@ -124,45 +148,13 @@ const ApplicationTrackingPage = () => {
     // setReminders(mockReminders);
   }, []);
 
+
   // Filter jobs based on search and filter criteria
   useEffect(() => {
-    let filtered = [...jobs];
+    // Remove client-side filtering since backend handles it now
+    setFilteredJobs(jobs);
+  }, [jobs]);
 
-    // Text search
-    if (searchText) {
-      filtered = filtered.filter(job => 
-        job.title.toLowerCase().includes(searchText.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchText.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchText.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter(job => job.status === statusFilter);
-    }
-
-    // Priority filter
-    if (priorityFilter) {
-      filtered = filtered.filter(job => job.priority === priorityFilter);
-    }
-
-    // Platform filter
-    if (platformFilter) {
-      filtered = filtered.filter(job => job.platform === platformFilter);
-    }
-
-    // Date range filter
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      filtered = filtered.filter(job => {
-        const jobDate = dayjs(job.datePosted);
-        return jobDate.isAfter(dateRange[0]) && jobDate.isBefore(dateRange[1]);
-      });
-    }
-
-    setFilteredJobs(filtered);
-  }, [jobs, searchText, statusFilter, priorityFilter, platformFilter, dateRange]);
 
   const handleStatusUpdate = useCallback(async (jobId: string, newStatus: string) => {
     try {
@@ -183,6 +175,7 @@ const ApplicationTrackingPage = () => {
         job._id === jobId ? { ...job, status: newStatus } : job
       );
       setJobs(updatedJobs);
+      setFilteredJobs(updatedJobs);
       toast.success('Status updated successfully');
     } catch (error) {
       console.error('Error updating status:', error);
@@ -190,25 +183,6 @@ const ApplicationTrackingPage = () => {
     }
   }, [jobs]);
 
-  const handleDelete = useCallback(async (jobId: string) => {
-    try {
-      const response = await fetch(`/api/applications/${jobId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete application');
-      }
-
-      // Update local state
-      const updatedJobs = jobs.filter(job => job._id !== jobId);
-      setJobs(updatedJobs);
-      toast.success('Application deleted successfully');
-    } catch (error) {
-      console.error('Error deleting application:', error);
-      toast.error('Failed to delete application');
-    }
-  }, [jobs]);
 
   const clearFilters = () => {
     setSearchText('');

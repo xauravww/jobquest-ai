@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '@/components/AppLayout';
-import { Card, Modal, Upload, message } from 'antd';
+import { Card, Modal, Upload, message, Select } from 'antd';
 import { 
   FileText, 
   Upload as UploadIcon, 
@@ -22,6 +22,7 @@ interface Resume {
   _id: string;
   title: string;
   description: string;
+  database: 'default' | 'database1' | 'database2' | 'database3';
   type: 'standard' | 'latex' | 'ats_optimized' | 'creative';
   fileName: string;
   filePath: string;
@@ -62,11 +63,12 @@ const ResumeManagementPage = () => {
     }
   };
 
-  const handleUpload = async (file: File, resumeData: unknown) => {
+  const handleUpload = async (file: File, resumeData: { title: string; description: string; database: string; type: string }) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', resumeData.title);
     formData.append('description', resumeData.description);
+    formData.append('database', resumeData.database);
     formData.append('type', resumeData.type);
 
     try {
@@ -287,6 +289,10 @@ const ResumeManagementPage = () => {
                     {/* Metadata */}
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between text-sm">
+                        <span className="text-text-muted">Database:</span>
+                        <span className="text-text capitalize">{resume.database.replace('_', ' ')}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
                         <span className="text-text-muted">File Size:</span>
                         <span className="text-text">{formatFileSize(resume.fileSize)}</span>
                       </div>
@@ -320,7 +326,7 @@ const ResumeManagementPage = () => {
                         setSelectedResume(resume);
                         setPreviewModalVisible(true);
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-bg-light hover:bg-primary/20 text-text hover:text-primary rounded-lg transition-colors text-sm"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary hover:bg-primary/20 text-text hover:text-primary rounded-lg transition-colors text-sm"
                     >
                       <Eye className="w-4 h-4" />
                       Preview
@@ -400,11 +406,12 @@ const ResumeManagementPage = () => {
 const UploadModal = ({ visible, onClose, onUpload }: {
   visible: boolean;
   onClose: () => void;
-  onUpload: (file: File, data: unknown) => void;
+  onUpload: (file: File, data: { title: string; description: string; database: string; type: string }) => void;
 }) => {
   const [form, setForm] = useState({
     title: '',
     description: '',
+    database: 'default',
     type: 'standard'
   });
   const [file, setFile] = useState<File | null>(null);
@@ -416,7 +423,7 @@ const UploadModal = ({ visible, onClose, onUpload }: {
     }
 
     onUpload(file, form);
-    setForm({ title: '', description: '', type: 'standard' });
+    setForm({ title: '', description: '', database: 'default', type: 'standard' });
     setFile(null);
   };
 
@@ -433,7 +440,7 @@ const UploadModal = ({ visible, onClose, onUpload }: {
         <FormInput
           label="Title *"
           value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          onChange={(value) => setForm({ ...form, title: value })}
           placeholder="e.g., Software Engineer Resume"
           icon={<FileText className="w-4 h-4" />}
         />
@@ -447,6 +454,21 @@ const UploadModal = ({ visible, onClose, onUpload }: {
             className="w-full px-3 py-2 bg-bg-light border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
             placeholder="Brief description of this resume version..."
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-text-muted mb-2">Database</label>
+          <Select
+            value={form.database}
+            onChange={(value) => setForm({ ...form, database: value })}
+            className="w-full"
+            placeholder="Select resume database"
+          >
+            <Select.Option value="default">Default Database</Select.Option>
+            <Select.Option value="database1">Database 1</Select.Option>
+            <Select.Option value="database2">Database 2</Select.Option>
+            <Select.Option value="database3">Database 3</Select.Option>
+          </Select>
         </div>
 
         <div>
@@ -532,7 +554,7 @@ const PreviewModal = ({ visible, resume, onClose }: {
           </div>
           <a
             href={`/api/resumes/${resume._id}/download`}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Download

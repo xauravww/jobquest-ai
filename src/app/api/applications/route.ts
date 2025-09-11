@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority');
     const platform = searchParams.get('platform');
     const search = searchParams.get('search');
+    const page = searchParams.get('page') || '1';
+    const limit = searchParams.get('limit') || '10';
     
     // If date range is provided, get jobs by date range
     if (dateFrom || dateTo) {
@@ -40,16 +42,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(jobs);
     }
 
-    // Get applications for this user with optional filtering
-    const applications = await mongodbService.getApplicationsWithFilters(user._id, {
+    // Get applications for this user with optional filtering and pagination
+    const { applications, totalCount } = await mongodbService.getApplicationsWithFilters(user._id, {
       status,
       priority,
       platform,
       search,
       dateFrom,
-      dateTo
+      dateTo,
+      page,
+      limit
     });
-    return NextResponse.json(applications);
+    return NextResponse.json({ applications, totalCount });
     
   } catch (error) {
     console.error('Error fetching data:', error);

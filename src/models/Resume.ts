@@ -14,6 +14,13 @@ const ResumeSchema = new mongoose.Schema({
     required: true
   },
   description: String,
+
+  // Resume Database
+  database: {
+    type: String,
+    enum: ['default', 'database1', 'database2', 'database3'], // example databases, adjust as needed
+    default: 'default'
+  },
   
   // Resume Type
   type: {

@@ -325,24 +325,24 @@ export class MongoDBService {
   async getApplicationsWithFilters(userId: string, filters: any = {}) {
     try {
       await connectDB();
-      
+
       const query: any = { userId };
-      
+
       // Status filter
       if (filters.status) {
         query.status = this.normalizeStatus(filters.status);
       }
-      
+
       // Priority filter
       if (filters.priority) {
         query.priority = filters.priority;
       }
-      
+
       // Platform filter
       if (filters.platform) {
         query.platform = filters.platform;
       }
-      
+
       // Date range filter
       if (filters.dateFrom || filters.dateTo) {
         query.appliedDate = {};
@@ -353,11 +353,22 @@ export class MongoDBService {
           query.appliedDate.$lte = new Date(filters.dateTo);
         }
       }
-      
+
+      // Pagination params
+      const page = parseInt(filters.page, 10) || 1;
+      const limit = parseInt(filters.limit, 10) || 10;
+      const skip = (page - 1) * limit;
+
+      // Get total count for pagination
+      const totalCount = await Application.countDocuments(query);
+
+      // Fetch paginated results
       let applications = await Application.find(query)
         .populate('jobId')
-        .sort({ appliedDate: -1 });
-      
+        .sort({ appliedDate: -1 })
+        .skip(skip)
+        .limit(limit);
+
       // Text search filter (applied after population)
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
@@ -373,11 +384,11 @@ export class MongoDBService {
         });
       }
 
-      return applications;
-      
+      return { applications, totalCount };
+
     } catch (error) {
       console.error('Error getting applications with filters:', error);
-      return [];
+      return { applications: [], totalCount: 0 };
     }
   }
 
