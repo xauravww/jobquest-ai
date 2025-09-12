@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, InputNumber, DatePicker, Select } from 'antd';
+import { Input, InputNumber, Select } from 'antd';
 import type { InputProps, InputNumberProps, SelectProps } from 'antd';
 import dayjs from 'dayjs';
 
@@ -132,6 +132,9 @@ export const FormDateInput: React.FC<FormDateInputProps> = ({
   className = '',
   required = false
 }) => {
+  // Check if value is a valid date string
+  const dateValue = value && value !== '' && !isNaN(Date.parse(value)) ? value : '';
+
   return (
     <div className={`w-full ${className}`}>
       {label && (
@@ -139,16 +142,18 @@ export const FormDateInput: React.FC<FormDateInputProps> = ({
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
-      <DatePicker
-        value={value ? dayjs(value) : null}
-        onChange={(date) => onChange?.(date ? date.format('YYYY-MM-DD') : '')}
+      <input
+        type="date"
+        value={dateValue}
+        onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
-        className={`w-full bg-bg-card border-border hover:border-primary focus:border-primary ${error ? 'border-red-500' : ''}`}
+        className={`bg-bg-card border-border hover:border-primary focus:border-primary rounded px-3 py-1 text-text text-sm w-full ${error ? 'border-red-500' : ''}`}
         style={{
           backgroundColor: 'var(--bg-card)',
           borderColor: error ? '#ef4444' : 'var(--border)',
           color: 'var(--text)',
         }}
+        required={required}
       />
       {error && (
         <span className="text-red-500 text-xs mt-1">{error}</span>

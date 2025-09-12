@@ -4,12 +4,18 @@ import { Reminder } from '@/models/Reminder';
 import { Job } from '@/models/Job';
 import { Application } from '@/models/Application';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-// GET - Fetch reminders with filtering and pagination
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    
+
+    const session = await getServerSession(authOptions);
+    if (!session || !('id' in session.user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = (session.user as { id: string }).id;
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -21,35 +27,32 @@ export async function GET(request: NextRequest) {
     const applicationId = searchParams.get('applicationId');
     const jobId = searchParams.get('jobId');
     const search = searchParams.get('search');
-    
-    // TODO: Get userId from session
-    const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
-    
+
     // Build query
     const query: any = {
       userId // Filter by user
     };
-    
+
     if (status && status !== 'all') {
       query.status = status;
     }
-    
+
     if (type && type !== 'all') {
       query.type = type;
     }
-    
+
     if (priority && priority !== 'all') {
       query.priority = priority;
     }
-    
+
     if (applicationId) {
       query.applicationId = applicationId;
     }
-    
+
     if (jobId) {
       query.jobId = jobId;
     }
-    
+
     // Add search functionality to the query
     if (search) {
       query.$or = [
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
         { tags: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     // Date filtering
     if (dateFrom || dateTo) {
       query.dueDate = {};
@@ -69,10 +72,10 @@ export async function GET(request: NextRequest) {
         query.dueDate.$lte = new Date(dateTo);
       }
     }
-    
+
     // Calculate pagination
     const skip = (page - 1) * limit;
-    
+
     // Fetch reminders
     const reminders = await Reminder.find(query)
       .populate('applicationId', 'status jobId')
@@ -80,10 +83,10 @@ export async function GET(request: NextRequest) {
       .sort({ dueDate: 1, priority: -1 })
       .skip(skip)
       .limit(limit);
-    
+
     // Get total count for pagination
     const total = await Reminder.countDocuments(query);
-    
+
     // Get stats
     const stats = await Reminder.aggregate([
       { $match: query },
@@ -94,18 +97,18 @@ export async function GET(request: NextRequest) {
         }
       }
     ]);
-    
+
     const statusStats = {
       pending: 0,
       completed: 0,
       snoozed: 0,
       cancelled: 0
     };
-    
+
     stats.forEach(stat => {
       statusStats[stat._id as keyof typeof statusStats] = stat.count;
     });
-    
+
     return NextResponse.json({
       reminders,
       pagination: {
@@ -116,7 +119,7 @@ export async function GET(request: NextRequest) {
       },
       stats: statusStats
     });
-    
+
   } catch (error) {
     console.error('Error fetching reminders:', error);
     return NextResponse.json(
@@ -158,8 +161,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Get userId from session
-    const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
+    // Get userId from session
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !('id' in session.user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = (session.user as { id: string }).id;
 
     // Validate application and job associations
     if (applicationId) {
