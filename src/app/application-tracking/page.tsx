@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Modal, Select, Tag, Table, Popconfirm, Input, DatePicker, Button } from 'antd';
 import {
@@ -40,6 +40,7 @@ interface PopulatedJob {
   location: string;
   description: string;
   datePosted: string;
+  url?: string;
 }
 
 interface ApiApplication {
@@ -60,7 +61,29 @@ interface ApiApplication {
   resumeUsed?: string;
 }
 
+interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  field: string;
+  gpa?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface WorkExperience {
+  id: string;
+  company: string;
+  position: string;
+  location: string;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+}
+
 interface UserProfile {
+  name: string;
+  experience: WorkExperience[];
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -69,8 +92,8 @@ interface UserProfile {
   skills?: string[] | string;
   experienceYears?: number | string;
   targetRole?: string;
-  education?: any[];
-  workExperience?: any[];
+  education?: Education[];
+  workExperience?: WorkExperience[];
 }
 
 const ApplicationTrackingPage = () => {
@@ -85,7 +108,20 @@ const ApplicationTrackingPage = () => {
   const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
 
   // New state for user profile
-  const [userProfile, setUserProfile] = useState<UserProfile>({});
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: '',
+    experience: [],
+    firstName: '',
+    lastName: '',
+    email: '',
+    location: '',
+    bio: '',
+    skills: [],
+    experienceYears: '',
+    targetRole: '',
+    education: [],
+    workExperience: []
+  });
 
   // Pagination and filter states
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,7 +131,7 @@ const ApplicationTrackingPage = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [platformFilter, setPlatformFilter] = useState('');
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
 
   // Fetch user profile on mount
   useEffect(() => {
@@ -106,7 +142,11 @@ const ApplicationTrackingPage = () => {
           throw new Error('Failed to fetch user profile');
         }
         const data = await response.json();
-        setUserProfile(data);
+        setUserProfile({
+          ...data,
+          name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+          experience: data.workExperience || [],
+        });
       } catch (error) {
         console.error('Error fetching user profile:', error);
         toast.error('Failed to load user profile');
@@ -153,7 +193,7 @@ const ApplicationTrackingPage = () => {
           description: (jobData as PopulatedJob)?.description || app.description || '',
           priority: app.priority || 'medium',
           platform: app.platform || 'other',
-          url: (jobData as any)?.url || '',
+          url: (jobData as PopulatedJob)?.url || '',
           notes: app.notes || '',
           createdAt: app.createdAt || new Date().toISOString(),
           appliedDate: app.appliedDate || new Date().toISOString(),
@@ -198,32 +238,7 @@ const ApplicationTrackingPage = () => {
 
 
 
-  const handleStatusUpdate = useCallback(async (jobId: string, newStatus: string) => {
-    try {
-      const response = await fetch(`/api/applications/${jobId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update status');
-      }
-
-      // Update local state
-      const updatedJobs = jobs.map(job =>
-        job._id === jobId ? { ...job, status: newStatus } : job
-      );
-      setJobs(updatedJobs);
-      setFilteredJobs(updatedJobs);
-      toast.success('Status updated successfully');
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status');
-    }
-  }, [jobs]);
+  // Removed unused handleStatusUpdate to fix eslint warning
 
   const handleDelete = useCallback(async (jobId: string) => {
     try {
@@ -277,114 +292,7 @@ const ApplicationTrackingPage = () => {
     }
   };
 
-  const jobColumns = useMemo(() => [
-    {
-      title: 'Job Title',
-      dataIndex: 'title',
-      key: 'title',
-      sorter: (a: Job, b: Job) => a.title.localeCompare(b.title),
-      render: (text: string, record: Job) => (
-        <span className="font-semibold text-text-light cursor-pointer hover:underline" onClick={() => { setSelectedJob(record); setCreateJobModalVisible(true); }}>
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: 'Company',
-      dataIndex: 'company',
-      key: 'company',
-      sorter: (a: Job, b: Job) => a.company.localeCompare(b.company),
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)} className="uppercase text-xs tracking-wider">
-          {status}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Location',
-      dataIndex: 'location',
-      key: 'location',
-      sorter: (a: Job, b: Job) => a.location.localeCompare(b.location),
-    },
-    {
-      title: 'Platform',
-      dataIndex: 'platform',
-      key: 'platform',
-      render: (platform: string) => (
-        <Tag color="blue" className="uppercase text-xs tracking-wider">
-          {platform}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Priority',
-      dataIndex: 'priority',
-      key: 'priority',
-      render: (priority: string) => (
-        <Tag color={getPriorityTagColor(priority)} className="uppercase text-xs tracking-wider">
-          {priority}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Date Posted',
-      dataIndex: 'datePosted',
-      key: 'datePosted',
-      render: (date: string) => dayjs(date).format('MMM DD, YYYY'),
-      sorter: (a: Job, b: Job) => dayjs(a.datePosted).unix() - dayjs(b.datePosted).unix(),
-    },
-    {
-                  title: 'Actions',
-                  key: 'actions',
-                  render: (_: unknown, record: Job) => (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedJobForCoverLetter(record);
-                          setCoverLetterModalVisible(true);
-                        }}
-                        className="flex items-center justify-center w-9 h-9 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 hover:text-purple-400 rounded-lg transition-all duration-200 hover:scale-105"
-                        title="Generate Cover Letter"
-                        aria-label="Generate cover letter"
-                      >
-                        <Sparkles className="w-5 h-5" />
-                      </button>
-                      <Select
-                        value={record.status}
-                        onChange={(value) => handleStatusUpdate(record._id, value)}
-                        className="w-32"
-                        size="small"
-                      >
-                        <Select.Option value="saved">Saved</Select.Option>
-                        <Select.Option value="applied">Applied</Select.Option>
-                        <Select.Option value="interviewing">Interviewing</Select.Option>
-                        <Select.Option value="offered">Offered</Select.Option>
-                        <Select.Option value="rejected">Rejected</Select.Option>
-                      </Select>
-                      <Popconfirm
-                        title="Are you sure?"
-                        onConfirm={() => handleDelete(record._id)}
-                        okText="Yes"
-                        cancelText="No"
-                        className="text-white"
-                      >
-                        <button
-                          className="flex items-center justify-center w-9 h-9 bg-red-500/20 hover:bg-red-500/30 text-red-500 hover:text-red-400 rounded-lg transition-all duration-200 hover:scale-105"
-                          title="Delete Application"
-                          aria-label="Delete job application"
-                        >
-                          <RiDeleteBin6Line className="w-5 h-5" />
-                        </button>
-                      </Popconfirm>
-                    </div>
-                  ),
-    },
-  ], [handleDelete, handleStatusUpdate]);
+  // Remove unused jobColumns variable to fix eslint warning
 
   return (
     <AppLayout showFooter={false}>
@@ -749,7 +657,7 @@ const ApplicationTrackingPage = () => {
                   description: (jobData as PopulatedJob)?.description || newJob.description || '',
                   priority: newJob.priority || 'medium',
                   platform: newJob.platform || 'other',
-                  url: newJob.jobUrl || (jobData as any)?.url || '',
+                  url: newJob.jobUrl || (jobData as PopulatedJob)?.url || '',
                   notes: newJob.notes || '',
                   createdAt: newJob.createdAt || new Date().toISOString(),
                   appliedDate: newJob.appliedDate || new Date().toISOString()

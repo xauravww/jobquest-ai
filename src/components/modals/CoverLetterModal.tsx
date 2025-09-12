@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Card, Spin, Alert, Divider, Input, Checkbox } from 'antd';
-import { FileText, Sparkles, User, Briefcase, X } from 'lucide-react';
+import { Modal, Button, Card, Spin, Alert, Input, Collapse } from 'antd';
+import { FileText, Sparkles, Briefcase, X, Copy, ChevronDown, ChevronUp, ChevronsRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Job {
@@ -23,20 +23,28 @@ interface Job {
 }
 
 interface Education {
+  id: string;
+  institution: string;
   degree: string;
   field: string;
-  institution: string;
+  gpa?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface WorkExperience {
-  position: string;
+  id: string;
   company: string;
+  position: string;
+  location: string;
   startDate?: string;
   endDate?: string;
-  description: string;
+  description?: string;
 }
 
 interface UserProfile {
+  name: string;
+  experience: WorkExperience[];
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -62,40 +70,47 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
   const [coverLetter, setCoverLetter] = useState('');
   const [error, setError] = useState('');
   const [profileDetails, setProfileDetails] = useState('');
-  const [includeUrlContent, setIncludeUrlContent] = useState(true);
-  const [extractedJobContent, setExtractedJobContent] = useState('');
+  const [extractedContent, setExtractedContent] = useState('');
+  const [isExtracted, setIsExtracted] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      const profileText = `
-Name: ${userProfile.firstName || ''} ${userProfile.lastName || ''}
-Email: ${userProfile.email || ''}
-Location: ${userProfile.location || ''}
-Bio: ${userProfile.bio || ''}
-Skills: ${Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills || ''}
-Experience: ${userProfile.experienceYears || ''} years
-Current Role: ${userProfile.targetRole || ''}
-Education: ${Array.isArray(userProfile.education) ? userProfile.education.map((edu: Education) => edu.degree + ' in ' + edu.field + ' from ' + edu.institution).join('; ') : ''}
-Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workExperience.slice(0, 2).map((exp: WorkExperience) => exp.position + ' at ' + exp.company + ' (' + (exp.startDate ? new Date(exp.startDate).getFullYear() : 'Present') + ' - ' + (exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present') + '): ' + exp.description).join('; ') : ''}
-      `.trim();
-      setProfileDetails(profileText);
-    } else {
+      // Reset states when modal opens
       setCoverLetter('');
       setError('');
       setGenerating(false);
-      setProfileDetails('');
-      setExtractedJobContent('');
+      setExtractedContent('');
+      setIsExtracted(false);
+
+      // Pre-populate profile details from the userProfile prop
+      const profileString = userProfile ? JSON.stringify({
+          name: `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim(),
+          email: userProfile.email,
+          location: userProfile.location,
+          skills: userProfile.skills,
+          experience: userProfile.workExperience,
+      }, null, 2) : '';
+      setProfileDetails(profileString);
     }
   }, [visible, userProfile]);
+
+  const handleExtractContent = () => {
+      if (job?.description) {
+        setExtractedContent(job.description);
+        setIsExtracted(true);
+        toast.success('Job description extracted!');
+      } else {
+        setExtractedContent('No description available to extract.');
+        toast.error('No description found for this job.');
+      }
+  };
 
   const handleGenerateCoverLetter = async () => {
     if (!job) return;
 
     setGenerating(true);
     setError('');
-
     try {
-      // Get AI configuration from localStorage
       let aiConfig = null;
       if (typeof window !== 'undefined') {
         const savedConfig = localStorage.getItem('ai-provider-config');
@@ -117,11 +132,10 @@ Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workE
           jobId: job._id,
           jobTitle: job.title,
           company: job.company,
-          jobDescription: job.description,
+          jobDescription: extractedContent,
           location: job.location,
-          profileDetails: profileDetails || JSON.stringify(userProfile),
+          profileDetails: profileDetails,
           aiConfig: aiConfig,
-          jobUrl: includeUrlContent ? job.url : null,
         }),
       });
 
@@ -152,7 +166,7 @@ Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workE
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          coverLetterUsed: coverLetter,
+          notes: `Cover Letter:\n${coverLetter}`,
         }),
       });
 
@@ -160,7 +174,7 @@ Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workE
         throw new Error('Failed to save cover letter');
       }
 
-      toast.success('Cover letter saved successfully!');
+      toast.success('Cover letter saved to application notes!');
       onClose();
     } catch (error) {
       console.error('Error saving cover letter:', error);
@@ -169,10 +183,12 @@ Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workE
       setLoading(false);
     }
   };
-
-  const handleResumeCreation = () => {
-    // Resume creation is disabled as per requirements
-    toast('Resume creation feature is coming soon!', { icon: 'ℹ️' });
+  
+  const handleCopy = () => {
+    if(coverLetter) {
+        navigator.clipboard.writeText(coverLetter);
+        toast.success('Copied to clipboard!');
+    }
   };
 
   return (
@@ -180,198 +196,131 @@ Work Experience: ${Array.isArray(userProfile.workExperience) ? userProfile.workE
       open={visible}
       onCancel={onClose}
       footer={null}
-      width={800}
+      width={1000}
       className="custom-dark-modal"
-      bodyStyle={{ backgroundColor: '#000000' }}
       title={
         <div className="flex items-center gap-3 text-white">
           <Sparkles className="w-6 h-6 text-primary" />
-          <span className="text-xl font-semibold">AI Assistant</span>
+          <span className="text-xl font-semibold">AI Cover Letter Assistant</span>
         </div>
       }
     >
-      <div className="space-y-6">
-        {/* Job Information */}
-        {job && (
-          <Card
-            className="bg-bg-card border border-border"
-            bodyStyle={{ padding: '16px' }}
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-primary/20 rounded-lg">
-                <Briefcase className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-1">{job.title}</h3>
-                <p className="text-primary font-medium mb-2">{job.company}</p>
-                <div className="flex items-center gap-4 text-sm text-text-muted">
-                  <span className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    {job.location}
-                  </span>
-                </div>
-                {job.description && (
-                  <p className="text-text text-sm mt-3 line-clamp-3">{job.description}</p>
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Profile Details Input */}
-        <Card
-          className="bg-bg-card border border-border"
-          bodyStyle={{ padding: '16px' }}
-          title={<span className="text-white">Your Profile Details (optional)</span>}
-        >
-          <Input.TextArea
-            value={profileDetails}
-            onChange={(e) => setProfileDetails(e.target.value)}
-            placeholder="Add or edit your profile details to customize the cover letter"
-            rows={6}
-            className="bg-bg-light text-white"
-            style={{ color: 'white', backgroundColor: '#1a1a1a' }}
-          />
-        </Card>
-
-        {/* URL Content Extraction */}
-        <Card
-          className="bg-bg-card border border-border"
-          bodyStyle={{ padding: '16px' }}
-          title={<span className="text-white">Extract Job Posting Content</span>}
-        >
-          <Input.TextArea
-            value={extractedJobContent}
-            onChange={(e) => setExtractedJobContent(e.target.value)}
-            placeholder="Extracted job posting content will appear here. You can edit it before generating the cover letter."
-            rows={6}
-            className="bg-bg-light text-white"
-            style={{ color: 'white', backgroundColor: '#1a1a1a' }}
-          />
-          <Button
-            type="default"
-            onClick={async () => {
-              if (!job?.url) {
-                toast.error('No job URL available to extract content');
-                return;
-              }
-              setGenerating(true);
-              try {
-                const response = await fetch('/api/ai/extract-job-url-content', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ url: job.url }),
-                });
-                if (!response.ok) {
-                  throw new Error('Failed to extract content');
-                }
-                const data = await response.json();
-                setExtractedJobContent(data.content);
-                toast.success('Job posting content extracted');
-              } catch (error) {
-                toast.error('Failed to extract job posting content');
-              } finally {
-                setGenerating(false);
-              }
-            }}
-            className="w-full mt-2"
-          >
-            Extract Job Posting Content
-          </Button>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button
-            type="primary"
-            size="large"
-            icon={<Sparkles className="w-5 h-5" />}
-            onClick={handleGenerateCoverLetter}
-            loading={generating}
-            disabled={!job}
-            className="h-12 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary border-0"
-          >
-            {generating ? 'Generating...' : 'Generate Cover Letter'}
-          </Button>
-
-          <Button
-            size="large"
-            icon={<FileText className="w-5 h-5" />}
-            onClick={handleResumeCreation}
-            disabled
-            className="h-12 bg-gray-600 hover:bg-gray-500 border-0 opacity-50 cursor-not-allowed"
-          >
-            Resume Creation (Coming Soon)
-          </Button>
-        </div>
-
-        {/* Error Display */}
-        {error && (
-          <Alert
-            message="Error"
-            description={error}
-            type="error"
-            showIcon
-            closable
-            onClose={() => setError('')}
-          />
-        )}
-
-        {/* Generated Cover Letter */}
-        {coverLetter && (
-          <>
-            <Divider className="border-border" />
-            <Card
-              className="bg-bg-card border border-border"
-              title={
-                <div className="flex items-center gap-2 text-white">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Generated Cover Letter
-                </div>
-              }
-              bodyStyle={{ padding: '16px' }}
-            >
-              <div className="space-y-4">
-                <div className="bg-bg-light p-4 rounded-lg border border-border">
-                  <pre className="text-white whitespace-pre-wrap font-sans text-sm leading-relaxed" style={{ color: 'white' }}>
-                    {coverLetter}
-                  </pre>
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <Button
-                    onClick={() => setCoverLetter('')}
-                    icon={<X className="w-4 h-4" />}
-                    className="border-border text-text hover:text-white"
-                  >
-                    Discard
-                  </Button>
-                  <Button
-                    type="primary"
-                    onClick={handleSaveCoverLetter}
-                    loading={loading}
-                    icon={<FileText className="w-4 h-4" />}
-                    className="bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary border-0"
-                  >
-                    {loading ? 'Saving...' : 'Save Cover Letter'}
-                  </Button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left Column: Inputs */}
+        <div className="space-y-4">
+          {job && (
+            <Card className="bg-bg-card border-border" bodyStyle={{ padding: '16px' }}>
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-primary/20 rounded-lg"><Briefcase className="w-6 h-6 text-primary" /></div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white mb-1">{job.title}</h3>
+                  <p className="text-primary font-medium">{job.company}</p>
                 </div>
               </div>
             </Card>
-          </>
-        )}
+          )}
 
-        {/* Loading State */}
-        {generating && (
-          <div className="text-center py-8">
-            <Spin size="large" />
-            <p className="text-text-muted mt-4">Generating your personalized cover letter...</p>
-          </div>
-        )}
+          <Card
+            title={
+                <div className="flex justify-between items-center text-white">
+                    <span>Job Description</span>
+                    <Button icon={<ChevronsRight/>} onClick={handleExtractContent} size="small" disabled={isExtracted}>Extract Text</Button>
+                </div>
+            }
+            className="bg-bg-card border-border"
+            bodyStyle={{ padding: '16px' }}
+            >
+          <Input.TextArea
+                value={extractedContent}
+                onChange={(e) => setExtractedContent(e.target.value)}
+                placeholder="Click 'Extract Text' or paste the job description here."
+                rows={8}
+                className="bg-bg-light text-text"
+              />
+          </Card>
+          
+          <Collapse ghost expandIcon={({ isActive }) => isActive ? <ChevronUp /> : <ChevronDown />} items={[{
+            key: '1',
+            label: <span className="text-white font-medium">Customize Your Profile for this Letter</span>,
+            children: <Input.TextArea
+              value={profileDetails}
+              onChange={(e) => setProfileDetails(e.target.value)}
+              placeholder="Add or edit your profile details to customize the cover letter"
+              rows={6}
+              className="bg-bg-light text-text"
+            />
+          }]} />
+
+        </div>
+
+        {/* Right Column: Output & Actions */}
+        <div className="flex flex-col space-y-4">
+            <Card className="bg-bg-card border-border flex-grow flex flex-col" bodyStyle={{ padding: '16px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                <div className="flex-grow flex flex-col items-center justify-center space-y-4 text-center">
+                    
+                    {!coverLetter && !generating && (
+                        <>
+                            <div className="p-4 bg-primary/10 rounded-full border-4 border-primary/20">
+                                <Sparkles className="w-8 h-8 text-primary" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white">Ready to Generate?</h3>
+                            <p className="text-text-muted text-sm max-w-xs">
+                                Once you have the job description, click the button below to generate your personalized cover letter.
+                            </p>
+                        </>
+                    )}
+
+                    <Button
+                        type="primary"
+                        size="large"
+                        icon={<Sparkles className="w-5 h-5" />}
+                        onClick={handleGenerateCoverLetter}
+                        loading={generating}
+                        disabled={!job || !isExtracted}
+                        className="h-12 w-full max-w-xs bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary border-0 font-semibold"
+                    >
+                        {generating ? 'Generating...' : 'Generate Cover Letter'}
+                    </Button>
+                    <p className="text-center text-xs text-text-muted">AI resume builder is coming soon!</p>
+                </div>
+
+                {error && (
+                <Alert message="Error" description={error} type="error" showIcon closable onClose={() => setError('')} className="mt-4"/>
+                )}
+
+                {(generating || coverLetter) && (
+                    <div className="mt-4">
+                        {generating ? (
+                            <div className="flex flex-col items-center justify-center h-full min-h-[200px]">
+                                <Spin size="large" />
+                                <p className="text-text-muted mt-4">Our AI is writing your personalized cover letter...</p>
+                            </div>
+                        ) : (
+                        <div className="space-y-4">
+                            <div className="bg-bg-light p-4 rounded-lg border border-border max-h-80 overflow-y-auto">
+                            <pre className="text-text whitespace-pre-wrap font-sans text-sm leading-relaxed">{coverLetter}</pre>
+                            </div>
+                            <div className="flex justify-end gap-3">
+                                <Button onClick={() => setCoverLetter('')} icon={<X className="w-4 h-4" />}>Discard</Button>
+                                <Button onClick={handleCopy} icon={<Copy className="w-4 h-4" />}>Copy</Button>
+                                <Button
+                                    type="primary"
+                                    onClick={handleSaveCoverLetter}
+                                    loading={loading}
+                                    icon={<FileText className="w-4 h-4" />}
+                                >
+                                    {loading ? 'Saving...' : 'Save to Notes'}
+                                </Button>
+                            </div>
+                        </div>
+                        )}
+                    </div>
+                )}
+            </Card>
+        </div>
       </div>
     </Modal>
   );
 };
 
 export default CoverLetterModal;
-

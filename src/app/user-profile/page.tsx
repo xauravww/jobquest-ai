@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '@/components/AppLayout';
-import { Card, Input, Button, Collapse, Tag, Space, Divider } from 'antd';
+import { Card, Button } from 'antd';
 import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog } from 'lucide-react';
-import { FormInput, FormInputNumber, FormDateInput } from '@/components/ui/FormInput';
+import { FormInput, FormDateInput } from '@/components/ui/FormInput';
 import AIProviderConfig from '@/components/AIProviderConfig';
 
 interface WorkExperience {
@@ -460,7 +460,7 @@ const UserProfilePage = () => {
                     <FormInput
                       type="url"
                       value={profile.personalInfo.website}
-                      onChange={(e) => handleInputChange('personalInfo', 'website', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'website', value)}
                       icon={<Globe className="w-4 h-4 text-text-muted" />}
                       placeholder="https://yourwebsite.com"
                     />
@@ -478,7 +478,7 @@ const UserProfilePage = () => {
                     <FormInput
                       type="url"
                       value={profile.personalInfo.linkedin}
-                      onChange={(e) => handleInputChange('personalInfo', 'linkedin', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'linkedin', value)}
                       icon={<Linkedin className="w-4 h-4 text-text-muted" />}
                       placeholder="https://linkedin.com/in/username"
                     />
@@ -496,7 +496,7 @@ const UserProfilePage = () => {
                     <FormInput
                       type="url"
                       value={profile.personalInfo.github}
-                      onChange={(e) => handleInputChange('personalInfo', 'github', e.target.value)}
+                      onChange={(value) => handleInputChange('personalInfo', 'github', value)}
                       icon={<Github className="w-4 h-4 text-text-muted" />}
                       placeholder="https://github.com/username"
                     />
@@ -636,9 +636,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Company"
                             value={exp.company}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].company = e.target.value;
+                              newExp[index].company = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -650,9 +650,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Position"
                             value={exp.position}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].position = e.target.value;
+                              newExp[index].position = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -666,9 +666,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Location"
                             value={exp.location}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].location = e.target.value;
+                              newExp[index].location = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -776,7 +776,7 @@ const UserProfilePage = () => {
                   <div className="text-center py-8 text-text-muted">
                     <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No work experience added yet.</p>
-                    {isEditing && <p className="text-sm">Click "Add Experience" to get started.</p>}
+                    {isEditing && <p className="text-sm">Click &quot;Add Experience&quot; to get started.</p>}
                   </div>
                 )}
               </div>
@@ -835,9 +835,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Institution"
                             value={edu.institution}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].institution = e.target.value;
+                              newEdu[index].institution = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, education: newEdu }
@@ -849,9 +849,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Degree"
                             value={edu.degree}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].degree = e.target.value;
+                              newEdu[index].degree = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, education: newEdu }
@@ -865,9 +865,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Field of Study"
                             value={edu.field}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].field = e.target.value;
+                              newEdu[index].field = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, education: newEdu }
@@ -907,9 +907,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="GPA (Optional)"
                             value={edu.gpa || ''}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].gpa = e.target.value;
+                              newEdu[index].gpa = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, education: newEdu }
@@ -972,7 +972,7 @@ const UserProfilePage = () => {
                   <div className="text-center py-8 text-text-muted">
                     <GraduationCap className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No education added yet.</p>
-                    {isEditing && <p className="text-sm">Click "Add Education" to get started.</p>}
+                    {isEditing && <p className="text-sm">Click &apos;Add Education&apos; to get started.</p>}
                   </div>
                 )}
               </div>
@@ -1027,20 +1027,20 @@ const UserProfilePage = () => {
                   <div key={project.id} className="p-4 bg-bg-light rounded-lg border border-border">
                     {isEditing ? (
                       <div className="space-y-4">
-                        <FormInput
-                          label="Project Name"
-                          value={project.name}
-                          onChange={(e) => {
-                            const newProjects = [...profile.professionalInfo.projects];
-                            newProjects[index].name = e.target.value;
-                            setProfile(prev => ({
-                              ...prev,
-                              professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                            }));
-                          }}
-                          icon={<Code className="w-4 h-4" />}
-                          placeholder="Project name"
-                        />
+                          <FormInput
+                            label="Project Name"
+                            value={project.name}
+                            onChange={(value) => {
+                              const newProjects = [...profile.professionalInfo.projects];
+                              newProjects[index].name = value;
+                              setProfile(prev => ({
+                                ...prev,
+                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
+                              }));
+                            }}
+                            icon={<Code className="w-4 h-4" />}
+                            placeholder="Project name"
+                          />
                         <div>
                           <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
                           <textarea
@@ -1062,9 +1062,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Project URL (Optional)"
                             value={project.url || ''}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].url = e.target.value;
+                              newProjects[index].url = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, projects: newProjects }
@@ -1076,9 +1076,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="GitHub URL (Optional)"
                             value={project.github || ''}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].github = e.target.value;
+                              newProjects[index].github = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, projects: newProjects }
@@ -1186,7 +1186,7 @@ const UserProfilePage = () => {
                   <div className="text-center py-8 text-text-muted">
                     <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No projects added yet.</p>
-                    {isEditing && <p className="text-sm">Click "Add Project" to get started.</p>}
+                    {isEditing && <p className="text-sm">Click &apos;Add Project&apos; to get started.</p>}
                   </div>
                 )}
               </div>
@@ -1241,9 +1241,9 @@ const UserProfilePage = () => {
                         <FormInput
                           label="Achievement Title"
                           value={achievement.title}
-                          onChange={(e) => {
+                          onChange={(value) => {
                             const newAchievements = [...profile.professionalInfo.achievements];
-                            newAchievements[index].title = e.target.value;
+                            newAchievements[index].title = value;
                             setProfile(prev => ({
                               ...prev,
                               professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
@@ -1254,28 +1254,28 @@ const UserProfilePage = () => {
                         />
                         <div>
                           <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
-                          <textarea
-                            value={achievement.description}
-                            onChange={(e) => {
-                              const newAchievements = [...profile.professionalInfo.achievements];
-                              newAchievements[index].description = e.target.value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
-                              }));
-                            }}
-                            rows={3}
-                            className="w-full px-3 py-2 bg-bg-card border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
-                            placeholder="Describe your achievement..."
-                          />
+                  <textarea
+                    value={achievement.description}
+                    onChange={(e) => {
+                      const newAchievements = [...profile.professionalInfo.achievements];
+                      newAchievements[index].description = e.target.value;
+                      setProfile(prev => ({
+                        ...prev,
+                        professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
+                      }));
+                    }}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-bg-card border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
+                    placeholder="Describe your achievement..."
+                  />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormInput
                             label="Organization (Optional)"
                             value={achievement.organization || ''}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newAchievements = [...profile.professionalInfo.achievements];
-                              newAchievements[index].organization = e.target.value;
+                              newAchievements[index].organization = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
@@ -1334,7 +1334,7 @@ const UserProfilePage = () => {
                   <div className="text-center py-8 text-text-muted">
                     <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No achievements added yet.</p>
-                    {isEditing && <p className="text-sm">Click "Add Achievement" to get started.</p>}
+                    {isEditing && <p className="text-sm">Click &quot;Add Achievement&quot; to get started.</p>}
                   </div>
                 )}
               </div>
@@ -1390,9 +1390,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Certification Name"
                             value={cert.name}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].name = e.target.value;
+                              newCerts[index].name = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
@@ -1404,9 +1404,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Issuer"
                             value={cert.issuer}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].issuer = e.target.value;
+                              newCerts[index].issuer = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
@@ -1432,9 +1432,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Certificate URL (Optional)"
                             value={cert.url || ''}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].url = e.target.value;
+                              newCerts[index].url = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
@@ -1450,7 +1450,7 @@ const UserProfilePage = () => {
                             size="small"
                             icon={<X className="w-4 h-4" />}
                             onClick={() => {
-                              const newCerts = profile.professionalInfo.certifications.filter((_, i) => i !== index);
+                              const newCerts = (profile.professionalInfo.certifications || []).filter((_, i) => i !== index);
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
