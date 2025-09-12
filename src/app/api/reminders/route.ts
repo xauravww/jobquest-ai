@@ -6,12 +6,30 @@ import { Application } from '@/models/Application';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+type ReminderQuery = {
+  userId: string;
+  status?: string;
+  type?: string;
+  priority?: string;
+  applicationId?: string;
+  jobId?: string;
+  dueDate?: {
+    $gte?: Date;
+    $lte?: Date;
+  };
+  $or?: Array<{
+    title?: { $regex: string; $options: string };
+    description?: { $regex: string; $options: string };
+    tags?: { $regex: string; $options: string };
+  }>;
+};
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
     const session = await getServerSession(authOptions);
-    if (!session || !('id' in session.user)) {
+    if (!session || !session.user || !('id' in session.user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const userId = (session.user as { id: string }).id;
@@ -29,7 +47,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
 
     // Build query
-    const query: any = {
+    const query: ReminderQuery = {
       userId // Filter by user
     };
 
