@@ -1,17 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import MongoDBService from '@/lib/mongodbService';
 
-// Import MongoDB service dynamically
-let MongoDBService: any;
-
-const initService = async () => {
-  if (!MongoDBService) {
-    MongoDBService = (await import('@/lib/mongodbService')).default || require('@/lib/mongodbService');
-  }
-};
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    await initService();
     const mongoService = new MongoDBService();
     const health = await mongoService.healthCheck();
 

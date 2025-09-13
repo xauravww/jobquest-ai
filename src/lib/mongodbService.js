@@ -3,7 +3,9 @@
  * Integrates with the existing MongoDB models and connection
  */
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import { Job } from '../models/Job';
+import { Application } from '../models/Application';
 
 class MongoDBService {
   constructor() {
@@ -32,7 +34,6 @@ class MongoDBService {
   async getJobsByUser(userId) {
     try {
       await this.connect();
-      const Job = require('../models/Job').Job || require('../models/Job').default;
       const jobs = await Job.find({ userId }).sort({ datePosted: -1 });
       return jobs;
     } catch (error) {
@@ -47,7 +48,6 @@ class MongoDBService {
   async updateJobForUser(userId, jobId, updateData) {
     try {
       await this.connect();
-      const Job = require('../models/Job').Job || require('../models/Job').default;
       const job = await Job.findOne({ _id: jobId, userId });
       if (!job) {
         return null;
@@ -68,7 +68,6 @@ class MongoDBService {
   async deleteJobForUser(userId, jobId) {
     try {
       await this.connect();
-      const Job = require('../models/Job').Job || require('../models/Job').default;
       const result = await Job.deleteOne({ _id: jobId, userId });
       return result.deletedCount > 0;
     } catch (error) {
@@ -108,9 +107,6 @@ class MongoDBService {
   async saveJobResults(jobs, query, filters = {}) {
     try {
       await this.connect();
-      
-      // Import Job model dynamically to avoid circular dependencies
-      const Job = require('../models/Job').Job || require('../models/Job').default;
       
       const savedJobs = [];
       
@@ -237,8 +233,6 @@ class MongoDBService {
     try {
       await this.connect();
       
-      const Job = require('../models/Job').Job || require('../models/Job').default;
-      
       const query = {
         isActive: true,
         isSkipped: false
@@ -286,15 +280,12 @@ class MongoDBService {
   async saveFilteredJobs(jobs, filters = {}) {
     try {
       await this.connect();
-      
-      const Application = require('../models/Application').Application || require('../models/Application').default;
-      
+
       const savedApplications = [];
-      
+
       for (const jobData of jobs) {
         try {
           // Find the corresponding job in the database
-          const Job = require('../models/Job').Job || require('../models/Job').default;
           let job = await Job.findOne({
             $or: [
               { url: jobData.link || jobData.url },
@@ -351,18 +342,17 @@ class MongoDBService {
 
       console.log(`Saved ${savedApplications.length} filtered job applications`);
       return savedApplications;
-      
+
     } catch (error) {
       console.error('Error saving filtered jobs:', error);
       throw error;
     }
   }
-}
 
   /**
    * Save applications from AI filtered jobs
    */
-  saveApplicationsFromAI = async (applications) => {
+  async saveApplicationsFromAI(applications) {
     try {
       await this.connect();
 
@@ -390,8 +380,7 @@ class MongoDBService {
       console.error('Error saving applications from AI:', error);
       return [];
     }
+  }
 }
 
-module.exports = MongoDBService;
-
-module.exports = MongoDBService;
+export default MongoDBService;

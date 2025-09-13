@@ -13,13 +13,14 @@ interface MongooseCache {
 
 // Global is used here to maintain a cached connection across hot reloads in development
 declare global {
-  var mongoose: MongooseCache | undefined;
+  // eslint-disable-next-line no-var
+  var mongooseCache: MongooseCache | undefined;
 }
 
-let cached = global.mongoose;
+let cached = global.mongooseCache;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = global.mongooseCache = { conn: null, promise: null };
 }
 
 export async function connectDB(): Promise<typeof mongoose> {

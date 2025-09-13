@@ -18,6 +18,9 @@ interface FilterCriteria {
   experience?: string;
   skills?: string;
   userQuery?: string;
+  targetRole?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // Simple AI filtering logic (in a real app, this would use an actual AI service)
@@ -133,7 +136,6 @@ export async function POST(request: NextRequest) {
           const prompt = buildAIPrompt(job, criteria);
           const { provider, apiUrl, model, apiKey } = aiService.getConfig();
 
-          let response;
           let requestBody;
           let headers: Record<string, string> = {
             'Content-Type': 'application/json',
@@ -192,7 +194,7 @@ export async function POST(request: NextRequest) {
             ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
             : `${apiUrl}/v1/chat/completions`;
 
-          response = await fetch(endpoint, {
+          const response = await fetch(endpoint, {
             method: 'POST',
             headers,
             body: JSON.stringify(requestBody)
@@ -216,7 +218,7 @@ export async function POST(request: NextRequest) {
                 aiReason: analysis.reason || 'AI analysis completed',
                 isFiltered: analysis.isMatch || analysis.score >= 60
               };
-            } catch (parseError) {
+            } catch {
               console.warn('Failed to parse AI response, using fallback');
               return analyzeJobFallback(job, criteria);
             }
@@ -250,7 +252,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildAIPrompt(job: any, criteria: any) {
+function buildAIPrompt(job: Job, criteria: FilterCriteria) {
   return `
 Job Details:
 Title: ${job.title}
@@ -271,9 +273,9 @@ Analyze this job match and provide a score with reasoning.
   `;
 }
 
-function analyzeJobFallback(job: any, criteria: unknown) {
-  const analysis = analyzeJob(job, criteria || {});
-  
+function analyzeJobFallback(job: Job, criteria: FilterCriteria) {
+  const analysis = analyzeJob(job, criteria);
+
   return {
     ...job,
     aiScore: analysis.score,

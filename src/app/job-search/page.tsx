@@ -171,14 +171,14 @@ const JobSearchPage = () => {
                 <FormInput
                   placeholder="Job title, keywords, or company"
                   value={filters.query}
-                  onChange={(e) => handleFilterChange('query', e.target.value)}
+                  onChange={(value) => handleFilterChange('query', value)}
                   icon={<Search className="w-5 h-5" />}
                 />
-                
+
                 <FormInput
                   placeholder="Location"
                   value={filters.location}
-                  onChange={(e) => handleFilterChange('location', e.target.value)}
+                  onChange={(value) => handleFilterChange('location', value)}
                   icon={<MapPin className="w-5 h-5" />}
                 />
 

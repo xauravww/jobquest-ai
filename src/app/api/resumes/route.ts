@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {

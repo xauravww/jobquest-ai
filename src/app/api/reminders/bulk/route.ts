@@ -80,10 +80,19 @@ export async function POST(request: NextRequest) {
         );
     }
     
+    let count: number;
+    if (action === 'delete') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      count = (result as any).deletedCount;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      count = (result as any).modifiedCount;
+    }
+
     return NextResponse.json({
       success: true,
-      modifiedCount: result.modifiedCount || result.deletedCount,
-      message: `Successfully ${action}ed ${result.modifiedCount || result.deletedCount} reminders`
+      modifiedCount: count,
+      message: `Successfully ${action}ed ${count} reminders`
     });
     
   } catch (error) {

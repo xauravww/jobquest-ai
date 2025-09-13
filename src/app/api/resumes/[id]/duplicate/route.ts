@@ -8,7 +8,7 @@ import path from 'path';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,9 @@ export async function POST(
     }
 
     await dbConnect();
-    
+
+    const { id } = await params;
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -26,10 +28,10 @@ export async function POST(
     }
 
     // Find original resume
-    const originalResume = await Resume.findOne({ 
-      _id: params.id, 
+    const originalResume = await Resume.findOne({
+      _id: id,
       userId: user._id,
-      isActive: true 
+      isActive: true
     });
 
     if (!originalResume) {

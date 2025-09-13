@@ -5,6 +5,16 @@ import { Job } from '@/models/Job';
 import { Application } from '@/models/Application';
 import { Reminder } from '@/models/Reminder';
 
+interface EventQuery {
+  userId: string;
+  type?: string;
+  status?: string | { $in: string[] };
+  applicationId?: string;
+  jobId?: string;
+  $or?: Array<{ [key: string]: { $regex: string; $options: string } }>;
+  startDate?: { $gte?: Date; $lte?: Date };
+}
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -17,7 +27,6 @@ export async function GET(request: NextRequest) {
     const applicationId = searchParams.get('applicationId');
     const jobId = searchParams.get('jobId');
     const search = searchParams.get('search'); // Added search param
-    const view = searchParams.get('view') || 'month'; // month, week, day
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     
@@ -25,7 +34,7 @@ export async function GET(request: NextRequest) {
     const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
     
     // Build query
-    const query: any = {
+    const query: EventQuery = {
       userId // Filter by user
     };
     
@@ -77,7 +86,7 @@ export async function GET(request: NextRequest) {
       .limit(limit);
     
     // Get upcoming events (next 7 days)
-    const upcomingQuery = {
+    const upcomingQuery: EventQuery = {
       ...query,
       startDate: {
         $gte: new Date(),

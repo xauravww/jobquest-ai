@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import { Responsive, WidthProvider } from 'react-grid-layout';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -9,17 +9,14 @@ import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
 import {
   Briefcase,
-  Search,
   Target,
   TrendingUp,
   Users,
   Calendar,
   MapPin,
-  DollarSign,
   Brain,
   Bell,
   AlertTriangle,
-  FileText,
   Clock,
   ExternalLink
 } from 'lucide-react';
@@ -101,12 +98,18 @@ const layouts = {
 
 
 // --- Recharts Custom Components ---
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipEntry {
+  color: string;
+  name: string;
+  value: number;
+}
+
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-bg-light/80 backdrop-blur-sm border border-border p-3 rounded-lg shadow-lg text-sm">
         <p className="font-bold text-white mb-2">{`Date: ${label}`}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index) => (
           <p key={`item-${index}`} style={{ color: entry.color }}>{`${entry.name}: ${entry.value}`}</p>
         ))}
       </div>
@@ -117,11 +120,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 // --- Widget Components ---
 
-const WidgetSkeleton = () => (
-    <div className="bg-bg-card rounded-xl p-6 h-full flex items-center justify-center animate-pulse">
-        <div className="w-8 h-8 bg-bg-light rounded-full"></div>
-    </div>
-);
+
 
 const StatCard = ({ title, value, icon, link, children }: { title: string, value: string | number, icon: React.ReactNode, link: string, children: React.ReactNode }) => (
     <Link href={link} className="block h-full">
@@ -144,7 +143,7 @@ const StatCard = ({ title, value, icon, link, children }: { title: string, value
 
 
 const DashboardPage = () => {
-  const { data: session, status } = useSession({ required: true });
+  const { status } = useSession({ required: true });
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +223,7 @@ const DashboardPage = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               Welcome back, {data?.userProfile.firstName || 'User'}!
             </h1>
-            <p className="text-text-muted text-base md:text-lg">Here's your job search progress and insights.</p>
+            <p className="text-text-muted text-base md:text-lg">Here&apos;s your job search progress and insights.</p>
           </div>
           <Link href="/application-tracking" className="px-5 py-3 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors font-semibold flex items-center gap-2 whitespace-nowrap">
             <Briefcase className="w-5 h-5" />

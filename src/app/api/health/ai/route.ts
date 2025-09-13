@@ -1,17 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import AiFilterService from '@/lib/aiFilterService';
+import { NextResponse } from 'next/server';
 
-// Import AI filter service dynamically
-let AiFilterService: any;
-
-const initService = async () => {
-  if (!AiFilterService) {
-    AiFilterService = (await import('@/lib/aiFilterService')).default || require('@/lib/aiFilterService');
-  }
-};
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    await initService();
     const aiFilterService = new AiFilterService();
     
     // Test AI service with a simple query

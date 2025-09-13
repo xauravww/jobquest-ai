@@ -41,15 +41,16 @@ export async function GET(
 // POST - Create reminders for an application
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    
+
+    const { id } = await params;
     const body = await request.json();
     const { type, autoGenerate } = body;
-    
-    const application = await Application.findById(params.id).populate('jobId');
+
+    const application = await Application.findById(id).populate('jobId');
     if (!application) {
       return NextResponse.json(
         { error: 'Application not found' },
@@ -62,7 +63,7 @@ export async function POST(
     if (autoGenerate) {
       // Auto-generate standard reminders for the application
       result = await reminderCalendarService.createApplicationReminders(
-        params.id,
+        id,
         application.jobId
       );
     } else if (type === 'interview') {
@@ -76,9 +77,9 @@ export async function POST(
         attendees,
         preparationNotes
       } = body;
-      
+
       result = await reminderCalendarService.createInterviewEvent({
-        applicationId: params.id,
+        applicationId: id,
         title: title || `Interview for ${application.jobId.title}`,
         startDate: new Date(startDate),
         endDate: new Date(endDate),

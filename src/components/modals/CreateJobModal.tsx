@@ -429,9 +429,9 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
             onChange={(value) => setSelectedResumeId(value)}
             size="large"
             className="w-full"
-            filterOption={(input: string, option?: DefaultOptionType) => {
-              if (option && option.children && typeof option.children === 'string') {
-                return option.children.toLowerCase().includes(input.toLowerCase());
+filterOption={(input: string, option?: DefaultOptionType) => {
+              if (typeof option?.children === 'string') {
+                return (option.children as string).toLowerCase().includes(input.toLowerCase());
               }
               return false;
             }}

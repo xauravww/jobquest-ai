@@ -1,17 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
+import ApiSearchService from '@/lib/apiSearchService';
+import AiFilterService from '@/lib/aiFilterService';
+import MongoDBService from '@/lib/mongodbService';
 
-// Import services dynamically to handle CommonJS modules
-let ApiSearchService: any;
-let AiFilterService: any;
-let MongoDBService: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface SearchJob extends Record<string, any> {
+  title: string;
+  content: string;
+  url: string;
+  publishedDate?: string;
+  date?: string;
+  postedDate?: string;
+  metadata?: { publishedDate?: string };
+  location?: string;
+  company?: string;
+  salary?: { min: number; max: number };
+  engine?: string;
+}
 
-// Initialize services
-const initServices = async () => {
-  if (!ApiSearchService) {
-    ApiSearchService = (await import('@/lib/apiSearchService')).default || require('@/lib/apiSearchService');
-    AiFilterService = (await import('@/lib/aiFilterService')).default || require('@/lib/aiFilterService');
-    MongoDBService = (await import('@/lib/mongodbService')).default || require('@/lib/mongodbService');
-  }
+type SearchResults = MultiPageResult | {
+  query: string;
+  totalResults: number;
+  pagesSearched: number;
+  maxPages: number;
+  results: SearchJob[];
+  storageStats?: {
+    saved: number;
+    total: number;
+  };
 };
 
 interface FilterStats {
@@ -19,8 +35,36 @@ interface FilterStats {
   type: string;
   originalCount?: number;
   filteredCount?: number;
-  additionalFilters?: Record<string, any>;
+  additionalFilters?: Record<string, string | number | boolean>;
   additionalFilteredCount?: number;
+}
+
+interface SearchResultData {
+  number_of_results: number;
+  results: SearchJob[];
+}
+
+interface R
+ {
+  success: boolean;
+  data?: SearchResultData;
+  error?: string;
+  storageStats?: {
+    saved: number;
+    total: number;
+  };
+}
+
+interface MultiPageResult {
+  query: string;
+  totalResults: number;
+  pagesSearched: number;
+  maxPages: number;
+  results: SearchJob[];
+  storageStats?: {
+    saved: number;
+    total: number;
+  };
 }
 
 interface SearchResponse {
@@ -30,7 +74,7 @@ interface SearchResponse {
   pages: number;
   maxPages: number;
   filter: FilterStats;
-  data: any[];
+  data: SearchJob[];
   storage?: {
     saved: number;
     total: number;
@@ -39,16 +83,13 @@ interface SearchResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    // Initialize services
-    await initServices();
-
     const searchService = new ApiSearchService();
     const aiFilterService = new AiFilterService();
     const mongoService = new MongoDBService();
 
     // Helper function to get job date
     // Enhanced date extraction to handle cases where date fields are overwritten with current date
-    const getJobDate = (job: Record<string, any>) => {
+    const getJobDate = (job: SearchJob) => {
       // Try to parse date fields first
       const dateCandidates = [
         job.publishedDate,
@@ -56,10 +97,11 @@ export async function GET(request: NextRequest) {
         job.metadata?.publishedDate,
         job.date,
         job.postedDate
-      ].filter(Boolean).map((d: string) => new Date(d));
-
+      ].filter((d): d is string => Boolean(d));
+      const dateObjects = dateCandidates.map(d => new Date(d));
+ 
       // Filter out invalid dates
-      const validDates = dateCandidates.filter(d => !isNaN(d.getTime()));
+      const validDates = dateObjects.filter(d => !isNaN(d.getTime()));
 
       // If multiple valid dates, pick the earliest (original post date)
       if (validDates.length > 0) {
@@ -117,7 +159,7 @@ export async function GET(request: NextRequest) {
     if (company) console.log(`  Company: ${company}`);
     if (searchEngine) console.log(`  Search Engine: ${searchEngine}`);
 
-    let results;
+    let results: SearchResults;
 
     if (maxPages > 1) {
       // Multi-page search with optional storage
@@ -129,7 +171,8 @@ export async function GET(request: NextRequest) {
     } else {
       // Single page search with optional storage
       if (storeResults) {
-        const result = await searchService.searchAndStore(query, { pageno: page });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await searchService.searchAndStore(query, { pageno: page }) as any;
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -142,7 +185,8 @@ export async function GET(request: NextRequest) {
           storageStats: result.storageStats
         };
       } else {
-        const result = await searchService.search(query, { pageno: page });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await searchService.search(query, { pageno: page }) as any;
         if (!result.success) {
           throw new Error(result.error);
         }
@@ -183,7 +227,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Helper function to extract field from job content
-    const extractFieldFromContent = (job: Record<string, any>, field: string) => {
+    const extractFieldFromContent = (job: SearchJob, field: string): string | { min: number; max: number } | null => {
       const content = (job.title + ' ' + job.content).toLowerCase();
       switch (field) {
         case 'location':
@@ -207,18 +251,21 @@ export async function GET(request: NextRequest) {
     };
 
     // Apply additional filters
-    const additionalFilters: Record<string, any> = {};
+    const additionalFilters: Record<string, string | number | boolean> = {};
 
     if (location) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const jobLocation = job.location || extractFieldFromContent(job, 'location');
-        return jobLocation && jobLocation.toLowerCase().includes(location.toLowerCase());
+        if (typeof jobLocation === 'string') {
+          return jobLocation.toLowerCase().includes(location.toLowerCase());
+        }
+        return false;
       });
       additionalFilters.location = location;
     }
 
     if (jobType) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) =>
+      filteredResults = filteredResults.filter((job: SearchJob) =>
         job.title && job.title.toLowerCase().includes(jobType.toLowerCase())
       );
       additionalFilters.jobType = jobType;
@@ -226,7 +273,7 @@ export async function GET(request: NextRequest) {
 
     if (isRemote) {
       const remoteFilter = isRemote.toLowerCase() === 'true';
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const content = (job.title + ' ' + job.content).toLowerCase();
         return content.includes('remote') === remoteFilter;
       });
@@ -234,15 +281,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (company) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const jobCompany = job.company || extractFieldFromContent(job, 'company');
-        return jobCompany && jobCompany.toLowerCase().includes(company.toLowerCase());
+        if (typeof jobCompany === 'string') {
+          return jobCompany.toLowerCase().includes(company.toLowerCase());
+        }
+        return false;
       });
       additionalFilters.company = company;
     }
 
     if (searchEngine) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) =>
+      filteredResults = filteredResults.filter((job: SearchJob) =>
         job.engine && job.engine.toLowerCase().includes(searchEngine!)
       );
       additionalFilters.searchEngine = searchEngine;
@@ -250,7 +300,7 @@ export async function GET(request: NextRequest) {
 
     if (hasDate) {
       const hasDateFilter = hasDate.toLowerCase() === 'true';
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         // Strictly check publishedDate field for null or invalid
         if (hasDateFilter) {
           if (!job.publishedDate) return false;
@@ -265,17 +315,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (minSalary !== null) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const jobSalary = job.salary || extractFieldFromContent(job, 'salary');
-        return jobSalary && jobSalary.min >= minSalary!;
+        return jobSalary && typeof jobSalary === 'object' && 'min' in jobSalary && (jobSalary as { min: number; max: number }).min >= minSalary!;
       });
       additionalFilters.minSalary = minSalary;
     }
 
     if (maxSalary !== null) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const jobSalary = job.salary || extractFieldFromContent(job, 'salary');
-        return jobSalary && jobSalary.max <= maxSalary!;
+        return jobSalary && typeof jobSalary === 'object' && 'max' in jobSalary && (jobSalary as { min: number; max: number }).max <= maxSalary!;
       });
       additionalFilters.maxSalary = maxSalary;
     }
@@ -283,7 +333,7 @@ export async function GET(request: NextRequest) {
 
 
     if (postedAfter) {
-      filteredResults = filteredResults.filter((job: Record<string, any>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const jobDate = getJobDate(job);
         if (!jobDate || isNaN(jobDate.getTime())) return false;
         const filterDate = new Date(postedAfter!);
@@ -296,7 +346,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (postedBefore) {
-      filteredResults = filteredResults.filter((job: Record<string, unknown>) => {
+      filteredResults = filteredResults.filter((job: SearchJob) => {
         const jobDate = getJobDate(job);
         if (!jobDate || isNaN(jobDate.getTime())) return false;
         const filterDate = new Date(postedBefore!);
@@ -321,7 +371,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Add storage stats if available
-    if (results.storageStats) {
+    if ('storageStats' in results && results.storageStats) {
       response.storage = results.storageStats;
     }
 

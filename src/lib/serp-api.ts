@@ -43,6 +43,31 @@ interface SerpApiResponse {
   searchParams: JobSearchParams;
 }
 
+interface SerpJobResult {
+  job_id?: string;
+  title?: string;
+  company_name?: string;
+  location?: string;
+  description?: string;
+  snippet?: string;
+  salary?: string;
+  detected_extensions?: {
+    posted_at?: string;
+    schedule_type?: string;
+  };
+  apply_options?: Array<{ link?: string }>;
+  share_link?: string;
+  source?: string;
+  via?: string;
+}
+
+interface SerpApiRawData {
+  jobs_results?: SerpJobResult[];
+  search_information?: {
+    total_results?: number;
+  };
+}
+
 class SerpApiClient {
   private config: SerpApiConfig;
 
@@ -114,8 +139,8 @@ class SerpApiClient {
   /**
    * Transform SERP API response to our format
    */
-  private transformSerpResponse(data: any, params: JobSearchParams): SerpApiResponse {
-    const jobs: JobResult[] = (data.jobs_results || []).map((job: any, index: number) => ({
+  private transformSerpResponse(data: SerpApiRawData, params: JobSearchParams): SerpApiResponse {
+    const jobs: JobResult[] = (data.jobs_results || []).map((job: SerpJobResult, index: number) => ({
       id: job.job_id || `job_${Date.now()}_${index}`,
       title: job.title || 'Unknown Title',
       company: job.company_name || 'Unknown Company',

@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Import MongoDB service dynamically
-let MongoDBService: unknown;
-
-const initService = async () => {
-  if (!MongoDBService) {
-    MongoDBService = (await import('@/lib/mongodbService')).default || require('@/lib/mongodbService');
-  }
-};
+import MongoDBService from '@/lib/mongodbService';
 
 export async function POST(request: NextRequest) {
   try {
-    await initService();
-    
     const { jobs } = await request.json();
 
     if (!jobs || !Array.isArray(jobs)) {

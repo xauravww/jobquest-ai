@@ -8,7 +8,7 @@ import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,9 @@ export async function GET(
     }
 
     await dbConnect();
-    
+
+    const { id } = await params;
+
     // Find user first to get userId
     const User = (await import('@/models/User')).default;
     const user = await User.findOne({ email: session.user.email });
@@ -25,10 +27,10 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const resume = await Resume.findOne({ 
-      _id: params.id, 
+    const resume = await Resume.findOne({
+      _id: id,
       userId: user._id,
-      isActive: true 
+      isActive: true
     });
 
     if (!resume) {
@@ -40,13 +42,15 @@ export async function GET(
     const fileBuffer = await readFile(fullPath);
 
     // Update usage count
-    await Resume.findByIdAndUpdate(params.id, {
+    await Resume.findByIdAndUpdate(id, {
       $inc: { usageCount: 1 },
       lastUsed: new Date()
     });
 
     // Return file with appropriate headers
-    const response = new NextResponse(fileBuffer);
+    // Convert Buffer to Uint8Array to ensure compatibility with NextResponse
+    const uint8Array = new Uint8Array(fileBuffer);
+    const response = new NextResponse(uint8Array);
     response.headers.set('Content-Type', resume.mimeType);
     response.headers.set('Content-Disposition', `attachment; filename="${resume.fileName}"`);
     response.headers.set('Content-Length', resume.fileSize.toString());

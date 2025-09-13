@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Handle mongoose validation errors
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError') {
-      const validationError = error as { errors: Record<string, { message: string }> };
+      const validationError = (error as unknown) as { errors: Record<string, { message: string }> };
       const messages = Object.values(validationError.errors).map(err => err.message);
       return NextResponse.json(
         { error: messages.join(', ') },

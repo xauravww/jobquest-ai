@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
-import { Bot, Building, ExternalLink, LoaderCircle, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye, Cog, Lock, Link } from 'lucide-react';
+import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye, Cog, Lock, Link } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { FormInput, FormInputNumber, FormDateInput, FormSelect } from '@/components/ui/FormInput';
 
@@ -371,7 +370,6 @@ const AIProviderConfig = ({
   setApiUrl,
   model,
   setModel,
-  showConfig,
   setShowConfig
 }: {
   aiProvider: string;
@@ -382,7 +380,6 @@ const AIProviderConfig = ({
   setApiUrl: (value: string) => void;
   model: string;
   setModel: (value: string) => void;
-  showConfig: boolean;
   setShowConfig: (value: boolean) => void;
 }) => {
   const requiresApiKey = aiProvider === 'gemini';
@@ -626,7 +623,7 @@ const JobSearchPage = () => {
       const data = await response.json();
 
       // Process jobs and create chunks
-      const processedJobs = data.data.map((job: any) => ({
+      const processedJobs = data.data.map((job: Job) => ({
         ...job,
         id: generateJobId(job)
       }));
@@ -987,7 +984,7 @@ const JobSearchPage = () => {
                 <span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded font-bold">AI POWERED</span>
               </span>
               <div className="text-xs text-text-muted mt-1">
-                AI detects: job titles, "hiring", "apply", salary mentions, and other hiring indicators
+                AI detects: job titles, &quot;hiring&quot;, &quot;apply&quot;, salary mentions, and other hiring indicators
               </div>
             </label>
           </div>
@@ -1109,9 +1106,9 @@ const JobSearchPage = () => {
         </p>
         <div className="mt-6 flex items-center justify-center gap-2 text-sm text-text-muted">
           <span>💡 Tip: Try broader keywords like</span>
-          <span className="px-2 py-1 bg-primary/20 text-primary rounded font-medium">"developer"</span>
+          <span className="px-2 py-1 bg-primary/20 text-primary rounded font-medium">&quot;developer&quot;</span>
           <span>or</span>
-          <span className="px-2 py-1 bg-primary/20 text-primary rounded font-medium">"engineer&quot;</span>
+          <span className="px-2 py-1 bg-primary/20 text-primary rounded font-medium">&quot;engineer&quot;</span>
         </div>
       </div>
     );
@@ -1247,7 +1244,6 @@ const JobSearchPage = () => {
               setApiUrl={setApiUrl}
               model={model}
               setModel={setModel}
-              showConfig={showAIConfig}
               setShowConfig={setShowAIConfig}
             />
           )}

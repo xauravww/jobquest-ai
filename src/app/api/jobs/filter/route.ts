@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Import AI filter service dynamically
-let AiFilterService: unknown;
-
-const initService = async () => {
-  if (!AiFilterService) {
-    AiFilterService = (await import('@/lib/aiFilterService')).default || require('@/lib/aiFilterService');
-  }
-};
+import AiFilterService from '@/lib/aiFilterService';
 
 export async function POST(request: NextRequest) {
   try {
-    await initService();
     const aiFilterService = new AiFilterService();
     
     const { results, filters = {} } = await request.json();

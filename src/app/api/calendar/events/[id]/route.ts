@@ -2,6 +2,61 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { CalendarEvent } from '@/models/CalendarEvent';
 
+interface CalendarEventUpdateData {
+  title?: string;
+  description?: string;
+  startDate?: Date;
+  endDate?: Date;
+  isAllDay?: boolean;
+  timezone?: string;
+  location?: {
+    address?: string;
+    coordinates?: { lat?: number; lng?: number };
+    isVirtual?: boolean;
+    meetingLink?: string;
+    meetingId?: string;
+    meetingPassword?: string;
+  };
+  type?: string;
+  status?: string;
+  attendees?: Array<{
+    name?: string;
+    email?: string;
+    role?: string;
+    company?: string;
+    phone?: string;
+    responseStatus?: string;
+  }>;
+  reminders?: Array<{
+    type?: string;
+    timing?: number;
+    sent?: boolean;
+    sentAt?: Date;
+  }>;
+  applicationId?: string;
+  jobId?: string;
+  reminderId?: string;
+  preparationNotes?: string;
+  agenda?: string[];
+  documents?: Array<{
+    name?: string;
+    url?: string;
+    type?: string;
+  }>;
+  tags?: string[];
+  color?: string;
+  priority?: string;
+  outcome?: {
+    result?: string;
+    feedback?: string;
+    nextSteps?: string;
+    followUpScheduled?: boolean;
+  };
+  followUpRequired?: boolean;
+  followUpDate?: Date;
+  followUpNotes?: string;
+}
+
 // GET - Fetch single calendar event
 export async function GET(
   request: NextRequest,
@@ -71,7 +126,7 @@ export async function PUT(
       followUpNotes
     } = body;
     
-    const updateData: any = {};
+    const updateData: CalendarEventUpdateData = {};
     
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
