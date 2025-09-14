@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye, Cog, Lock, Link } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import { FormInput, FormInputNumber, FormDateInput, FormSelect } from '@/components/ui/FormInput';
 
@@ -822,7 +823,7 @@ const JobSearchPage = () => {
               location: job.location || 'Unknown Location',
               jobUrl: job.url,
               description: job.content || '',
-              status: 'interested',
+              status: 'saved',
               notes: `Added from AI search on ${new Date().toLocaleDateString()}`
             }))
           }),
@@ -862,10 +863,10 @@ const JobSearchPage = () => {
         filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: null }))
       })));
 
-      alert(`Changes saved successfully!\n- ${savedCount} jobs added to tracker\n- ${skippedCount} jobs permanently skipped`);
+      toast.success(`Changes saved successfully!\n- ${savedCount} jobs added to tracker\n- ${skippedCount} jobs permanently skipped`);
     } catch (error) {
       console.error('Error saving changes:', error);
-      alert('Failed to save changes. Please check the console for details.');
+      toast.error('Failed to save changes. Please check the console for details.');
     } finally {
       setIsSaving(false);
     }
@@ -1116,6 +1117,7 @@ const JobSearchPage = () => {
 
   return (
     <AppLayout showFooter={false}>
+      <Toaster />
       <div className="p-6">
         <div className="mb-8 text-center">
           <div className="flex mt-4 items-center justify-center gap-3 mb-4">
