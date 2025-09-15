@@ -86,16 +86,24 @@ export async function PUT(
     if (completedNotes !== undefined) updateData.completedNotes = completedNotes;
     if (snoozedUntil !== undefined) {
       updateData.snoozedUntil = new Date(snoozedUntil);
-      updateData.snoozeCount = { $inc: 1 };
     }
     if (isRecurring !== undefined) updateData.isRecurring = isRecurring;
     if (recurrencePattern !== undefined) updateData.recurrencePattern = recurrencePattern;
     if (recurrenceInterval !== undefined) updateData.recurrenceInterval = recurrenceInterval;
     if (recurrenceEndDate !== undefined) updateData.recurrenceEndDate = recurrenceEndDate ? new Date(recurrenceEndDate) : null;
     
+    interface UpdateQuery {
+      $inc?: { snoozeCount: number };
+      [key: string]: any;
+    }
+    const updateQuery: UpdateQuery = { ...updateData };
+    if (snoozedUntil !== undefined) {
+      updateQuery.$inc = { snoozeCount: 1 };
+    }
+
     const reminder = await Reminder.findByIdAndUpdate(
       id,
-      updateData,
+      updateQuery,
       { new: true, runValidators: true }
     )
       .populate('applicationId', 'status jobId')

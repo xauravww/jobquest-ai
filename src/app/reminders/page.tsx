@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Input, Pagination } from 'antd';
+import { Input, Pagination, Select } from 'antd';
 import AppLayout from '@/components/AppLayout';
 import {
   Bell,
@@ -107,24 +107,65 @@ const RemindersPage = () => {
     fetchData();
   }, [debouncedQuery, currentPage, itemsPerPage]);
 
+  const [actionLoading, setActionLoading] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = React.useState<string | null>(null);
+
   const handleCompleteReminder = async (reminderId: string) => {
+    setActionLoading(reminderId);
+    setActionError(null);
+    setActionSuccess(null);
     try {
-      await fetch(`/api/reminders/${reminderId}`, {
+      const response = await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed' })
       });
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+      setActionSuccess('Reminder marked as completed');
       // Refetch data after action
       const event = new Event('refetchReminders');
       window.dispatchEvent(event);
     } catch (error) {
+      setActionError('Error completing reminder');
       console.error('Error completing reminder:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStatusUpdate = async (reminderId: string, newStatus: string) => {
+    setActionLoading(reminderId);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const response = await fetch(`/api/reminders/${reminderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+      setActionSuccess('Reminder status updated');
+      const event = new Event('refetchReminders');
+      window.dispatchEvent(event);
+    } catch (error) {
+      setActionError('Error updating status');
+      console.error('Error updating status:', error);
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleSnoozeReminder = async (reminderId: string, snoozeUntil: Date) => {
+    setActionLoading(reminderId);
+    setActionError(null);
+    setActionSuccess(null);
     try {
-      await fetch(`/api/reminders/${reminderId}`, {
+      const response = await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,11 +173,18 @@ const RemindersPage = () => {
           snoozedUntil: snoozeUntil.toISOString()
         })
       });
+      if (!response.ok) {
+        throw new Error('Failed to snooze reminder');
+      }
+      setActionSuccess('Reminder snoozed for 24 hours');
       // Refetch data after action
       const event = new Event('refetchReminders');
       window.dispatchEvent(event);
     } catch (error) {
+      setActionError('Error snoozing reminder');
       console.error('Error snoozing reminder:', error);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -281,6 +329,15 @@ const RemindersPage = () => {
             Add Reminder
           </button>
         </div>
+
+        {/* Notifications */}
+        {(actionSuccess || actionError) && (
+          <div className="max-w-4xl mx-auto mb-4">
+            <div className={`p-4 rounded-lg ${actionSuccess ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
+              {actionSuccess || actionError}
+            </div>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="max-w-4xl mx-auto mb-8">
@@ -431,18 +488,32 @@ const RemindersPage = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Select
+                        value={reminder.status}
+                        onChange={(value) => handleStatusUpdate(reminder._id, value)}
+                        disabled={actionLoading === reminder._id}
+                        className="w-32"
+                        size="small"
+                      >
+                        <Select.Option value="pending">Pending</Select.Option>
+                        <Select.Option value="completed">Completed</Select.Option>
+                        <Select.Option value="snoozed">Snoozed</Select.Option>
+                        <Select.Option value="cancelled">Cancelled</Select.Option>
+                      </Select>
                       {reminder.status === 'pending' && (
                         <>
                           <button
                             onClick={() => handleCompleteReminder(reminder._id)}
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-600/30 rounded-lg transition-all duration-200 hover:scale-105"
+                            disabled={actionLoading === reminder._id}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-600/30 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
                             title="Mark as Complete"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleSnoozeReminder(reminder._id, new Date(Date.now() + 24 * 60 * 60 * 1000))}
-                            className="flex items-center gap-2 px-3 py-2 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 hover:text-yellow-300 border border-yellow-600/30 rounded-lg transition-all duration-200 hover:scale-105"
+                            disabled={actionLoading === reminder._id}
+                            className="flex items-center gap-2 px-3 py-2 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 hover:text-yellow-300 border border-yellow-600/30 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
                             title="Snooze for 24 hours"
                           >
                             <PauseCircle className="w-4 h-4" />
@@ -454,7 +525,8 @@ const RemindersPage = () => {
                           setEditingReminder(reminder);
                           setShowCreateModal(true);
                         }}
-                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
+                        disabled={actionLoading === reminder._id}
+                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
                         title="Edit"
                       >
                         <Edit className="w-5 h-5" />
@@ -462,7 +534,8 @@ const RemindersPage = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteReminder(reminder._id)}
-                        className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105"
+                        disabled={actionLoading === reminder._id}
+                        className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
                         title="Delete"
                       >
                         <RiDeleteBin6Line className="w-5 h-5" />

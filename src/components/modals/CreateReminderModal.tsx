@@ -30,7 +30,24 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
     onSuccess,
     editingReminder
 }): JSX.Element => {
-    const [formData, setFormData] = useState({
+    interface FormData {
+        title: string;
+        description: string;
+        dueDate: string;
+        dueTime: string;
+        type: string;
+        priority: string;
+        applicationId: string;
+        tags: string;
+        color: string;
+        isRecurring: boolean;
+        recurrencePattern: string;
+        recurrenceInterval: number;
+        recurrenceEndDate: string;
+        notifications: { type: string; timing: string }[];
+    }
+
+    const [formData, setFormData] = useState<FormData>({
         title: '',
         description: '',
         dueDate: '',
@@ -38,7 +55,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         type: 'follow_up',
         priority: 'medium',
         applicationId: '',
-        jobId: '',
         tags: '',
         color: '#3b82f6',
         isRecurring: false,
@@ -51,13 +67,12 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
     });
     const [loading, setLoading] = useState(false);
     const [applications, setApplications] = useState<any[]>([]);
-    const [jobs, setJobs] = useState<any[]>([]);
 
     useEffect(() => {
         if (isOpen) {
-            fetchApplicationsAndJobs();
+            fetchApplications();
             if (editingReminder) {
-                console.log('Editing Reminder jobId:', editingReminder.jobId);
+                console.log('Editing Reminder applicationId:', editingReminder.applicationId);
                 setFormData({
                     title: editingReminder.title || '',
                     description: editingReminder.description || '',
@@ -66,7 +81,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     type: editingReminder.type || 'follow_up',
                     priority: editingReminder.priority || 'medium',
                     applicationId: editingReminder.applicationId?._id || '',
-                    jobId: typeof editingReminder.jobId === 'string' ? editingReminder.jobId : editingReminder.jobId?._id || '',
                     tags: editingReminder.tags?.join(', ') || '',
                     color: editingReminder.color || '#3b82f6',
                     isRecurring: editingReminder.isRecurring || false,
@@ -85,51 +99,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     type: 'follow_up',
                     priority: 'medium',
                     applicationId: '',
-                    jobId: '',
-                    tags: '',
-                    color: '#3b82f6',
-                    isRecurring: false,
-                    recurrencePattern: 'weekly',
-                    recurrenceInterval: 1,
-                    recurrenceEndDate: '',
-                    notifications: [{ type: 'in_app', timing: 'on_time' }]
-                });
-            }
-        }
-    }, [isOpen, editingReminder]);
-    useEffect(() => {
-        if (isOpen) {
-            fetchApplicationsAndJobs();
-            if (editingReminder) {
-                console.log('Editing Reminder jobId:', editingReminder.jobId);
-                setFormData({
-                    title: editingReminder.title || '',
-                    description: editingReminder.description || '',
-                    dueDate: editingReminder.dueDate ? new Date(editingReminder.dueDate).toISOString().split('T')[0] : '',
-                    dueTime: editingReminder.dueTime || '09:00',
-                    type: editingReminder.type || 'follow_up',
-                    priority: editingReminder.priority || 'medium',
-                    applicationId: editingReminder.applicationId?._id || '',
-                    jobId: typeof editingReminder.jobId === 'string' ? editingReminder.jobId : editingReminder.jobId?._id || '',
-                    tags: editingReminder.tags?.join(', ') || '',
-                    color: editingReminder.color || '#3b82f6',
-                    isRecurring: editingReminder.isRecurring || false,
-                    recurrencePattern: editingReminder.recurrencePattern || 'weekly',
-                    recurrenceInterval: editingReminder.recurrenceInterval || 1,
-                    recurrenceEndDate: editingReminder.recurrenceEndDate ? new Date(editingReminder.recurrenceEndDate).toISOString().split('T')[0] : '',
-                    notifications: editingReminder.notifications || [{ type: 'in_app', timing: 'on_time' }]
-                });
-            } else {
-                // Reset form for new reminder
-                setFormData({
-                    title: '',
-                    description: '',
-                    dueDate: '',
-                    dueTime: '09:00',
-                    type: 'follow_up',
-                    priority: 'medium',
-                    applicationId: '',
-                    jobId: '',
                     tags: '',
                     color: '#3b82f6',
                     isRecurring: false,
@@ -142,22 +111,17 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         }
     }, [isOpen, editingReminder]);
 
-    useEffect(() => {
-        console.log('Jobs list:', jobs);
-    }, [jobs]);
-
-const fetchApplicationsAndJobs = async () => {
+const fetchApplications = async () => {
         try {
-            // Fetch jobs only from /api/jobs
-            const jobsResponse = await fetch('/api/jobs');
-            let jobsFromApi: any[] = [];
-            if (jobsResponse.ok) {
-                const jobsData = await jobsResponse.json();
-                jobsFromApi = Array.isArray(jobsData) ? jobsData : [];
+            const response = await fetch('/api/applications', { credentials: 'include' });
+            let applicationsFromApi: any[] = [];
+            if (response.ok) {
+                const data = await response.json();
+                applicationsFromApi = Array.isArray(data) ? data : data.applications || [];
             }
-            setJobs(jobsFromApi);
+            setApplications(applicationsFromApi);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error fetching applications:', error);
         }
     };
 
@@ -349,9 +313,9 @@ const fetchApplicationsAndJobs = async () => {
                                     onChange={(value) => setFormData({ ...formData, jobId: value })}
                                     options={[
                                         { value: '', label: 'None' },
-                                        ...jobs.map((job: any) => ({
-                                            value: job._id,
-                                            label: `${job.title} at ${job.company}`
+                                        ...applications.map((application: any) => ({
+                                            value: application._id,
+                                            label: `${application.jobTitle || 'Untitled'} - ${application.jobId?.title || 'No Job'} at ${application.jobId?.company || 'Unknown Company'}`
                                         }))
                                     ]}
                                     showSearch
@@ -366,12 +330,12 @@ const fetchApplicationsAndJobs = async () => {
                                             <span className="text-success font-medium">Linked to Job</span>
                                         </div>
                                         {(() => {
-                                            const selectedJob = jobs.find((job: any) => job._id === formData.jobId);
-                                            return selectedJob ? (
+                                            const selectedApplication = applications.find((app: any) => app._id === formData.applicationId);
+                                            return selectedApplication ? (
                                                 <div className="mt-2 text-xs text-text-muted">
-                                                    <div>Title: {selectedJob.title}</div>
-                                                    <div>Company: {selectedJob.company}</div>
-                                                    <div>Location: {selectedJob.location || 'Not specified'}</div>
+                                                    <div>Title: {selectedApplication.jobId?.title || 'No Job'}</div>
+                                                    <div>Company: {selectedApplication.jobId?.company || 'Unknown Company'}</div>
+                                                    <div>Location: {selectedApplication.jobId?.location || 'Not specified'}</div>
                                                 </div>
                                             ) : null;
                                         })()}

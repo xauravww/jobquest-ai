@@ -278,7 +278,7 @@ class MongoDBService {
   /**
    * Save filtered jobs (for the save-filtered endpoint)
    */
-  async saveFilteredJobs(jobs, filters = {}) {
+  async saveFilteredJobs(jobs, filters = {}, userId = null) {
     try {
       await this.connect();
 
@@ -301,6 +301,7 @@ class MongoDBService {
           // If job doesn't exist, create it first
           if (!job) {
             job = new Job({
+              userId: userId, // Set userId here to link job to user
               jobId: jobData.id || `job-${Date.now()}-${Math.random()}`,
               title: jobData.title,
               company: jobData.company,
