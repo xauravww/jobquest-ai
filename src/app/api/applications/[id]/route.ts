@@ -64,9 +64,15 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
+    console.log('PATCH /api/applications/[id] - Received body:', body);
+    console.log('PATCH /api/applications/[id] - Received status:', body.status);
+
+    // Filter out immutable fields
+    delete body.id;
+    delete body._id;
 
     // Handle job-related updates
-    if (body.title || body.company || body.location || body.description) {
+    if (body.jobTitle || body.company || body.location || body.description) {
       // Find the application first to get the jobId
       const Application = (await import('@/models/Application')).default;
       const application = await Application.findOne({ _id: id, userId: user._id });
@@ -77,18 +83,20 @@ export async function PATCH(
         const job = await Job.findById(application.jobId);
 
         if (job) {
-          if (body.title) job.title = body.title;
+          if (body.jobTitle) job.title = body.jobTitle;
           if (body.company) job.company = body.company;
           if (body.location) job.location = body.location;
           if (body.description) job.description = body.description;
+          if (body.jobUrl) job.url = body.jobUrl;
           await job.save();
         }
 
         // Remove job fields from application update
-        delete body.title;
+        delete body.jobTitle;
         delete body.company;
         delete body.location;
         delete body.description;
+        delete body.jobUrl;
       }
     }
 

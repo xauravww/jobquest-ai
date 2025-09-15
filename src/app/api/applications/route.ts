@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
           location: job.location || 'Unknown Location',
           jobUrl: job.jobUrl || '',
           description: job.description || '',
-          status: job.status || 'submitted',
+          status: job.status || 'draft',
           applicationMethod: 'manual',
           platform: 'other',
           notes: job.notes || `Added from AI search on ${new Date().toLocaleDateString()}`,
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
         return {
           userId: user._id,
           jobId: job.id,
-          status: job.status || 'submitted',
+          status: job.status || 'draft',
           applicationMethod: 'manual',
           platform: 'other',
           notes: job.aiReason || '',
@@ -217,18 +217,19 @@ export async function PATCH(request: NextRequest) {
       };
       updateData.platform = platformMap[updateData.platform] || 'other';
     }
-    if (updateData.status) {
-      // Map frontend status to backend status enum if needed
-      const statusMap: Record<string, string> = {
-        saved: 'draft',
-        submitted: 'submitted',
-        interviewing: 'phone_screening',
-        offered: 'offer_received',
-        rejected: 'rejected',
-        // Add more mappings as needed
-      };
-      updateData.status = statusMap[updateData.status] || updateData.status;
-    }
+      if (updateData.status) {
+        // Map frontend status to backend status enum if needed
+        const statusMap: Record<string, string> = {
+          saved: 'draft',
+          applied: 'applied',
+          submitted: 'submitted',
+          interviewing: 'phone_screening',
+          offered: 'offer_received',
+          rejected: 'rejected',
+          // Add more mappings as needed
+        };
+        updateData.status = statusMap[updateData.status] || updateData.status;
+      }
     // Notes and priority exist in model, keep as is
 
     // Update fields

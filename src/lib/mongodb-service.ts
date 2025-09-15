@@ -10,6 +10,7 @@ export class MongoDBService {
   private normalizeStatus(status: unknown): string {
     const validStatuses = [
       'draft',
+      'applied',
       'submitted',
       'under_review',
       'phone_screening',
@@ -24,7 +25,6 @@ export class MongoDBService {
     // Map common invalid statuses to valid ones
     const statusMapping: { [key: string]: string } = {
       'interested': 'submitted',
-      'applied': 'submitted',
       'pending': 'submitted',
       'in_progress': 'under_review',
       'review': 'under_review',
@@ -181,7 +181,7 @@ export class MongoDBService {
           const application = new Application({
             jobId: job._id,
             applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: this.normalizeStatus(appData.status as string) || 'submitted',
+            status: this.normalizeStatus(appData.status as string) || 'draft',
             appliedDate: new Date(),
             lastStatusUpdate: new Date(),
             applicationMethod: (appData.applicationMethod as string) || 'online',
@@ -252,7 +252,7 @@ export class MongoDBService {
             userId: appData.userId,
             jobId: job._id,
             applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: this.normalizeStatus(appData.status) || 'submitted',
+            status: this.normalizeStatus(appData.status) || 'draft',
             appliedDate: new Date(),
             lastStatusUpdate: new Date(),
             applicationMethod: appData.applicationMethod || 'manual',
@@ -415,21 +415,25 @@ export class MongoDBService {
   async updateApplication(applicationId: string, userId: string, updateData: Record<string, unknown>) {
     try {
       await connectDB();
-      
+
+      console.log('updateApplication - applicationId:', applicationId, 'userId:', userId, 'updateData:', updateData);
+
       // Normalize status if provided
       if (updateData.status) {
         updateData.status = this.normalizeStatus(updateData.status);
         updateData.lastStatusUpdate = new Date();
       }
-      
+
       const application = await Application.findOneAndUpdate(
         { _id: applicationId, userId },
         { $set: updateData },
         { new: true }
       ).populate('jobId');
-      
+
+      console.log('updateApplication - result:', application);
+
       return application;
-      
+
     } catch (error) {
       console.error('Error updating application:', error);
       return null;

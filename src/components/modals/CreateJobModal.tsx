@@ -41,7 +41,7 @@ interface ValidationErrors {
   notes?: string;
 }
 
-const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJobCreated, job }) => {
+const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalProps) => {
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
@@ -97,8 +97,12 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
         setSelectedResumeId(job.resumeUsed);
       } else if (job.resumeUsed && typeof job.resumeUsed === 'object' && job.resumeUsed._id) {
         setSelectedResumeId(job.resumeUsed._id);
-      } else {
-        setSelectedResumeId(undefined);
+        if (job.resumeUsed && typeof job.resumeUsed === 'object' && job.resumeUsed._id && typeof (job.resumeUsed._id as any).toString === 'function') {
+          // Handle mongoose ObjectId case
+          setSelectedResumeId((job.resumeUsed._id as any).toString());
+        } else {
+          setSelectedResumeId(undefined);
+        }
       }
     } else if (!job && visible) {
       resetForm();
@@ -150,11 +154,11 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
         return undefined;
 
       case 'description':
-        if (value && value.length > 1000) return 'Description must be less than 1000 characters';
+        if (value && value.length > 5000) return 'Description must be less than 5000 characters';
         return undefined;
 
       case 'notes':
-        if (value && value.length > 500) return 'Notes must be less than 500 characters';
+        if (value && value.length > 2000) return 'Notes must be less than 2000 characters';
         return undefined;
 
       default:
@@ -236,6 +240,13 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
         applicationMethod: 'manual',
         resumeUsed: selectedResumeId || null,
       };
+
+      // If resumeUsed is an ID, convert to string ID for backend
+      if (selectedResumeId && typeof selectedResumeId === 'object' && selectedResumeId !== null && '_id' in selectedResumeId) {
+        payload.resumeUsed = (selectedResumeId as { _id: string })._id;
+      } else if (selectedResumeId && typeof selectedResumeId === 'string') {
+        payload.resumeUsed = selectedResumeId;
+      }
 
       const response = await fetch(job ? `/api/applications/${job._id}` : '/api/applications', {
         method: job ? 'PATCH' : 'POST',
@@ -404,7 +415,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
             status={errors.description ? 'error' : ''}
           />
           {errors.description && <div className="text-red-500 text-sm mt-1">{errors.description}</div>}
-          <div className="text-gray-400 text-xs mt-1">{description.length}/1000 characters</div>
+          <div className="text-gray-400 text-xs mt-1">{description.length}/5000 characters</div>
         </div>
         <div>
           <label className="block text-sm font-semibold text-white mb-1">Notes</label>
@@ -417,32 +428,32 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({ visible, onClose, onJob
             status={errors.notes ? 'error' : ''}
           />
           {errors.notes && <div className="text-red-500 text-sm mt-1">{errors.notes}</div>}
-          <div className="text-gray-400 text-xs mt-1">{notes.length}/500 characters</div>
+          <div className="text-gray-400 text-xs mt-1">{notes.length}/2000 characters</div>
         </div>
         <div>
           <label className="block text-sm font-semibold text-white mb-1">Resume</label>
-          <Select
-            showSearch
-            placeholder="Select a resume"
-            optionFilterProp="children"
-            value={selectedResumeId}
-            onChange={(value) => setSelectedResumeId(value)}
-            size="large"
-            className="w-full"
-filterOption={(input: string, option?: DefaultOptionType) => {
-              if (typeof option?.children === 'string') {
-                return (option.children as string).toLowerCase().includes(input.toLowerCase());
-              }
-              return false;
-            }}
-            allowClear={true}
-            >
-              {resumes.map((resume: { _id: string; title: string }) => (
-                <Select.Option key={resume._id} value={resume._id}>
-                  {resume.title}
-                </Select.Option>
-              ))}
-            </Select>
+      <Select
+        showSearch
+        placeholder="Select a resume"
+        optionFilterProp="children"
+        value={selectedResumeId}
+        onChange={(value) => setSelectedResumeId(value)}
+        size="large"
+        className="w-full"
+        filterOption={(input: string, option?: DefaultOptionType) => {
+          if (typeof option?.children === 'string') {
+            return (option.children as string).toLowerCase().includes(input.toLowerCase());
+          }
+          return false;
+        }}
+        allowClear={true}
+      >
+        {resumes.map((resume: { _id: string; title: string }) => (
+          <Select.Option key={resume._id} value={resume._id}>
+            {resume.title || resume._id}
+          </Select.Option>
+        ))}
+      </Select>
         </div>
       </div>
     </Modal>

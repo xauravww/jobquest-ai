@@ -3,9 +3,14 @@ import AiFilterService from '@/lib/aiFilterService';
 
 export async function POST(request: NextRequest) {
   try {
+    const { results, filters = {}, aiConfig } = await request.json();
+
     const aiFilterService = new AiFilterService();
-    
-    const { results, filters = {} } = await request.json();
+
+    // If AI config is provided, save it to the service
+    if (aiConfig) {
+      aiFilterService.saveConfig(aiConfig);
+    }
 
     if (!results || !Array.isArray(results)) {
       return NextResponse.json(
@@ -19,6 +24,8 @@ export async function POST(request: NextRequest) {
 
     const filteredResults = await aiFilterService.filterResults(results, filters);
 
+    console.log(`AI Filter API - Filtered results count: ${filteredResults.length}`);
+
     return NextResponse.json({
       success: true,
       originalCount: results.length,
@@ -31,7 +38,7 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('Filter API error:', errorMessage);
     return NextResponse.json(
-      { error: 'An error occurred while filtering results.', details: errorMessage },
+      { error: errorMessage, details: errorMessage },
       { status: 500 }
     );
   }

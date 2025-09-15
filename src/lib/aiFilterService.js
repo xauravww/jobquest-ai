@@ -75,6 +75,17 @@ class AiFilterService {
         postedAfter = null
       } = filters;
 
+      // Validate config before proceeding
+      if (!this.config || !this.config.provider) {
+        throw new Error('AI Filter Failed: Provider not configured. Please set up your AI provider in settings.');
+      }
+      if (this.config.provider === 'gemini' && !this.config.apiKey) {
+        throw new Error('AI Filter Failed: API key missing. Please set up your AI provider in settings.');
+      }
+      if ((this.config.provider === 'lm-studio' || this.config.provider === 'ollama') && !this.config.apiUrl) {
+        throw new Error('AI Filter Failed: API URL missing. Please set up your AI provider in settings.');
+      }
+
       // Process jobs in chunks to avoid overwhelming the AI server
       const chunkSize = 5;
       const chunks = [];
@@ -100,20 +111,14 @@ class AiFilterService {
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (chunkError) {
           console.error('Error processing chunk:', chunkError);
-          // Fallback to quick filter for this chunk
-          if (onlyHiringPosts) {
-            filteredJobs = filteredJobs.concat(this.quickHiringFilter(chunk));
-          } else {
-            filteredJobs = filteredJobs.concat(chunk);
-          }
+          throw chunkError; // Re-throw to fail the entire filtering operation
         }
       }
 
       return filteredJobs;
     } catch (error) {
       console.error('AI filtering error:', error);
-      // Fallback to quick filter
-      return filters.onlyHiringPosts ? this.quickHiringFilter(jobs) : jobs;
+      throw error; // Re-throw to fail the entire filtering operation
     }
   }
 
@@ -178,13 +183,24 @@ class AiFilterService {
         ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
         : `${apiUrl}/v1/chat/completions`;
 
-      response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(requestBody)
-      });
+      console.log(`AI Filter Service - Calling API: ${endpoint} with provider: ${provider}, model: ${model}`);
+
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(requestBody)
+        });
+        console.log(`AI Filter Service - API Response Status: ${response.status} ${response.statusText}`);
+      } catch (networkError) {
+        console.error('AI Filter Service - Network error during AI analysis:', networkError);
+        this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+        throw networkError;
+      }
 
       if (!response.ok) {
+        this.showToast(`AI Filter Failed: The service returned an error (status ${response.status}). Please try again later.`);
+        console.error(`AI server error: ${response.status} - ${response.statusText}`);
         throw new Error(`AI server error: ${response.status} - ${response.statusText}`);
       }
 
@@ -198,9 +214,12 @@ class AiFilterService {
       }
 
       if (!aiResponse) {
+        this.showToast('AI Filter Failed: No response received from the AI service.');
+        console.error('No AI response received');
         throw new Error('No AI response received');
       }
 
+      console.log(`AI Filter Service - AI analysis completed for ${jobs.length} jobs`);
       return this.parseAIResponse(aiResponse, jobs, filters);
     } catch (error) {
       console.error('AI analysis error:', error);
@@ -244,6 +263,8 @@ Please respond with a JSON array where each object has:
    */
   parseAIResponse(aiResponse, jobs, filters) {
     try {
+      console.log(`AI Filter Service - Parsing AI response: ${aiResponse.substring(0, 200)}...`);
+
       // Try to extract JSON from the response
       const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
       if (!jsonMatch) {
@@ -251,17 +272,21 @@ Please respond with a JSON array where each object has:
       }
 
       const analysis = JSON.parse(jsonMatch[0]);
+      console.log(`AI Filter Service - Parsed ${analysis.length} job analyses from AI response`);
+
       const filteredJobs = [];
 
       analysis.forEach(item => {
         const jobIndex = item.jobIndex - 1; // Convert to 0-based index
         if (jobIndex >= 0 && jobIndex < jobs.length) {
           const job = jobs[jobIndex];
-          
+
           // Add AI analysis data to job
           job.aiScore = item.confidence;
           job.aiReason = item.reason;
           job.isHiring = item.isHiring;
+
+          console.log(`AI Filter Service - Job ${jobIndex + 1}: isHiring=${item.isHiring}, confidence=${item.confidence}`);
 
           // Apply filters
           if (filters.onlyHiringPosts) {
@@ -274,6 +299,7 @@ Please respond with a JSON array where each object has:
         }
       });
 
+      console.log(`AI Filter Service - Filtered ${filteredJobs.length} jobs out of ${jobs.length} total`);
       return filteredJobs;
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
@@ -346,13 +372,24 @@ Please respond with a JSON array where each object has:
         ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
         : `${apiUrl}/v1/chat/completions`;
 
-      response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(requestBody)
-      });
+      console.log(`AI Filter Service - Cover Letter Generation - Calling API: ${endpoint} with provider: ${provider}, model: ${model}`);
+
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(requestBody)
+        });
+        console.log(`AI Filter Service - Cover Letter Generation - API Response Status: ${response.status} ${response.statusText}`);
+      } catch (networkError) {
+        console.error('AI Filter Service - Cover Letter Generation - Network error:', networkError);
+        this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+        throw networkError;
+      }
 
       if (!response.ok) {
+        this.showToast(`AI Filter Failed: The service returned an error (status ${response.status}). Please try again later.`);
+        console.error(`AI server error: ${response.status} - ${response.statusText}`);
         throw new Error(`AI server error: ${response.status} - ${response.statusText}`);
       }
 
@@ -366,6 +403,8 @@ Please respond with a JSON array where each object has:
       }
 
       if (!aiResponse) {
+        this.showToast('AI Filter Failed: No response received from the AI service.');
+        console.error('No AI response received');
         throw new Error('No AI response received');
       }
 
@@ -437,23 +476,53 @@ Please respond with a JSON array where each object has:
         ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
         : `${apiUrl}/v1/chat/completions`;
 
-      response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(requestBody)
-      });
+      console.log(`AI Filter Service - Content Analysis - Calling API: ${endpoint} with provider: ${provider}, model: ${model}`);
+
+      try {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(requestBody)
+        });
+        console.log(`AI Filter Service - Content Analysis - API Response Status: ${response.status} ${response.statusText}`);
+      } catch (networkError) {
+        console.error('AI Filter Service - Content Analysis - Network error:', networkError);
+        this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+        return {
+          content,
+          analysis: `AI analysis failed: ${networkError.message}`,
+          isHiring: false,
+          confidence: 0
+        };
+      }
 
       if (!response.ok) {
-        throw new Error(`AI server error: ${response.status} - ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`AI Filter Service - Content Analysis - API Error Response: ${errorText}`);
+        this.showToast(`AI Filter Failed: The service returned an error (status ${response.status}). Please try again later.`);
+        return {
+          content,
+          analysis: `AI analysis failed: Server error ${response.status}`,
+          isHiring: false,
+          confidence: 0
+        };
       }
 
       const data = await response.json();
+      console.log(`AI Filter Service - Content Analysis - API Response Data:`, {
+        hasCandidates: !!data.candidates,
+        hasChoices: !!data.choices,
+        responseKeys: Object.keys(data)
+      });
+
       let aiResponse;
 
       if (provider === 'gemini') {
         aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        console.log(`AI Filter Service - Content Analysis - Gemini Response: ${aiResponse ? 'Received' : 'Empty'}`);
       } else {
         aiResponse = data.choices?.[0]?.message?.content;
+        console.log(`AI Filter Service - Content Analysis - OpenAI Response: ${aiResponse ? 'Received' : 'Empty'}`);
       }
 
       return {
@@ -470,6 +539,17 @@ Please respond with a JSON array where each object has:
         isHiring: false,
         confidence: 0
       };
+    }
+  }
+
+  showToast(message) {
+    if (typeof window !== 'undefined') {
+      import('react-hot-toast').then(({ default: toast }) => {
+        toast.error(message, {
+          duration: 5000,
+          dismissible: true
+        });
+      });
     }
   }
 }

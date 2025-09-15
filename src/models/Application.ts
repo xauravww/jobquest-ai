@@ -25,6 +25,7 @@ const ApplicationSchema = new mongoose.Schema({
     type: String,
     enum: [
       'draft',
+      'applied',
       'submitted',
       'under_review',
       'phone_screening',
@@ -35,7 +36,7 @@ const ApplicationSchema = new mongoose.Schema({
       'rejected',
       'withdrawn'
     ],
-    default: 'submitted'
+    default: 'draft'
   },
   
   // Application Timeline

@@ -71,6 +71,13 @@ interface FilterState {
   minConfidence: string | number;
 }
 
+interface FilteredJob {
+  title: string;
+  company: string;
+  aiScore: number;
+  isHiring: boolean;
+}
+
 // Job Card Component
 const JobCard = ({ job, onTrack, onSkip }: { 
   job: Job; 
@@ -782,7 +789,13 @@ const JobSearchPage = () => {
         },
         body: JSON.stringify({
           results: chunk.jobs,
-          filters: filterParams
+          filters: filterParams,
+          aiConfig: {
+            provider: aiProvider,
+            apiKey,
+            apiUrl,
+            model
+          }
         }),
       });
 
@@ -791,6 +804,14 @@ const JobSearchPage = () => {
       }
 
       const filterData = await response.json();
+
+      console.log(`AI Filter UI - Chunk ${chunkId} filtered: ${filterData.filteredCount} jobs out of ${filterData.originalCount} total`);
+      console.log(`AI Filter UI - Filtered jobs:`, filterData.data.map((job: FilteredJob) => ({
+        title: job.title,
+        company: job.company,
+        aiScore: job.aiScore,
+        isHiring: job.isHiring
+      })));
 
       setChunks(prev => prev.map(chunk =>
         chunk.id === chunkId
@@ -805,9 +826,10 @@ const JobSearchPage = () => {
       ));
     } catch (err) {
       console.error('Error filtering chunk:', err);
+      const errorMessage = err instanceof Error ? err.message : 'AI filtering failed';
       setChunks(prev => prev.map(chunk =>
         chunk.id === chunkId
-          ? { ...chunk, isLoading: false, error: 'Filtering failed' }
+          ? { ...chunk, isLoading: false, error: errorMessage }
           : chunk
       ));
     }
