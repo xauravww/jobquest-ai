@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Dropdown, Drawer, Button, Avatar, MenuProps, Switch } from 'antd';
 import { FiMenu, FiX, FiLogOut } from 'react-icons/fi';
 import { FaBriefcase, FaUser } from 'react-icons/fa';
@@ -87,7 +87,26 @@ const GlassNavbar: React.FC = () => {
     );
   };
 
-  const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => (
+const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => {
+  const pathname = usePathname();
+  const [onboardingComplete, setOnboardingComplete] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedValue = localStorage.getItem('onboardingComplete');
+      console.log('onboardingComplete from localStorage:', storedValue);
+      setOnboardingComplete(storedValue === 'true');
+      console.log('onboardingComplete state:', storedValue === 'true');
+      console.log('Current pathname:', pathname);
+    }
+  }, [pathname]);
+
+  if (pathname.startsWith('/onboarding') && !onboardingComplete) {
+    // Hide Sign In and Get Started buttons on onboarding page if onboarding not complete
+    return null;
+  }
+
+  return (
     <div className={inDrawer ? 'flex flex-col space-y-4 p-4 mt-auto border-t border-border' : 'hidden md:flex items-center gap-4'}>
       {status === 'authenticated' ? (
         <Dropdown menu={{ items: menuItems }} trigger={['click']} overlayClassName="glass-dropdown">
@@ -121,6 +140,7 @@ const GlassNavbar: React.FC = () => {
       )}
     </div>
   );
+};
 
   return (
     <>

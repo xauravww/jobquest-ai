@@ -1093,6 +1093,10 @@ body {
 }
 .ant-select .ant-select-selection-search-input {
   color: var(--text-muted) !important;
+  border: none;
+}
+.ant-select-selection-search input:focus{
+  box-shadow: none;
 }
 
 .ant-select:hover .ant-select-selector {
@@ -1355,6 +1359,9 @@ box-shadow: none;
 }
 .ant-checkbox-wrapper{
   color: white;
+}
+.ant-select-selection-item-content{
+  border: none;
 }
 
 /* *{

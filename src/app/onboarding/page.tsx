@@ -42,12 +42,36 @@ const OnboardingPage: React.FC = () => {
   const router = useRouter();
   const [form] = Form.useForm();
   const [formValues, setFormValues] = useState<Partial<OnboardingData>>({});
+  const [otp, setOtp] = useState<string>('');
+  const [otpSent, setOtpSent] = useState<boolean>(false);
+  const [otpVerified, setOtpVerified] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          const fullName = data.firstName + (data.lastName ? ' ' + data.lastName : '');
+          form.setFieldsValue({
+            name: fullName,
+            email: data.email,
+          });
+          setFormValues((prev) => ({ ...prev, name: fullName, email: data.email }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      }
+    }
+    fetchProfile();
+  }, [form]);
 
   const steps = [
     { title: 'Personal Info', description: 'Basic information' },
     { title: 'Professional Details', description: 'Your background' },
     { title: 'Job Preferences', description: 'What you\'re looking for' },
-    { title: 'Complete', description: 'Ready to start!' }
+    { title: 'Complete', description: 'Ready to start!' },
+    { title: 'Verify Email', description: 'OTP Verification' }
   ];
 
   const handleNext = async (): Promise<void> => {
@@ -91,6 +115,45 @@ const OnboardingPage: React.FC = () => {
     }
   };
 
+  const sendOtp = async () => {
+    try {
+      const response = await fetch('/api/user/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formValues.email }),
+      });
+      if (response.ok) {
+        toast.success('OTP sent to your email');
+        setOtpSent(true);
+      } else {
+        toast.error('Failed to send OTP');
+      }
+    } catch (error) {
+      toast.error('Network error while sending OTP');
+    }
+  };
+
+  const verifyOtp = async () => {
+    try {
+      const response = await fetch('/api/user/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formValues.email, otp }),
+      });
+      if (response.ok) {
+        toast.success('Email verified successfully');
+        setOtpVerified(true);
+        localStorage.setItem('onboardingComplete', 'true');
+        router.push('/dashboard');
+      } else {
+        toast.error('Invalid OTP');
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Network error while verifying OTP');
+    }
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -106,7 +169,7 @@ const OnboardingPage: React.FC = () => {
                 prefix={<User className="w-5 h-5 text-gray-400" />}
                 placeholder="Your full name"
                 size="large"
-                className="bg-gray-800/70 text-white placeholder-gray-500 border-gray-600 hover:border-indigo-500 focus:border-indigo-500"
+                className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
               />
             </Form.Item>
 
@@ -121,7 +184,7 @@ const OnboardingPage: React.FC = () => {
                 prefix={<Mail className="w-5 h-5 text-gray-400" />}
                 placeholder="your.email@example.com"
                 size="large"
-                className="bg-gray-800/70 text-white placeholder-gray-500 border-gray-600 hover:border-indigo-500 focus:border-indigo-500"
+                className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
               />
             </Form.Item>
 
@@ -130,7 +193,7 @@ const OnboardingPage: React.FC = () => {
                 prefix={<Briefcase className="w-5 h-5 text-gray-400" />}
                 placeholder="e.g., Frontend Developer, Product Manager"
                 size="large"
-                className="bg-gray-800/70 text-white placeholder-gray-500 border-gray-600 hover:border-indigo-500 focus:border-indigo-500"
+                className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
               />
             </Form.Item>
 
@@ -139,7 +202,7 @@ const OnboardingPage: React.FC = () => {
                 prefix={<MapPin className="w-5 h-5 text-gray-400" />}
                 placeholder="e.g., San Francisco, CA"
                 size="large"
-                className="bg-gray-800/70 text-white placeholder-gray-500 border-gray-600 hover:border-indigo-500 focus:border-indigo-500"
+                className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
               />
             </Form.Item>
           </div>
@@ -302,7 +365,7 @@ const OnboardingPage: React.FC = () => {
               <p className="text-gray-300">Your profile is ready. Let&apos;s find you some amazing job opportunities.</p>
             </div>
 
-            <div className="rounded-lg p-6 border border-gray-700 bg-gray-800/60">
+            <div className="rounded-lg p-6 border border-border bg-bg-card">
               <h3 className="text-lg font-semibold text-white mb-4 text-center">What&apos;s Next?</h3>
               <ul className="text-left space-y-2 text-gray-200">
                 <li className="flex items-center gap-2">
@@ -326,6 +389,32 @@ const OnboardingPage: React.FC = () => {
           </div>
         );
 
+      case 4:
+        return (
+          <div className="space-y-6 max-w-md mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-4">Verify Your Email</h2>
+            {!otpSent ? (
+              <Button type="primary" onClick={sendOtp} className="w-full">
+                Send OTP to {formValues.email}
+              </Button>
+            ) : otpVerified ? (
+              <p className="text-green-500 font-semibold">Email verified successfully!</p>
+            ) : (
+              <>
+                <Input
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  size="large"
+                  className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
+                />
+                <Button type="primary" onClick={verifyOtp} className="w-full mt-4">
+                  Verify OTP
+                </Button>
+              </>
+            )}
+          </div>
+        );
       default:
         return null;
     }
@@ -374,7 +463,7 @@ const OnboardingPage: React.FC = () => {
           </div>
 
           {/* Step Content */}
-          <Card className="bg-gray-800/70 border-gray-700" styles={{ body: { padding: '2rem' } }}>
+          <Card className="bg-bg-card border-border" styles={{ body: { padding: '2rem' } }}>
             <Form
               form={form}
               onFinish={currentStep === steps.length - 1 ? handleComplete : handleNext}
