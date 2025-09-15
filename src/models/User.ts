@@ -40,6 +40,9 @@ export interface IUser extends Document {
   emailVerificationToken?: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  otp?: string;
+  otpExpires?: Date;
+  lastOtpSentAt?: Date;
   profile: {
     title?: string;
     company?: string;
@@ -112,6 +115,9 @@ const UserSchema = new Schema<IUser>(
     emailVerificationToken: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
+    otp: String,
+    otpExpires: Date,
+    lastOtpSentAt: Date,
     profile: {
       title: String,
       company: String,
@@ -194,4 +200,5 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+delete mongoose.models['User'];
+export default mongoose.model<IUser>('User', UserSchema);

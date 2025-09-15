@@ -1,38 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-
-// Temporary in-memory OTP store (should be replaced with shared persistent store)
-const otpStore = new Map();
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Removed session check to allow unauthenticated OTP verification during onboarding
 
     const { email, otp } = await request.json();
     if (!email || !otp) {
       return NextResponse.json({ error: 'Email and OTP are required' }, { status: 400 });
     }
 
-    const storedOtpData = otpStore.get(email);
-    if (!storedOtpData) {
+    await dbConnect();
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (!user.otp || !user.otpExpires) {
       return NextResponse.json({ error: 'OTP not found or expired' }, { status: 400 });
     }
 
-    if (storedOtpData.expiresAt < Date.now()) {
-      otpStore.delete(email);
+    if (user.otpExpires < new Date()) {
+      // Clear expired OTP
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      await user.save();
       return NextResponse.json({ error: 'OTP expired' }, { status: 400 });
     }
 
-    if (storedOtpData.otp !== otp) {
+    if (user.otp !== otp) {
       return NextResponse.json({ error: 'Invalid OTP' }, { status: 400 });
     }
 
-    // OTP is valid, delete it from store
-    otpStore.delete(email);
+    // OTP is valid, clear it from user
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
 
     return NextResponse.json({ message: 'OTP verified' });
   } catch (error) {

@@ -95,3 +95,42 @@ export const sendPasswordResetEmail = async (email: string, resetToken: string):
     text,
   });
 };
+
+export const sendOTPEmail = async (email: string, otp: string): Promise<void> => {
+  const subject = 'Your OTP for JobQuest AI';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Your One-Time Password (OTP)</h2>
+      <p>Hello,</p>
+      <p>You have requested an OTP for your JobQuest AI account.</p>
+      <p>Your OTP is: <strong style="font-size: 24px; color: #007bff;">${otp}</strong></p>
+      <p>This OTP will expire in 10 minutes for security reasons.</p>
+      <p>If you didn't request this OTP, please ignore this email.</p>
+      <p>Best regards,<br>The JobQuest AI Team</p>
+    </div>
+  `;
+
+  const text = `
+    Your One-Time Password (OTP) - JobQuest AI
+
+    Hello,
+
+    You have requested an OTP for your JobQuest AI account.
+
+    Your OTP is: ${otp}
+
+    This OTP will expire in 10 minutes for security reasons.
+
+    If you didn't request this OTP, please ignore this email.
+
+    Best regards,
+    The JobQuest AI Team
+  `;
+
+  await sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+  });
+};

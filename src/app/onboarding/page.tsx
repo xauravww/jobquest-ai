@@ -408,9 +408,14 @@ const OnboardingPage: React.FC = () => {
                   size="large"
                   className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
                 />
-                <Button type="primary" onClick={verifyOtp} className="w-full mt-4">
-                  Verify OTP
-                </Button>
+                <div className="flex justify-between mt-4">
+                  <Button type="primary" onClick={verifyOtp} className="w-1/2 mr-2">
+                    Verify OTP
+                  </Button>
+                  <Button type="default" onClick={sendOtp} className="w-1/2 ml-2">
+                    Resend OTP
+                  </Button>
+                </div>
               </>
             )}
           </div>
