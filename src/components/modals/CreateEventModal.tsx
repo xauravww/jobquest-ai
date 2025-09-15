@@ -6,15 +6,15 @@ import { RiDeleteBin6Line } from 'react-icons/ri';
 import { Modal, Button, Form, Input, Select, DatePicker, Checkbox, Space } from 'antd';
 import dayjs from 'dayjs';
 
-interface Job {
-  _id: string;
-  title: string;
-  company: string;
-  location?: string;
-}
-
 interface Application {
-  jobId: Job;
+  _id: string;
+  jobId: {
+    _id: string;
+    title: string;
+    company: string;
+    location?: string;
+  };
+  status: string;
 }
 
 interface Attendee {
@@ -41,10 +41,14 @@ interface CalendarEvent {
   };
   attendees: Attendee[];
   agenda: string[];
-  jobId?: string | {
+  applicationId?: string | {
     _id: string;
-    title: string;
-    company: string;
+    status: string;
+    jobId: {
+      _id: string;
+      title: string;
+      company: string;
+    };
   };
   tags?: string[];
 }
@@ -68,7 +72,7 @@ interface FormData {
   };
   attendees: Attendee[];
   agenda: string[];
-  jobId?: string;
+  applicationId?: string;
   tags?: string;
 }
 
@@ -87,46 +91,26 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const isVirtual = Form.useWatch(['location', 'isVirtual'], form);
 
-  const fetchApplicationsAndJobs = async () => {
+  const fetchApplications = async () => {
     try {
-      // Fetch applications, which contain the necessary job data
       const appsResponse = await fetch('/api/applications');
-      const jobsResponse = await fetch('/api/jobs');
-      let jobsFromApps: Job[] = [];
-      let jobsFromApi: Job[] = [];
+      let applicationsFromApi: Application[] = [];
       if (appsResponse.ok) {
         const appsData = await appsResponse.json();
-        const validApps = Array.isArray(appsData.applications) ? appsData.applications : [];
-
-        // Extract the job details from each application
-        jobsFromApps = validApps
-          .map((app: Application) => app.jobId)
-          .filter((job: Job) => job && typeof job !== 'string' && job._id && job.title); // Ensure job exists and has key properties
+        applicationsFromApi = Array.isArray(appsData.applications) ? appsData.applications : [];
       }
-      if (jobsResponse.ok) {
-        const jobsData = await jobsResponse.json();
-        jobsFromApi = Array.isArray(jobsData) ? jobsData : [];
-      }
-      // Merge and deduplicate jobs from applications and jobs API
-      const mergedJobsMap = new Map<string, Job>();
-      [...jobsFromApps, ...jobsFromApi].forEach(job => {
-        if (job && typeof job !== 'string' && job._id) {
-          mergedJobsMap.set(job._id, job);
-        }
-      });
-      const mergedJobs = Array.from(mergedJobsMap.values());
-      setJobs(mergedJobs);
+      setApplications(applicationsFromApi);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching applications:', error);
     }
   };
 
   useEffect(() => {
     if (isOpen) {
-      fetchApplicationsAndJobs();
+      fetchApplications();
       if (editingEvent && typeof editingEvent === 'object') {
         // Populate form for editing
         form.setFieldsValue({
@@ -136,7 +120,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           endDate: editingEvent.endDate ? dayjs(editingEvent.endDate) : null,
           endTime: editingEvent.endDate ? dayjs(editingEvent.endDate).format('HH:mm') : '10:00',
           tags: editingEvent.tags?.join(', '),
-          jobId: (typeof editingEvent.jobId === 'object' ? editingEvent.jobId?._id : editingEvent.jobId) || '',
+          applicationId: (typeof editingEvent.applicationId === 'object' ? editingEvent.applicationId?._id : editingEvent.applicationId) || '',
         });
       } else {
         // Reset form for creating a new event
@@ -153,11 +137,12 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           startTime: now.format('HH:mm'),
           endDate: oneHourLater,
           endTime: oneHourLater.format('HH:mm'),
-          jobId: '',
+          applicationId: '',
         });
       }
     }
   }, [isOpen, editingEvent, form]);
+
 
   const handleSubmit = async (values: FormData) => {
     setLoading(true);
@@ -170,6 +155,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         startDate: startDateTime.toISOString(),
         endDate: endDateTime.toISOString(),
         tags: values.tags?.split(',').map((tag:string) => tag.trim()).filter(Boolean),
+        applicationId: values.applicationId || null,
       };
 
       const eventId = typeof editingEvent === 'string' ? editingEvent : editingEvent?._id;
@@ -336,39 +322,39 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2"><FileText className="w-5 h-5" />Associations</h3>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Form.Item name="jobId" label="Related Job">
-                <Select
-                  placeholder="Select a job (optional)"
-                  allowClear
-                  showSearch
-                  filterOption={(input, option) =>
-                    (String(option?.label) ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
-                  options={[
-                    { value: '', label: 'None' },
-                    ...jobs.map((job: Job) => ({
-                      value: job._id,
-                      label: `${job.title} at ${job.company}`
-                    }))
-                  ]}
-                />
-              </Form.Item>
-                  {form.getFieldValue('jobId') && (() => {
-                    const selectedJob = jobs.find((job: Job) => job._id === form.getFieldValue('jobId'));
-                    return selectedJob ? (
-                      <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-2 h-2 bg-success rounded-full"></div>
-                          <span className="text-success font-medium">Linked to Job</span>
-                        </div>
-                        <div className="mt-2 text-xs text-text-muted">
-                          <div>Title: {selectedJob.title}</div>
-                          <div>Company: {selectedJob.company}</div>
-                          <div>Location: {selectedJob.location || 'Not specified'}</div>
-                        </div>
-                      </div>
-                    ) : null;
-                  })()}
+          <Form.Item name="applicationId" label="Related Application">
+            <Select
+              placeholder="Select an application (optional)"
+              allowClear
+              showSearch
+              filterOption={(input, option) =>
+                (String(option?.label) ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={[
+                { value: '', label: 'None' },
+                ...applications.map((app: Application) => ({
+                  value: app._id,
+                  label: `${app.jobId.title} at ${app.jobId.company}`
+                }))
+              ]}
+            />
+          </Form.Item>
+              {form.getFieldValue('applicationId') && (() => {
+                const selectedApp = applications.find((app: Application) => app._id === form.getFieldValue('applicationId'));
+                return selectedApp ? (
+                  <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-success rounded-full"></div>
+                      <span className="text-success font-medium">Linked to Application</span>
+                    </div>
+                    <div className="mt-2 text-xs text-text-muted">
+                      <div>Title: {selectedApp.jobId.title}</div>
+                      <div>Company: {selectedApp.jobId.company}</div>
+                      <div>Location: {selectedApp.jobId.location || 'Not specified'}</div>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         </section>

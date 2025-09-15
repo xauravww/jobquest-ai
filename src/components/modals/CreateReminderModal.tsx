@@ -53,7 +53,6 @@ interface FormData {
     type: string;
     priority: string;
     applicationId: string;
-    jobId?: string;
     tags: string;
     color: string;
     isRecurring: boolean;
@@ -176,8 +175,8 @@ const fetchApplications = async () => {
             toast.error('Please select a valid due date.');
             return;
         }
-        if (formData.jobId && !applications.find((job: Application) => job._id === formData.jobId)) {
-            toast.error('Selected job is invalid.');
+        if (formData.applicationId && !applications.find((app: Application) => app._id === formData.applicationId)) {
+            toast.error('Selected application is invalid.');
             return;
         }
 
@@ -189,8 +188,7 @@ const fetchApplications = async () => {
                 tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
                 dueDate: new Date(formData.dueDate).toISOString(),
                 recurrenceEndDate: formData.recurrenceEndDate ? new Date(formData.recurrenceEndDate).toISOString() : null,
-                applicationId: formData.applicationId || null,
-                jobId: formData.jobId || null
+                applicationId: formData.applicationId || null
             };
 
             const url = editingReminder ? `/api/reminders/${editingReminder._id}` : '/api/reminders';
@@ -338,14 +336,14 @@ const fetchApplications = async () => {
                         <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                             <div className="space-y-2">
                                 <FormSelect
-                                    label="Related Job"
-                                    value={formData.jobId}
-                                    onChange={(value) => setFormData({ ...formData, jobId: value })}
+                                    label="Related Application"
+                                    value={formData.applicationId}
+                                    onChange={(value) => setFormData({ ...formData, applicationId: value })}
                                     options={[
                                         { value: '', label: 'None' },
                                         ...applications.map((application: Application) => ({
                                             value: application._id,
-                                            label: `${application.jobTitle || 'Untitled'} - ${application.jobId?.title || 'No Job'} at ${application.jobId?.company || 'Unknown Company'}`
+                                            label: `${application.jobId?.title || 'Untitled'} at ${application.jobId?.company || 'Unknown Company'}`
                                         }))
                                     ]}
                                     showSearch
@@ -353,11 +351,11 @@ const fetchApplications = async () => {
                                         (String(option?.label) ?? '').toLowerCase().includes(input.toLowerCase())
                                     }
                                 />
-                                {formData.jobId && (
+                                {formData.applicationId && (
                                     <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
                                         <div className="flex items-center gap-2 text-sm">
                                             <div className="w-2 h-2 bg-success rounded-full"></div>
-                                            <span className="text-success font-medium">Linked to Job</span>
+                                            <span className="text-success font-medium">Linked to Application</span>
                                         </div>
                                         {(() => {
                                             const selectedApplication = applications.find((app: Application) => app._id === formData.applicationId);

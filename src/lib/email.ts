@@ -24,6 +24,7 @@ export interface EmailOptions {
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
+    console.log('Creating transporter with host:', process.env.EMAIL_HOST, 'port:', process.env.EMAIL_PORT);
     const transporter = createTransporter();
 
     const mailOptions = {
@@ -34,8 +35,9 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
       text: options.text,
     };
 
+    console.log('Sending email to:', options.to, 'subject:', options.subject);
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', info);
+    console.log('Email sent successfully:', info);
   } catch (error) {
     console.error('Email sending failed:', error);
     throw new Error('Failed to send email');

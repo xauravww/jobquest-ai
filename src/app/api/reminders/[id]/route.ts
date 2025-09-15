@@ -75,7 +75,7 @@ export async function GET(
     return NextResponse.json(reminder);
     
   } catch (error) {
-    console.error('Error fetching reminder:', error as Error);
+    console.error('Error fetching reminder:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

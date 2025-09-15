@@ -79,7 +79,11 @@ interface CalendarEvent {
   applicationId?: {
     _id: string;
     status: string;
-    jobId: string;
+    jobId: {
+      _id: string;
+      title: string;
+      company: string;
+    };
   };
   jobId?: {
     _id: string;
