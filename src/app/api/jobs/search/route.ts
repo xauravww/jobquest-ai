@@ -380,9 +380,25 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('Search API error:', errorMessage);
+
+    // Provide user-friendly error messages based on error type
+    let userFriendlyMessage = 'An error occurred while searching. Please try again later.';
+    let statusCode = 500;
+
+    if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('timeout')) {
+      userFriendlyMessage = 'Search timed out. The search service is currently slow. Please try again in a few minutes.';
+      statusCode = 504; // Gateway Timeout
+    } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+      userFriendlyMessage = 'Unable to connect to search service. Please check your internet connection and try again.';
+      statusCode = 503; // Service Unavailable
+    } else if (errorMessage.includes('Search API error: 5')) {
+      userFriendlyMessage = 'Search service is temporarily unavailable. Please try again later.';
+      statusCode = 503;
+    }
+
     return NextResponse.json(
-      { error: 'An error occurred while searching.', details: errorMessage },
-      { status: 500 }
+      { error: userFriendlyMessage, details: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
+      { status: statusCode }
     );
   }
 }

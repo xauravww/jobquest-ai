@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
+import connectDB from '@/lib/db';
 import { reminderCalendarService } from '@/lib/reminder-calendar-service';
 import { Application } from '@/models/Application';
 import { Job } from '@/models/Job';

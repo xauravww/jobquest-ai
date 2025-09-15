@@ -15,8 +15,8 @@ class ApiSearchService {
    * Single page search without storage
    */
   async search(query, options = {}) {
-    const MAX_RETRIES = 2;
-    const TIMEOUT_MS = 10000; // 10 seconds
+    const MAX_RETRIES = 3;
+    const TIMEOUT_MS = 180000; // 3 minutes
 
     const fetchWithTimeout = (url, fetchOptions, timeout) => {
       return new Promise((resolve, reject) => {
@@ -74,6 +74,7 @@ class ApiSearchService {
         }
 
         const data = await response.json();
+        console.log("data from search api:",data)
         return {
           success: true,
           data: {
@@ -90,7 +91,9 @@ class ApiSearchService {
             error: error.message
           };
         }
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        // Exponential backoff for retries
+        const backoffTime = Math.min(1000 * 2 ** attempt, 10000);
+        await new Promise(resolve => setTimeout(resolve, backoffTime));
       }
     }
   }
@@ -133,6 +136,8 @@ class ApiSearchService {
     try {
       let allResults = [];
       let totalResults = 0;
+      let consecutiveFailures = 0;
+      const MAX_CONSECUTIVE_FAILURES = 2;
       
       for (let page = 1; page <= maxPages; page++) {
         const searchResult = await this.search(query, { 
@@ -140,8 +145,14 @@ class ApiSearchService {
         });
         if (!searchResult.success) {
           console.error(`Page ${page} search failed:`, searchResult.error);
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            console.error('Too many consecutive failures, aborting multi-page search.');
+            break;
+          }
           continue;
         }
+        consecutiveFailures = 0;
 
         allResults = allResults.concat(searchResult.data.results);
         totalResults = searchResult.data.number_of_results;

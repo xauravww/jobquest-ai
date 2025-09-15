@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, DollarSign, MapPin, Calendar, Building2, Save, Eye, Cog, Lock, Link } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
@@ -59,6 +59,16 @@ interface FilterParams {
   postedAfter?: string;
   postedBefore?: string;
   searchEngine?: string;
+}
+
+interface FilterState {
+  location: string;
+  postedAfter: string;
+  postedBefore: string;
+  searchEngine: string;
+  maxPages: string;
+  onlyHiringPosts: boolean;
+  minConfidence: string | number;
 }
 
 // Job Card Component
@@ -531,17 +541,14 @@ const JobSearchPage = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showHiddenJobs, setShowHiddenJobs] = useState(false);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterState>({
     location: '',
-    company: '',
-    minSalary: '',
-    maxSalary: '',
     postedAfter: '',
     postedBefore: '',
     searchEngine: '',
-    maxPages: '3',
+    maxPages: '',
     onlyHiringPosts: true,
-    minConfidence: 60
+    minConfidence: '' as string | number
   });
   const [isSaving, setIsSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<{
@@ -552,12 +559,16 @@ const JobSearchPage = () => {
   // New filter state for hasDate
   const [hasDate, setHasDate] = useState<boolean | undefined>(undefined);
 
+  // Ref to maintain focus on the input
+  const maxPagesInputRef = useRef<HTMLInputElement | null>(null);
+
   // AI provider config state
   const [aiProvider, setAiProvider] = useState('lm-studio');
   const [apiKey, setApiKey] = useState('');
   const [apiUrl, setApiUrl] = useState('http://localhost:1234');
   const [model, setModel] = useState('local-model');
-  const [showAIConfig, setShowAIConfig] = useState(false);
+  // Removed AI Config state and toggle as per user request
+  // const [showAIConfig, setShowAIConfig] = useState(false);
 
   // Load saved AI config from localStorage on mount
   useEffect(() => {
@@ -601,19 +612,23 @@ const JobSearchPage = () => {
     setError(null);
     setHasSearched(true);
 
-    try {
-      const params = new URLSearchParams({
-        q: query.trim(),
-        maxPages: (parseInt(filters.maxPages.toString()) || 3).toString(),
-        ...(hasDate !== undefined && { hasDate: hasDate.toString() }),
-        ...(filters.postedAfter && { postedAfter: filters.postedAfter }),
-        ...(filters.postedBefore && { postedBefore: filters.postedBefore }),
-        ...(filters.location && { location: filters.location }),
-        ...(filters.company && { company: filters.company }),
-        ...(filters.minSalary && { minSalary: filters.minSalary.toString() }),
-        ...(filters.maxSalary && { maxSalary: filters.maxSalary.toString() }),
-        ...(filters.searchEngine && { engine: filters.searchEngine }),
-      });
+      try {
+        const params = new URLSearchParams({
+          q: query.trim(),
+          // Removed maxPages limit, keep empty as per user request
+          maxPages: filters.maxPages ? filters.maxPages.toString() : '',
+          ...(hasDate !== undefined && { hasDate: hasDate.toString() }),
+          ...(filters.postedAfter && { postedAfter: filters.postedAfter }),
+          ...(filters.postedBefore && { postedBefore: filters.postedBefore }),
+          ...(filters.location && { location: filters.location }),
+          // Removed company filter as per user request
+          // ...(filters.company && { company: filters.company }),
+          // Removed minSalary filter as per user request
+          // ...(filters.minSalary && { minSalary: filters.minSalary.toString() }),
+          // Removed maxSalary filter as per user request
+          // ...(filters.maxSalary && { maxSalary: filters.maxSalary.toString() }),
+          ...(filters.searchEngine && { engine: filters.searchEngine }),
+        });
 
       const response = await fetch(`/api/jobs/search?${params.toString()}`);
 
@@ -748,9 +763,12 @@ const JobSearchPage = () => {
 
       // Add additional filters if they have values
       if (filters.location) filterParams.location = filters.location;
-      if (filters.company) filterParams.company = filters.company;
-      if (filters.minSalary) filterParams.minSalary = parseInt(filters.minSalary);
-      if (filters.maxSalary) filterParams.maxSalary = parseInt(filters.maxSalary);
+      // Removed company filter as per user request
+      // if (filters.company) filterParams.company = filters.company;
+      // Removed minSalary filter as per user request
+      // if (filters.minSalary) filterParams.minSalary = parseInt(filters.minSalary);
+      // Removed maxSalary filter as per user request
+      // if (filters.maxSalary) filterParams.maxSalary = parseInt(filters.maxSalary);
       if (filters.postedAfter) filterParams.postedAfter = filters.postedAfter;
       if (filters.postedBefore) filterParams.postedBefore = filters.postedBefore;
       if (filters.searchEngine) filterParams.searchEngine = filters.searchEngine;
@@ -879,95 +897,160 @@ const JobSearchPage = () => {
     }));
   };
 
-  // Filter Panel Component
-  const FilterPanel = () => (
-    <div className="filter-panel rounded-xl p-6 mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-primary/20 rounded-lg">
-            <Filter className="w-5 h-5 text-primary" />
-          </div>
-          <div className="text-xl font-semibold text-white">Advanced Filters</div>
+const FilterPanel = ({
+  filters,
+  handleFilterChange,
+  hasDate,
+  setShowFilters,
+  setHasDate,
+  maxPagesInputRef
+}: {
+  filters: FilterState;
+  handleFilterChange: (key: keyof FilterState, value: string | number | boolean) => void;
+  hasDate: boolean | undefined;
+  setShowFilters: (value: boolean) => void;
+  setHasDate: (value: boolean | undefined) => void;
+  maxPagesInputRef: React.RefObject<HTMLInputElement | null>;
+}) => (
+  <div className="filter-panel rounded-xl p-6 mb-8">
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-4">
+        <div className="p-2 bg-primary/20 rounded-lg">
+          <Filter className="w-5 h-5 text-primary" />
         </div>
-        <div
-          onClick={() => setShowFilters(false)}
-          className="w-8 h-8 cursor-pointer"
-        >
-          ×
+        <div className="text-xl font-semibold text-white">Advanced Filters</div>
+      </div>
+      <div
+        onClick={() => setShowFilters(false)}
+        className="w-8 h-8 cursor-pointer"
+      >
+        ×
+      </div>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Date Filters - Your Core Feature */}
+      <FormDateInput
+        label="Posted After"
+        value={filters.postedAfter}
+        onChange={(value) => handleFilterChange('postedAfter', value)}
+      />
+      <FormDateInput
+        label="Posted Before"
+        value={filters.postedBefore}
+        onChange={(value) => handleFilterChange('postedBefore', value)}
+      />
+
+      {/* Location Filter */}
+      <FormInput
+        label="Location"
+        value={filters.location}
+        onChange={(value) => handleFilterChange('location', value)}
+        placeholder="e.g., Remote, New York"
+        icon={<MapPin className="w-4 h-4" />}
+      />
+
+      {/* Confidence Filter */}
+      <FormInputNumber
+        label="Min Confidence (%)"
+        value={filters.minConfidence}
+        onChange={(value) => handleFilterChange('minConfidence', value !== null ? value : 60)}
+        min={0}
+        max={100}
+        step={1}
+      />
+
+      {/* Max Pages Filter */}
+      <div className="w-full">
+        <label className="block text-sm font-medium text-white mb-2">
+          Max Pages
+        </label>
+        <div className="flex items-center gap-2">
+          <button
+            onMouseDown={() => {
+              if (maxPagesInputRef.current) {
+                const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
+                const newValue = Math.max(1, currentValue - 1);
+                maxPagesInputRef.current.value = newValue.toString();
+                handleFilterChange('maxPages', newValue.toString());
+              }
+              // Start continuous decrement
+              const interval = setInterval(() => {
+                if (maxPagesInputRef.current) {
+                  const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
+                  const newValue = Math.max(1, currentValue - 1);
+                  maxPagesInputRef.current.value = newValue.toString();
+                  handleFilterChange('maxPages', newValue.toString());
+                }
+              }, 150);
+              // Clear interval on mouse up
+              const clearIntervalOnUp = () => {
+                clearInterval(interval);
+                document.removeEventListener('mouseup', clearIntervalOnUp);
+              };
+              document.addEventListener('mouseup', clearIntervalOnUp);
+            }}
+            className="bg-bg-light hover:bg-bg-card border border-border rounded px-3 py-2 text-text hover:text-white transition-colors select-none"
+            type="button"
+          >
+            -
+          </button>
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary" />
+            <input
+              ref={maxPagesInputRef}
+              type="number"
+              defaultValue={filters.maxPages || 3}
+              onBlur={(e) => {
+                const value = parseInt(e.target.value) || 1;
+                const finalValue = Math.max(1, value).toString();
+                e.target.value = finalValue;
+                handleFilterChange('maxPages', finalValue);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+              className="w-full bg-bg-card border border-border rounded px-10 py-2 text-text focus:border-primary focus:outline-none"
+              min="1"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                borderColor: 'var(--border)',
+                color: 'var(--text)',
+              }}
+            />
+          </div>
+          <button
+            onMouseDown={() => {
+              if (maxPagesInputRef.current) {
+                const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
+                const newValue = currentValue + 1;
+                maxPagesInputRef.current.value = newValue.toString();
+                handleFilterChange('maxPages', newValue.toString());
+              }
+              // Start continuous increment
+              const interval = setInterval(() => {
+                if (maxPagesInputRef.current) {
+                  const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
+                  const newValue = currentValue + 1;
+                  maxPagesInputRef.current.value = newValue.toString();
+                  handleFilterChange('maxPages', newValue.toString());
+                }
+              }, 150);
+              // Clear interval on mouse up
+              const clearIntervalOnUp = () => {
+                clearInterval(interval);
+                document.removeEventListener('mouseup', clearIntervalOnUp);
+              };
+              document.addEventListener('mouseup', clearIntervalOnUp);
+            }}
+            className="bg-bg-light hover:bg-bg-card border border-border rounded px-3 py-2 text-text hover:text-white transition-colors select-none"
+            type="button"
+          >
+            +
+          </button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Date Filters - Your Core Feature */}
-        <FormDateInput
-          label="Posted After"
-          value={filters.postedAfter}
-          onChange={(value) => handleFilterChange('postedAfter', value)}
-        />
-        <FormDateInput
-          label="Posted Before"
-          value={filters.postedBefore}
-          onChange={(value) => handleFilterChange('postedBefore', value)}
-        />
-
-        {/* Location Filter */}
-        <FormInput
-          label="Location"
-          value={filters.location}
-          onChange={(value) => handleFilterChange('location', value)}
-          placeholder="e.g., Remote, New York"
-          icon={<MapPin className="w-4 h-4" />}
-        />
-
-        {/* Company Filter */}
-        <FormInput
-          label="Company"
-          value={filters.company}
-          onChange={(value) => handleFilterChange('company', value)}
-          placeholder="e.g., Google, Microsoft"
-          icon={<Building2 className="w-4 h-4" />}
-        />
-
-        {/* Salary Filters */}
-        <FormInputNumber
-          label="Min Salary ($)"
-          value={filters.minSalary}
-          onChange={(value) => handleFilterChange('minSalary', value !== null ? value : '')}
-          placeholder="e.g., 80000"
-          icon={<DollarSign className="w-4 h-4" />}
-          min={0}
-          step={1000}
-        />
-        <FormInputNumber
-          label="Max Salary ($)"
-          value={filters.maxSalary}
-          onChange={(value) => handleFilterChange('maxSalary', value !== null ? value : '')}
-          placeholder="e.g., 150000"
-          icon={<DollarSign className="w-4 h-4" />}
-          min={0}
-          step={1000}
-        />
-
-        {/* Confidence Filter */}
-        <FormInputNumber
-          label="Min Confidence (%)"
-          value={filters.minConfidence}
-          onChange={(value) => handleFilterChange('minConfidence', value !== null ? value : 60)}
-          min={0}
-          max={100}
-          step={1}
-        />
-
-        {/* Max Pages Filter */}
-        <FormInputNumber
-          label="Max Pages"
-          value={filters.maxPages}
-          onChange={(value) => handleFilterChange('maxPages', value !== null ? value : '3')}
-          placeholder="1-10"
-          icon={<Search className="w-4 h-4" />}
-          min={1}
-          max={10}
-          step={1}
-        />
 
         {/* Hiring Posts Filter */}
         <div className="md:col-span-2 lg:col-span-3">
@@ -1167,6 +1250,8 @@ const JobSearchPage = () => {
 
             {/* Filter and Save Controls */}
             <div className="flex gap-3 flex-wrap items-center">
+              {/* Removed AI Config toggle button as per user request */}
+              {/* 
               <button
                 onClick={() => setShowAIConfig(!showAIConfig)}
                 className={`flex items-center gap-2 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 ${
@@ -1183,6 +1268,7 @@ const JobSearchPage = () => {
                   </span>
                 </div>
               </button>
+              */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 ${
@@ -1236,7 +1322,8 @@ const JobSearchPage = () => {
           </div>
 
           {/* AI Config Panel */}
-          {showAIConfig && (
+          {/* Removed AIProviderConfig from AI Filtering page as per user request */}
+          {/* {showAIConfig && (
             <AIProviderConfig
               aiProvider={aiProvider}
               setAiProvider={setAiProvider}
@@ -1248,16 +1335,48 @@ const JobSearchPage = () => {
               setModel={setModel}
               setShowConfig={setShowAIConfig}
             />
-          )}
+          )} 
+          */}
+          
+          {/* Removed AI Config toggle button as per user request */}
+          {/* 
+          <button
+            onClick={() => setShowAIConfig(!showAIConfig)}
+            className={`flex items-center gap-2 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 ${
+              showAIConfig
+                ? 'bg-primary text-white shadow-lg'
+                : 'bg-bg-card hover:bg-bg-light text-text border border-border'
+            }`}
+          >
+            <Cog size={18} />
+            <div className="flex flex-col items-start">
+              <span>{showAIConfig ? 'Hide AI Config' : 'AI Config'}</span>
+              <span className="text-xs opacity-75 capitalize">
+                {aiProvider.replace('-', ' ')} {apiKey || apiUrl ? '✓' : '⚠'}
+              </span>
+            </div>
+          </button>
+          */}
 
           {/* Filter Panel */}
-          {showFilters && <FilterPanel />}
+          {showFilters && (
+            <FilterPanel
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              hasDate={hasDate}
+              setShowFilters={setShowFilters}
+              setHasDate={setHasDate}
+              maxPagesInputRef={maxPagesInputRef}
+            />
+          )}
 
           {renderContent()}
         </div>
       </div>
     </AppLayout>
   );
+
+
 };
 
 export default JobSearchPage;

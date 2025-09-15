@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
+import connectDB from '@/lib/db';
 import { CalendarEvent } from '@/models/CalendarEvent';
 import { Job } from '@/models/Job';
 import { Application } from '@/models/Application';

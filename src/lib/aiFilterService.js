@@ -474,4 +474,4 @@ Please respond with a JSON array where each object has:
   }
 }
 
-module.exports = AiFilterService;
+export default AiFilterService;

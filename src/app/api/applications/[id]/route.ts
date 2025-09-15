@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { mongodbService } from '@/lib/mongodb-service';
-import { connectDB } from '@/lib/db';
+import connectDB from '@/lib/db';
 
 export async function GET(
   request: NextRequest,

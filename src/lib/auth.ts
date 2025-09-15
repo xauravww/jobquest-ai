@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import dbConnect from './mongodb';
+import connectDB from './db';
 import User from '@/models/User';
 
 export const authOptions: NextAuthOptions = {
@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          await dbConnect();
+          await connectDB();
 
           const user = await User.findOne({ email: credentials.email });
 
@@ -53,7 +53,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = (user as { role?: string }).role;
         token.id = user.id;
       }
       return token;

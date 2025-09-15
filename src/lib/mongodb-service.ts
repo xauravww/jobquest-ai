@@ -1,13 +1,13 @@
-import { connectDB } from './db';
-import { Job } from '@/models/Job';
-import { Application } from '@/models/Application';
+import connectDB from './db';
+import { Job } from '../models/Job';
+import { Application } from '../models/Application';
 import mongoose from 'mongoose';
 
 
 export class MongoDBService {
 
   // Helper method to normalize status values to valid enum values
-  private normalizeStatus(status: string): string {
+  private normalizeStatus(status: unknown): string {
     const validStatuses = [
       'draft',
       'submitted',
@@ -35,21 +35,21 @@ export class MongoDBService {
       'cancelled': 'withdrawn'
     };
 
-    const normalized = status?.toLowerCase().replace(/\s+/g, '_');
+    const normalized = (status as string)?.toLowerCase().replace(/\s+/g, '_');
     if (statusMapping[normalized]) {
       return statusMapping[normalized];
     }
 
     // If status is already valid, return it
-    if (validStatuses.includes(status)) {
-      return status;
+    if (validStatuses.includes(status as string)) {
+      return status as string;
     }
 
     // Default to 'submitted' for unknown statuses
     return 'submitted';
   }
 
-  async saveJobResults(jobs: any[], query: string, filters: any = {}) {
+  async saveJobResults(jobs: Record<string, unknown>[]) {
     try {
       await connectDB();
       
@@ -71,18 +71,18 @@ export class MongoDBService {
 
           if (!existingJob) {
             const job = new Job({
-              jobId: jobData.id || `job-${Date.now()}-${Math.random()}`,
-              title: jobData.title,
-              company: jobData.company,
-              location: jobData.location,
-              description: jobData.description || jobData.snippet,
+              jobId: (jobData.id as string) || `job-${Date.now()}-${Math.random()}`,
+              title: jobData.title as string,
+              company: jobData.company as string,
+              location: jobData.location as string,
+              description: (jobData.description as string) || (jobData.snippet as string),
               salary: jobData.salary,
-              jobType: jobData.jobType || 'full-time',
-              experienceLevel: jobData.experienceLevel || 'mid',
+              jobType: (jobData.jobType as string) || 'full-time',
+              experienceLevel: (jobData.experienceLevel as string) || 'mid',
               skills: jobData.skills || [],
-              source: jobData.source || 'api-search',
-              url: jobData.link || jobData.url,
-              datePosted: jobData.date ? new Date(jobData.date) : new Date(),
+              source: (jobData.source as string) || 'api-search',
+              url: (jobData.link as string) || (jobData.url as string),
+              datePosted: jobData.date ? new Date(jobData.date as string | number | Date) : new Date(),
               isActive: true,
               isBookmarked: false,
               isSkipped: false,
@@ -117,24 +117,25 @@ export class MongoDBService {
     }
   }
 
-  async getJobsByDateRange(dateFrom: string, dateTo: string, filters: any = {}) {
+  async getJobsByDateRange(dateFrom: string, dateTo: string, filters: Record<string, unknown> = {}) {
     try {
       await connectDB();
-      
-      const query: any = {
+
+      const query: Record<string, unknown> = {
         isActive: true,
         isSkipped: false
       };
 
       // Date filtering
       if (dateFrom || dateTo) {
-        query.datePosted = {};
+        const dateQuery: { $gte?: Date; $lte?: Date } = {};
         if (dateFrom) {
-          query.datePosted.$gte = new Date(dateFrom);
+          dateQuery.$gte = new Date(dateFrom);
         }
         if (dateTo) {
-          query.datePosted.$lte = new Date(dateTo);
+          dateQuery.$lte = new Date(dateTo);
         }
+        query.datePosted = dateQuery;
       }
 
       // Additional filters
@@ -162,7 +163,7 @@ export class MongoDBService {
     }
   }
 
-  async saveApplications(applications: any[]) {
+  async saveApplications(applications: Record<string, unknown>[]) {
     try {
       await connectDB();
       
@@ -171,7 +172,7 @@ export class MongoDBService {
       for (const appData of applications) {
         try {
           // Find the corresponding job
-          const job = await Job.findById(appData.jobId);
+          const job = await Job.findById(appData.jobId as string);
           if (!job) {
             console.warn('Job not found for application:', appData.jobId);
             continue;
@@ -180,13 +181,13 @@ export class MongoDBService {
           const application = new Application({
             jobId: job._id,
             applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: this.normalizeStatus(appData.status) || 'submitted',
+            status: this.normalizeStatus(appData.status as string) || 'submitted',
             appliedDate: new Date(),
             lastStatusUpdate: new Date(),
-            applicationMethod: appData.applicationMethod || 'online',
-            platform: appData.platform || 'direct',
-            notes: appData.notes || '',
-            priority: appData.priority || 'medium',
+            applicationMethod: (appData.applicationMethod as string) || 'online',
+            platform: (appData.platform as string) || 'direct',
+            notes: (appData.notes as string) || '',
+            priority: (appData.priority as string) || 'medium',
             communications: [],
             interviews: [],
             // AI data
@@ -211,7 +212,7 @@ export class MongoDBService {
     }
   }
 
-  async saveApplicationsFromAI(applications: any[]) {
+  async saveApplicationsFromAI(applications: Record<string, unknown>[]) {
     try {
       await connectDB();
       
@@ -322,11 +323,11 @@ export class MongoDBService {
     }
   }
 
-  async getApplicationsWithFilters(userId: string, filters: any = {}) {
+  async getApplicationsWithFilters(userId: string, filters: Record<string, unknown> = {}) {
     try {
       await connectDB();
 
-      const query: any = { userId };
+      const query: Record<string, unknown> = { userId };
 
       // Status filter
       if (filters.status) {
@@ -345,18 +346,19 @@ export class MongoDBService {
 
       // Date range filter
       if (filters.dateFrom || filters.dateTo) {
-        query.appliedDate = {};
+        const dateQuery: { $gte?: Date; $lte?: Date } = {};
         if (filters.dateFrom) {
-          query.appliedDate.$gte = new Date(filters.dateFrom);
+          dateQuery.$gte = new Date(filters.dateFrom as string);
         }
         if (filters.dateTo) {
-          query.appliedDate.$lte = new Date(filters.dateTo);
+          dateQuery.$lte = new Date(filters.dateTo as string);
         }
+        query.appliedDate = dateQuery;
       }
 
       // Pagination params
-      const page = parseInt(filters.page, 10) || 1;
-      const limit = parseInt(filters.limit, 10) || 10;
+      const page = parseInt(String(filters.page), 10) || 1;
+      const limit = parseInt(String(filters.limit), 10) || 10;
       const skip = (page - 1) * limit;
 
       // Get total count for pagination
@@ -371,14 +373,14 @@ export class MongoDBService {
 
       // Text search filter (applied after population)
       if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
+        const searchTerm = String(filters.search).toLowerCase();
         applications = applications.filter(app => {
-          const job = app.jobId as any;
+          const job = app.jobId as Record<string, unknown>;
           return (
-            job?.title?.toLowerCase().includes(searchTerm) ||
-            job?.company?.toLowerCase().includes(searchTerm) ||
-            job?.location?.toLowerCase().includes(searchTerm) ||
-            job?.description?.toLowerCase().includes(searchTerm) ||
+            (job?.title as string)?.toLowerCase().includes(searchTerm) ||
+            (job?.company as string)?.toLowerCase().includes(searchTerm) ||
+            (job?.location as string)?.toLowerCase().includes(searchTerm) ||
+            (job?.description as string)?.toLowerCase().includes(searchTerm) ||
             app.notes?.toLowerCase().includes(searchTerm)
           );
         });
@@ -395,22 +397,22 @@ export class MongoDBService {
   async getApplicationById(applicationId: string, userId?: string) {
     try {
       await connectDB();
-      
-      const query: any = { _id: applicationId };
+
+      const query: Record<string, unknown> = { _id: applicationId };
       if (userId) {
         query.userId = userId;
       }
-      
+
       const application = await Application.findOne(query).populate('jobId');
       return application;
-      
+
     } catch (error) {
       console.error('Error getting application by ID:', error);
       return null;
     }
   }
 
-  async updateApplication(applicationId: string, userId: string, updateData: any) {
+  async updateApplication(applicationId: string, userId: string, updateData: Record<string, unknown>) {
     try {
       await connectDB();
       

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cog, Lock, Link, Bot } from 'lucide-react';
 import { FormInput, FormSelect } from '@/components/ui/FormInput';
+import toast from 'react-hot-toast';
 
 const AI_PROVIDERS = [
   { label: 'LM Studio', value: 'lm-studio' },
@@ -21,9 +22,18 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   const [apiUrl, setApiUrl] = useState('http://localhost:1234');
   const [model, setModel] = useState('local-model');
 
-  // Load saved AI config from localStorage on mount
+  // Update model default when aiProvider changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (aiProvider === 'gemini') {
+      setModel('gemini-pro');
+    } else if (aiProvider === 'lm-studio' || aiProvider === 'ollama') {
+      setModel('local-model');
+    }
+  }, [aiProvider]);
+
+  // Load saved AI config from localStorage on mount and when modal opens
+  useEffect(() => {
+    if (typeof window !== 'undefined' && showConfig) {
       const savedConfig = localStorage.getItem('ai-provider-config');
       if (savedConfig) {
         try {
@@ -37,7 +47,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
         }
       }
     }
-  }, []);
+  }, [showConfig]);
 
   // Save AI config to localStorage on change
   useEffect(() => {
@@ -50,10 +60,23 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   const requiresApiKey = aiProvider === 'gemini';
   const requiresUrlAndModel = aiProvider === 'lm-studio' || aiProvider === 'ollama';
 
+  // Set model defaults when provider changes
+  useEffect(() => {
+    if (aiProvider === 'gemini' && !model.startsWith('gemini-')) {
+      setModel('gemini-2.0-flash-exp');
+    } else if (aiProvider === 'lm-studio' && model.startsWith('gemini-')) {
+      setModel('local-model');
+    } else if (aiProvider === 'ollama' && model.startsWith('gemini-')) {
+      setModel('llama2');
+    }
+  }, [aiProvider, model]);
+
   const handleSaveConfig = () => {
     const config = { provider: aiProvider, apiKey, apiUrl, model, enabled: true };
     localStorage.setItem('ai-provider-config', JSON.stringify(config));
     console.log('AI config saved:', config);
+    toast.success('Preferences saved successfully!');
+    setShowConfig(false);
   };
 
   if (!showConfig) return null;

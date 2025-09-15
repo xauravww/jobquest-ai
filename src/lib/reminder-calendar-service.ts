@@ -1,4 +1,4 @@
-import { connectDB } from './db';
+import connectDB from './db';
 import { Reminder } from '@/models/Reminder';
 import { CalendarEvent } from '@/models/CalendarEvent';
 import { Application } from '@/models/Application';

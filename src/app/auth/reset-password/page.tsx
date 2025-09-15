@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Form, Input } from 'antd';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ const Button = ({
   </button>
 );
 
-const ResetPasswordPage: React.FC = () => {
+const ResetPasswordForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
@@ -264,6 +264,24 @@ const ResetPasswordPage: React.FC = () => {
         </div>
       </main>
     </>
+  );
+};
+
+const ResetPasswordPage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
+        <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-indigo-600 mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold text-white mb-2">Loading</h3>
+            <p className="text-gray-400">Please wait...</p>
+          </div>
+        </div>
+      </main>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 };
 

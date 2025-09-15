@@ -1,55 +1,86 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
+import { logger } from "../lib/logger";
+import config from "../lib/env";
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/jobquest-ai';
+// MongoDB connection options for production-ready setup
+const getMongoOptions = () => {
+  const { development } = config;
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-}
+  const baseOptions = {
+    // Connection pool settings
+    maxPoolSize: 10, // Maximum number of connections in the connection pool
+    minPoolSize: 2, // Minimum number of connections in the connection pool
+    maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+    serverSelectionTimeoutMS: 5000, // How long to try selecting a server
+    socketTimeoutMS: 45000, // How long a send or receive on a socket can take before timing out
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-}
+    // Retry settings
+    retryWrites: true,
+    retryReads: true,
 
-// Global is used here to maintain a cached connection across hot reloads in development
-declare global {
-  // eslint-disable-next-line no-var
-  var mongooseCache: MongooseCache | undefined;
-}
+    // Other settings
+    autoIndex: !development, // Don't build indexes in production
+    autoCreate: !development, // Don't auto-create collections in production
+  };
 
-let cached = global.mongooseCache;
+  return baseOptions;
+};
 
-if (!cached) {
-  cached = global.mongooseCache = { conn: null, promise: null };
-}
+const connectDB = async (): Promise<void> => {
+  const { mongoUri, development } = config;
 
-export async function connectDB(): Promise<typeof mongoose> {
-  if (cached!.conn) {
-    return cached!.conn;
-  }
-
-  if (!cached!.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
-    cached!.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log('Connected to MongoDB');
-      return mongoose;
-    }).catch((error) => {
-      console.error('MongoDB connection error:', error);
-      throw error;
-    });
+  if (!mongoUri) {
+    logger.error("MONGO_URI is not defined in environment variables.");
+    process.exit(1);
   }
 
   try {
-    cached!.conn = await cached!.promise;
-  } catch (e) {
-    cached!.promise = null;
-    throw e;
-  }
+    // Set mongoose options
+    mongoose.set("strictQuery", true);
 
-  return cached!.conn;
-}
+    // Connect with production-ready options
+    await mongoose.connect(mongoUri, getMongoOptions());
+
+    logger.info(
+      `MongoDB connected successfully in ${
+        development ? "development" : "production"
+      } mode`
+    );
+
+    // Log connection details (without sensitive info)
+    const connection = mongoose.connection;
+    logger.info(`Database: ${connection.db?.databaseName}`);
+    logger.info(`Host: ${connection.host}`);
+    logger.info(`Port: ${connection.port}`);
+  } catch (err) {
+    logger.error("MongoDB connection error:", err);
+    process.exit(1);
+  }
+};
+
+// Handle connection events
+mongoose.connection.on("connected", () => {
+  logger.info("Mongoose connected to MongoDB");
+});
+
+mongoose.connection.on("error", (err) => {
+  logger.error("Mongoose connection error:", err);
+});
+
+mongoose.connection.on("disconnected", () => {
+  logger.error("Mongoose disconnected from MongoDB");
+});
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  try {
+    await mongoose.connection.close();
+    logger.info("MongoDB connection closed through app termination");
+    process.exit(0);
+  } catch (err) {
+    logger.error("Error during MongoDB disconnection:", err);
+    process.exit(1);
+  }
+});
 
 export default connectDB;

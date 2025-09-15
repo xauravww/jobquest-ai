@@ -114,4 +114,4 @@ JobSchema.index({ experienceLevel: 1 });
 JobSchema.index({ postedDate: -1 });
 JobSchema.index({ 'aiAnalysis.isHiringPost': 1 });
 
-module.exports = mongoose.models.Job || mongoose.model('Job', JobSchema);
+export default mongoose.models.Job || mongoose.model('Job', JobSchema);
