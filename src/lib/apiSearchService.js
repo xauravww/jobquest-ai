@@ -7,7 +7,7 @@ import MongoDBService from './mongodbService';
 
 class ApiSearchService {
   constructor() {
-    this.baseUrl = process.env.SEARCH_API_URL || 'https://search.canine.tools/search';
+    this.urls = JSON.parse(process.env.SEARCH_API_URLS || '["https://search.canine.tools"]');
     this.mongoService = new MongoDBService();
   }
 
@@ -16,25 +16,6 @@ class ApiSearchService {
    */
   async search(query, options = {}) {
     const MAX_RETRIES = 3;
-    const TIMEOUT_MS = 180000; // 3 minutes
-
-    const fetchWithTimeout = (url, fetchOptions, timeout) => {
-      return new Promise((resolve, reject) => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        fetchOptions.signal = controller.signal;
-
-        fetch(url, fetchOptions)
-          .then(response => {
-            clearTimeout(id);
-            resolve(response);
-          })
-          .catch(err => {
-            clearTimeout(id);
-            reject(err);
-          });
-      });
-    };
 
     let attempt = 0;
     while (attempt <= MAX_RETRIES) {
@@ -45,8 +26,8 @@ class ApiSearchService {
           pageno: options.pageno || 1,
           time_range: options.time_range || 'month',
           categories: 'it,news',
-          engines: 'duckduckgo,bing,google,wikipedia,brave',
-          enabled_engines: 'google',
+          engines: 'duckduckgo,bing',
+          enabled_engines: 'duckduckgo,wikipedia',
           disabled_engines: '',
           language: 'en',
           safesearch: '1',
@@ -58,21 +39,19 @@ class ApiSearchService {
           disabled_plugins: '',
           ...options
         };
-        const formData = new URLSearchParams();
-        Object.keys(searchParams).forEach(key => {
-          formData.append(key, searchParams[key]);
-        });
-        const response = await fetchWithTimeout(this.baseUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: formData
-        }, TIMEOUT_MS);
-        if (!response.ok) {
-          throw new Error(`Search API error: ${response.status}`);
-        }
+        const queryString = new URLSearchParams(searchParams).toString();
 
+        // Pick a random base URL from the list and append /search path
+        const baseUrl = this.urls[Math.floor(Math.random() * this.urls.length)];
+        const url = `${baseUrl}/search?${queryString}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        console.log("response: ",response)
         const data = await response.json();
         console.log("data from search api:",data)
         return {
@@ -85,48 +64,23 @@ class ApiSearchService {
       } catch (error) {
         attempt++;
         console.error(`Search error on attempt ${attempt}:`, error);
-        if (attempt > MAX_RETRIES) {
-          return {
-            success: false,
-            error: error.message
-          };
-        }
         // Exponential backoff for retries
         const backoffTime = Math.min(1000 * 2 ** attempt, 10000);
         await new Promise(resolve => setTimeout(resolve, backoffTime));
       }
     }
+    // If all retries failed
+    return {
+      success: false,
+      error: 'All search attempts failed'
+    };
   }
 
   /**
-   * Single page search with MongoDB storage
+   * Single page search without storage
    */
   async searchAndStore(query, options = {}) {
-    try {
-      const searchResult = await this.search(query, options);
-      if (!searchResult.success) {
-        return searchResult;
-      }
-
-      // Store results in MongoDB
-      const storageStats = await this.mongoService.saveJobResults(
-        searchResult.data.results,
-        query
-      );
-      return {
-        ...searchResult,
-        storageStats: {
-          saved: storageStats.length,
-          total: searchResult.data.results.length
-        }
-      };
-    } catch (error) {
-      console.error('Search and store error:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+    return this.search(query, options);
   }
 
   /**
@@ -143,6 +97,7 @@ class ApiSearchService {
         const searchResult = await this.search(query, { 
           pageno: page 
         });
+        console.log("searchresult: ",searchResult)
         if (!searchResult.success) {
           console.error(`Page ${page} search failed:`, searchResult.error);
           consecutiveFailures++;
@@ -186,10 +141,10 @@ class ApiSearchService {
   }
 
   /**
-   * Multi-page search with MongoDB storage
+   * Multi-page search without storage
    */
   async searchAllPagesAndStore(query, maxPages = 3) {
-    return this.searchAllPages(query, maxPages, true);
+    return this.searchAllPages(query, maxPages, false);
   }
 
   /**

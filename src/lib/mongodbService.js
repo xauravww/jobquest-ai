@@ -115,8 +115,9 @@ class MongoDBService {
           // Check if job already exists
           const existingJob = await Job.findOne({
             $or: [
+              { jobId: jobData.id },
               { url: jobData.link || jobData.url },
-              { 
+              {
                 title: jobData.title,
                 company: jobData.company,
                 location: jobData.location
