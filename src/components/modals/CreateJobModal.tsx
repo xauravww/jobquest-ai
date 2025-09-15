@@ -95,11 +95,12 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
       // Pre-select resume if available
       if (job.resumeUsed && typeof job.resumeUsed === 'string') {
         setSelectedResumeId(job.resumeUsed);
-      } else if (job.resumeUsed && typeof job.resumeUsed === 'object' && job.resumeUsed._id) {
-        setSelectedResumeId(job.resumeUsed._id);
-        if (job.resumeUsed && typeof job.resumeUsed === 'object' && job.resumeUsed._id && typeof (job.resumeUsed._id as any).toString === 'function') {
+      } else if (job.resumeUsed && typeof job.resumeUsed === 'object' && '_id' in job.resumeUsed && job.resumeUsed._id) {
+        setSelectedResumeId(job.resumeUsed._id as string);
+        const id = job.resumeUsed._id as unknown;
+        if (typeof id === 'object' && id !== null && 'toString' in id && typeof (id as { toString: () => string }).toString === 'function') {
           // Handle mongoose ObjectId case
-          setSelectedResumeId((job.resumeUsed._id as any).toString());
+          setSelectedResumeId((id as { toString: () => string }).toString());
         } else {
           setSelectedResumeId(undefined);
         }
