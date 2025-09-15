@@ -23,7 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             },
           }}
           containerStyle={{
-            zIndex: 2147483647,
+            zIndex: 2147483650,  // Increased z-index to be above ant-modal-wrap
             position: 'fixed',
             top: '20px',
             left: '50%',

@@ -198,8 +198,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (jobId) {
+      console.log('Validating jobId:', jobId, 'for userId:', userId);
       const job = await Job.findOne({ _id: jobId, userId });
       if (!job) {
+        console.log('Job validation failed for jobId:', jobId, 'userId:', userId);
         return NextResponse.json(
           { error: 'Invalid job ID or access denied' },
           { status: 400 }

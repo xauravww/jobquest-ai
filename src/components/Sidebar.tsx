@@ -12,7 +12,6 @@ import {
   Bell,
   Zap,
   Settings,
-  Search,
   Brain,
   Briefcase,
   BarChart3,
@@ -21,7 +20,6 @@ import {
   TrendingUp,
   Atom, // New Icon for LaTeX
 } from 'lucide-react';
-import Image from 'next/image';
 
 interface SidebarProps {
   className?: string;
@@ -594,7 +592,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           <NavLink href="/resume-management" icon={<FileText />} pathname={pathname} isCollapsed={isCollapsed}>
             Resumes
           </NavLink>
-          <NavLink href="/latex-resume-builder" icon={<Atom />} pathname={pathname} isCollapsed={isCollapsed}>
+          <NavLink href="/latex-resume-builder" icon={<Atom />} pathname={pathname} isCollapsed={isCollapsed} disabled={true}>
             LaTeX Resume Builder
           </NavLink>
 

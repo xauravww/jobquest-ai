@@ -1,9 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Tag, AlertCircle, Repeat } from 'lucide-react';
+import { Tag, AlertCircle, Repeat } from 'lucide-react';
 import { FormInput, FormTextarea, FormSelect, FormDateInput } from '../ui/FormInput';
 import { Modal, Button } from 'antd';
+import toast from 'react-hot-toast';
+
+import { ToastPosition } from 'react-hot-toast';
+
+// Adjust toast position for better visibility
+const toastOptions = {
+  position: 'topCenter' as ToastPosition,
+  duration: 4000,
+  style: {
+    zIndex: 9999,
+  },
+};
 
 interface CreateReminderModalProps {
     isOpen: boolean;
@@ -17,7 +29,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
     onClose,
     onSuccess,
     editingReminder
-}) => {
+}): JSX.Element => {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -136,40 +148,45 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
 const fetchApplicationsAndJobs = async () => {
         try {
-            // Fetch applications, which contain the necessary job data
-            const appsResponse = await fetch('/api/applications');
+            // Fetch jobs only from /api/jobs
             const jobsResponse = await fetch('/api/jobs');
-            let jobsFromApps: any[] = [];
             let jobsFromApi: any[] = [];
-            if (appsResponse.ok) {
-                const appsData = await appsResponse.json();
-                const validApps = Array.isArray(appsData.applications) ? appsData.applications : [];
-                setApplications(validApps);
-
-                // Extract the job details from each application
-                jobsFromApps = validApps
-                  .map((app: any) => app.jobId)
-                  .filter((job: any) => job && job._id && job.title); // Ensure job exists and has key properties
-            }
             if (jobsResponse.ok) {
                 const jobsData = await jobsResponse.json();
                 jobsFromApi = Array.isArray(jobsData) ? jobsData : [];
             }
-            // Merge and deduplicate jobs from applications and jobs API
-            const mergedJobsMap = new Map<string, any>();
-            [...jobsFromApps, ...jobsFromApi].forEach(job => {
-                if (job && job._id) {
-                    mergedJobsMap.set(job._id, job);
-                }
-            });
-            const mergedJobs = Array.from(mergedJobsMap.values());
-            setJobs(mergedJobs);
+            setJobs(jobsFromApi);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
     };
 
     const handleSubmit = async () => {
+        console.log('Create button clicked');
+
+        // Validation
+        if (!formData.title.trim()) {
+            toast.error('Please enter a title for the reminder.');
+            return;
+        }
+        if (!formData.dueDate) {
+            toast.error('Please select a due date.');
+            return;
+        }
+        if (!formData.type) {
+            toast.error('Please select a reminder type.');
+            return;
+        }
+        const date = new Date(formData.dueDate);
+        if (isNaN(date.getTime())) {
+            toast.error('Please select a valid due date.');
+            return;
+        }
+        if (formData.jobId && !jobs.find(job => job._id === formData.jobId)) {
+            toast.error('Selected job is invalid.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -190,14 +207,17 @@ const fetchApplicationsAndJobs = async () => {
                 body: JSON.stringify(payload)
             });
             if (response.ok) {
+                toast.success('Reminder created successfully!', toastOptions);
                 onSuccess();
                 onClose();
             } else {
                 const error = await response.json();
                 console.error('Error saving reminder:', error);
+                toast.error(error.error || 'Failed to create reminder. Please try again.', toastOptions);
             }
         } catch (error) {
             console.error('Error saving reminder:', error);
+            toast.error('Failed to create reminder. Please try again.');
         } finally {
             setLoading(false);
         }
