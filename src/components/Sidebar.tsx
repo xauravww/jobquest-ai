@@ -614,6 +614,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           <NavLink href="/events" icon={<Calendar />} pathname={pathname} isCollapsed={isCollapsed}>
             Events
           </NavLink>
+          <NavLink href="/reminders-calendar" icon={<Target />} pathname={pathname} isCollapsed={isCollapsed}>
+            Calendar
+          </NavLink>
           <NavLink href="/naukri-automation" icon={<Zap />} pathname={pathname} isCollapsed={isCollapsed} disabled>
             Auto Apply
           </NavLink>
