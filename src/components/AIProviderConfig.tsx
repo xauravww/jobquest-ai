@@ -43,7 +43,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
           if (config.apiUrl) setApiUrl(config.apiUrl);
           if (config.model) setModel(config.model);
         } catch (e) {
-          console.warn('Failed to parse saved AI config');
+          console.warn('Failed to parse saved AI config',e);
         }
       }
     }

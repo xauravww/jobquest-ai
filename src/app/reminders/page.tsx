@@ -8,14 +8,11 @@ import {
   CheckCircle,
   PauseCircle,
   Edit,
-  Trash2,
   Search,
   Target,
   Zap,
   Clock,
-  FileText,
-  MapPin,
-  Users
+  FileText
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -56,7 +53,7 @@ const RemindersPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
@@ -320,7 +317,7 @@ const RemindersPage = () => {
         <div className="flex justify-center gap-4 mb-8">
           <button
             onClick={() => {
-              setEditingReminder(null);
+              setEditingReminder(undefined);
               setShowCreateModal(true);
             }}
             className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
@@ -391,7 +388,7 @@ const RemindersPage = () => {
             </h2>
             {debouncedQuery && (
               <span className="text-text-muted text-sm">
-                Searching for "{debouncedQuery}"
+                Searching for &ldquo;{debouncedQuery}&rdquo;
               </span>
             )}
           </div>
@@ -430,7 +427,7 @@ const RemindersPage = () => {
                 <div className="flex justify-center gap-4">
                   <button
                     onClick={() => {
-                      setEditingReminder(null);
+                      setEditingReminder(undefined);
                       setShowCreateModal(true);
                     }}
                     className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
@@ -568,13 +565,13 @@ const RemindersPage = () => {
             isOpen={showCreateModal}
             onClose={() => {
               setShowCreateModal(false);
-              setEditingReminder(null);
+              setEditingReminder(undefined);
             }}
             onSuccess={() => {
               // Instead of direct fetch, dispatch event
               const event = new Event('refetchReminders');
               window.dispatchEvent(event);
-              setEditingReminder(null);
+              setEditingReminder(undefined);
             }}
             editingReminder={editingReminder}
           />

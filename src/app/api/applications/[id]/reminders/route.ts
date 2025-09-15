@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { reminderCalendarService } from '@/lib/reminder-calendar-service';
 import { Application } from '@/models/Application';
-import { Job } from '@/models/Job';
 
 // GET - Get reminders for a specific application
 export async function GET(
@@ -30,7 +29,7 @@ export async function GET(
     });
     
   } catch (error) {
-    console.error('Error fetching application reminders:', error);
+    console.error('Error fetching application reminders:', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -101,7 +100,7 @@ export async function POST(
     });
     
   } catch (error) {
-    console.error('Error creating application reminders:', error);
+    console.error('Error creating application reminders:', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

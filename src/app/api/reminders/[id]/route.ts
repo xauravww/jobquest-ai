@@ -2,6 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import { Reminder } from '@/models/Reminder';
 
+interface NotificationData {
+  type: string;
+  timing: string;
+  sent: boolean;
+  sentAt?: Date;
+}
+
+interface ReminderUpdateData {
+  title?: string;
+  description?: string;
+  dueDate?: Date;
+  dueTime?: string;
+  type?: string;
+  priority?: string;
+  status?: string;
+  applicationId?: string;
+  jobId?: string;
+  tags?: string[];
+  color?: string;
+  notifications?: NotificationData[];
+  completedNotes?: string;
+  snoozedUntil?: Date;
+  isRecurring?: boolean;
+  recurrencePattern?: string;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: Date | null;
+  completedAt?: Date;
+}
+
+interface ReminderRequestBody {
+  title?: string;
+  description?: string;
+  dueDate?: string;
+  dueTime?: string;
+  type?: string;
+  priority?: string;
+  status?: string;
+  applicationId?: string;
+  jobId?: string;
+  tags?: string[];
+  color?: string;
+  notifications?: NotificationData[];
+  completedNotes?: string;
+  snoozedUntil?: string;
+  isRecurring?: boolean;
+  recurrencePattern?: string;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: string | null;
+}
+
 // GET - Fetch single reminder
 export async function GET(
   request: NextRequest,
@@ -25,7 +75,7 @@ export async function GET(
     return NextResponse.json(reminder);
     
   } catch (error) {
-    console.error('Error fetching reminder:', error);
+    console.error('Error fetching reminder:', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -42,7 +92,7 @@ export async function PUT(
     await connectDB();
 
     const { id } = await params;
-    const body = await request.json();
+    const body: ReminderRequestBody = await request.json();
     const {
       title,
       description,
@@ -64,7 +114,7 @@ export async function PUT(
       recurrenceEndDate
     } = body;
     
-    const updateData: any = {};
+    const updateData: ReminderUpdateData = {};
     
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
@@ -82,7 +132,7 @@ export async function PUT(
     if (jobId !== undefined) updateData.jobId = jobId;
     if (tags !== undefined) updateData.tags = tags;
     if (color !== undefined) updateData.color = color;
-    if (notifications !== undefined) updateData.notifications = notifications;
+    if (notifications !== undefined) updateData.notifications = notifications as NotificationData[];
     if (completedNotes !== undefined) updateData.completedNotes = completedNotes;
     if (snoozedUntil !== undefined) {
       updateData.snoozedUntil = new Date(snoozedUntil);
@@ -94,7 +144,7 @@ export async function PUT(
     
     interface UpdateQuery {
       $inc?: { snoozeCount: number };
-      [key: string]: any;
+      [key: string]: unknown;
     }
     const updateQuery: UpdateQuery = { ...updateData };
     if (snoozedUntil !== undefined) {
@@ -122,7 +172,7 @@ export async function PUT(
     });
     
   } catch (error) {
-    console.error('Error updating reminder:', error);
+    console.error('Error updating reminder:', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -154,7 +204,7 @@ export async function DELETE(
     });
     
   } catch (error) {
-    console.error('Error deleting reminder:', error);
+    console.error('Error deleting reminder:', error as Error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

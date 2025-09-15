@@ -3,10 +3,28 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
-import Application from '@/models/Application';
 import { fetchAndConvertToMarkdown } from '@/lib/urlReader';
 
+interface AIConfig {
+  provider: string;
+  apiUrl: string;
+  model: string;
+  apiKey: string;
+}
+
+interface CoverLetterRequestBody {
+  jobId?: string;
+  jobTitle: string;
+  company: string;
+  jobDescription?: string;
+  location?: string;
+  aiConfig?: AIConfig;
+  jobUrl?: string;
+  profileDetails?: string;
+}
+
 // Import AI service dynamically
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 let AiFilterService: any;
 const initService = async () => {
   if (!AiFilterService) {
@@ -35,7 +53,7 @@ export async function POST(request: NextRequest) {
     type Project = { name: string; description: string };
     type Education = { degree: string; field: string; institution: string };
 
-    const body = await request.json();
+    const body: CoverLetterRequestBody = await request.json();
     const { jobId, jobTitle, company, jobDescription, location, aiConfig, jobUrl, profileDetails } = body;
 
     if (!jobTitle || !company) {
@@ -97,7 +115,7 @@ Make the cover letter sound natural and authentic, like a personal conversation,
           systemPrompt += `\n\nAdditional information from the job posting URL:\n${urlContent}`;
         }
       } catch (error) {
-        console.error('Error fetching job URL content:', error);
+        console.error('Error fetching job URL content:', error as Error);
         // Continue without URL content if fetch fails
       }
     }
@@ -144,7 +162,7 @@ Please generate a compelling cover letter that highlights the candidate's releva
     });
 
   } catch (error) {
-    console.error('Error generating cover letter:', error);
+    console.error('Error generating cover letter:', error as Error);
     return NextResponse.json(
       { error: 'An error occurred while generating the cover letter' },
       { status: 500 }

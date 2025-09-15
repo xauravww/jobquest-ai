@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Dropdown, Drawer, Button, Avatar, MenuProps, Switch } from 'antd';
-import { FiMenu, FiX, FiLogOut } from 'react-icons/fi';
+import { FiMenu, FiLogOut } from 'react-icons/fi';
 import { FaBriefcase, FaUser } from 'react-icons/fa';
 import { LuLayoutDashboard, LuUserRound, LuInfo, LuStar, LuMessageSquare, LuPhone } from 'react-icons/lu';
 import Sidebar from './Sidebar';

@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 

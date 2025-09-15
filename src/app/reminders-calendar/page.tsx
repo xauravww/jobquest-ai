@@ -6,10 +6,8 @@ import AppLayout from '@/components/AppLayout';
 import {
   Calendar,
   Clock,
-  Plus,
   Bell,
   CheckCircle,
-  Trash2,
   Edit,
   PauseCircle,
   Users,
@@ -63,13 +61,20 @@ interface CalendarEvent {
   status: string;
   location?: {
     address?: string;
-    isVirtual?: boolean;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+    isVirtual: boolean;
     meetingLink?: string;
+    meetingId?: string;
+    meetingPassword?: string;
   };
   attendees: Array<{
     name: string;
     email: string;
     role: string;
+    company: string;
   }>;
   applicationId?: {
     _id: string;
@@ -84,23 +89,19 @@ interface CalendarEvent {
   tags: string[];
   color: string;
   priority: string;
+  agenda: string[];
 }
 
 const RemindersCalendarPage = () => {
   const [reminders, setReminders] = useState<(Reminder & { tags: string[] })[]>([]);
-  const [remindersPage, setRemindersPage] = useState(1);
-  const [remindersTotalPages, setRemindersTotalPages] = useState(1);
-
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [eventsPage, setEventsPage] = useState(1);
-  const [eventsTotalPages, setEventsTotalPages] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<'reminder' | 'event'>('reminder');
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingReminder, setEditingReminder] = useState<(Reminder & { tags: string[] }) | null>(null);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editingReminder, setEditingReminder] = useState<(Reminder & { tags: string[] }) | undefined>(undefined);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | string | undefined>(undefined);
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -231,25 +232,26 @@ const RemindersCalendarPage = () => {
 
   const filteredItems = getFilteredItems();
 
-  const getItemIcon = (item: any) => {
+  const getItemIcon = (item: (Reminder & { type: 'reminder' }) | (CalendarEvent & { type: 'event'; dueDate: string })) => {
     if (item.type === 'reminder') {
       return <Bell className="w-5 h-5 text-primary" />;
     }
     return <Calendar className="w-5 h-5 text-success" />;
   };
 
-  const getTimeDisplay = (item: any) => {
+  const getTimeDisplay = (item: (Reminder & { type: 'reminder' }) | (CalendarEvent & { type: 'event'; dueDate: string })) => {
     const date = new Date(item.dueDate);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
     const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
 
+    const time = 'dueTime' in item ? item.dueTime : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     if (isToday) {
-      return `Today at ${item.dueTime || date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `Today at ${time}`;
     } else if (isTomorrow) {
-      return `Tomorrow at ${item.dueTime || date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `Tomorrow at ${time}`;
     } else {
-      return `${date.toLocaleDateString()} at ${item.dueTime || date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      return `${date.toLocaleDateString()} at ${time}`;
     }
   };
 
@@ -311,7 +313,7 @@ const RemindersCalendarPage = () => {
           <button
             onClick={() => {
               setCreateType('reminder');
-              setEditingReminder(null);
+              setEditingReminder(undefined);
               setShowCreateModal(true);
             }}
             className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
@@ -323,7 +325,7 @@ const RemindersCalendarPage = () => {
           <button
             onClick={() => {
               setCreateType('event');
-              setEditingEvent(null);
+              setEditingEvent(undefined);
               setShowCreateModal(true);
             }}
             className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
@@ -387,7 +389,7 @@ const RemindersCalendarPage = () => {
             </h2>
             {searchQuery && (
               <span className="text-text-muted text-sm">
-                Searching for "{searchQuery}"
+                Searching for &#34;{searchQuery}&#34;
               </span>
             )}
           </div>
@@ -420,7 +422,7 @@ const RemindersCalendarPage = () => {
                   <button
                     onClick={() => {
                       setCreateType('reminder');
-                      setEditingReminder(null);
+                      setEditingReminder(undefined);
                       setShowCreateModal(true);
                     }}
                     className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
@@ -431,7 +433,7 @@ const RemindersCalendarPage = () => {
                   <button
                     onClick={() => {
                       setCreateType('event');
-                      setEditingEvent(null);
+                      setEditingEvent(undefined);
                       setShowCreateModal(true);
                     }}
                     className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
@@ -496,11 +498,11 @@ const RemindersCalendarPage = () => {
                         )}
 
                         {'attendees' in item && item.attendees && item.attendees.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-purple-400" />
-                        <span>{Array.isArray(item.attendees) ? item.attendees.length : 0} attendee{Array.isArray(item.attendees) && item.attendees.length > 1 ? 's' : ''}</span>
-                      </div>
-                    )}
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-purple-400" />
+                            <span>{item.attendees.length} attendee{item.attendees.length > 1 ? 's' : ''}</span>
+                          </div>
+                        )}
                   </div>
                 </div>
 
@@ -600,7 +602,7 @@ const RemindersCalendarPage = () => {
                   <button
                     onClick={() => {
                       setCreateType('reminder');
-                      setEditingReminder(null);
+                      setEditingReminder(undefined);
                       setShowCreateModal(true);
                     }}
                     className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
@@ -611,7 +613,7 @@ const RemindersCalendarPage = () => {
                   <button
                     onClick={() => {
                       setCreateType('event');
-                      setEditingEvent(null);
+                      setEditingEvent(undefined);
                       setShowCreateModal(true);
                     }}
                     className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
@@ -763,11 +765,11 @@ const RemindersCalendarPage = () => {
             isOpen={showCreateModal}
             onClose={() => {
               setShowCreateModal(false);
-              setEditingReminder(null);
+              setEditingReminder(undefined);
             }}
             onSuccess={() => {
               fetchData();
-              setEditingReminder(null);
+              setEditingReminder(undefined);
             }}
             editingReminder={editingReminder}
           />
@@ -778,11 +780,11 @@ const RemindersCalendarPage = () => {
             isOpen={showCreateModal}
             onClose={() => {
               setShowCreateModal(false);
-              setEditingEvent(null);
+              setEditingEvent(undefined);
             }}
             onSuccess={() => {
               fetchData();
-              setEditingEvent(null);
+              setEditingEvent(undefined);
             }}
             editingEvent={editingEvent}
           />

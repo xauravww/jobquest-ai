@@ -44,16 +44,7 @@ interface SearchResultData {
   results: SearchJob[];
 }
 
-interface R
- {
-  success: boolean;
-  data?: SearchResultData;
-  error?: string;
-  storageStats?: {
-    saved: number;
-    total: number;
-  };
-}
+
 
 interface MultiPageResult {
   query: string;

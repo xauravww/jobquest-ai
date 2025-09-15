@@ -11,8 +11,6 @@ import {
   Phone,
   Edit,
   Trash2,
-  CheckCircle,
-  AlertCircle
 } from 'lucide-react';
 
 interface EventCardProps {
@@ -51,9 +49,9 @@ interface EventCardProps {
     priority: string;
     preparationNotes?: string;
   };
-  onEdit?: (event: any) => void;
+  onEdit?: (event: EventCardProps['event']) => void;
   onDelete?: (id: string) => void;
-  onJoin?: (event: any) => void;
+  onJoin?: (event: EventCardProps['event']) => void;
   compact?: boolean;
 }
 

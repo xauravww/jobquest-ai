@@ -1,15 +1,82 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, FileText, Plus, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Users, FileText, Plus } from 'lucide-react';
+import { RiDeleteBin6Line } from 'react-icons/ri';
 import { Modal, Button, Form, Input, Select, DatePicker, Checkbox, Space } from 'antd';
 import dayjs from 'dayjs';
+
+interface Job {
+  _id: string;
+  title: string;
+  company: string;
+  location?: string;
+}
+
+interface Application {
+  jobId: Job;
+}
+
+interface Attendee {
+  name: string;
+  email: string;
+  role: string;
+  company: string;
+}
+
+interface CalendarEvent {
+  _id: string;
+  title: string;
+  description?: string;
+  type: string;
+  status: string;
+  priority: string;
+  startDate: string;
+  endDate: string;
+  location?: {
+    isVirtual: boolean;
+    address?: string;
+    meetingLink?: string;
+    meetingId?: string;
+  };
+  attendees: Attendee[];
+  agenda: string[];
+  jobId?: string | {
+    _id: string;
+    title: string;
+    company: string;
+  };
+  tags?: string[];
+}
+
+interface FormData {
+  title: string;
+  description?: string;
+  type: string;
+  status: string;
+  priority: string;
+  isAllDay?: boolean;
+  startDate: dayjs.Dayjs;
+  startTime: string;
+  endDate: dayjs.Dayjs;
+  endTime: string;
+  location?: {
+    isVirtual: boolean;
+    address?: string;
+    meetingLink?: string;
+    meetingId?: string;
+  };
+  attendees: Attendee[];
+  agenda: string[];
+  jobId?: string;
+  tags?: string;
+}
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  editingEvent?: any;
+  editingEvent?: CalendarEvent | string;
 }
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
@@ -20,7 +87,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const isVirtual = Form.useWatch(['location', 'isVirtual'], form);
 
   const fetchApplicationsAndJobs = async () => {
@@ -28,25 +95,25 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       // Fetch applications, which contain the necessary job data
       const appsResponse = await fetch('/api/applications');
       const jobsResponse = await fetch('/api/jobs');
-      let jobsFromApps: any[] = [];
-      let jobsFromApi: any[] = [];
+      let jobsFromApps: Job[] = [];
+      let jobsFromApi: Job[] = [];
       if (appsResponse.ok) {
         const appsData = await appsResponse.json();
         const validApps = Array.isArray(appsData.applications) ? appsData.applications : [];
 
         // Extract the job details from each application
         jobsFromApps = validApps
-          .map((app: any) => app.jobId)
-          .filter((job: any) => job && job._id && job.title); // Ensure job exists and has key properties
+          .map((app: Application) => app.jobId)
+          .filter((job: Job) => job && typeof job !== 'string' && job._id && job.title); // Ensure job exists and has key properties
       }
       if (jobsResponse.ok) {
         const jobsData = await jobsResponse.json();
         jobsFromApi = Array.isArray(jobsData) ? jobsData : [];
       }
       // Merge and deduplicate jobs from applications and jobs API
-      const mergedJobsMap = new Map<string, any>();
+      const mergedJobsMap = new Map<string, Job>();
       [...jobsFromApps, ...jobsFromApi].forEach(job => {
-        if (job && job._id) {
+        if (job && typeof job !== 'string' && job._id) {
           mergedJobsMap.set(job._id, job);
         }
       });
@@ -60,7 +127,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       fetchApplicationsAndJobs();
-      if (editingEvent) {
+      if (editingEvent && typeof editingEvent === 'object') {
         // Populate form for editing
         form.setFieldsValue({
           ...editingEvent,
@@ -69,7 +136,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           endDate: editingEvent.endDate ? dayjs(editingEvent.endDate) : null,
           endTime: editingEvent.endDate ? dayjs(editingEvent.endDate).format('HH:mm') : '10:00',
           tags: editingEvent.tags?.join(', '),
-          jobId: editingEvent.jobId?._id || editingEvent.jobId || '',
+          jobId: (typeof editingEvent.jobId === 'object' ? editingEvent.jobId?._id : editingEvent.jobId) || '',
         });
       } else {
         // Reset form for creating a new event
@@ -92,7 +159,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }
   }, [isOpen, editingEvent, form]);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: FormData) => {
     setLoading(true);
     try {
       const startDateTime = dayjs(values.startDate).hour(parseInt(values.startTime.split(':')[0])).minute(parseInt(values.startTime.split(':')[1]));
@@ -105,7 +172,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         tags: values.tags?.split(',').map((tag:string) => tag.trim()).filter(Boolean),
       };
 
-      const url = editingEvent ? `/api/calendar/events/${editingEvent._id}` : '/api/calendar/events';
+      const eventId = typeof editingEvent === 'string' ? editingEvent : editingEvent?._id;
+      const url = editingEvent ? `/api/calendar/events/${eventId}` : '/api/calendar/events';
       const method = editingEvent ? 'PUT' : 'POST';
 
       const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -250,7 +318,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       <Input placeholder="Company name" className="h-9 leading-none" />
     </Form.Item>
     <Form.Item className="mb-0">
-      <Button icon={<Trash2 size={16} />} onClick={() => remove(name)} danger />
+      <Button icon={<RiDeleteBin6Line size={16} />} onClick={() => remove(name)} danger />
     </Form.Item>
   </Space>
 ))}
@@ -278,29 +346,29 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   }
                   options={[
                     { value: '', label: 'None' },
-                    ...jobs.map((job: any) => ({
+                    ...jobs.map((job: Job) => ({
                       value: job._id,
                       label: `${job.title} at ${job.company}`
                     }))
                   ]}
                 />
               </Form.Item>
-              {form.getFieldValue('jobId') && (() => {
-                const selectedJob = jobs.find((job: any) => job._id === form.getFieldValue('jobId'));
-                return selectedJob ? (
-                  <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className="w-2 h-2 bg-success rounded-full"></div>
-                      <span className="text-success font-medium">Linked to Job</span>
-                    </div>
-                    <div className="mt-2 text-xs text-text-muted">
-                      <div>Title: {selectedJob.title}</div>
-                      <div>Company: {selectedJob.company}</div>
-                      <div>Location: {selectedJob.location || 'Not specified'}</div>
-                    </div>
-                  </div>
-                ) : null;
-              })()}
+                  {form.getFieldValue('jobId') && (() => {
+                    const selectedJob = jobs.find((job: Job) => job._id === form.getFieldValue('jobId'));
+                    return selectedJob ? (
+                      <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-success rounded-full"></div>
+                          <span className="text-success font-medium">Linked to Job</span>
+                        </div>
+                        <div className="mt-2 text-xs text-text-muted">
+                          <div>Title: {selectedJob.title}</div>
+                          <div>Company: {selectedJob.company}</div>
+                          <div>Location: {selectedJob.location || 'Not specified'}</div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
             </div>
           </div>
         </section>
@@ -316,7 +384,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                             <Input placeholder={`Agenda Item ${index + 1}`} />
                         </Form.Item>
                         <Form.Item className="mb-0">
-                            <Button icon={<Trash2 size={16} />} onClick={() => remove(field.name)} danger />
+                            <Button icon={<RiDeleteBin6Line size={16} />} onClick={() => remove(field.name)} danger />
                         </Form.Item>
                     </Space>
                 ))}

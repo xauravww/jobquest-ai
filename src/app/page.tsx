@@ -79,7 +79,7 @@ const ProblemSolutionSection = () => (
           The modern job hunt is overwhelming.
         </h2>
         <p className="mt-6 text-lg leading-8 text-gray-300">
-          You're tired of endlessly scrolling, customizing resumes for ATS bots, and tracking applications in spreadsheets. There's a smarter way.
+          You&#39;re tired of endlessly scrolling, customizing resumes for ATS bots, and tracking applications in spreadsheets. There&#39;s a smarter way.
         </p>
       </div>
       <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-2">
@@ -209,10 +209,10 @@ const DataDrivenSection = () => (
           <h2 className="text-3xl font-bold text-white">Make Data-Driven Decisions</h2>
         </div>
         <p className="text-lg text-gray-300 mb-6 leading-relaxed">
-          Stop guessing what works. Jobquest AI provides clear analytics on your job search performance, helping you refine your strategy and land a job faster. This is a feature already supported by your dashboard's API.
+          Stop guessing what works. Jobquest AI provides clear analytics on your job search performance, helping you refine your strategy and land a job faster. This is a feature already supported by your dashboard&apos;s API.
         </p>
         <ul className="space-y-4">
-          <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Track your application response rate over time to see what's working.</span></li>
+          <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Track your application response rate over time to see what&apos;s working.</span></li>
           <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Identify which of your skills are most in-demand based on job descriptions.</span></li>
           <li className="flex items-start gap-3"><CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" /><span className="text-gray-200">Visualize your application pipeline from submitted to offer.</span></li>
         </ul>

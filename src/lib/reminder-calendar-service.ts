@@ -2,12 +2,29 @@ import connectDB from './db';
 import { Reminder } from '@/models/Reminder';
 import { CalendarEvent } from '@/models/CalendarEvent';
 import { Application } from '@/models/Application';
-import { Job } from '@/models/Job';
+
+interface JobData {
+  title: string;
+  company: string;
+  applicationDeadline?: Date;
+}
+
+interface Location {
+  address?: string;
+  type?: string;
+  coordinates?: [number, number];
+}
+
+interface Attendee {
+  name: string;
+  email: string;
+  role?: string;
+}
 
 export class ReminderCalendarService {
-  
+
   // Auto-generate reminders for new applications
-  async createApplicationReminders(applicationId: string, jobData: any) {
+  async createApplicationReminders(applicationId: string, jobData: JobData) {
     try {
       await connectDB();
       
@@ -90,8 +107,8 @@ export class ReminderCalendarService {
     startDate: Date;
     endDate: Date;
     type: string;
-    location?: any;
-    attendees?: any[];
+    location?: Location;
+    attendees?: Attendee[];
     preparationNotes?: string;
   }) {
     try {

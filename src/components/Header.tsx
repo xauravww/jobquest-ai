@@ -10,11 +10,8 @@ import {
   User,
   Settings,
   LogOut,
-  Menu,
-  X,
   Briefcase,
   Home,
-  FileText,
   BarChart3,
   Users,
   ChevronDown
@@ -22,7 +19,6 @@ import {
 
 const Header = () => {
   const { data: session, status } = useSession();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const navigation = [

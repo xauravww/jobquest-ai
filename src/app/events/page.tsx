@@ -7,7 +7,6 @@ import {
   Calendar,
   Clock,
   Edit,
-  Trash2,
   Search,
   Target,
   Zap,
@@ -28,17 +27,26 @@ interface CalendarEvent {
   type: string;
   status: string;
   location?: {
+    isVirtual: boolean;
     address?: string;
+    meetingLink?: string;
+    meetingId?: string;
   };
-  jobId?: {
+  jobId?: string | {
     _id: string;
     title: string;
     company: string;
   };
-  attendees: any[];
+  attendees: Array<{
+    name: string;
+    email: string;
+    role: string;
+    company: string;
+  }>;
   tags: string[];
   color: string;
   priority: string;
+  agenda: string[];
 }
 
 const EventsPage = () => {
@@ -48,7 +56,7 @@ const EventsPage = () => {
   const [itemsPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
@@ -84,7 +92,7 @@ const EventsPage = () => {
           setEvents([]);
           setTotal(0);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error fetching events:', error);
         setEvents([]);
         setTotal(0);
@@ -131,14 +139,14 @@ const EventsPage = () => {
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
     switch (activeFilter) {
       case 'today':
-        return filtered.filter(e => {
+        return filtered.filter((e: CalendarEvent) => {
           const itemDate = new Date(e.startDate);
           return itemDate >= today && itemDate < tomorrow;
         });
       case 'upcoming':
-        return filtered.filter(e => new Date(e.startDate) >= tomorrow);
+        return filtered.filter((e: CalendarEvent) => new Date(e.startDate) >= tomorrow);
       case 'overdue':
-        return filtered.filter(e => new Date(e.startDate) < today && e.status !== 'completed');
+        return filtered.filter((e: CalendarEvent) => new Date(e.startDate) < today && e.status !== 'completed');
       default:
         return filtered;
     }
@@ -155,15 +163,7 @@ const EventsPage = () => {
     return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
   
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'text-white bg-red-600 border-red-600';
-      case 'high': return 'text-white bg-orange-600 border-orange-600';
-      case 'medium': return 'text-white bg-yellow-600 border-yellow-600';
-      case 'low': return 'text-white bg-blue-600 border-blue-600';
-      default: return 'text-white bg-gray-600 border-gray-600';
-    }
-  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'text-white bg-green-600';
@@ -195,7 +195,7 @@ const EventsPage = () => {
         </div>
         <div className="flex justify-center gap-4 mb-8">
             <button
-              onClick={() => { setEditingEvent(null); setShowCreateModal(true); }}
+              onClick={() => { setEditingEvent(undefined); setShowCreateModal(true); }}
               className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
             >
               <Calendar className="w-5 h-5" /> Add Event
@@ -218,7 +218,7 @@ const EventsPage = () => {
                 <div className="flex gap-2">
                   {[ { key: 'all', label: 'All', icon: Target }, { key: 'today', label: 'Today', icon: Zap }, { key: 'upcoming', label: 'Upcoming', icon: Clock }, { key: 'overdue', label: 'Overdue', icon: Calendar } ]
                   .map(({ key, label, icon: Icon }) => (
-                    <button key={key} onClick={() => setActiveFilter(key as any)}
+                    <button key={key} onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${activeFilter === key ? 'bg-blue-600 text-white shadow-lg' : 'bg-bg-light hover:bg-bg-card text-text-secondary hover:text-white'}`}>
                       <Icon className="w-4 h-4" /> {label}
                     </button>
@@ -232,7 +232,7 @@ const EventsPage = () => {
             <h2 className="text-xl font-semibold text-white">
                 All Events ({filteredEvents.length})
             </h2>
-            {debouncedQuery && <span className="text-text-muted text-sm">Searching for "{debouncedQuery}"</span>}
+            {debouncedQuery && <span className="text-text-muted text-sm">Searching for &quot;{debouncedQuery}&quot;</span>}
           </div>
         </div>
 
@@ -271,7 +271,7 @@ const EventsPage = () => {
                       </div>
                       <div className="flex items-center gap-6 text-sm text-text-muted mt-2">
                         <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-blue-600" /><span className="font-medium">{getTimeDisplay(event)}</span></div>
-                        {event.jobId && <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-blue-500" /><span>{event.jobId.title} at {event.jobId.company}</span></div>}
+                        {event.jobId && typeof event.jobId === 'object' && <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-blue-500" /><span>{event.jobId.title} at {event.jobId.company}</span></div>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -309,8 +309,8 @@ const EventsPage = () => {
           {showCreateModal && (
             <CreateEventModal
               isOpen={showCreateModal}
-              onClose={() => { setShowCreateModal(false); setEditingEvent(null); }}
-              onSuccess={() => { refetchData(); setEditingEvent(null); }}
+              onClose={() => { setShowCreateModal(false); setEditingEvent(undefined); }}
+              onSuccess={() => { refetchData(); setEditingEvent(undefined); }}
               editingEvent={editingEvent}
             />
           )}

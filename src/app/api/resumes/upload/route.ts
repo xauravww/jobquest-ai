@@ -5,6 +5,27 @@ import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
 import { v2 as cloudinary } from 'cloudinary';
 
+interface CloudinaryUploadResult {
+  secure_url: string;
+  public_id: string;
+}
+
+interface ResumeData {
+  userId: string;
+  title: string;
+  description: string;
+  database: string;
+  type: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  isActive: boolean;
+  usageCount: number;
+  cloudinaryPublicId: string;
+  isDefault?: boolean;
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -24,7 +45,7 @@ export async function POST(request: NextRequest) {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const type = formData.get('type') as string;
-    const database = formData.get('database') as string || 'default';
+    const database = (formData.get('database') as string) || 'default';
 
     if (!file || !title) {
       return NextResponse.json({ error: 'File and title are required' }, { status: 400 });
@@ -56,7 +77,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Upload to Cloudinary
-    const uploadResult = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
+    const uploadResult = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           resource_type: 'raw',
@@ -67,15 +88,15 @@ export async function POST(request: NextRequest) {
         },
         (error, result) => {
           if (error) reject(error);
-          else resolve(result as any);
+          else resolve(result as CloudinaryUploadResult);
         }
       );
       stream.end(buffer);
     });
 
     // Create resume record
-    const resumeData: any = {
-      userId: user._id,
+    const resumeData: ResumeData = {
+      userId: user._id.toString(),
       title,
       description: description || '',
       database,
@@ -92,7 +113,7 @@ export async function POST(request: NextRequest) {
     // If this is the first resume, make it default
     const existingResumes = await Resume.countDocuments({ userId: user._id, isActive: true });
     if (existingResumes === 0) {
-      (resumeData as any).isDefault = true;
+      resumeData.isDefault = true;
     }
 
     const resume = new Resume(resumeData);
@@ -100,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(resume, { status: 201 });
   } catch (error) {
-    console.error('Resume upload error:', error);
+    console.error('Resume upload error:', error as Error);
     return NextResponse.json(
       { error: 'Failed to upload resume' },
       { status: 500 }

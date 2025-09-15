@@ -17,11 +17,57 @@ const toastOptions = {
   },
 };
 
+interface Reminder {
+  _id: string;
+  title: string;
+  description?: string;
+  dueDate: string;
+  dueTime: string;
+  type: string;
+  priority: string;
+  applicationId?: { _id: string };
+  tags?: string[];
+  color?: string;
+  isRecurring?: boolean;
+  recurrencePattern?: string;
+  recurrenceInterval?: number;
+  recurrenceEndDate?: string;
+  notifications?: { type: string; timing: string }[];
+}
+
+interface Application {
+  _id: string;
+  jobTitle?: string;
+  jobId?: {
+    title?: string;
+    company?: string;
+    location?: string;
+  };
+}
+
+interface FormData {
+    title: string;
+    description: string;
+    dueDate: string;
+    dueTime: string;
+    type: string;
+    priority: string;
+    applicationId: string;
+    jobId?: string;
+    tags: string;
+    color: string;
+    isRecurring: boolean;
+    recurrencePattern: string;
+    recurrenceInterval: number;
+    recurrenceEndDate: string;
+    notifications: { type: string; timing: string }[];
+}
+
 interface CreateReminderModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    editingReminder?: any;
+    editingReminder?: Reminder;
 }
 
 const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
@@ -29,23 +75,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
     onClose,
     onSuccess,
     editingReminder
-}): JSX.Element => {
-    interface FormData {
-        title: string;
-        description: string;
-        dueDate: string;
-        dueTime: string;
-        type: string;
-        priority: string;
-        applicationId: string;
-        tags: string;
-        color: string;
-        isRecurring: boolean;
-        recurrencePattern: string;
-        recurrenceInterval: number;
-        recurrenceEndDate: string;
-        notifications: { type: string; timing: string }[];
-    }
+}) => {
 
     const [formData, setFormData] = useState<FormData>({
         title: '',
@@ -66,7 +96,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         ]
     });
     const [loading, setLoading] = useState(false);
-    const [applications, setApplications] = useState<any[]>([]);
+    const [applications, setApplications] = useState<Application[]>([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -114,7 +144,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 const fetchApplications = async () => {
         try {
             const response = await fetch('/api/applications', { credentials: 'include' });
-            let applicationsFromApi: any[] = [];
+            let applicationsFromApi: Application[] = [];
             if (response.ok) {
                 const data = await response.json();
                 applicationsFromApi = Array.isArray(data) ? data : data.applications || [];
@@ -146,7 +176,7 @@ const fetchApplications = async () => {
             toast.error('Please select a valid due date.');
             return;
         }
-        if (formData.jobId && !jobs.find(job => job._id === formData.jobId)) {
+        if (formData.jobId && !applications.find((job: Application) => job._id === formData.jobId)) {
             toast.error('Selected job is invalid.');
             return;
         }
@@ -313,7 +343,7 @@ const fetchApplications = async () => {
                                     onChange={(value) => setFormData({ ...formData, jobId: value })}
                                     options={[
                                         { value: '', label: 'None' },
-                                        ...applications.map((application: any) => ({
+                                        ...applications.map((application: Application) => ({
                                             value: application._id,
                                             label: `${application.jobTitle || 'Untitled'} - ${application.jobId?.title || 'No Job'} at ${application.jobId?.company || 'Unknown Company'}`
                                         }))
@@ -330,7 +360,7 @@ const fetchApplications = async () => {
                                             <span className="text-success font-medium">Linked to Job</span>
                                         </div>
                                         {(() => {
-                                            const selectedApplication = applications.find((app: any) => app._id === formData.applicationId);
+                                            const selectedApplication = applications.find((app: Application) => app._id === formData.applicationId);
                                             return selectedApplication ? (
                                                 <div className="mt-2 text-xs text-text-muted">
                                                     <div>Title: {selectedApplication.jobId?.title || 'No Job'}</div>
