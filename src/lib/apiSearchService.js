@@ -15,7 +15,7 @@ class ApiSearchService {
    * Single page search without storage
    */
   async search(query, options = {}) {
-    const MAX_RETRIES = 3;
+    const MAX_RETRIES = 50;
 
     let attempt = 0;
     while (attempt <= MAX_RETRIES) {

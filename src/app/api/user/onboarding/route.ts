@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
       {
         $set: {
           name: data.name,
+          isOnboarded: true,
           profile: {
             title: data.title,
             skills: data.skills,

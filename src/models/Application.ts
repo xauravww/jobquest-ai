@@ -27,6 +27,7 @@ const ApplicationSchema = new mongoose.Schema({
       'draft',
       'applied',
       'submitted',
+      'saved',
       'under_review',
       'phone_screening',
       'technical_interview',
