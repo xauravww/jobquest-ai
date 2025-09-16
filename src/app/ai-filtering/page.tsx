@@ -399,6 +399,10 @@ const JobSearchPage = () => {
   // New filter state for hasDate
   const [hasDate, setHasDate] = useState<boolean | undefined>(undefined);
 
+  // State for tracked and skipped job IDs
+  const [trackedJobIds, setTrackedJobIds] = useState<Set<string>>(new Set());
+  const [skippedJobIds, setSkippedJobIds] = useState<Set<string>>(new Set());
+
   // Ref to maintain focus on the input
   const maxPagesInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -421,14 +425,14 @@ const JobSearchPage = () => {
           if (activeConfig) {
             setAiProvider(activeConfig.provider);
             setApiKey(activeConfig.apiKey || '');
-            setApiUrl(activeConfig.apiUrl || 'http://localhost:1234');
+            setApiUrl(activeConfig.apiUrl || (activeConfig.provider === 'gemini' ? '' : 'http://localhost:1234'));
             setModel(activeConfig.aiModel);
             console.log('Active AI config loaded from backend:', activeConfig);
             // Sync to localStorage
             const config = {
               provider: activeConfig.provider,
               apiKey: activeConfig.apiKey || '',
-              apiUrl: activeConfig.apiUrl || 'http://localhost:1234',
+              apiUrl: activeConfig.apiUrl || (activeConfig.provider === 'gemini' ? '' : 'http://localhost:1234'),
               model: activeConfig.aiModel,
               enabled: true
             };
@@ -487,6 +491,45 @@ const JobSearchPage = () => {
     fetchActiveAIConfig();
   }, []);
 
+  // Fetch tracked and skipped jobs on mount
+  useEffect(() => {
+    const fetchTrackedAndSkippedJobs = async () => {
+      try {
+        // Fetch tracked jobs (applications)
+        const applicationsResponse = await fetch('/api/applications');
+        if (applicationsResponse.ok) {
+          const applicationsData = await applicationsResponse.json();
+          const trackedIds = new Set<string>();
+          applicationsData.applications?.forEach((app: any) => {
+            if (app.jobId) {
+              trackedIds.add(app.jobId.toString());
+            }
+          });
+          setTrackedJobIds(trackedIds);
+          console.log('Fetched tracked job IDs:', trackedIds.size);
+        }
+
+        // Fetch skipped jobs (jobs with isSkipped: true)
+        const skippedResponse = await fetch('/api/jobs/skipped');
+        if (skippedResponse.ok) {
+          const skippedData = await skippedResponse.json();
+          const skippedIds = new Set<string>();
+          skippedData.jobs?.forEach((job: any) => {
+            if (job._id) {
+              skippedIds.add(job._id.toString());
+            }
+          });
+          setSkippedJobIds(skippedIds);
+          console.log('Fetched skipped job IDs:', skippedIds.size);
+        }
+      } catch (error) {
+        console.error('Error fetching tracked/skipped jobs:', error);
+      }
+    };
+
+    fetchTrackedAndSkippedJobs();
+  }, []);
+
   // Save AI config to localStorage on change (debounced)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -542,11 +585,17 @@ const JobSearchPage = () => {
         id: generateJobId(job)
       }));
 
+      // Filter out tracked and skipped jobs
+      const filteredJobs = processedJobs.filter((job: Job) => {
+        const jobId = job.id || job.url;
+        return !trackedJobIds.has(jobId) && !skippedJobIds.has(jobId);
+      });
+
       const chunkSize = 20;
       const newChunks: Chunk[] = [];
 
-      for (let i = 0; i < processedJobs.length; i += chunkSize) {
-        const chunkJobs = processedJobs.slice(i, i + chunkSize);
+      for (let i = 0; i < filteredJobs.length; i += chunkSize) {
+        const chunkJobs = filteredJobs.slice(i, i + chunkSize);
         newChunks.push({
           id: Math.floor(i / chunkSize) + 1,
           jobs: chunkJobs,
@@ -787,12 +836,42 @@ const JobSearchPage = () => {
       // Clear pending changes
       setPendingChanges({ toTrack: [], toSkip: [] });
 
-      // Reset user actions in chunks
-      setChunks(prev => prev.map(chunk => ({
-        ...chunk,
-        jobs: chunk.jobs.map(j => ({ ...j, userAction: null })),
-        filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: null }))
-      })));
+      // Update tracked and skipped job IDs
+      let newTrackedIds = new Set(trackedJobIds);
+      let newSkippedIds = new Set(skippedJobIds);
+
+      if (savedCount > 0) {
+        pendingChanges.toTrack.forEach(job => {
+          const jobId = job.id || job.url;
+          newTrackedIds.add(jobId);
+        });
+        setTrackedJobIds(newTrackedIds);
+      }
+
+      if (skippedCount > 0) {
+        pendingChanges.toSkip.forEach(job => {
+          const jobId = job.id || job.url;
+          newSkippedIds.add(jobId);
+        });
+        setSkippedJobIds(newSkippedIds);
+      }
+
+      // Remove tracked and skipped jobs from chunks immediately using updated sets
+      setChunks(prev => prev.map(chunk => {
+        const remainingJobs = chunk.jobs.filter(job => {
+          const jobId = job.id || job.url;
+          return !newTrackedIds.has(jobId) && !newSkippedIds.has(jobId);
+        });
+        const remainingFilteredJobs = chunk.filteredJobs.filter(job => {
+          const jobId = job.id || job.url;
+          return !newTrackedIds.has(jobId) && !newSkippedIds.has(jobId);
+        });
+        return {
+          ...chunk,
+          jobs: remainingJobs,
+          filteredJobs: remainingFilteredJobs
+        };
+      }));
 
       toast.success(`Changes saved successfully!\n- ${savedCount} jobs added to tracker\n- ${skippedCount} jobs permanently skipped`);
     } catch (error) {

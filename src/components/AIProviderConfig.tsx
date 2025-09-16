@@ -57,6 +57,12 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
           setApiKey(activeConfig.apiKey || '');
           setApiUrl(activeConfig.apiUrl || 'http://localhost:1234');
           setModel(activeConfig.aiModel);
+        } else {
+          // No active config, clear form and show message
+          setAiProvider('');
+          setApiKey('');
+          setApiUrl('');
+          setModel('');
         }
       }
     } catch (error) {
@@ -169,34 +175,41 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
             <p className="text-sm">Create your first configuration below.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {configs.map((config) => (
-              <div
-                key={config._id}
-                className={`p-4 rounded-lg border transition-colors cursor-pointer ${
-                  config.isActive
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border bg-bg-light/50 hover:bg-bg-light'
-                }`}
-                onClick={() => handleSelectConfig(config._id)}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-white capitalize">{config.provider}</span>
-                    {config.isActive && <Check className="w-4 h-4 text-primary" />}
-                  </div>
-                  <span className="text-xs text-text-muted">
-                    {new Date(config.lastSelectedAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="text-sm text-text-muted">
-                  <p>Model: {config.aiModel}</p>
-                  {config.apiUrl && <p>URL: {config.apiUrl}</p>}
-                  {config.apiKey && <p>API Key: ••••••••</p>}
-                </div>
+          <>
+            {configs.find(c => c.isActive) ? null : (
+              <div className="mb-4 p-4 bg-yellow-600 text-yellow-100 rounded-lg text-center">
+                No active AI configuration selected. Please select a configuration to activate it.
               </div>
-            ))}
-          </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {configs.map((config) => (
+                <div
+                  key={config._id}
+                  className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+                    config.isActive
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-bg-light/50 hover:bg-bg-light'
+                  }`}
+                  onClick={() => handleSelectConfig(config._id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-white capitalize">{config.provider}</span>
+                      {config.isActive && <Check className="w-4 h-4 text-primary" />}
+                    </div>
+                    <span className="text-xs text-text-muted">
+                      {new Date(config.lastSelectedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="text-sm text-text-muted">
+                    <p>Model: {config.aiModel}</p>
+                    {config.apiUrl && <p>URL: {config.apiUrl}</p>}
+                    {config.apiKey && <p>API Key: ••••••••</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 

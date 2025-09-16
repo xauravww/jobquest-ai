@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '@/components/AppLayout';
-import { Card, Button } from 'antd';
+import { Card, Button, Select } from 'antd';
 import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog } from 'lucide-react';
 import { FormInput, FormDateInput } from '@/components/ui/FormInput';
 import AIProviderConfig from '@/components/AIProviderConfig';
@@ -1167,19 +1167,21 @@ const UserProfilePage = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-text-muted mb-2">Technologies (comma-separated)</label>
-                          <input
-                            type="text"
-                            value={project.technologies.join(', ')}
-                            onChange={(e) => {
+                          <Select
+                            mode="tags"
+                            style={{ width: '100%' }}
+                            placeholder="Add technologies"
+                            value={project.technologies}
+                            onChange={(value) => {
                               const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].technologies = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                              newProjects[index].technologies = value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, projects: newProjects }
                               }));
                             }}
-                            className="w-full px-3 py-2 bg-bg-card border border-border rounded-lg text-text focus:border-primary focus:outline-none"
-                            placeholder="React, Node.js, MongoDB, etc."
+                            tokenSeparators={[',', ' ']}
+                            className="w-full"
                           />
                         </div>
                         <div className="flex justify-end">
