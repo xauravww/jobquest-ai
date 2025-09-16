@@ -82,6 +82,15 @@ interface WorkExperience {
   description?: string;
 }
 
+interface ApplicationForReminder {
+  _id: string;
+  jobId?: {
+    title?: string;
+    company?: string;
+    location?: string;
+  };
+}
+
 interface UserProfile {
   name: string;
   experience: WorkExperience[];
@@ -717,7 +726,14 @@ const ApplicationTrackingPage = () => {
               toast.success('Reminder created successfully');
             }}
             editingReminder={undefined}
-            defaultApplication={selectedJobForReminder}
+            defaultApplication={selectedJobForReminder ? {
+              _id: selectedJobForReminder._id,
+              jobId: {
+                title: selectedJobForReminder.title,
+                company: selectedJobForReminder.company,
+                location: selectedJobForReminder.location
+              }
+            } : undefined}
           />
         </div>
       </div>

@@ -262,6 +262,7 @@ const RemindersCalendarPage = () => {
               </Tag>
             </li>
           )}
+        </ul>
       </div>
     );
   };
