@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
     user.otpExpires = undefined;
     await user.save();
 
+    // Update onboarding status to true after successful OTP verification
+    await User.findByIdAndUpdate(user._id, { isOnboarded: true });
+
     return NextResponse.json({ message: 'OTP verified' });
   } catch (error) {
     console.error('Verify OTP error:', error);

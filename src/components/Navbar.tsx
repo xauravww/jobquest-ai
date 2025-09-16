@@ -92,14 +92,22 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
   const [onboardingComplete, setOnboardingComplete] = React.useState(false);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedValue = localStorage.getItem('onboardingComplete');
-      console.log('onboardingComplete from localStorage:', storedValue);
-      setOnboardingComplete(storedValue === 'true');
-      console.log('onboardingComplete state:', storedValue === 'true');
-      console.log('Current pathname:', pathname);
+    const checkOnboarding = async () => {
+      try {
+        const response = await fetch('/api/user/onboarding');
+        if (response.ok) {
+          const data = await response.json();
+          setOnboardingComplete(data.user?.isOnboarded || false);
+        }
+      } catch (error) {
+        console.error('Failed to check onboarding status:', error);
+      }
+    };
+
+    if (status === 'authenticated') {
+      checkOnboarding();
     }
-  }, [pathname]);
+  }, [status]);
 
   if (pathname.startsWith('/onboarding') && !onboardingComplete) {
     // Hide Sign In and Get Started buttons on onboarding page if onboarding not complete

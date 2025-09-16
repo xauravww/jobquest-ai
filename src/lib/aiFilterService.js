@@ -14,6 +14,22 @@ class AiFilterService {
     this.loadConfig();
   }
 
+  /**
+   * Retry function with exponential backoff for rate limit errors
+   */
+  async retryWithBackoff(fn, retries = 3, delay = 1000) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (retries > 0 && error.status === 429) {
+        console.log(`Rate limit hit, retrying in ${delay}ms... (${retries} retries left)`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.retryWithBackoff(fn, retries - 1, delay * 2);
+      }
+      throw error;
+    }
+  }
+
   loadConfig() {
     // On server side, always use default config
     // Config will be set via saveConfig() method when called from API
@@ -180,28 +196,56 @@ class AiFilterService {
       }
 
       const endpoint = provider === 'gemini'
-        ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+        ? `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
         : `${apiUrl}/v1/chat/completions`;
 
       console.log(`AI Filter Service - Calling API: ${endpoint} with provider: ${provider}, model: ${model}`);
+      console.log(`AI Filter Service - Request Headers:`, JSON.stringify(headers, null, 2));
+      console.log(`AI Filter Service - Request Body:`, JSON.stringify(requestBody, null, 2));
 
       try {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(requestBody)
+        response = await this.retryWithBackoff(async () => {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(requestBody)
+          });
+
+          // Log response details
+          console.log(`AI Filter Service - API Response Status: ${res.status} ${res.statusText}`);
+          console.log(`AI Filter Service - Response Headers:`, Object.fromEntries(res.headers.entries()));
+
+          // Clone response for logging body
+          const responseClone = res.clone();
+          const responseText = await responseClone.text();
+          console.log(`AI Filter Service - Response Body:`, responseText);
+
+          // If not ok, throw error with status
+          if (!res.ok) {
+            const error = new Error(`AI server error: ${res.status} - ${res.statusText}`);
+            error.status = res.status;
+            error.responseBody = responseText;
+            throw error;
+          }
+
+          return res;
         });
-        console.log(`AI Filter Service - API Response Status: ${response.status} ${response.statusText}`);
       } catch (networkError) {
         console.error('AI Filter Service - Network error during AI analysis:', networkError);
-        this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
-        throw networkError;
-      }
 
-      if (!response.ok) {
-        this.showToast(`AI Filter Failed: The service returned an error (status ${response.status}). Please try again later.`);
-        console.error(`AI server error: ${response.status} - ${response.statusText}`);
-        throw new Error(`AI server error: ${response.status} - ${response.statusText}`);
+        // Specific error handling based on status
+        if (networkError.status === 400) {
+          this.showToast('AI Filter Failed: Invalid request payload. Please check your input.');
+        } else if (networkError.status === 401) {
+          this.showToast('AI Filter Failed: Authentication failed. Please check your API key.');
+        } else if (networkError.status === 429) {
+          this.showToast('AI Filter Failed: Rate limit exceeded. Please try again later.');
+        } else if (networkError.status === 500) {
+          this.showToast('AI Filter Failed: Server error. Please try again later.');
+        } else {
+          this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+        }
+        throw networkError;
       }
 
       const data = await response.json();
@@ -369,28 +413,56 @@ Please respond with a JSON array where each object has:
       }
 
       const endpoint = provider === 'gemini'
-        ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+        ? `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
         : `${apiUrl}/v1/chat/completions`;
 
       console.log(`AI Filter Service - Cover Letter Generation - Calling API: ${endpoint} with provider: ${provider}, model: ${model}`);
+      console.log(`AI Filter Service - Cover Letter Generation - Request Headers:`, JSON.stringify(headers, null, 2));
+      console.log(`AI Filter Service - Cover Letter Generation - Request Body:`, JSON.stringify(requestBody, null, 2));
 
       try {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(requestBody)
+        response = await this.retryWithBackoff(async () => {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(requestBody)
+          });
+
+          // Log response details
+          console.log(`AI Filter Service - Cover Letter Generation - API Response Status: ${res.status} ${res.statusText}`);
+          console.log(`AI Filter Service - Cover Letter Generation - Response Headers:`, Object.fromEntries(res.headers.entries()));
+
+          // Clone response for logging body
+          const responseClone = res.clone();
+          const responseText = await responseClone.text();
+          console.log(`AI Filter Service - Cover Letter Generation - Response Body:`, responseText);
+
+          // If not ok, throw error with status
+          if (!res.ok) {
+            const error = new Error(`AI server error: ${res.status} - ${res.statusText}`);
+            error.status = res.status;
+            error.responseBody = responseText;
+            throw error;
+          }
+
+          return res;
         });
-        console.log(`AI Filter Service - Cover Letter Generation - API Response Status: ${response.status} ${response.statusText}`);
       } catch (networkError) {
         console.error('AI Filter Service - Cover Letter Generation - Network error:', networkError);
-        this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
-        throw networkError;
-      }
 
-      if (!response.ok) {
-        this.showToast(`AI Filter Failed: The service returned an error (status ${response.status}). Please try again later.`);
-        console.error(`AI server error: ${response.status} - ${response.statusText}`);
-        throw new Error(`AI server error: ${response.status} - ${response.statusText}`);
+        // Specific error handling based on status
+        if (networkError.status === 400) {
+          this.showToast('AI Filter Failed: Invalid request payload. Please check your input.');
+        } else if (networkError.status === 401) {
+          this.showToast('AI Filter Failed: Authentication failed. Please check your API key.');
+        } else if (networkError.status === 429) {
+          this.showToast('AI Filter Failed: Rate limit exceeded. Please try again later.');
+        } else if (networkError.status === 500) {
+          this.showToast('AI Filter Failed: Server error. Please try again later.');
+        } else {
+          this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+        }
+        throw networkError;
       }
 
       const data = await response.json();
@@ -473,36 +545,58 @@ Please respond with a JSON array where each object has:
       }
 
       const endpoint = provider === 'gemini'
-        ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+        ? `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
         : `${apiUrl}/v1/chat/completions`;
 
       console.log(`AI Filter Service - Content Analysis - Calling API: ${endpoint} with provider: ${provider}, model: ${model}`);
+      console.log(`AI Filter Service - Content Analysis - Request Headers:`, JSON.stringify(headers, null, 2));
+      console.log(`AI Filter Service - Content Analysis - Request Body:`, JSON.stringify(requestBody, null, 2));
 
       try {
-        response = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(requestBody)
+        response = await this.retryWithBackoff(async () => {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(requestBody)
+          });
+
+          // Log response details
+          console.log(`AI Filter Service - Content Analysis - API Response Status: ${res.status} ${res.statusText}`);
+          console.log(`AI Filter Service - Content Analysis - Response Headers:`, Object.fromEntries(res.headers.entries()));
+
+          // Clone response for logging body
+          const responseClone = res.clone();
+          const responseText = await responseClone.text();
+          console.log(`AI Filter Service - Content Analysis - Response Body:`, responseText);
+
+          // If not ok, throw error with status
+          if (!res.ok) {
+            const error = new Error(`AI server error: ${res.status} - ${res.statusText}`);
+            error.status = res.status;
+            error.responseBody = responseText;
+            throw error;
+          }
+
+          return res;
         });
-        console.log(`AI Filter Service - Content Analysis - API Response Status: ${response.status} ${response.statusText}`);
       } catch (networkError) {
         console.error('AI Filter Service - Content Analysis - Network error:', networkError);
-        this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+
+        // Specific error handling based on status
+        if (networkError.status === 400) {
+          this.showToast('AI Filter Failed: Invalid request payload. Please check your input.');
+        } else if (networkError.status === 401) {
+          this.showToast('AI Filter Failed: Authentication failed. Please check your API key.');
+        } else if (networkError.status === 429) {
+          this.showToast('AI Filter Failed: Rate limit exceeded. Please try again later.');
+        } else if (networkError.status === 500) {
+          this.showToast('AI Filter Failed: Server error. Please try again later.');
+        } else {
+          this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
+        }
         return {
           content,
           analysis: `AI analysis failed: ${networkError.message}`,
-          isHiring: false,
-          confidence: 0
-        };
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`AI Filter Service - Content Analysis - API Error Response: ${errorText}`);
-        this.showToast(`AI Filter Failed: The service returned an error (status ${response.status}). Please try again later.`);
-        return {
-          content,
-          analysis: `AI analysis failed: Server error ${response.status}`,
           isHiring: false,
           confidence: 0
         };

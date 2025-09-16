@@ -37,6 +37,7 @@ export interface IUser extends Document {
   avatar?: string;
   role: 'user' | 'admin';
   isEmailVerified: boolean;
+  isOnboarded: boolean;
   emailVerificationToken?: string;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -44,6 +45,8 @@ export interface IUser extends Document {
   otpExpires?: Date;
   lastOtpSentAt?: Date;
   profile: {
+    firstName?: string;
+    lastName?: string;
     title?: string;
     company?: string;
     location?: string;
@@ -112,6 +115,10 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    isOnboarded: {
+      type: Boolean,
+      default: false,
+    },
     emailVerificationToken: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
@@ -119,6 +126,8 @@ const UserSchema = new Schema<IUser>(
     otpExpires: Date,
     lastOtpSentAt: Date,
     profile: {
+      firstName: String,
+      lastName: String,
       title: String,
       company: String,
       location: String,

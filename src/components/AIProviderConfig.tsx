@@ -17,10 +17,38 @@ interface AIProviderConfigProps {
 }
 
 const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) => {
-  const [aiProvider, setAiProvider] = useState('lm-studio');
-  const [apiKey, setApiKey] = useState('');
-  const [apiUrl, setApiUrl] = useState('http://localhost:1234');
-  const [model, setModel] = useState('local-model');
+  // Initialize state with saved config from localStorage
+  const getInitialConfig = () => {
+    if (typeof window !== 'undefined') {
+      const savedConfig = localStorage.getItem('ai-provider-config');
+      if (savedConfig) {
+        try {
+          const config = JSON.parse(savedConfig);
+          return {
+            aiProvider: config.provider || 'lm-studio',
+            apiKey: config.apiKey || '',
+            apiUrl: config.apiUrl || 'http://localhost:1234',
+            model: config.model || 'local-model'
+          };
+        } catch (e) {
+          console.warn('Failed to parse saved AI config', e);
+        }
+      }
+    }
+    return {
+      aiProvider: 'lm-studio',
+      apiKey: '',
+      apiUrl: 'http://localhost:1234',
+      model: 'local-model'
+    };
+  };
+
+  const initialConfig = getInitialConfig();
+
+  const [aiProvider, setAiProvider] = useState(initialConfig.aiProvider);
+  const [apiKey, setApiKey] = useState(initialConfig.apiKey);
+  const [apiUrl, setApiUrl] = useState(initialConfig.apiUrl);
+  const [model, setModel] = useState(initialConfig.model);
 
   // Update model default when aiProvider changes
   useEffect(() => {
@@ -63,7 +91,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   // Set model defaults when provider changes
   useEffect(() => {
     if (aiProvider === 'gemini' && !model.startsWith('gemini-')) {
-      setModel('gemini-2.0-flash-exp');
+      setModel('gemini-2.0-flash');
     } else if (aiProvider === 'lm-studio' && model.startsWith('gemini-')) {
       setModel('local-model');
     } else if (aiProvider === 'ollama' && model.startsWith('gemini-')) {
@@ -152,7 +180,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
             value={model}
             onChange={setModel}
             options={[
-              { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash-exp' },
+              { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
               { label: 'Gemini Pro', value: 'gemini-pro' },
               { label: 'Gemini Pro Vision', value: 'gemini-pro-vision' }
             ]}

@@ -102,8 +102,7 @@ const OnboardingPage: React.FC = () => {
 
       if (response.ok) {
         toast.success('Profile setup complete!');
-        localStorage.setItem('onboardingComplete', 'true');
-        router.push('/dashboard');
+        // Onboarding will be marked complete after OTP verification
       } else {
         toast.error(data.error || 'Failed to save profile');
       }
@@ -143,13 +142,13 @@ const OnboardingPage: React.FC = () => {
       if (response.ok) {
         toast.success('Email verified successfully');
         setOtpVerified(true);
-        localStorage.setItem('onboardingComplete', 'true');
+        // Onboarding is now complete after OTP verification
         router.push('/dashboard');
       } else {
         toast.error('Invalid OTP');
       }
     } catch (error) {
-      console.error(error)
+      console.error(error);
       toast.error('Network error while verifying OTP');
     }
   };

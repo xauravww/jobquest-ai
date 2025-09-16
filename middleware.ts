@@ -21,15 +21,16 @@ export function middleware(request: NextRequest) {
   }
 
   // Check if the requested path is protected
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    // Check onboarding completion from cookies (assuming onboardingComplete cookie is set on client)
-    const onboardingComplete = request.cookies.get('onboardingComplete')?.value === 'true';
+  // Onboarding check is now handled client-side in OnboardingCheck component
+  // if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+  //   // Check onboarding completion from cookies (assuming onboardingComplete cookie is set on client)
+  //   const onboardingComplete = request.cookies.get('onboardingComplete')?.value === 'true';
 
-    if (!onboardingComplete) {
-      // Redirect to onboarding page if not complete
-      return NextResponse.redirect(new URL('/onboarding', request.url));
-    }
-  }
+  //   if (!onboardingComplete) {
+  //     // Redirect to onboarding page if not complete
+  //     return NextResponse.redirect(new URL('/onboarding', request.url));
+  //   }
+  // }
 
   return NextResponse.next();
 }

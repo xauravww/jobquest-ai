@@ -68,7 +68,7 @@ const SignInPage: React.FC = () => {
         // Check onboarding status
         const onboardingResponse = await fetch('/api/user/onboarding');
         const onboardingData = await onboardingResponse.json();
-        if (onboardingResponse.ok && !onboardingData.user?.onboardingCompleted) {
+        if (onboardingResponse.ok && !onboardingData.user?.isOnboarded) {
           router.push('/onboarding');
         } else {
           router.push('/dashboard');

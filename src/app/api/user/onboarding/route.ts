@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
             salaryRange: data.salaryRange,
             industries: data.industries,
           },
-          onboardingCompleted: true,
           updatedAt: new Date(),
         },
         $setOnInsert: {
@@ -121,7 +120,7 @@ export async function GET() {
       { email: session.user.email },
       {
         projection: {
-          onboardingCompleted: 1,
+          isOnboarded: 1,
           profile: 1,
           preferences: 1,
           name: 1,
@@ -141,7 +140,7 @@ export async function GET() {
       success: true,
       user: {
         ...user,
-        onboardingCompleted: user.onboardingCompleted || false
+        isOnboarded: user.isOnboarded || false
       }
     });
 

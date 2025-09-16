@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
           }
 
           const endpoint = provider === 'gemini'
-            ? `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`
+            ? `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
             : `${apiUrl}/v1/chat/completions`;
 
           const response = await fetch(endpoint, {
