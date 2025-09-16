@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import AIConfig from '@/models/AIConfig';
+import User from '@/models/User';
 
 export async function PATCH(
   request: NextRequest,
@@ -35,6 +36,20 @@ export async function PATCH(
     configToActivate.isActive = true;
     configToActivate.lastSelectedAt = new Date();
     await configToActivate.save();
+
+    // Also update the user's aiConfig
+    await User.findOneAndUpdate(
+      { _id: configToActivate.userId },
+      {
+        aiConfig: {
+          provider: configToActivate.provider,
+          apiKey: configToActivate.apiKey,
+          apiUrl: configToActivate.apiUrl,
+          model: configToActivate.aiModel,
+          enabled: true
+        }
+      }
+    );
 
     return NextResponse.json(configToActivate);
   } catch (error) {

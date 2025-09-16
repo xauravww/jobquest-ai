@@ -410,23 +410,81 @@ const JobSearchPage = () => {
   // Removed AI Config state and toggle as per user request
   // const [showAIConfig, setShowAIConfig] = useState(false);
 
-  // Load saved AI config from localStorage on mount
+  // Load active AI config from backend on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedConfig = localStorage.getItem('ai-provider-config');
-      if (savedConfig) {
-        try {
-          const config = JSON.parse(savedConfig);
-          if (config.provider) setAiProvider(config.provider);
-          if (config.apiKey) setApiKey(config.apiKey);
-          if (config.apiUrl) setApiUrl(config.apiUrl);
-          if (config.model) setModel(config.model);
-          console.log('AI config loaded from localStorage:', config);
-        } catch (e) {
-          console.warn('Failed to parse saved AI config',e);
+    const fetchActiveAIConfig = async () => {
+      try {
+        const response = await fetch('/api/ai-config');
+        if (response.ok) {
+          const configs = await response.json();
+          const activeConfig = configs.find((c: any) => c.isActive);
+          if (activeConfig) {
+            setAiProvider(activeConfig.provider);
+            setApiKey(activeConfig.apiKey || '');
+            setApiUrl(activeConfig.apiUrl || 'http://localhost:1234');
+            setModel(activeConfig.aiModel);
+            console.log('Active AI config loaded from backend:', activeConfig);
+            // Sync to localStorage
+            const config = {
+              provider: activeConfig.provider,
+              apiKey: activeConfig.apiKey || '',
+              apiUrl: activeConfig.apiUrl || 'http://localhost:1234',
+              model: activeConfig.aiModel,
+              enabled: true
+            };
+            localStorage.setItem('ai-provider-config', JSON.stringify(config));
+          } else {
+            // Fallback to localStorage if no active config
+            const savedConfig = localStorage.getItem('ai-provider-config');
+            if (savedConfig) {
+              try {
+                const config = JSON.parse(savedConfig);
+                if (config.provider) setAiProvider(config.provider);
+                if (config.apiKey) setApiKey(config.apiKey);
+                if (config.apiUrl) setApiUrl(config.apiUrl);
+                if (config.model) setModel(config.model);
+                console.log('AI config loaded from localStorage (fallback):', config);
+              } catch (e) {
+                console.warn('Failed to parse saved AI config', e);
+              }
+            }
+          }
+        } else {
+          // Fallback to localStorage if API fails
+          const savedConfig = localStorage.getItem('ai-provider-config');
+          if (savedConfig) {
+            try {
+              const config = JSON.parse(savedConfig);
+              if (config.provider) setAiProvider(config.provider);
+              if (config.apiKey) setApiKey(config.apiKey);
+              if (config.apiUrl) setApiUrl(config.apiUrl);
+              if (config.model) setModel(config.model);
+              console.log('AI config loaded from localStorage (API failed):', config);
+            } catch (e) {
+              console.warn('Failed to parse saved AI config', e);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI config from backend:', error);
+        // Fallback to localStorage
+        const savedConfig = localStorage.getItem('ai-provider-config');
+        if (savedConfig) {
+          try {
+            const config = JSON.parse(savedConfig);
+            if (config.provider) setAiProvider(config.provider);
+            if (config.apiKey) setApiKey(config.apiKey);
+            if (config.apiUrl) setApiUrl(config.apiUrl);
+            if (config.model) setModel(config.model);
+            console.log('AI config loaded from localStorage (error):', config);
+          } catch (e) {
+            console.warn('Failed to parse saved AI config', e);
+          }
         }
       }
-    }
+    };
+
+    fetchActiveAIConfig();
   }, []);
 
   // Save AI config to localStorage on change (debounced)
