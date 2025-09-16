@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
+import AIConfig from '@/models/AIConfig';
 
 interface Job {
   id: string;
@@ -114,6 +119,11 @@ function analyzeJob(job: Job, criteria: FilterCriteria) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { jobs, criteria } = await request.json();
 
     if (!jobs || !Array.isArray(jobs)) {
@@ -123,9 +133,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    await dbConnect();
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Import the AI service dynamically to avoid SSR issues
     const { default: AiFilterService } = await import('@/lib/aiFilterService');
     const aiService = new AiFilterService();
+
+    // Get user's active AI config
+    const { default: AIConfig } = await import('@/models/AIConfig');
+    const activeConfig = await AIConfig.findOne({
+      userId: user._id,
+      isActive: true
+    });
+
+    // Set active AI config or fallback to user's aiConfig
+    if (activeConfig) {
+      aiService.saveConfig({
+        provider: activeConfig.provider,
+        apiUrl: activeConfig.apiUrl,
+        model: activeConfig.aiModel,
+        apiKey: activeConfig.apiKey
+      });
+    } else if (user.aiConfig) {
+      aiService.saveConfig({
+        provider: user.aiConfig.provider,
+        apiUrl: user.aiConfig.apiUrl,
+        model: user.aiConfig.model,
+        apiKey: user.aiConfig.apiKey
+      });
+    }
 
     let analyzedJobs = [];
 

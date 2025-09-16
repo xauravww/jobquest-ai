@@ -79,6 +79,13 @@ export interface IUser extends Document {
       applicationUpdates: boolean;
     };
   };
+  aiConfig: {
+    provider: string;
+    apiKey?: string;
+    apiUrl?: string;
+    model: string;
+    enabled: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -182,6 +189,13 @@ const UserSchema = new Schema<IUser>(
         jobAlerts: { type: Boolean, default: true },
         applicationUpdates: { type: Boolean, default: true },
       },
+    },
+    aiConfig: {
+      provider: { type: String, default: 'lm-studio' },
+      apiKey: String,
+      apiUrl: { type: String, default: 'http://localhost:1234' },
+      model: { type: String, default: 'local-model' },
+      enabled: { type: Boolean, default: true },
     },
   },
   {

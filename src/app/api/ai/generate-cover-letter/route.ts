@@ -64,9 +64,16 @@ export async function POST(request: NextRequest) {
     await initService();
     const aiFilterService = new AiFilterService();
 
-    // Set AI configuration if provided
+    // Set AI configuration - use provided config or user's stored config
     if (aiConfig) {
       aiFilterService.saveConfig(aiConfig);
+    } else if (user.aiConfig) {
+      aiFilterService.saveConfig({
+        provider: user.aiConfig.provider,
+        apiUrl: user.aiConfig.apiUrl,
+        model: user.aiConfig.model,
+        apiKey: user.aiConfig.apiKey
+      });
     }
 
     // Get user profile data for personalization

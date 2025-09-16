@@ -1,14 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
 import AiFilterService from '@/lib/aiFilterService';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { results, filters = {}, aiConfig } = await request.json();
+
+    await dbConnect();
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     const aiFilterService = new AiFilterService();
 
-    // If AI config is provided, save it to the service
-    if (aiConfig) {
+    // Use user's stored AI config, or provided config, or default
+    if (user.aiConfig) {
+      aiFilterService.saveConfig({
+        provider: user.aiConfig.provider,
+        apiUrl: user.aiConfig.apiUrl,
+        model: user.aiConfig.model,
+        apiKey: user.aiConfig.apiKey
+      });
+    } else if (aiConfig) {
       aiFilterService.saveConfig(aiConfig);
     }
 

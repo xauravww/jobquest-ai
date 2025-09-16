@@ -36,6 +36,13 @@ export async function GET() {
           max: user.preferences?.salaryRange?.max || 0
         },
         remoteWork: user.preferences?.remoteWork || false
+      },
+      aiConfig: {
+        provider: user.aiConfig?.provider || 'lm-studio',
+        apiKey: user.aiConfig?.apiKey || '',
+        apiUrl: user.aiConfig?.apiUrl || 'http://localhost:1234',
+        model: user.aiConfig?.model || 'local-model',
+        enabled: user.aiConfig?.enabled ?? true
       }
     };
 
@@ -57,27 +64,49 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { personalInfo, professionalInfo, preferences } = body;
+    const { personalInfo, professionalInfo, preferences, aiConfig } = body;
 
     await dbConnect();
-    
-    const updateData = {
-      name: personalInfo.fullName,
-      'profile.location': personalInfo.location,
-      'profile.portfolioUrl': personalInfo.website,
-      'profile.linkedinUrl': personalInfo.linkedin,
-      'profile.githubUrl': personalInfo.github,
-      'profile.title': professionalInfo.currentRole,
-      'profile.experienceYears': professionalInfo.experience ? parseInt(professionalInfo.experience) : 0,
-      'profile.skills': professionalInfo.skills,
-      'profile.bio': professionalInfo.bio,
-      'preferences.jobTypes': preferences.jobTypes,
-      'preferences.locations': preferences.locations,
-      'preferences.salaryRange.min': preferences.salaryRange.min,
-      'preferences.salaryRange.max': preferences.salaryRange.max,
-      'preferences.remoteWork': preferences.remoteWork,
+
+    // Build update data conditionally based on what was provided
+    const updateData: any = {
       updatedAt: new Date()
     };
+
+    // Handle personal info updates
+    if (personalInfo) {
+      if (personalInfo.fullName !== undefined) updateData.name = personalInfo.fullName;
+      if (personalInfo.location !== undefined) updateData['profile.location'] = personalInfo.location;
+      if (personalInfo.website !== undefined) updateData['profile.portfolioUrl'] = personalInfo.website;
+      if (personalInfo.linkedin !== undefined) updateData['profile.linkedinUrl'] = personalInfo.linkedin;
+      if (personalInfo.github !== undefined) updateData['profile.githubUrl'] = personalInfo.github;
+    }
+
+    // Handle professional info updates
+    if (professionalInfo) {
+      if (professionalInfo.currentRole !== undefined) updateData['profile.title'] = professionalInfo.currentRole;
+      if (professionalInfo.experience !== undefined) updateData['profile.experienceYears'] = professionalInfo.experience ? parseInt(professionalInfo.experience) : 0;
+      if (professionalInfo.skills !== undefined) updateData['profile.skills'] = professionalInfo.skills;
+      if (professionalInfo.bio !== undefined) updateData['profile.bio'] = professionalInfo.bio;
+    }
+
+    // Handle preferences updates
+    if (preferences) {
+      if (preferences.jobTypes !== undefined) updateData['preferences.jobTypes'] = preferences.jobTypes;
+      if (preferences.locations !== undefined) updateData['preferences.locations'] = preferences.locations;
+      if (preferences.salaryRange?.min !== undefined) updateData['preferences.salaryRange.min'] = preferences.salaryRange.min;
+      if (preferences.salaryRange?.max !== undefined) updateData['preferences.salaryRange.max'] = preferences.salaryRange.max;
+      if (preferences.remoteWork !== undefined) updateData['preferences.remoteWork'] = preferences.remoteWork;
+    }
+
+    // Handle AI config updates
+    if (aiConfig) {
+      if (aiConfig.provider !== undefined) updateData['aiConfig.provider'] = aiConfig.provider;
+      if (aiConfig.apiKey !== undefined) updateData['aiConfig.apiKey'] = aiConfig.apiKey;
+      if (aiConfig.apiUrl !== undefined) updateData['aiConfig.apiUrl'] = aiConfig.apiUrl;
+      if (aiConfig.model !== undefined) updateData['aiConfig.model'] = aiConfig.model;
+      if (aiConfig.enabled !== undefined) updateData['aiConfig.enabled'] = aiConfig.enabled;
+    }
 
     const user = await User.findOneAndUpdate(
       { email: session.user.email },

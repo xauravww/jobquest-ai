@@ -89,6 +89,13 @@ interface UserProfile {
     targetRole: string;
     targetCompanies: string[];
   };
+  aiConfig: {
+    provider: string;
+    apiKey?: string;
+    apiUrl?: string;
+    model: string;
+    enabled: boolean;
+  };
 }
 
 const UserProfilePage = () => {
@@ -121,6 +128,13 @@ const UserProfilePage = () => {
       remoteWork: false,
       targetRole: '',
       targetCompanies: []
+    },
+    aiConfig: {
+      provider: 'lm-studio',
+      apiKey: '',
+      apiUrl: 'http://localhost:1234',
+      model: 'local-model',
+      enabled: true
     }
   });
 
@@ -171,6 +185,13 @@ const UserProfilePage = () => {
             remoteWork: data.preferences?.remoteWork || false,
             targetRole: data.targetRole || '',
             targetCompanies: data.preferences?.targetCompanies || []
+          },
+          aiConfig: {
+            provider: data.aiConfig?.provider || 'lm-studio',
+            apiKey: data.aiConfig?.apiKey || '',
+            apiUrl: data.aiConfig?.apiUrl || 'http://localhost:1234',
+            model: data.aiConfig?.model || 'local-model',
+            enabled: data.aiConfig?.enabled ?? true
           }
         };
 
@@ -213,6 +234,36 @@ const UserProfilePage = () => {
         [field]: value
       }
     }));
+  };
+
+  const handleAISave = async (aiConfig: {
+    provider: string;
+    apiKey?: string;
+    apiUrl?: string;
+    model: string;
+    enabled: boolean;
+  }) => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ aiConfig }),
+      });
+
+      if (response.ok) {
+        setProfile(prev => ({
+          ...prev,
+          aiConfig
+        }));
+      } else {
+        throw new Error('Failed to save AI config');
+      }
+    } catch (error) {
+      console.error('Error saving AI config:', error);
+      throw error;
+    }
   };
 
   if (loading) {

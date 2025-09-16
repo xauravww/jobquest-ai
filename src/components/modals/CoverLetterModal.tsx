@@ -111,18 +111,6 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
     setGenerating(true);
     setError('');
     try {
-      let aiConfig = null;
-      if (typeof window !== 'undefined') {
-        const savedConfig = localStorage.getItem('ai-provider-config');
-        if (savedConfig) {
-          try {
-            aiConfig = JSON.parse(savedConfig);
-          } catch (e) {
-            console.warn('Failed to parse AI config, using defaults');
-          }
-        }
-      }
-
       const response = await fetch('/api/ai/generate-cover-letter', {
         method: 'POST',
         headers: {
@@ -135,7 +123,6 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
           jobDescription: extractedContent,
           location: job.location,
           profileDetails: profileDetails,
-          aiConfig: aiConfig,
         }),
       });
 
