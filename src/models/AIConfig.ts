@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 
 export interface IAIConfig extends Document {
   userId: mongoose.Types.ObjectId;
@@ -47,7 +47,8 @@ const AIConfigSchema = new Schema<IAIConfig>(
 // Pre-save hook to ensure only one active config per user
 AIConfigSchema.pre('save', async function (next) {
   if (this.isActive) {
-    await this.constructor.updateMany(
+    const model = this.constructor as Model<IAIConfig>;
+    await model.updateMany(
       { userId: this.userId, _id: { $ne: this._id } },
       { isActive: false }
     );
