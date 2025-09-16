@@ -4,6 +4,172 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Override Ant Design Calendar for dark theme */
+.ant-picker-calendar,
+.ant-calendar {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text) !important;
+}
+
+.ant-calendar,
+.ant-calendar * {
+  background-color: var(--bg-card) !important;
+  color: var(--text) !important;
+}
+
+.ant-calendar-header {
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-calendar-header-year-select {
+  display: none !important;
+}
+
+.ant-calendar-body {
+  background-color: var(--bg-card) !important;
+  color: var(--text) !important;
+}
+
+.ant-calendar-date {
+  color: var(--text) !important;
+  border: 1px solid transparent !important;
+  background-color: transparent !important;
+  /* Ensure text color is white or light for dark background */
+  color: #f9fafb !important;
+}
+
+.ant-calendar-date:hover {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.ant-calendar-selected-date .ant-calendar-date {
+  background-color: var(--primary-lightest) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.ant-calendar-today .ant-calendar-date {
+  border: 1px solid var(--primary) !important;
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+
+.ant-picker-panel {
+  background-color: var(--bg-card) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text) !important;
+}
+
+.ant-picker-cell {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text) !important;
+}
+
+.ant-picker-cell-in-view:hover {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  cursor: pointer;
+}
+
+.ant-picker-cell-selected,
+.ant-picker-cell-selected:hover {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+}
+
+.ant-picker-cell-today .ant-picker-cell-inner {
+  border: 1px solid var(--primary) !important;
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+
+.ant-picker-header {
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-picker-header-view {
+  color: var(--text) !important;
+}
+
+.ant-picker-header-super-prev-btn,
+.ant-picker-header-prev-btn,
+.ant-picker-header-next-btn,
+.ant-picker-header-super-next-btn {
+  color: var(--text) !important;
+}
+
+.ant-picker-header-super-prev-btn:hover,
+.ant-picker-header-prev-btn:hover,
+.ant-picker-header-next-btn:hover,
+.ant-picker-header-super-next-btn:hover {
+  color: var(--primary) !important;
+}
+
+.ant-picker-footer {
+  background-color: var(--bg-card) !important;
+  border-top: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+.ant-picker-footer-btns .ant-btn-primary {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+.ant-picker-footer-btns .ant-btn-primary:hover {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  opacity: 0.8;
+}
+
+/* Additional styling for calendar date cells */
+.calendar-date-cell {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 4rem;
+  overflow: hidden;
+}
+
+.calendar-date-cell li {
+  margin-bottom: 0.15rem;
+}
+
+.calendar-date-cell li:last-child {
+  margin-bottom: 0;
+}
+
+.calendar-date-cell .ant-badge-status-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text);
+  background-color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-left: 8px;
+  display: inline-block;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 0 6px var(--primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.calendar-date-cell .ant-badge-status-text:hover {
+  text-decoration: none;
+  color: var(--primary-foreground);
+  background-color: var(--primary-foreground);
+  box-shadow: 0 0 10px var(--primary-foreground);
+}
+
 :root {
   /* Modern dark theme matching reference design */
   --bg-dark: #0a0f1c;
@@ -16,15 +182,15 @@
   /* card background */
   --text: #f9fafb;
   /* pure white text */
-  --text-muted: #9ca3af;
+  --text-muted: #d1d5db;
   /* muted gray text */
-  --text-secondary: #6b7280;
+  --text-secondary: #9ca3af;
   /* secondary text */
   --highlight: #10b981;
   /* emerald accent */
-  --border: #374151;
+  --border: #4b5563;
   /* subtle border */
-  --border-muted: #4b5563;
+  --border-muted: #6b7280;
   /* muted border */
   --primary: #10b981;
   /* emerald primary */
@@ -511,12 +677,12 @@ textarea:focus {
   --secondary: #6366f1;
   --secondary-foreground: #f9fafb;
   --muted: #4b5563;
-  --muted-foreground: #9ca3af;
+  --muted-foreground: #d1d5db;
   --accent: #10b981;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
-  --border: #374151;
-  --input: #374151;
+  --border: #4b5563;
+  --input: #4b5563;
   --ring: #10b981;
   --chart-1: #ef4444;
   --chart-2: #3b82f6;
@@ -529,7 +695,7 @@ textarea:focus {
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #10b981;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #374151;
+  --sidebar-border: #4b5563;
   --sidebar-ring: #10b981;
 }
 
@@ -860,7 +1026,6 @@ body {
 }
 
 .ant-table-tbody>tr>td {
-  background-color: var(--bg-card) !important;
   color: var(--text) !important;
   border-bottom: 1px solid var(--border) !important;
   font-weight: 500;

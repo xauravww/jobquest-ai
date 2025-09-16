@@ -364,6 +364,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <Select.Option value="offered">Offered</Select.Option>
             <Select.Option value="rejected">Rejected</Select.Option>
             <Select.Option value="submitted">Submitted</Select.Option>
+            <Select.Option value="expired">Expired</Select.Option>
           </Select>
         </div>
         <div>

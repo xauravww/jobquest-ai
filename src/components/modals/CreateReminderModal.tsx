@@ -67,13 +67,17 @@ interface CreateReminderModalProps {
     onClose: () => void;
     onSuccess: () => void;
     editingReminder?: Reminder;
+    defaultDate?: string;
+    defaultApplication?: Application | undefined;
 }
 
 const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
     isOpen,
     onClose,
     onSuccess,
-    editingReminder
+    editingReminder,
+    defaultDate,
+    defaultApplication
 }) => {
 
     const [formData, setFormData] = useState<FormData>({
@@ -118,12 +122,29 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     recurrenceEndDate: editingReminder.recurrenceEndDate ? new Date(editingReminder.recurrenceEndDate).toISOString().split('T')[0] : '',
                     notifications: editingReminder.notifications || [{ type: 'in_app', timing: 'on_time' }]
                 });
+            } else if (defaultApplication) {
+                setFormData({
+                    title: '',
+                    description: '',
+                    dueDate: defaultDate || '',
+                    dueTime: '09:00',
+                    type: 'follow_up',
+                    priority: 'medium',
+                    applicationId: defaultApplication._id || '',
+                    tags: '',
+                    color: '#3b82f6',
+                    isRecurring: false,
+                    recurrencePattern: 'weekly',
+                    recurrenceInterval: 1,
+                    recurrenceEndDate: '',
+                    notifications: [{ type: 'in_app', timing: 'on_time' }]
+                });
             } else {
                 // Reset form for new reminder
                 setFormData({
                     title: '',
                     description: '',
-                    dueDate: '',
+                    dueDate: defaultDate || '',
                     dueTime: '09:00',
                     type: 'follow_up',
                     priority: 'medium',
@@ -138,7 +159,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                 });
             }
         }
-    }, [isOpen, editingReminder]);
+    }, [isOpen, editingReminder, defaultApplication]);
 
 const fetchApplications = async () => {
         try {

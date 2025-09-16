@@ -81,13 +81,17 @@ interface CreateEventModalProps {
   onClose: () => void;
   onSuccess: () => void;
   editingEvent?: CalendarEvent | string;
+  defaultStartDate?: dayjs.Dayjs;
+  defaultEndDate?: dayjs.Dayjs;
 }
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  editingEvent
+  editingEvent,
+  defaultStartDate,
+  defaultEndDate
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -125,8 +129,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       } else {
         // Reset form for creating a new event
         form.resetFields();
-        const now = dayjs();
-        const oneHourLater = now.add(1, 'hour');
+        const now = defaultStartDate || dayjs();
+        const oneHourLater = defaultEndDate || now.add(1, 'hour');
         form.setFieldsValue({
           status: 'scheduled',
           priority: 'medium',
@@ -141,7 +145,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         });
       }
     }
-  }, [isOpen, editingEvent, form]);
+  }, [isOpen, editingEvent, form, defaultStartDate, defaultEndDate]);
 
 
   const handleSubmit = async (values: FormData) => {
@@ -334,7 +338,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 { value: '', label: 'None' },
                 ...applications.map((app: Application) => ({
                   value: app._id,
-                  label: `${app.jobId.title} at ${app.jobId.company}`
+                  label: `${app.jobId?.title || 'Untitled'} at ${app.jobId?.company || 'Unknown Company'}`
                 }))
               ]}
             />

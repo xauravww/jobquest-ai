@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 import CoverLetterModal from '@/components/modals/CoverLetterModal';
+import CreateReminderModal from '@/components/modals/CreateReminderModal';
 
 const { Search: AntSearch } = Input;
 const { RangePicker } = DatePicker;
@@ -107,6 +108,10 @@ const ApplicationTrackingPage = () => {
   const [coverLetterModalVisible, setCoverLetterModalVisible] = useState(false);
   const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
 
+  // New state for reminder modal visibility and selected job for reminder
+  const [reminderModalVisible, setReminderModalVisible] = useState(false);
+  const [selectedJobForReminder, setSelectedJobForReminder] = useState<Job | undefined>(undefined);
+
   // New state for user profile
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: '',
@@ -188,7 +193,7 @@ const ApplicationTrackingPage = () => {
           title: (jobData as PopulatedJob)?.title || app.jobTitle || app.title || 'Unknown Title',
           company: (jobData as PopulatedJob)?.company || app.company || 'Unknown Company',
           location: (jobData as PopulatedJob)?.location || app.location || 'Unknown Location',
-          status: app.status || 'submitted',
+          status: app.status || 'saved',
           datePosted: app.appliedDate || (jobData as PopulatedJob)?.datePosted || app.createdAt || app.datePosted || new Date().toISOString(),
           description: (jobData as PopulatedJob)?.description || app.description || '',
           priority: app.priority || 'medium',
@@ -279,6 +284,7 @@ const ApplicationTrackingPage = () => {
       case 'offered': return 'green';
       case 'rejected': return 'red';
       case 'submitted': return 'cyan';
+      case 'expired': return 'gray';
       default: return 'blue';
     }
   };
@@ -363,6 +369,7 @@ const ApplicationTrackingPage = () => {
                     <Select.Option value="offered">Offered</Select.Option>
                     <Select.Option value="rejected">Rejected</Select.Option>
                     <Select.Option value="submitted">Submitted</Select.Option>
+                    <Select.Option value="expired">Expired</Select.Option>
                   </Select>
                 </div>
 
@@ -581,24 +588,38 @@ const ApplicationTrackingPage = () => {
                         <Edit className="w-5 h-5" />
                         <span className="sr-only">Edit</span>
                       </button>
-                      <Popconfirm
-                        title="Are you sure you want to delete this application?"
-                        onConfirm={() => {
-                          handleDelete(record._id);
-                        }}
-                        okText="Yes"
-                        cancelText="No"
-                      >
-                        <button
-                          className="flex items-center gap-2 px-4 py-3 bg-danger text-white border border-danger rounded-lg transition-all duration-200 hover:scale-105"
-                          title="Delete"
-                        >
-                          <RiDeleteBin6Line className="w-5 h-5" />
-                          <span className="sr-only">Delete</span>
-                        </button>
-                      </Popconfirm>
-                    </div>
-                  ),
+                <button
+                  onClick={() => {
+                    setSelectedJobForReminder(record);
+                    setReminderModalVisible(true);
+                  }}
+                  className="flex items-center justify-center w-9 h-9 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-500 hover:text-yellow-400 rounded-lg transition-all duration-200 hover:scale-105"
+                  title="Set Follow-Up Reminder"
+                  aria-label="Set follow-up reminder"
+                >
+                  {/* Bell icon from lucide-react */}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </button>
+                <Popconfirm
+                  title="Are you sure you want to delete this application?"
+                  onConfirm={() => {
+                    handleDelete(record._id);
+                  }}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <button
+                    className="flex items-center gap-2 px-4 py-3 bg-danger text-white border border-danger rounded-lg transition-all duration-200 hover:scale-105"
+                    title="Delete"
+                  >
+                    <RiDeleteBin6Line className="w-5 h-5" />
+                    <span className="sr-only">Delete</span>
+                  </button>
+                </Popconfirm>
+              </div>
+            ),
                   responsive: ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'],
                   width: 150,
                 },
@@ -685,6 +706,18 @@ const ApplicationTrackingPage = () => {
             onClose={() => setCoverLetterModalVisible(false)}
             job={selectedJobForCoverLetter}
             userProfile={userProfile}
+          />
+
+          {/* Create Reminder Modal */}
+          <CreateReminderModal
+            isOpen={reminderModalVisible}
+            onClose={() => setReminderModalVisible(false)}
+            onSuccess={() => {
+              setReminderModalVisible(false);
+              toast.success('Reminder created successfully');
+            }}
+            editingReminder={undefined}
+            defaultApplication={selectedJobForReminder}
           />
         </div>
       </div>

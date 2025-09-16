@@ -34,7 +34,8 @@ const ApplicationSchema = new mongoose.Schema({
       'offer_received',
       'accepted',
       'rejected',
-      'withdrawn'
+      'withdrawn',
+      'expired'
     ],
     default: 'draft'
   },

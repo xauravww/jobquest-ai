@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as AntCalendar, Input, Pagination, Badge, Tooltip } from 'antd';
+import { Calendar as AntCalendar, Input, Pagination, Tooltip, Tag } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import AppLayout from '@/components/AppLayout';
 import {
@@ -22,6 +22,7 @@ import { RiDeleteBin6Line } from 'react-icons/ri';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
 import CreateEventModal from '@/components/modals/CreateEventModal';
+import DayViewModal from './DayViewModal';
 
 const { Search: AntSearch } = Input;
 
@@ -88,6 +89,10 @@ const RemindersCalendarPage = () => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [showDayViewModal, setShowDayViewModal] = useState(false);
+  const [dayViewItems, setDayViewItems] = useState<CalendarItem[]>([]);
+  const [dayViewDate, setDayViewDate] = useState<Dayjs | null>(null);
   const itemsPerPage = 20;
 
   const fetchData = useCallback(async (page = 1) => {
@@ -209,35 +214,56 @@ const RemindersCalendarPage = () => {
     const dateStr = value.format('YYYY-MM-DD');
     const items = itemsByDate[dateStr] || [];
 
-    return (
-      <ul className="calendar-date-cell">
-        {items.map(item => (
-          <Tooltip key={item.id} title={`${item.title} (${item.type})`}>
-            <li>
-              <Badge
-                color={item.color || (item.type === 'event' ? '#3b82f6' : '#f59e0b')}
-                text={
-                  <span className="text-xs font-semibold cursor-pointer" onClick={() => handleEditItem(item)}>
-                    {item.time ? `${item.time} - ` : ''}{item.title}
-                  </span>
-                }
-              />
-            </li>
-          </Tooltip>
-        ))}
-      </ul>
-    );
-  };
+    const reminderCount = items.filter(item => item.type === 'reminder').length;
+    const eventCount = items.filter(item => item.type === 'event').length;
 
-  const handleEditItem = (item: CalendarItem) => {
-    if (item.type === 'reminder') {
-      setEditingReminder(item);
-      setCreateType('reminder');
-    } else {
-      setEditingEvent(item);
-      setCreateType('event');
-    }
-    setShowCreateModal(true);
+    const handleEditItem = (item: CalendarItem) => {
+      if (item.type === 'reminder') {
+        setEditingReminder(item);
+        setCreateType('reminder');
+      } else {
+        setEditingEvent(item);
+        setCreateType('event');
+      }
+      setShowCreateModal(true);
+    };
+
+    return (
+      <div className="calendar-date-cell cursor-pointer" onClick={() => {
+        setSelectedDate(value);
+        setDayViewItems(items);
+        setDayViewDate(value);
+        setShowDayViewModal(true);
+      }}>
+        <ul>
+          {reminderCount > 0 && (
+            <li className="cursor-pointer" onClick={(e) => {
+              e.stopPropagation();
+              setSelectedDate(value);
+              setDayViewItems(items.filter(item => item.type === 'reminder'));
+              setDayViewDate(value);
+              setShowDayViewModal(true);
+            }}>
+              <Tag color="orange" className="text-xs font-medium">
+                {reminderCount} reminder{reminderCount > 1 ? 's' : ''}
+              </Tag>
+            </li>
+          )}
+          {eventCount > 0 && (
+            <li className="cursor-pointer" onClick={(e) => {
+              e.stopPropagation();
+              setSelectedDate(value);
+              setDayViewItems(items.filter(item => item.type === 'event'));
+              setDayViewDate(value);
+              setShowDayViewModal(true);
+            }}>
+              <Tag color="blue" className="text-xs font-medium">
+                {eventCount} event{eventCount > 1 ? 's' : ''}
+              </Tag>
+            </li>
+          )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -346,8 +372,43 @@ const RemindersCalendarPage = () => {
           <AntCalendar
             dateCellRender={dateCellRender}
             fullscreen={false}
+            headerRender={({ value, onChange }) => {
+              const current = value.clone();
+              // dayjs does not have localeData, so use Intl API for month names
+              const month = current.month();
+              const year = current.year();
+
+              const monthNames = Array.from({ length: 12 }, (_, i) =>
+                new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(year, i))
+              );
+
+              return (
+                <div style={{ padding: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <select
+                    value={month}
+                    onChange={e => {
+                      const newMonth = parseInt(e.target.value, 10);
+                      const newValue = value.clone().month(newMonth);
+                      onChange(newValue);
+                    }}
+                  >
+                    {monthNames.map((name, i) => (
+                      <option key={i} value={i}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            }}
             onSelect={(date) => {
-              // Optional: could implement date click behavior
+              setSelectedDate(date);
+              const dateStr = date.format('YYYY-MM-DD');
+              const items = itemsByDate[dateStr] || [];
+              setDayViewItems(items);
+              setDayViewDate(date);
+              setShowDayViewModal(true);
+              return null;
             }}
             className="rounded-xl shadow-lg"
           />
@@ -381,6 +442,7 @@ const RemindersCalendarPage = () => {
             }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             editingReminder={editingReminder as any}
+            defaultDate={selectedDate.format('YYYY-MM-DD')}
           />
         )}
 
@@ -397,6 +459,30 @@ const RemindersCalendarPage = () => {
             }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             editingEvent={editingEvent as any}
+            defaultStartDate={selectedDate}
+            defaultEndDate={selectedDate.add(1, 'hour')}
+          />
+        )}
+
+        {/* Day View Modal */}
+        {showDayViewModal && dayViewDate && dayViewItems && (
+          <DayViewModal
+            isOpen={showDayViewModal}
+            onClose={() => setShowDayViewModal(false)}
+            date={dayViewDate}
+            items={dayViewItems}
+            onEditItem={(item) => {
+              if (item.type === 'reminder') {
+                setEditingReminder(item);
+                setCreateType('reminder');
+              } else {
+                setEditingEvent(item);
+                setCreateType('event');
+              }
+              setShowCreateModal(true);
+              setShowDayViewModal(false);
+            }}
+            onRefresh={() => fetchData()}
           />
         )}
       </div>

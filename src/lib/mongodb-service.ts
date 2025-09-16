@@ -8,44 +8,11 @@ export class MongoDBService {
 
   // Helper method to normalize status values to valid enum values
   private normalizeStatus(status: unknown): string {
-    const validStatuses = [
-      'draft',
-      'applied',
-      'submitted',
-      'under_review',
-      'phone_screening',
-      'technical_interview',
-      'final_interview',
-      'offer_received',
-      'accepted',
-      'rejected',
-      'withdrawn'
-    ];
-
-    // Map common invalid statuses to valid ones
-    const statusMapping: { [key: string]: string } = {
-      'interested': 'submitted',
-      'pending': 'submitted',
-      'in_progress': 'under_review',
-      'review': 'under_review',
-      'interview': 'technical_interview',
-      'offered': 'offer_received',
-      'hired': 'accepted',
-      'declined': 'rejected',
-      'cancelled': 'withdrawn'
-    };
-
-    const normalized = (status as string)?.toLowerCase().replace(/\s+/g, '_');
-    if (statusMapping[normalized]) {
-      return statusMapping[normalized];
+    // Remove normalization and mapping, accept status as is
+    if (typeof status === 'string') {
+      return status;
     }
-
-    // If status is already valid, return it
-    if (validStatuses.includes(status as string)) {
-      return status as string;
-    }
-
-    // Default to 'submitted' for unknown statuses
+    // Default to 'submitted' if not a string
     return 'submitted';
   }
 
