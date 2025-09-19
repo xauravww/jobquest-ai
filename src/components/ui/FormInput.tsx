@@ -67,24 +67,41 @@ export const FormInput: React.FC<FormInputProps> = ({
     <div className={`w-full ${className}`}>
       {label && (
         <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
+          {label} {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      <Input
-        {...props}
-        value={value}
-        allowClear
-        prefix={icon && <span className="text-primary">{icon}</span>}
-        className={`bg-bg-card border-border hover:border-primary focus:border-primary ${error ? 'border-red-500' : ''}`}
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: error ? '#ef4444' : 'var(--border)',
-          color: 'var(--text)',
-        }}
-        onChange={handleChange}
-      />
+      <div className="relative">
+        <Input
+          {...props}
+          value={value}
+          allowClear
+          prefix={icon && <span className="text-primary mr-1">{icon}</span>}
+          className={`bg-bg-card border-border hover:border-primary focus:border-primary transition-all duration-200 ${
+            error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'focus:ring-2 focus:ring-primary/20'
+          }`}
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: error ? '#ef4444' : 'var(--border)',
+            color: 'var(--text)',
+            height: '44px',
+          }}
+          onChange={handleChange}
+        />
+        {error && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
+      </div>
       {error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
+        <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          {error}
+        </p>
       )}
     </div>
   );
@@ -139,24 +156,41 @@ export const FormDateInput: React.FC<FormDateInputProps> = ({
     <div className={`w-full ${className}`}>
       {label && (
         <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
+          {label} {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-      <input
-        type="date"
-        value={dateValue}
-        onChange={(e) => onChange?.(e.target.value)}
-        placeholder={placeholder}
-        className={`bg-bg-card border-border hover:border-primary focus:border-primary rounded px-3 py-1 text-text text-sm w-full ${error ? 'border-red-500' : ''}`}
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: error ? '#ef4444' : 'var(--border)',
-          color: 'var(--text)',
-        }}
-        required={required}
-      />
+      <div className="relative">
+        <input
+          type="date"
+          value={dateValue}
+          onChange={(e) => onChange?.(e.target.value)}
+          placeholder={placeholder}
+          className={`bg-bg-card border border-border hover:border-primary focus:border-primary rounded-lg px-4 py-3 text-text w-full transition-all duration-200 focus:outline-none focus:ring-2 ${
+            error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'focus:ring-primary/20'
+          }`}
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderColor: error ? '#ef4444' : 'var(--border)',
+            color: 'var(--text)',
+            height: '44px',
+          }}
+          required={required}
+        />
+        {error && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
+      </div>
       {error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
+        <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          {error}
+        </p>
       )}
     </div>
   );

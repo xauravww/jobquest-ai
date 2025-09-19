@@ -74,13 +74,17 @@ const GlassNavbar: React.FC = () => {
         );
     }
 
-    // Desktop version remains the same
+    // Fixed desktop version - now shows navigation
     return (
       <div className='hidden md:flex flex-1 justify-center space-x-8'>
          {navItems.map(item => (
-             <Link key={item.href} href={item.href} className="group text-indigo-300 hover:text-indigo-500 transition-transform duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-600 rounded">
-                {item.label}
-                <span className="block max-w-0 group-hover:max-w-full transition-all duration-500 h-0.5 bg-indigo-500"></span>
+             <Link 
+               key={item.href} 
+               href={item.href} 
+               className="group relative px-3 py-2 text-gray-300 hover:text-white transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 rounded-md"
+             >
+                <span className="relative z-10">{item.label}</span>
+                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
              </Link>
          ))}
       </div>
@@ -124,25 +128,15 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
         </Dropdown>
       ) : (
         <>
-          <Link href="/auth/signin" passHref>
-            <Button
-              ghost
-              className="border-indigo-500 text-indigo-400 hover:bg-indigo-500 hover:text-white w-full"
-              onClick={closeDrawer}
-              size="large"
-            >
+          <Link href="/auth/signin" onClick={closeDrawer}>
+            <button className="w-full px-4 py-3 border-2 border-indigo-500 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-lg transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900">
               Sign In
-            </Button>
+            </button>
           </Link>
-          <Link href="/auth/signup" passHref>
-            <Button
-              type="primary"
-              className="bg-indigo-600 hover:bg-indigo-700 border-indigo-600 w-full"
-              onClick={closeDrawer}
-              size="large"
-            >
+          <Link href="/auth/signup" onClick={closeDrawer}>
+            <button className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900">
               Get Started
-            </Button>
+            </button>
           </Link>
         </>
       )}
@@ -179,6 +173,9 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
               </Link>
             </div>
 
+            {/* Desktop Navigation */}
+            <NavLinks />
+
             {/* Desktop Auth Buttons */}
             <div className="flex-shrink-0">
               <AuthButtons />
@@ -186,14 +183,13 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center gap-2">
-              <Button
-                icon={<FiMenu className="w-6 h-6 text-white" />}
+              <button
                 onClick={showDrawer}
-                type="text"
-                className="text-white"
+                className="w-10 h-10 bg-gray-800 hover:bg-gray-700 text-white rounded-md transition-colors duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
                 aria-label="Open navigation menu"
-                style={{ width: '40px', height: '40px', backgroundColor: '#1f2937', borderRadius: '4px' }}
-              />
+              >
+                <FiMenu className="w-6 h-6" />
+              </button>
             </div>
           </div>
         </div>
@@ -211,16 +207,15 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
                 Jobquest AI
               </span>
             </Link>
-             {/* Restore the Switch to toggle between views */}
+             {/* Simplified view toggle - only show for authenticated users */}
              {session && (
-                 <div className='flex items-center gap-2'>
-                    <span className='text-xs font-semibold text-gray-400'>{drawerView === 'nav' ? 'Menu' : 'App'}</span>
-                    <Switch
-                        checked={drawerView === 'sidebar'}
-                        onChange={toggleDrawerView}
-                        aria-label="Toggle between menu and app sidebar"
-                    />
-                 </div>
+                 <button
+                   onClick={toggleDrawerView}
+                   className="text-xs font-semibold text-gray-400 hover:text-white transition-colors px-2 py-1 rounded"
+                   aria-label="Toggle between menu and app sidebar"
+                 >
+                   {drawerView === 'nav' ? 'Show App Menu' : 'Show Navigation'}
+                 </button>
              )}
           </div>
         }

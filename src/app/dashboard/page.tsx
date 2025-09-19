@@ -16,10 +16,10 @@ import {
   MapPin,
   Brain,
   Bell,
-  AlertTriangle,
   Clock,
   ExternalLink
 } from 'lucide-react';
+import ErrorState from '@/components/ui/ErrorState';
 import { useSession } from 'next-auth/react';
 
 // --- Type Definitions ---
@@ -68,31 +68,31 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 // --- Responsive Layout Definitions ---
 const layouts = {
   lg: [
-    { i: 'stats-total', x: 0, y: 0, w: 3, h: 2 },
-    { i: 'stats-interviews', x: 3, y: 0, w: 3, h: 2 },
-    { i: 'profile', x: 6, y: 0, w: 3, h: 2 },
-    { i: 'reminders', x: 9, y: 0, w: 3, h: 2 },
-    { i: 'activity-chart', x: 0, y: 2, w: 8, h: 4 },
-    { i: 'status-pie', x: 8, y: 2, w: 4, h: 4 },
-    { i: 'skills', x: 0, y: 6, w: 12, h: 2 },
+    { i: 'stats-total', x: 0, y: 0, w: 3, h: 3 },
+    { i: 'stats-interviews', x: 3, y: 0, w: 3, h: 3 },
+    { i: 'profile', x: 6, y: 0, w: 3, h: 3 },
+    { i: 'reminders', x: 9, y: 0, w: 3, h: 3 },
+    { i: 'activity-chart', x: 0, y: 3, w: 8, h: 4 },
+    { i: 'status-pie', x: 8, y: 3, w: 4, h: 4 },
+    { i: 'skills', x: 0, y: 7, w: 12, h: 2 },
   ],
   md: [
-    { i: 'stats-total', x: 0, y: 0, w: 5, h: 2 },
-    { i: 'stats-interviews', x: 5, y: 0, w: 5, h: 2 },
-    { i: 'profile', x: 0, y: 2, w: 5, h: 2 },
-    { i: 'reminders', x: 5, y: 2, w: 5, h: 2 },
-    { i: 'activity-chart', x: 0, y: 4, w: 10, h: 4 },
-    { i: 'status-pie', x: 0, y: 8, w: 10, h: 4 },
-    { i: 'skills', x: 0, y: 12, w: 10, h: 2 },
+    { i: 'stats-total', x: 0, y: 0, w: 5, h: 3 },
+    { i: 'stats-interviews', x: 5, y: 0, w: 5, h: 3 },
+    { i: 'profile', x: 0, y: 3, w: 5, h: 3 },
+    { i: 'reminders', x: 5, y: 3, w: 5, h: 3 },
+    { i: 'activity-chart', x: 0, y: 6, w: 10, h: 4 },
+    { i: 'status-pie', x: 0, y: 10, w: 10, h: 4 },
+    { i: 'skills', x: 0, y: 14, w: 10, h: 2 },
   ],
   sm: [
-    { i: 'stats-total', x: 0, y: 0, w: 6, h: 2 },
-    { i: 'stats-interviews', x: 0, y: 2, w: 6, h: 2 },
-    { i: 'profile', x: 0, y: 4, w: 6, h: 2 },
-    { i: 'reminders', x: 0, y: 6, w: 6, h: 2 },
-    { i: 'activity-chart', x: 0, y: 8, w: 6, h: 4 },
-    { i: 'status-pie', x: 0, y: 12, w: 6, h: 4 },
-    { i: 'skills', x: 0, y: 16, w: 6, h: 2 },
+    { i: 'stats-total', x: 0, y: 0, w: 6, h: 3 },
+    { i: 'stats-interviews', x: 0, y: 3, w: 6, h: 3 },
+    { i: 'profile', x: 0, y: 6, w: 6, h: 3 },
+    { i: 'reminders', x: 0, y: 9, w: 6, h: 3 },
+    { i: 'activity-chart', x: 0, y: 12, w: 6, h: 4 },
+    { i: 'status-pie', x: 0, y: 16, w: 6, h: 4 },
+    { i: 'skills', x: 0, y: 20, w: 6, h: 2 },
   ],
 };
 
@@ -123,18 +123,20 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 
 const StatCard = ({ title, value, icon, link, children }: { title: string, value: string | number, icon: React.ReactNode, link: string, children: React.ReactNode }) => (
-    <Link href={link} className="block h-full">
-        <div className="bg-bg-card hover:bg-bg-light transition-all duration-300 rounded-xl shadow-lg border border-border hover:border-primary/50 p-6 flex flex-col justify-between h-full overflow-hidden">
-            <div>
-                <div className="flex items-center gap-3 mb-3">
-                    {icon}
-                    <h3 className="text-md font-semibold text-text-muted truncate">{title}</h3>
+    <Link href={link} className="block h-full group">
+        <div className="bg-bg-card hover:bg-bg-light transition-all duration-300 rounded-xl shadow-lg border border-border hover:border-primary/50 p-4 md:p-6 flex flex-col justify-between h-full overflow-hidden group-hover:shadow-xl group-hover:shadow-primary/10">
+            <div className="flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                        {icon}
+                    </div>
+                    <h3 className="text-sm md:text-md font-semibold text-text-muted truncate group-hover:text-white transition-colors">{title}</h3>
                 </div>
-                <div className="text-4xl font-bold text-white mb-3">
+                <div className="text-2xl md:text-4xl font-bold text-white mb-4 group-hover:text-primary transition-colors">
                     {value}
                 </div>
             </div>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-xs md:text-sm border-t border-border/50 pt-4">
                 {children}
             </div>
         </div>
@@ -173,24 +175,42 @@ const DashboardPage = () => {
   if (status === "loading" || loading) {
     return (
       <AppLayout showFooter={false}>
-        <div className="p-8 bg-bg min-h-screen">
+        <div className="p-4 md:p-8 bg-bg min-h-screen">
             {/* Header Skeleton */}
-            <div className="animate-pulse flex justify-between items-center mb-8">
-                <div>
-                    <div className="h-8 bg-bg-light rounded w-64 mb-2"></div>
-                    <div className="h-5 bg-bg-light rounded w-96"></div>
+            <div className="animate-pulse flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 mt-8">
+                <div className="flex-1">
+                    <div className="h-6 md:h-8 bg-bg-light rounded w-48 md:w-64 mb-2"></div>
+                    <div className="h-4 md:h-5 bg-bg-light rounded w-64 md:w-96"></div>
                 </div>
-                <div className="h-10 bg-bg-light rounded w-32"></div>
+                <div className="h-10 md:h-12 bg-bg-light rounded w-32 md:w-40"></div>
             </div>
-            {/* Grid Skeleton */}
-            <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 md:col-span-6 lg:col-span-3 h-48 bg-bg-card rounded-xl"></div>
-                <div className="col-span-12 md:col-span-6 lg:col-span-3 h-48 bg-bg-card rounded-xl"></div>
-                <div className="col-span-12 md:col-span-6 lg:col-span-3 h-48 bg-bg-card rounded-xl"></div>
-                <div className="col-span-12 md:col-span-6 lg:col-span-3 h-48 bg-bg-card rounded-xl"></div>
-                <div className="col-span-12 lg:col-span-8 h-96 bg-bg-card rounded-xl"></div>
-                <div className="col-span-12 lg:col-span-4 h-96 bg-bg-card rounded-xl"></div>
-                <div className="col-span-12 h-48 bg-bg-card rounded-xl"></div>
+            {/* Improved Grid Skeleton */}
+            <div className="space-y-6">
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-32 md:h-40 bg-bg-card rounded-xl animate-pulse">
+                            <div className="p-4 md:p-6 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-bg-light rounded-lg"></div>
+                                    <div className="h-4 bg-bg-light rounded w-20"></div>
+                                </div>
+                                <div className="h-8 bg-bg-light rounded w-16"></div>
+                                <div className="space-y-2">
+                                    <div className="h-3 bg-bg-light rounded w-full"></div>
+                                    <div className="h-3 bg-bg-light rounded w-3/4"></div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div className="lg:col-span-2 h-64 md:h-80 bg-bg-card rounded-xl animate-pulse"></div>
+                    <div className="h-64 md:h-80 bg-bg-card rounded-xl animate-pulse"></div>
+                </div>
+                {/* Skills Row */}
+                <div className="h-32 bg-bg-card rounded-xl animate-pulse"></div>
             </div>
         </div>
       </AppLayout>
@@ -200,16 +220,14 @@ const DashboardPage = () => {
   if (error) {
     return (
       <AppLayout showFooter={false}>
-        <div className="p-8 bg-bg min-h-screen flex flex-col items-center justify-center text-center">
-            <AlertTriangle className="w-16 h-16 text-destructive mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">Oops! Something went wrong.</h1>
-            <p className="text-text-muted mb-6">{error}</p>
-            <button
-              onClick={fetchData}
-              className="px-6 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors font-semibold"
-            >
-              Try Again
-            </button>
+        <div className="p-4 md:p-8 bg-bg min-h-screen">
+          <ErrorState
+            title="Dashboard Error"
+            message={error}
+            onRetry={fetchData}
+            showHomeButton={true}
+            className="min-h-[60vh]"
+          />
         </div>
       </AppLayout>
     );
@@ -225,7 +243,7 @@ const DashboardPage = () => {
             </h1>
             <p className="text-text-muted text-base md:text-lg">Here&apos;s your job search progress and insights.</p>
           </div>
-          <Link href="/application-tracking" className="px-5 py-3 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors font-semibold flex items-center gap-2 whitespace-nowrap">
+          <Link href="/application-tracking" className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
             <Briefcase className="w-5 h-5" />
             Manage Applications
           </Link>

@@ -188,16 +188,14 @@ const SignInPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Disabled Google and Twitter sign-in buttons */}
-              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12 opacity-50 cursor-not-allowed" disabled>
-                <FcGoogle size={20} />
-                <span>Google (Disabled)</span>
-              </button>
-              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12 opacity-50 cursor-not-allowed" disabled>
-                <FaTwitter size={20} className="text-sky-400" />
-                <span>Twitter (Disabled)</span>
-              </button>
+            <div className="grid grid-cols-1 gap-4">
+              <div className="text-center p-4 bg-gray-800/30 rounded-lg border border-gray-700">
+                <p className="text-sm text-gray-400 mb-2">Social login coming soon</p>
+                <div className="flex justify-center gap-4 opacity-50">
+                  <FcGoogle size={24} />
+                  <FaTwitter size={24} className="text-sky-400" />
+                </div>
+              </div>
             </div>
           </div>
 

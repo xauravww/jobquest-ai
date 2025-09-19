@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Search, Filter, MapPin, Building, Clock, DollarSign, Bookmark, ExternalLink } from 'lucide-react';
 import { FormInput } from '@/components/ui/FormInput';
@@ -131,11 +131,18 @@ const JobSearchPage = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  // Update active filters when filters change
+  useEffect(() => {
+    updateActiveFilters();
+  }, [updateActiveFilters]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setCurrentPage(1);
     searchJobs();
   };
+
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const formatSalary = (salary?: string) => {
     if (!salary) return 'Salary not specified';
@@ -152,6 +159,26 @@ const JobSearchPage = () => {
     if (diffDays < 7) return `${diffDays} days ago`;
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
     return `${Math.ceil(diffDays / 30)} months ago`;
+  };
+
+  const updateActiveFilters = useCallback(() => {
+    const active = [];
+    if (filters.jobType !== 'all') active.push(`Type: ${jobTypes.find(t => t.value === filters.jobType)?.label}`);
+    if (filters.salaryRange !== 'all') active.push(`Salary: ${salaryRanges.find(s => s.value === filters.salaryRange)?.label}`);
+    if (filters.datePosted !== 'all') active.push(`Posted: ${datePostedOptions.find(d => d.value === filters.datePosted)?.label}`);
+    if (filters.location) active.push(`Location: ${filters.location}`);
+    setActiveFilters(active);
+  }, [filters, jobTypes, salaryRanges, datePostedOptions]);
+
+  const clearFilters = () => {
+    setFilters({
+      query: filters.query, // Keep search query
+      location: '',
+      jobType: 'all',
+      salaryRange: 'all',
+      datePosted: 'all'
+    });
+    setActiveFilters([]);
   };
 
   return (
@@ -239,9 +266,30 @@ const JobSearchPage = () => {
             </div>
           </form>
 
+          {/* Active Filters */}
+          {activeFilters.length > 0 && (
+            <div className="mb-6 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-text-muted">Active filters:</span>
+              {activeFilters.map((filter, index) => (
+                <span key={index} className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
+                  {filter}
+                </span>
+              ))}
+              <button
+                onClick={clearFilters}
+                className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm hover:bg-red-500/30 transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
+              <svg className="h-5 w-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
               <p className="text-red-400">{error}</p>
             </div>
           )}
@@ -249,9 +297,40 @@ const JobSearchPage = () => {
           {/* Results */}
           <div className="space-y-6">
             {isLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-text-muted">Searching for jobs...</p>
+              <div className="space-y-6">
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-2 border-border border-t-primary mx-auto mb-4"></div>
+                  <p className="text-text-muted text-lg">Searching for jobs...</p>
+                  <p className="text-text-secondary text-sm mt-2">This may take a few moments</p>
+                </div>
+                {/* Job card skeletons */}
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-bg-card rounded-xl p-6 border border-border animate-pulse">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1 space-y-3">
+                        <div className="h-6 bg-bg-light rounded w-3/4"></div>
+                        <div className="flex gap-4">
+                          <div className="h-4 bg-bg-light rounded w-24"></div>
+                          <div className="h-4 bg-bg-light rounded w-32"></div>
+                          <div className="h-4 bg-bg-light rounded w-20"></div>
+                        </div>
+                        <div className="flex gap-4">
+                          <div className="h-6 bg-bg-light rounded w-16"></div>
+                          <div className="h-6 bg-bg-light rounded w-24"></div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-bg-light rounded w-full"></div>
+                          <div className="h-4 bg-bg-light rounded w-5/6"></div>
+                          <div className="h-4 bg-bg-light rounded w-4/6"></div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <div className="w-10 h-10 bg-bg-light rounded-lg"></div>
+                        <div className="w-20 h-10 bg-bg-light rounded-lg"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredJobs.length > 0 ? (
               <>

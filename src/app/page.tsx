@@ -17,16 +17,16 @@ const FeatureCard = ({ title, description, icon: Icon, visual, reverse = false }
   visual: React.ReactNode;
   reverse?: boolean;
 }) => (
-  <div className="grid md:grid-cols-2 gap-12 items-center">
-    <div className={`rounded-lg bg-bg-light p-4 border border-border shadow-2xl ${reverse ? 'md:order-2' : 'md:order-1'}`}>
+  <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+    <div className={`rounded-xl bg-bg-light p-3 md:p-4 border border-border shadow-xl hover:shadow-2xl transition-shadow duration-300 ${reverse ? 'md:order-2' : 'md:order-1'}`}>
       {visual}
     </div>
-    <div className={reverse ? 'md:order-1' : 'md:order-2'}>
-      <div className="inline-flex items-center gap-3 mb-4">
-        <Icon className="w-7 h-7 text-primary" />
-        <h3 className="text-2xl font-bold text-white">{title}</h3>
+    <div className={`space-y-4 ${reverse ? 'md:order-1' : 'md:order-2'}`}>
+      <div className="inline-flex items-center gap-3 p-3 bg-primary/10 rounded-lg">
+        <Icon className="w-6 h-6 text-primary" />
+        <h3 className="text-xl md:text-2xl font-bold text-white">{title}</h3>
       </div>
-      <p className="text-lg text-gray-300 leading-relaxed">
+      <p className="text-base md:text-lg text-gray-300 leading-relaxed">
         {description}
       </p>
     </div>
@@ -50,20 +50,20 @@ const TestimonialCard = ({ quote, name, role }: { quote: string; name: string; r
 // --- START: Section Components ---
 
 const HeroSection = () => (
-  <section className="relative bg-gradient-hero text-center px-6 py-32 pt-40 z-10">
+  <section className="relative bg-gradient-hero text-center px-4 md:px-6 py-20 md:py-32 pt-28 md:pt-40 z-10">
     <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-0"></div>
-    <div className="relative z-10 max-w-4xl mx-auto">
-      <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-6 bg-gradient-to-r from-white via-gray-200 to-emerald-300 bg-clip-text text-transparent">
+    <div className="relative z-10 max-w-5xl mx-auto">
+      <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-6 bg-gradient-to-r from-white via-gray-200 to-emerald-300 bg-clip-text text-transparent">
         Stop Searching, Start Interviewing
       </h1>
-      <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-300 mb-12 leading-relaxed">
+      <p className="text-base md:text-lg lg:text-xl max-w-3xl mx-auto text-gray-300 mb-8 md:mb-12 leading-relaxed">
         Jobquest AI is your career co-pilot. We use intelligent automation to find your perfect job, optimize your resume, and manage your applications—so you can focus on acing the interview.
       </p>
-      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-        <a href="/auth/signup" className="button-primary text-lg px-8 py-4 flex items-center gap-2">
-          Get Started for Free <ArrowRight className="w-5 h-5" />
+      <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center">
+        <a href="/auth/signup" className="button-primary text-base md:text-lg px-6 md:px-8 py-3 md:py-4 flex items-center gap-2 w-full sm:w-auto justify-center">
+          Get Started for Free <ArrowRight className="w-4 md:w-5 h-4 md:h-5" />
         </a>
-        <a href="#features" className="button-secondary text-lg px-8 py-4">
+        <a href="#features" className="button-secondary text-base md:text-lg px-6 md:px-8 py-3 md:py-4 w-full sm:w-auto justify-center">
           See Features
         </a>
       </div>
