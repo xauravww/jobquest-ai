@@ -43,21 +43,41 @@ class TelegramService {
 
   constructor() {
     this.initializeCommands();
-    this.loadConfig();
+    this.loadConfig().catch(error => {
+      console.error('Failed to load config in constructor:', error);
+    });
   }
 
   // Load Telegram configuration
-  private loadConfig() {
+  private async loadConfig() {
     if (typeof window === 'undefined') return;
     
     try {
+      // Try to load from API first (database)
+      const response = await fetch('/api/settings/telegram');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.telegramConfig && data.telegramConfig.enabled) {
+          this.config = {
+            botToken: data.telegramConfig.botToken,
+            chatId: data.telegramConfig.chatId
+          };
+          if (this.config?.botToken && this.config?.chatId) {
+            this.isConnected = true;
+            console.log('🟢 [TELEGRAM SERVICE] Auto-connected with database config');
+            return;
+          }
+        }
+      }
+
+      // Fallback to localStorage for backward compatibility
       const stored = localStorage.getItem('telegramConfig');
       if (stored) {
         this.config = JSON.parse(stored);
         // Auto-connect if we have valid config
         if (this.config?.botToken && this.config?.chatId) {
           this.isConnected = true;
-          console.log('🟢 [TELEGRAM SERVICE] Auto-connected with saved config');
+          console.log('🟢 [TELEGRAM SERVICE] Auto-connected with localStorage config');
         }
       }
     } catch (error) {
@@ -66,11 +86,29 @@ class TelegramService {
   }
 
   // Save Telegram configuration
-  private saveConfig() {
+  private async saveConfig() {
     if (typeof window === 'undefined') return;
     
     try {
       if (this.config) {
+        // Save to database via API
+        const response = await fetch('/api/settings/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            botToken: this.config.botToken,
+            chatId: this.config.chatId,
+            enabled: true
+          })
+        });
+
+        if (response.ok) {
+          console.log('🟢 [TELEGRAM SERVICE] Config saved to database');
+        } else {
+          console.error('🔴 [TELEGRAM SERVICE] Failed to save config to database');
+        }
+
+        // Also save to localStorage as backup
         localStorage.setItem('telegramConfig', JSON.stringify(this.config));
       }
     } catch (error) {

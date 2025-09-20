@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { telegramService } from '@/services/TelegramService';
+import { getBotTokenFromDB, getUserByTelegramChatId } from '@/lib/telegram-config';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     console.log('🟦 [TELEGRAM WEBHOOK] Received webhook:', JSON.stringify(body, null, 2));
     
+    // Get bot token from database
+    const botToken = await getBotTokenFromDB();
+    if (!botToken) {
+      console.log('🟡 [TELEGRAM WEBHOOK] No bot token found in database');
+      return NextResponse.json({ error: 'Bot not configured' }, { status: 400 });
+    }
+
     // Log environment info for debugging
     console.log('🟦 [TELEGRAM WEBHOOK] Environment:', {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       VERCEL_URL: process.env.VERCEL_URL,
       NODE_ENV: process.env.NODE_ENV,
-      hasBotToken: !!process.env.TELEGRAM_BOT_TOKEN
+      hasBotToken: !!botToken
     });
 
     // Handle callback queries (inline keyboard button presses)
@@ -27,18 +35,30 @@ export async function POST(request: NextRequest) {
         chatId
       });
 
+      // Verify user exists for this chat ID
+      const user = await getUserByTelegramChatId(chatId?.toString());
+      if (!user) {
+        console.log('🟡 [TELEGRAM WEBHOOK] No user found for chat ID:', chatId);
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
       // Handle the callback
       const response = await telegramService.handleCallbackQuery(callbackData, messageId?.toString());
 
-      // Send response back to user
-      await telegramService.sendMessage({
-        text: response,
-        chatId: chatId?.toString(),
-        parseMode: 'Markdown'
+      // Send response back to user using bot token from DB
+      const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      await fetch(telegramApiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: response,
+          parse_mode: 'Markdown'
+        })
       });
 
       // Answer the callback query to remove loading state
-      await answerCallbackQuery(callbackQuery.id, 'Action processed!');
+      await answerCallbackQuery(callbackQuery.id, 'Action processed!', botToken);
 
       return NextResponse.json({ success: true, message: 'Callback processed' });
     }
@@ -54,44 +74,57 @@ export async function POST(request: NextRequest) {
         chatId
       });
 
+      // Verify user exists for this chat ID
+      const user = await getUserByTelegramChatId(chatId?.toString());
+      if (!user) {
+        console.log('🟡 [TELEGRAM WEBHOOK] No user found for chat ID:', chatId);
+        // Send a helpful message to the user
+        const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        await fetch(telegramApiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: '❌ Your Telegram account is not linked to JobQuest AI. Please configure Telegram in your settings first.',
+            parse_mode: 'Markdown'
+          })
+        });
+        return NextResponse.json({ success: true, message: 'User not configured' });
+      }
+
       // Handle commands and text inputs
       if (text) {
         let response: string | null = null;
         
         // Check if it's a command (starts with /)
         if (text.startsWith('/')) {
-          response = await handleCommand(text, chatId.toString());
+          response = await handleCommand(text, chatId.toString(), user);
         } else {
           // Handle special text formats (fleeting:, reminder:, etc.)
-          response = await handleTextMessage(text, chatId.toString());
+          response = await handleTextMessage(text, chatId.toString(), user);
         }
         
         if (response) {
           console.log('🟦 [TELEGRAM WEBHOOK] Sending response:', response.substring(0, 100) + '...');
           
-          // Send response directly via Telegram API instead of using telegramService
-          const botToken = process.env.TELEGRAM_BOT_TOKEN;
-          if (botToken) {
-            const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-            
-            const telegramResponse = await fetch(telegramApiUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: chatId,
-                text: response,
-                parse_mode: 'Markdown'
-              })
-            });
-            
-            console.log('🟦 [TELEGRAM WEBHOOK] Telegram API response status:', telegramResponse.status);
-            
-            if (!telegramResponse.ok) {
-              const errorText = await telegramResponse.text();
-              console.error('🔴 [TELEGRAM WEBHOOK] Telegram API error:', errorText);
-            }
-          } else {
-            console.error('🔴 [TELEGRAM WEBHOOK] No bot token available');
+          // Send response directly via Telegram API using bot token from DB
+          const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+          
+          const telegramResponse = await fetch(telegramApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: response,
+              parse_mode: 'Markdown'
+            })
+          });
+          
+          console.log('🟦 [TELEGRAM WEBHOOK] Telegram API response status:', telegramResponse.status);
+          
+          if (!telegramResponse.ok) {
+            const errorText = await telegramResponse.text();
+            console.error('🔴 [TELEGRAM WEBHOOK] Telegram API error:', errorText);
           }
         } else {
           console.log('🟡 [TELEGRAM WEBHOOK] No response generated for message:', text);
@@ -113,10 +146,8 @@ export async function POST(request: NextRequest) {
 }
 
 // Answer callback query to remove loading state from inline keyboard
-async function answerCallbackQuery(callbackQueryId: string, text?: string) {
+async function answerCallbackQuery(callbackQueryId: string, text?: string, botToken?: string) {
   try {
-    // Get bot token from environment or config
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
       console.log('🟡 [TELEGRAM WEBHOOK] No bot token available, skipping callback answer');
       return;
@@ -139,7 +170,7 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string) {
 }
 
 // Handle Telegram commands
-export async function handleCommand(text: string, chatId: string): Promise<string | null> {
+export async function handleCommand(text: string, chatId: string, user: any): Promise<string | null> {
   try {
     const parts = text.trim().split(' ');
     const command = parts[0].toLowerCase();
@@ -373,7 +404,7 @@ Type /help to see all available commands.
 }
 
 // Handle text messages for fleeting notes, reminders, etc.
-export async function handleTextMessage(text: string, chatId: string): Promise<string | null> {
+export async function handleTextMessage(text: string, chatId: string, user: any): Promise<string | null> {
   try {
     // Handle fleeting notes
     if (text.startsWith('fleeting:')) {

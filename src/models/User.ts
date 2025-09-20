@@ -86,6 +86,11 @@ export interface IUser extends Document {
     model: string;
     enabled: boolean;
   };
+  telegramConfig?: {
+    botToken?: string;
+    chatId?: string;
+    enabled: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -196,6 +201,11 @@ const UserSchema = new Schema<IUser>(
       apiUrl: { type: String, default: 'http://localhost:1234' },
       model: { type: String, default: 'local-model' },
       enabled: { type: Boolean, default: true },
+    },
+    telegramConfig: {
+      botToken: String,
+      chatId: String,
+      enabled: { type: Boolean, default: false },
     },
   },
   {

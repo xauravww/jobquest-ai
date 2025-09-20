@@ -65,14 +65,38 @@ const SettingsPage = () => {
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
+  const loadSettings = async () => {
     // Load notification preferences
     const prefs = notificationService.getPreferences();
     setNotificationPrefs(prefs);
 
-    // Load Telegram status
+    // Load Telegram settings from API
+    try {
+      const response = await fetch('/api/settings/telegram');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.telegramConfig) {
+          setTelegramConfig({
+            botToken: data.telegramConfig.botToken || '',
+            chatId: data.telegramConfig.chatId || ''
+          });
+          setTelegramStatus({
+            configured: data.telegramConfig.enabled,
+            connected: data.telegramConfig.enabled && data.telegramConfig.botToken && data.telegramConfig.chatId,
+            hasBotToken: !!data.telegramConfig.botToken,
+            hasChatId: !!data.telegramConfig.chatId
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load Telegram settings:', error);
+    }
+
+    // Load Telegram status from service as fallback
     const status = telegramService.getConfigStatus();
-    setTelegramStatus(status);
+    if (!telegramStatus.configured) {
+      setTelegramStatus(status);
+    }
 
     // Load email settings from localStorage
     if (typeof window !== 'undefined') {
@@ -103,16 +127,33 @@ const SettingsPage = () => {
   const saveTelegramSettings = async () => {
     try {
       setLoading(true);
-      const success = await telegramService.configure({
-        botToken: telegramConfig.botToken,
-        chatId: telegramConfig.chatId
+      
+      // Save to database via API
+      const response = await fetch('/api/settings/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          botToken: telegramConfig.botToken,
+          chatId: telegramConfig.chatId,
+          enabled: true
+        })
       });
 
-      if (success) {
-        toast.success('Telegram configured successfully');
-        setTelegramStatus(telegramService.getConfigStatus());
+      if (response.ok) {
+        // Also configure the service
+        const success = await telegramService.configure({
+          botToken: telegramConfig.botToken,
+          chatId: telegramConfig.chatId
+        });
+
+        if (success) {
+          toast.success('Telegram configured successfully');
+          setTelegramStatus(telegramService.getConfigStatus());
+        } else {
+          toast.error('Failed to configure Telegram service');
+        }
       } else {
-        toast.error('Failed to configure Telegram');
+        toast.error('Failed to save Telegram settings');
       }
     } catch (error) {
       console.error('Failed to configure Telegram:', error);
