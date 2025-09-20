@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { telegramService } from '@/services/TelegramService';
-import { getBotTokenFromDB, getUserByTelegramChatId } from '@/lib/telegram-config';
+import { getSharedBotToken, getUserByTelegramUserId } from '@/lib/telegram-config';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     console.log('🟦 [TELEGRAM WEBHOOK] Received webhook:', JSON.stringify(body, null, 2));
     
-    // Get bot token from database
-    const botToken = await getBotTokenFromDB();
+    // Get shared bot token from environment
+    const botToken = getSharedBotToken();
     if (!botToken) {
-      console.log('🟡 [TELEGRAM WEBHOOK] No bot token found in database');
+      console.log('🟡 [TELEGRAM WEBHOOK] No shared bot token found in environment');
       return NextResponse.json({ error: 'Bot not configured' }, { status: 400 });
     }
 
@@ -28,18 +28,31 @@ export async function POST(request: NextRequest) {
       const callbackData = callbackQuery.data;
       const messageId = callbackQuery.message?.message_id;
       const chatId = callbackQuery.message?.chat?.id;
+      const userId = callbackQuery.from?.id;
 
       console.log('🟦 [TELEGRAM WEBHOOK] Processing callback query:', {
         callbackData,
         messageId,
-        chatId
+        chatId,
+        userId
       });
 
-      // Verify user exists for this chat ID
-      const user = await getUserByTelegramChatId(chatId?.toString());
+      // Verify user exists for this Telegram user ID
+      const user = await getUserByTelegramUserId(userId?.toString());
       if (!user) {
-        console.log('🟡 [TELEGRAM WEBHOOK] No user found for chat ID:', chatId);
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        console.log('🟡 [TELEGRAM WEBHOOK] No user found for Telegram user ID:', userId);
+        // Send helpful message
+        const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        await fetch(telegramApiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: '❌ Your Telegram account is not linked to JobQuest AI. Please send /start to link your account.',
+            parse_mode: 'Markdown'
+          })
+        });
+        return NextResponse.json({ success: true, message: 'User not linked' });
       }
 
       // Handle the callback
@@ -68,16 +81,25 @@ export async function POST(request: NextRequest) {
       const message = body.message;
       const text = message.text;
       const chatId = message.chat.id;
+      const userId = message.from?.id;
+      const username = message.from?.username;
 
       console.log('🟦 [TELEGRAM WEBHOOK] Processing message:', {
         text,
-        chatId
+        chatId,
+        userId,
+        username
       });
 
-      // Verify user exists for this chat ID
-      const user = await getUserByTelegramChatId(chatId?.toString());
+      // Handle /start command for linking accounts
+      if (text === '/start') {
+        return await handleStartCommand(chatId, userId, username, botToken);
+      }
+
+      // Verify user exists for this Telegram user ID
+      const user = await getUserByTelegramUserId(userId?.toString());
       if (!user) {
-        console.log('🟡 [TELEGRAM WEBHOOK] No user found for chat ID:', chatId);
+        console.log('🟡 [TELEGRAM WEBHOOK] No user found for Telegram user ID:', userId);
         // Send a helpful message to the user
         const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
         await fetch(telegramApiUrl, {
@@ -85,11 +107,11 @@ export async function POST(request: NextRequest) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: chatId,
-            text: '❌ Your Telegram account is not linked to JobQuest AI. Please configure Telegram in your settings first.',
+            text: '❌ Your Telegram account is not linked to JobQuest AI.\n\nTo link your account:\n1. Go to JobQuest AI settings\n2. Navigate to Telegram section\n3. Enter your Telegram User ID: `' + userId + '`\n4. Save settings\n\nThen send /start again.',
             parse_mode: 'Markdown'
           })
         });
-        return NextResponse.json({ success: true, message: 'User not configured' });
+        return NextResponse.json({ success: true, message: 'User not linked' });
       }
 
       // Handle commands and text inputs
@@ -142,6 +164,46 @@ export async function POST(request: NextRequest) {
       { error: 'Webhook processing failed' },
       { status: 500 }
     );
+  }
+}
+
+// Handle /start command for account linking
+async function handleStartCommand(chatId: number, userId: number, username: string | undefined, botToken: string) {
+  try {
+    const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    
+    const welcomeMessage = `🚀 *Welcome to JobQuest AI!*
+
+Your Telegram User ID: \`${userId}\`
+${username ? `Username: @${username}` : ''}
+
+To link your account:
+1. Go to JobQuest AI settings
+2. Navigate to Telegram section  
+3. Enter your User ID: \`${userId}\`
+4. Save settings
+
+Once linked, you can:
+• Send \`fleeting: Your idea here\` for quick notes
+• Use /status, /reminders, /interviews commands
+• Get job search notifications
+
+Need help? Visit the web app for full features!`;
+
+    await fetch(telegramApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: welcomeMessage,
+        parse_mode: 'Markdown'
+      })
+    });
+
+    return NextResponse.json({ success: true, message: 'Start command processed' });
+  } catch (error) {
+    console.error('Error handling start command:', error);
+    return NextResponse.json({ error: 'Failed to process start command' }, { status: 500 });
   }
 }
 

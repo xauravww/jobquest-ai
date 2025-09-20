@@ -1,28 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mongodbService } from '@/lib/mongodb-service';
+import { getServerSession } from 'next-auth';
+import connectDB from '@/lib/db';
+import Job from '@/models/Job';
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobIds } = await request.json();
-    
-    if (!jobIds || !Array.isArray(jobIds)) {
-      return NextResponse.json(
-        { error: 'Job IDs array is required' },
-        { status: 400 }
-      );
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await mongodbService.skipJobs(jobIds);
+    const { jobId, url } = await request.json();
 
-    return NextResponse.json({
-      success: true,
-      skippedCount: result.modifiedCount || jobIds.length
+    await connectDB();
+
+    // Create or update job as skipped
+    const job = await Job.findOneAndUpdate(
+      { 
+        $or: [
+          { _id: jobId },
+          { url: url }
+        ]
+      },
+      {
+        isSkipped: true,
+        skippedBy: session.user.email,
+        skippedAt: new Date()
+      },
+      { 
+        upsert: true, 
+        new: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Job marked as skipped',
+      jobId: job._id
     });
 
   } catch (error) {
-    console.error('Error skipping jobs:', error);
+    console.error('Skip job error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to skip job' },
       { status: 500 }
     );
   }

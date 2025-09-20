@@ -1,24 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-
-// In-memory storage for demo (replace with database in production)
-let events: any[] = [];
+import connectDB from '@/lib/db';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    // Sort by start date
-    const sortedEvents = events.sort((a, b) => {
-      const aDate = new Date(a.startDate);
-      const bDate = new Date(b.startDate);
-      return aDate.getTime() - bDate.getTime();
-    });
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Get events from database
+    const CalendarEvent = (await import('@/models/CalendarEvent')).default;
+    const events = await CalendarEvent.find({ userId: user._id })
+      .sort({ startDate: 1 })
+      .populate('applicationId')
+      .populate('jobId');
     
     return NextResponse.json({
       success: true,
-      events: sortedEvents
+      events
     });
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -32,32 +44,46 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     
-    const newEvent = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+    // Create new event in database
+    const CalendarEvent = (await import('@/models/CalendarEvent')).default;
+    const newEvent = new CalendarEvent({
+      userId: user._id,
       title: body.title,
       description: body.description,
-      startDate: body.startDate,
-      endDate: body.endDate,
-      type: body.type || 'event',
+      startDate: new Date(body.startDate),
+      endDate: new Date(body.endDate),
+      type: body.type || 'other',
       status: body.status || 'scheduled',
       priority: body.priority || 'medium',
       isAllDay: body.isAllDay || false,
-      location: body.location || null,
+      location: body.location || {},
       attendees: body.attendees || [],
       tags: body.tags || [],
       jobId: body.jobId || null,
-      applicationId: body.applicationId || null,
-      userId: session?.user?.email || 'anonymous',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      applicationId: body.applicationId || null
+    });
     
-    events.push(newEvent);
+    await newEvent.save();
     
     console.log('📅 [EVENTS] New event created:', {
-      id: newEvent.id,
+      id: newEvent._id,
       title: newEvent.title,
       type: newEvent.type,
       startDate: newEvent.startDate
@@ -79,6 +105,22 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('id');
     const body = await request.json();
@@ -90,30 +132,30 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const eventIndex = events.findIndex(event => event.id === eventId);
+    // Update event in database
+    const CalendarEvent = (await import('@/models/CalendarEvent')).default;
+    const updatedEvent = await CalendarEvent.findOneAndUpdate(
+      { _id: eventId, userId: user._id },
+      { ...body, updatedAt: new Date() },
+      { new: true }
+    );
     
-    if (eventIndex === -1) {
+    if (!updatedEvent) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 }
       );
     }
     
-    events[eventIndex] = {
-      ...events[eventIndex],
-      ...body,
-      updatedAt: new Date().toISOString()
-    };
-    
     console.log('📅 [EVENTS] Event updated:', {
-      id: events[eventIndex].id,
-      status: events[eventIndex].status,
-      title: events[eventIndex].title
+      id: updatedEvent._id,
+      status: updatedEvent.status,
+      title: updatedEvent.title
     });
     
     return NextResponse.json({
       success: true,
-      event: events[eventIndex],
+      event: updatedEvent,
       message: 'Event updated successfully'
     });
   } catch (error) {
@@ -127,6 +169,22 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('id');
     
@@ -137,10 +195,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const initialLength = events.length;
-    events = events.filter(event => event.id !== eventId);
+    // Delete event from database
+    const CalendarEvent = (await import('@/models/CalendarEvent')).default;
+    const deletedEvent = await CalendarEvent.findOneAndDelete({
+      _id: eventId,
+      userId: user._id
+    });
     
-    if (events.length === initialLength) {
+    if (!deletedEvent) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 }

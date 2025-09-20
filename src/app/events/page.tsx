@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import EventsSkeleton from '@/components/ui/EventsSkeleton';
 import CreateEventModal from '@/components/modals/CreateEventModal';
 const { Search: AntSearch } = Input;
 
@@ -239,10 +240,7 @@ const EventsPage = () => {
         {/* This section now handles the loading, empty, and data states */}
         <div className="max-w-4xl mx-auto">
           {loading ? (
-            <div className="text-center py-20">
-              <LoadingSpinner size="lg" className="mx-auto mb-4" />
-              <p className="text-text-muted">Loading events...</p>
-            </div>
+            <EventsSkeleton count={5} />
            ) : filteredEvents.length === 0 ? (
             <div className="text-center py-20">
                <div className="w-24 h-24 bg-gradient-to-br from-blue-600/20 to-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-600/30">

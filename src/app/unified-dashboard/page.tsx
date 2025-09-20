@@ -23,6 +23,7 @@ import ActivityHub from '@/components/ActivityHub';
 import FollowUpTracker from '@/components/FollowUpTracker';
 import NotificationsPanel from '@/components/NotificationsPanel';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ActivitySkeleton from '@/components/ui/ActivitySkeleton';
 import { notificationService } from '@/services/NotificationService';
 import toast from 'react-hot-toast';
 
@@ -162,8 +163,14 @@ const UnifiedDashboard = () => {
   if (loading) {
     return (
       <AppLayout showFooter={false}>
-        <div className="flex items-center justify-center min-h-screen">
-          <LoadingSpinner size="lg" />
+        <div className="p-8 bg-bg min-h-screen">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-bg-light rounded w-64 mb-2"></div>
+              <div className="h-5 bg-bg-light rounded w-96 mb-8"></div>
+            </div>
+            <ActivitySkeleton count={6} />
+          </div>
         </div>
       </AppLayout>
     );

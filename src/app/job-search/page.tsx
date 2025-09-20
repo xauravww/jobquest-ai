@@ -1,436 +1,369 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Calendar, Building, ExternalLink, Filter, RotateCcw, Save, Eye, Sparkles } from 'lucide-react';
+import toast from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
-import { Search, Filter, MapPin, Building, Clock, DollarSign, Bookmark, ExternalLink } from 'lucide-react';
-import { FormInput } from '@/components/ui/FormInput';
+import SearchSkeleton from '@/components/ui/SearchSkeleton';
 
 interface Job {
   id: string;
   title: string;
   company: string;
   location: string;
-  salary?: string;
-  type: string;
-  postedDate: string;
-  description: string;
   url: string;
-  isBookmarked?: boolean;
+  description?: string;
+  publishedDate?: string;
+  salary?: string;
+  source: 'findwork' | 'jooble' | 'usajobs' | 'other';
+  userAction?: 'track' | 'skip' | null;
 }
 
 interface SearchFilters {
-  query: string;
   location: string;
-  jobType: string;
-  salaryRange: string;
-  datePosted: string;
+  remote: boolean;
+  sortBy: 'relevance' | 'date';
+  search: string;
+  source: 'all' | 'findwork' | 'jooble' | 'usajobs';
 }
+
+const JobCard = ({ job, onTrack, onSkip }: { 
+  job: Job; 
+  onTrack: (job: Job) => void;
+  onSkip: (job: Job) => void;
+}) => {
+  const getCardBorderClass = () => {
+    if (job.userAction === 'track') return 'border-green-500/50 bg-green-500/5';
+    if (job.userAction === 'skip') return 'border-red-500/50 bg-red-500/5';
+    return 'border-border hover:border-primary/50';
+  };
+
+  return (
+    <div className={`bg-bg-card rounded-xl shadow-lg p-6 border transition-all duration-300 hover:shadow-xl ${getCardBorderClass()}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-white mb-2">{job.title}</h3>
+          <div className="space-y-2">
+            <div className="flex items-center text-text-muted text-sm">
+              <Building size={14} className="mr-2 text-primary" />
+              <span>{job.company}</span>
+            </div>
+            <div className="flex items-center text-text-muted text-sm">
+              <MapPin size={14} className="mr-2 text-blue-400" />
+              <span>{job.location}</span>
+            </div>
+            {job.publishedDate && (
+              <div className="flex items-center text-text-muted text-sm">
+                <Calendar size={14} className="mr-2 text-yellow-400" />
+                <span>{new Date(job.publishedDate).toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-3">
+            {job.salary && (
+              <div className="p-2 bg-green-500/20 rounded-lg text-green-300 text-sm">
+                💰 {job.salary}
+              </div>
+            )}
+            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+              job.source === 'findwork' 
+                ? 'bg-blue-500/20 text-blue-300' 
+                : job.source === 'jooble'
+                ? 'bg-purple-500/20 text-purple-300'
+                : 'bg-green-500/20 text-green-300'
+            }`}>
+              {job.source === 'findwork' ? 'FindWork' : 
+               job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
+            </div>
+          </div>
+          {job.userAction && (
+            <div className={`mt-3 p-3 rounded-lg text-sm font-semibold ${
+              job.userAction === 'track' 
+                ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
+                : 'bg-red-500/20 text-red-300 border border-red-500/30'
+            }`}>
+              {job.userAction === 'track' ? '✓ Marked to Track' : '✗ Marked to Skip'}
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-col items-end gap-3 ml-4">
+          {!job.userAction && (
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => onTrack(job)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-all duration-200"
+              >
+                <Save size={16} />
+                Track
+              </button>
+              <button
+                onClick={() => onSkip(job)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-all duration-200"
+              >
+                ✗ Skip
+              </button>
+            </div>
+          )}
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary hover:text-white border border-primary/30 rounded-lg transition-all duration-200"
+          >
+            <ExternalLink size={16} />
+            View
+          </a>
+        </div>
+      </div>
+      {job.description && (
+        <div className="mt-4 p-4 bg-bg-light/50 rounded-lg">
+          <p className="text-text-muted text-sm line-clamp-3">{job.description}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const JobSearchPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
-    query: '',
     location: '',
-    jobType: 'all',
-    salaryRange: 'all',
-    datePosted: 'all'
+    remote: false,
+    sortBy: 'relevance',
+    search: '',
+    source: 'all'
   });
 
-  const jobTypes = [
-    { value: 'all', label: 'All Types' },
-    { value: 'full-time', label: 'Full Time' },
-    { value: 'part-time', label: 'Part Time' },
-    { value: 'contract', label: 'Contract' },
-    { value: 'remote', label: 'Remote' }
-  ];
 
-  const salaryRanges = [
-    { value: 'all', label: 'All Salaries' },
-    { value: '0-50k', label: '$0 - $50k' },
-    { value: '50k-100k', label: '$50k - $100k' },
-    { value: '100k-150k', label: '$100k - $150k' },
-    { value: '150k+', label: '$150k+' }
-  ];
-
-  const datePostedOptions = [
-    { value: 'all', label: 'Any Time' },
-    { value: '24h', label: 'Last 24 hours' },
-    { value: '7d', label: 'Last 7 days' },
-    { value: '30d', label: 'Last 30 days' }
-  ];
-
-  const searchJobs = async () => {
-    if (!filters.query.trim()) {
-      setError('Please enter a search query');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
+  const filterTrackedJobs = async (jobs: Job[]) => {
     try {
-      const response = await fetch('/api/jobs/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: filters.query,
-          location: filters.location,
-          jobType: filters.jobType !== 'all' ? filters.jobType : undefined,
-          salaryRange: filters.salaryRange !== 'all' ? filters.salaryRange : undefined,
-          datePosted: filters.datePosted !== 'all' ? filters.datePosted : undefined,
-          page: currentPage
-        }),
+      const jobIds = jobs.map(job => job.id).join(',');
+      const response = await fetch(`/api/jobs/track?jobIds=${jobIds}`);
+      if (!response.ok) return jobs;
+      
+      const { trackedJobs } = await response.json();
+      
+      // Filter out skipped jobs and mark tracked ones
+      return jobs.filter(job => {
+        const tracked = trackedJobs[job.id];
+        if (tracked?.isSkipped) return false; // Hide skipped jobs
+        
+        if (tracked?.isBookmarked) {
+          job.userAction = 'track';
+        }
+        return true;
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to search jobs');
-      }
-
-      const data = await response.json();
-      setJobs(data.jobs || []);
-      setFilteredJobs(data.jobs || []);
-      setTotalPages(data.totalPages || 1);
-    } catch (err) {
-      console.error('Error searching jobs:', err);
-      setError('Failed to search jobs. Please try again.');
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Error filtering tracked jobs:', error);
+      return jobs;
     }
   };
 
-  const toggleBookmark = async (jobId: string) => {
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!filters.search.trim()) return;
+
+    setLoading(true);
     try {
-      const response = await fetch('/api/jobs/bookmark', {
+      const params = new URLSearchParams({
+        search: filters.search,
+        location: filters.location,
+        source: filters.source,
+        ...(filters.remote && { remote: 'true' })
+      });
+
+      const response = await fetch(`/api/jobs/search-all?${params.toString()}`);
+      if (!response.ok) throw new Error('Search failed');
+
+      const data = await response.json();
+      
+      const processedJobs: Job[] = (data.results || []).map((job: any) => ({
+        id: job.id.toString(),
+        title: job.title || job.role,
+        company: job.company || job.company_name,
+        location: job.location,
+        url: job.url || job.link || '#',
+        description: job.description || job.snippet,
+        publishedDate: job.publishedDate || job.date_posted || job.updated,
+        salary: job.salary || job.salary_range,
+        source: job.source as 'findwork' | 'jooble' | 'usajobs',
+        userAction: null
+      }));
+
+      // Filter out tracked/skipped jobs
+      const filteredJobs = await filterTrackedJobs(processedJobs);
+      setJobs(filteredJobs);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Failed to search jobs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTrackJob = async (job: Job) => {
+    try {
+      const response = await fetch('/api/jobs/track', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ jobId }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId: job.id,
+          action: 'track',
+          jobData: job
+        })
       });
 
       if (response.ok) {
-        setFilteredJobs(prev => prev.map(job => 
-          job.id === jobId ? { ...job, isBookmarked: !job.isBookmarked } : job
-        ));
+        setJobs(prev => prev.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j));
+        toast.success('Job tracked successfully');
+      } else {
+        toast.error('Failed to track job');
       }
-    } catch (err) {
-      console.error('Error toggling bookmark:', err);
+    } catch (error) {
+      console.error('Error tracking job:', error);
+      toast.error('Failed to track job');
     }
   };
 
-  const handleFilterChange = (key: keyof SearchFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const handleSkipJob = async (job: Job) => {
+    try {
+      const response = await fetch('/api/jobs/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId: job.id,
+          action: 'skip',
+          jobData: job
+        })
+      });
+
+      if (response.ok) {
+        // Remove skipped job from the list immediately
+        setJobs(prev => prev.filter(j => j.id !== job.id));
+        toast.success('Job skipped');
+      } else {
+        toast.error('Failed to skip job');
+      }
+    } catch (error) {
+      console.error('Error skipping job:', error);
+      toast.error('Failed to skip job');
+    }
   };
 
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  const updateActiveFilters = useCallback(() => {
-    const active = [];
-    if (filters.jobType !== 'all') active.push(`Type: ${jobTypes.find(t => t.value === filters.jobType)?.label}`);
-    if (filters.salaryRange !== 'all') active.push(`Salary: ${salaryRanges.find(s => s.value === filters.salaryRange)?.label}`);
-    if (filters.datePosted !== 'all') active.push(`Posted: ${datePostedOptions.find(d => d.value === filters.datePosted)?.label}`);
-    if (filters.location) active.push(`Location: ${filters.location}`);
-    setActiveFilters(active);
-  }, [filters]);
-
-  // Update active filters when filters change
-  useEffect(() => {
-    updateActiveFilters();
-  }, [updateActiveFilters]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    searchJobs();
-  };
-
-  const formatSalary = (salary?: string) => {
-    if (!salary) return 'Salary not specified';
-    return salary;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-    return `${Math.ceil(diffDays / 30)} months ago`;
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      query: filters.query, // Keep search query
-      location: '',
-      jobType: 'all',
-      salaryRange: 'all',
-      datePosted: 'all'
-    });
-    setActiveFilters([]);
-  };
 
   return (
     <AppLayout showFooter={false}>
       <div className="p-8 bg-bg min-h-screen">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Job Search</h1>
-            <p className="text-text-muted text-lg">Find your next opportunity with AI-powered job matching</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">Job Search</h1>
+              <p className="text-text-muted text-lg">Search jobs from multiple sources</p>
+            </div>
+
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-8">
-            <div className="bg-bg-card rounded-xl p-6 border border-border">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <FormInput
-                  placeholder="Job title, keywords, or company"
-                  value={filters.query}
-                  onChange={(value) => handleFilterChange('query', value)}
-                  icon={<Search className="w-5 h-5" />}
-                />
-
-                <FormInput
-                  placeholder="Location"
-                  value={filters.location}
-                  onChange={(value) => handleFilterChange('location', value)}
-                  icon={<MapPin className="w-5 h-5" />}
-                />
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex items-center gap-2 px-4 py-3 bg-bg-light border border-border rounded-lg text-text hover:bg-bg-card transition-colors"
+          <div className="bg-bg-card rounded-xl p-6 border border-border">
+            <form onSubmit={handleSearch} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Search Keywords</label>
+                  <input
+                    type="text"
+                    value={filters.search}
+                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    placeholder="e.g. React Developer, Python, MERN"
+                    className="w-full px-4 py-3 bg-bg-light border border-border rounded-lg text-white placeholder-text-muted focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Location</label>
+                  <input
+                    type="text"
+                    value={filters.location}
+                    onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. London, New York, Remote"
+                    className="w-full px-4 py-3 bg-bg-light border border-border rounded-lg text-white placeholder-text-muted focus:border-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Job Source</label>
+                  <select
+                    value={filters.source}
+                    onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
+                    className="w-full px-4 py-3 bg-bg-light border border-border rounded-lg text-white focus:border-primary focus:outline-none"
                   >
-                    <Filter className="w-5 h-5" />
-                    Filters
-                  </button>
-                  
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? 'Searching...' : 'Search Jobs'}
-                  </button>
+                    <option value="all">All Sources</option>
+                    <option value="findwork">FindWork</option>
+                    <option value="jooble">Jooble</option>
+                    <option value="usajobs">USAJOBS</option>
+                  </select>
                 </div>
               </div>
-
-              {/* Advanced Filters */}
-              {showFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-border">
-                  <select
-                    value={filters.jobType}
-                    onChange={(e) => handleFilterChange('jobType', e.target.value)}
-                    className="px-4 py-3 bg-bg-light border border-border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    {jobTypes.map(type => (
-                      <option key={type.value} value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.salaryRange}
-                    onChange={(e) => handleFilterChange('salaryRange', e.target.value)}
-                    className="px-4 py-3 bg-bg-light border border-border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    {salaryRanges.map(range => (
-                      <option key={range.value} value={range.value}>{range.label}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={filters.datePosted}
-                    onChange={(e) => handleFilterChange('datePosted', e.target.value)}
-                    className="px-4 py-3 bg-bg-light border border-border rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    {datePostedOptions.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          </form>
-
-          {/* Active Filters */}
-          {activeFilters.length > 0 && (
-            <div className="mb-6 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-text-muted">Active filters:</span>
-              {activeFilters.map((filter, index) => (
-                <span key={index} className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm">
-                  {filter}
-                </span>
-              ))}
-              <button
-                onClick={clearFilters}
-                className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm hover:bg-red-500/30 transition-colors"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3">
-              <svg className="h-5 w-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <p className="text-red-400">{error}</p>
-            </div>
-          )}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <label className="flex items-center gap-2 text-white">
+                  <input
+                    type="checkbox"
+                    checked={filters.remote}
+                    onChange={(e) => setFilters(prev => ({ ...prev, remote: e.target.checked }))}
+                    className="rounded border-border bg-bg-light text-primary focus:ring-primary"
+                  />
+                  Remote Only
+                </label>
+                <button
+                  type="submit"
+                  disabled={loading || !filters.search.trim()}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Search size={20} />
+                  {loading ? 'Searching...' : 'Search Jobs'}
+                </button>
+              </div>
+            </form>
+          </div>
 
           {/* Results */}
-          <div className="space-y-6">
-            {isLoading ? (
-              <div className="space-y-6">
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-2 border-border border-t-primary mx-auto mb-4"></div>
-                  <p className="text-text-muted text-lg">Searching for jobs...</p>
-                  <p className="text-text-secondary text-sm mt-2">This may take a few moments</p>
+          {loading && <SearchSkeleton />}
+
+          {jobs.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-semibold text-white">
+                  Found {jobs.length} jobs
+                </h2>
+                <div className="text-sm text-text-muted">
+                  {filters.source === 'all' ? 'FindWork + Jooble + USAJOBS APIs' : 
+                   filters.source === 'findwork' ? 'FindWork API' : 
+                   filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
                 </div>
-                {/* Job card skeletons */}
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="bg-bg-card rounded-xl p-6 border border-border animate-pulse">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1 space-y-3">
-                        <div className="h-6 bg-bg-light rounded w-3/4"></div>
-                        <div className="flex gap-4">
-                          <div className="h-4 bg-bg-light rounded w-24"></div>
-                          <div className="h-4 bg-bg-light rounded w-32"></div>
-                          <div className="h-4 bg-bg-light rounded w-20"></div>
-                        </div>
-                        <div className="flex gap-4">
-                          <div className="h-6 bg-bg-light rounded w-16"></div>
-                          <div className="h-6 bg-bg-light rounded w-24"></div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="h-4 bg-bg-light rounded w-full"></div>
-                          <div className="h-4 bg-bg-light rounded w-5/6"></div>
-                          <div className="h-4 bg-bg-light rounded w-4/6"></div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <div className="w-10 h-10 bg-bg-light rounded-lg"></div>
-                        <div className="w-20 h-10 bg-bg-light rounded-lg"></div>
-                      </div>
-                    </div>
-                  </div>
+              </div>
+              <div className="grid gap-6">
+                {jobs.map(job => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    onTrack={handleTrackJob}
+                    onSkip={handleSkipJob}
+                  />
                 ))}
               </div>
-            ) : filteredJobs.length > 0 ? (
-              <>
-                <div className="flex justify-between items-center">
-                  <p className="text-text-muted">
-                    Showing {filteredJobs.length} jobs {totalPages > 1 && `(Page ${currentPage} of ${totalPages})`}
-                  </p>
-                </div>
+            </div>
+          )}
 
-                {filteredJobs.map((job) => (
-                  <div key={job.id} className="bg-bg-card rounded-xl p-6 border border-border hover:border-primary/50 transition-all duration-200">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-white mb-2">{job.title}</h3>
-                        <div className="flex items-center gap-4 text-text-muted mb-3">
-                          <div className="flex items-center gap-1">
-                            <Building className="w-4 h-4" />
-                            <span>{job.company}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{job.location}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{formatDate(job.postedDate)}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 mb-4">
-                          <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
-                            {job.type}
-                          </span>
-                          {job.salary && (
-                            <div className="flex items-center gap-1 text-success">
-                              <DollarSign className="w-4 h-4" />
-                              <span className="font-medium">{formatSalary(job.salary)}</span>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-text-muted line-clamp-3">{job.description}</p>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 ml-4">
-                        <button
-                          onClick={() => toggleBookmark(job.id)}
-                          className={`p-2 rounded-lg transition-colors ${
-                            job.isBookmarked 
-                              ? 'bg-primary/20 text-primary' 
-                              : 'bg-bg-light text-text-muted hover:text-primary'
-                          }`}
-                        >
-                          <Bookmark className={`w-5 h-5 ${job.isBookmarked ? 'fill-current' : ''}`} />
-                        </button>
-                        
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors font-medium"
-                        >
-                          Apply
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-8">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 bg-bg-card border border-border rounded-lg text-text hover:bg-bg-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    
-                    <span className="px-4 py-2 text-text-muted">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-bg-card border border-border rounded-lg text-text hover:bg-bg-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : !isLoading && filters.query && (
-              <div className="text-center py-12">
-                <p className="text-text-muted text-lg mb-2">No jobs found</p>
-                <p className="text-text-muted">Try adjusting your search criteria or filters</p>
+          {!loading && jobs.length === 0 && filters.search && (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 bg-gray-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search size={32} className="text-gray-400" />
               </div>
-            )}
-          </div>
+              <h3 className="text-xl font-semibold text-white mb-2">No jobs found</h3>
+              <p className="text-text-muted">Try adjusting your search criteria</p>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

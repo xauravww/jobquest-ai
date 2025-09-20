@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import RemindersSkeleton from '@/components/ui/RemindersSkeleton';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
 const { Search: AntSearch } = Input;
 
@@ -397,12 +398,7 @@ const RemindersPage = () => {
         {/* Reminders List */}
         <div className="max-w-4xl mx-auto">
           {loading ? (
-            <div className="text-center py-20">
-              <LoadingSpinner size="lg" className="mx-auto mb-4" />
-              <p className="text-text-muted">
-                {searchQuery ? `Searching for "${searchQuery}"...` : 'Loading reminders...'}
-              </p>
-            </div>
+            <RemindersSkeleton count={5} />
            ) : filteredReminders.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/30">

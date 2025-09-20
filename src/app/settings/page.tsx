@@ -27,7 +27,7 @@ const { TextArea } = Input;
 const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('notifications');
-  
+
   // Notification settings
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>({
     email: true,
@@ -42,14 +42,14 @@ const SettingsPage = () => {
 
   // Telegram settings
   const [telegramConfig, setTelegramConfig] = useState({
-    botToken: '',
-    chatId: ''
+    userId: '',
+    username: ''
   });
   const [telegramStatus, setTelegramStatus] = useState({
     configured: false,
     connected: false,
-    hasBotToken: false,
-    hasChatId: false
+    hasUserId: false,
+    hasUsername: false
   });
 
   // Email settings
@@ -77,14 +77,14 @@ const SettingsPage = () => {
         const data = await response.json();
         if (data.telegramConfig) {
           setTelegramConfig({
-            botToken: data.telegramConfig.botToken || '',
-            chatId: data.telegramConfig.chatId || ''
+            userId: data.telegramConfig.userId || '',
+            username: data.telegramConfig.username || ''
           });
           setTelegramStatus({
             configured: data.telegramConfig.enabled,
-            connected: data.telegramConfig.enabled && data.telegramConfig.botToken && data.telegramConfig.chatId,
-            hasBotToken: !!data.telegramConfig.botToken,
-            hasChatId: !!data.telegramConfig.chatId
+            connected: data.telegramConfig.enabled && data.telegramConfig.userId,
+            hasUserId: !!data.telegramConfig.userId,
+            hasUsername: !!data.telegramConfig.username
           });
         }
       }
@@ -95,7 +95,12 @@ const SettingsPage = () => {
     // Load Telegram status from service as fallback
     const status = telegramService.getConfigStatus();
     if (!telegramStatus.configured) {
-      setTelegramStatus(status);
+      setTelegramStatus({
+        configured: status.configured,
+        connected: status.connected,
+        hasUserId: status.hasChatId, // Map chatId to userId
+        hasUsername: false // Service doesn't track username
+      });
     }
 
     // Load email settings from localStorage
@@ -127,31 +132,26 @@ const SettingsPage = () => {
   const saveTelegramSettings = async () => {
     try {
       setLoading(true);
-      
+
       // Save to database via API
       const response = await fetch('/api/settings/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          botToken: telegramConfig.botToken,
-          chatId: telegramConfig.chatId,
+          userId: telegramConfig.userId,
+          username: telegramConfig.username,
           enabled: true
         })
       });
 
       if (response.ok) {
-        // Also configure the service
-        const success = await telegramService.configure({
-          botToken: telegramConfig.botToken,
-          chatId: telegramConfig.chatId
+        toast.success('Telegram configured successfully');
+        setTelegramStatus({
+          configured: true,
+          connected: true,
+          hasUserId: !!telegramConfig.userId,
+          hasUsername: !!telegramConfig.username
         });
-
-        if (success) {
-          toast.success('Telegram configured successfully');
-          setTelegramStatus(telegramService.getConfigStatus());
-        } else {
-          toast.error('Failed to configure Telegram service');
-        }
       } else {
         toast.error('Failed to save Telegram settings');
       }
@@ -238,11 +238,10 @@ const SettingsPage = () => {
   }) => (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-        isActive
+      className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${isActive
           ? 'bg-primary text-white shadow-lg'
           : 'text-gray-400 hover:text-white hover:bg-gray-700'
-      }`}
+        }`}
     >
       <Icon className="w-5 h-5" />
       {label}
@@ -329,7 +328,7 @@ const SettingsPage = () => {
                     {/* Notification Channels */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white">Notification Channels</h3>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
                           <div className="flex items-center gap-3">
@@ -432,7 +431,7 @@ const SettingsPage = () => {
                     {/* Notification Types */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white">Notification Types</h3>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
                           <span className="text-white">Interview Reminders</span>
@@ -463,7 +462,7 @@ const SettingsPage = () => {
                     {/* Timing Settings */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white">Timing</h3>
-                      
+
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -519,16 +518,19 @@ const SettingsPage = () => {
                     </div>
 
                     <Alert
-                      message="Telegram Bot Setup"
+                      message="Telegram Integration Setup"
                       description={
                         <div className="space-y-2">
-                          <p>To enable Telegram notifications, you need to:</p>
+                          <p>To enable Telegram notifications:</p>
                           <ol className="list-decimal list-inside space-y-1 text-sm">
-                            <li>Create a bot by messaging @BotFather on Telegram</li>
-                            <li>Copy the bot token provided by @BotFather</li>
-                            <li>Get your chat ID from @userinfobot</li>
-                            <li>Enter both values below and save</li>
+                            <li>Send /start to our shared bot on Telegram</li>
+                            <li>Copy your Telegram User ID from the bot's response</li>
+                            <li>Enter your User ID below and save</li>
+                            <li>Start using commands like <code>fleeting: Your note here</code></li>
                           </ol>
+                          <p className="text-xs text-gray-400 mt-2">
+                            <strong>Shared Bot:</strong> All users use the same bot for simplicity
+                          </p>
                         </div>
                       }
                       type="info"
@@ -541,31 +543,31 @@ const SettingsPage = () => {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Bot Token
+                          Telegram User ID
                         </label>
-                        <Input.Password
-                          placeholder="Enter your Telegram Bot Token from @BotFather"
-                          value={telegramConfig.botToken}
-                          onChange={(e) => setTelegramConfig(prev => ({ ...prev, botToken: e.target.value }))}
+                        <Input
+                          placeholder="Enter your Telegram User ID (e.g., 123456789)"
+                          value={telegramConfig.userId}
+                          onChange={(e) => setTelegramConfig(prev => ({ ...prev, userId: e.target.value }))}
                           className="bg-gray-700 border-gray-600"
                         />
                         <p className="text-xs text-gray-400 mt-1">
-                          Get this from @BotFather when you create a new bot
+                          Send /start to our bot to get your User ID
                         </p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Chat ID
+                          Telegram Username (Optional)
                         </label>
                         <Input
-                          placeholder="Your Telegram Chat ID"
-                          value={telegramConfig.chatId}
-                          onChange={(e) => setTelegramConfig(prev => ({ ...prev, chatId: e.target.value }))}
+                          placeholder="Your Telegram username (without @)"
+                          value={telegramConfig.username}
+                          onChange={(e) => setTelegramConfig(prev => ({ ...prev, username: e.target.value }))}
                           className="bg-gray-700 border-gray-600"
                         />
                         <p className="text-xs text-gray-400 mt-1">
-                          Get this from @userinfobot on Telegram
+                          Optional: Your @username for reference
                         </p>
                       </div>
                     </div>
@@ -575,33 +577,33 @@ const SettingsPage = () => {
                     {/* Status */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white">Connection Status</h3>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div className="flex items-center gap-2 p-3 bg-gray-700/20 rounded-lg">
-                          {telegramStatus.hasBotToken ? (
+                          {telegramStatus.hasUserId ? (
                             <CheckCircle className="w-5 h-5 text-green-400" />
                           ) : (
                             <AlertCircle className="w-5 h-5 text-red-400" />
                           )}
-                          <span className="text-sm text-white">Bot Token</span>
+                          <span className="text-sm text-white">User ID</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 p-3 bg-gray-700/20 rounded-lg">
-                          {telegramStatus.hasChatId ? (
+                          {telegramStatus.hasUsername ? (
                             <CheckCircle className="w-5 h-5 text-green-400" />
                           ) : (
-                            <AlertCircle className="w-5 h-5 text-red-400" />
+                            <AlertCircle className="w-5 h-5 text-gray-400" />
                           )}
-                          <span className="text-sm text-white">Chat ID</span>
+                          <span className="text-sm text-white">Username</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 p-3 bg-gray-700/20 rounded-lg">
                           {telegramStatus.connected ? (
                             <CheckCircle className="w-5 h-5 text-green-400" />
                           ) : (
                             <AlertCircle className="w-5 h-5 text-red-400" />
                           )}
-                          <span className="text-sm text-white">Connected</span>
+                          <span className="text-sm text-white">Linked</span>
                         </div>
                       </div>
                     </div>
@@ -609,7 +611,7 @@ const SettingsPage = () => {
                     {/* Available Commands */}
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-white">Available Commands</h3>
-                      
+
                       <div className="bg-gray-700/20 rounded-lg p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                           <div className="flex justify-between">
@@ -691,7 +693,7 @@ const SettingsPage = () => {
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-medium text-white">Email Types</h3>
-                        
+
                         <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
                           <span className="text-white">Daily Digest</span>
                           <Switch

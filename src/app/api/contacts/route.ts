@@ -1,17 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-
-// In-memory storage for demo (replace with database in production)
-let contacts: any[] = [];
+import connectDB from '@/lib/db';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Get contacts from database
+    const Contact = (await import('@/models/Contact')).default;
+    const contacts = await Contact.find({ userId: user._id })
+      .sort({ lastContactDate: -1 })
+      .populate('relatedApplications')
+      .populate('relatedJobs');
+    
     return NextResponse.json({
       success: true,
-      contacts: contacts.sort((a, b) => new Date(b.lastContactDate || 0).getTime() - new Date(a.lastContactDate || 0).getTime())
+      contacts
     });
   } catch (error) {
     console.error('Error fetching contacts:', error);
@@ -25,10 +44,27 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     
-    const newContact = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+    // Create new contact in database
+    const Contact = (await import('@/models/Contact')).default;
+    const newContact = new Contact({
+      userId: user._id,
       name: body.name,
       email: body.email,
       phone: body.phone || '',
@@ -38,17 +74,16 @@ export async function POST(request: NextRequest) {
       notes: body.notes || '',
       tags: body.tags || [],
       status: 'active',
-      lastContactDate: new Date().toISOString(),
+      lastContactDate: new Date(),
       nextFollowUpDate: body.nextFollowUpDate || null,
-      userId: session?.user?.email || 'anonymous',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      relationshipType: body.relationshipType || 'other',
+      priority: body.priority || 'medium'
+    });
     
-    contacts.push(newContact);
+    await newContact.save();
     
     console.log('👤 [CONTACTS] New contact added:', {
-      id: newContact.id,
+      id: newContact._id,
       name: newContact.name,
       company: newContact.company
     });
@@ -69,6 +104,22 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const contactId = searchParams.get('id');
     const body = await request.json();
@@ -80,24 +131,24 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const contactIndex = contacts.findIndex(contact => contact.id === contactId);
+    // Update contact in database
+    const Contact = (await import('@/models/Contact')).default;
+    const updatedContact = await Contact.findOneAndUpdate(
+      { _id: contactId, userId: user._id },
+      { ...body, updatedAt: new Date() },
+      { new: true }
+    );
     
-    if (contactIndex === -1) {
+    if (!updatedContact) {
       return NextResponse.json(
         { error: 'Contact not found' },
         { status: 404 }
       );
     }
     
-    contacts[contactIndex] = {
-      ...contacts[contactIndex],
-      ...body,
-      updatedAt: new Date().toISOString()
-    };
-    
     return NextResponse.json({
       success: true,
-      contact: contacts[contactIndex],
+      contact: updatedContact,
       message: 'Contact updated successfully'
     });
   } catch (error) {
@@ -111,6 +162,22 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const contactId = searchParams.get('id');
     
@@ -121,10 +188,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const initialLength = contacts.length;
-    contacts = contacts.filter(contact => contact.id !== contactId);
+    // Delete contact from database
+    const Contact = (await import('@/models/Contact')).default;
+    const deletedContact = await Contact.findOneAndDelete({
+      _id: contactId,
+      userId: user._id
+    });
     
-    if (contacts.length === initialLength) {
+    if (!deletedContact) {
       return NextResponse.json(
         { error: 'Contact not found' },
         { status: 404 }

@@ -1681,6 +1681,89 @@ box-shadow: none;
   border: none;
 }
 
-/* *{
-  border: 1px solid red;
-} */
+/* Skeleton Loading Animation Styles */
+.loading-skeleton {
+  background: linear-gradient(90deg, 
+    var(--bg-light) 25%, 
+    rgba(75, 85, 99, 0.4) 50%, 
+    var(--bg-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Animation delay utilities for skeleton elements */
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+/* Enhanced skeleton shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    to right,
+    var(--bg-light) 8%,
+    rgba(75, 85, 99, 0.6) 18%,
+    var(--bg-light) 33%
+  );
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Skeleton component specific styles */
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.skeleton-text {
+  background: var(--bg-light);
+  border-radius: 4px;
+  height: 1rem;
+}
+
+.skeleton-title {
+  background: var(--bg-light);
+  border-radius: 4px;
+  height: 1.5rem;
+}
+
+.skeleton-avatar {
+  background: var(--bg-light);
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.skeleton-button {
+  background: var(--bg-light);
+  border-radius: var(--radius);
+  height: 2.5rem;
+}

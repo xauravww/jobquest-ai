@@ -1,22 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import connectDB from '@/lib/db';
+import FleetingNote from '@/models/FleetingNote';
 
-// In-memory storage for demo (replace with database in production)
-let fleetingNotes: any[] = [];
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const page = parseInt(searchParams.get('page') || '1');
+    const skip = (page - 1) * limit;
+
+    const notes = await FleetingNote.find({ userEmail: session.user.email })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip);
+
+    const totalCount = await FleetingNote.countDocuments({ userEmail: session.user.email });
+
+    // Transform notes to match expected interface
+    const transformedNotes = notes.map(note => ({
+      id: note._id.toString(),
+      content: note.content,
+      source: note.source,
+      timestamp: note.timestamp || note.createdAt,
+      userId: session.user.email,
+      tags: note.tags || [],
+      archived: note.isArchived || false
+    }));
+
     return NextResponse.json({
       success: true,
-      notes: fleetingNotes.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      notes: transformedNotes,
+      totalCount,
+      page,
+      totalPages: Math.ceil(totalCount / limit)
     });
+
   } catch (error) {
-    console.error('Error fetching fleeting notes:', error);
+    console.error('Get fleeting notes error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch notes' },
+      { error: 'Failed to fetch fleeting notes' },
       { status: 500 }
     );
   }
@@ -24,36 +54,49 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const body = await request.json();
-    
-    const newNote = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
-      content: body.content,
-      source: body.source || 'web',
-      timestamp: body.timestamp || new Date().toISOString(),
-      userId: session?.user?.email || 'anonymous',
-      tags: body.tags || [],
-      archived: false
-    };
-    
-    fleetingNotes.push(newNote);
-    
-    console.log('📝 [FLEETING NOTES] New note added:', {
-      id: newNote.id,
-      content: newNote.content.substring(0, 50) + '...',
-      source: newNote.source
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { content, source = 'web', timestamp } = await request.json();
+
+    if (!content || content.trim().length === 0) {
+      return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+    }
+
+    await connectDB();
+
+    const note = new FleetingNote({
+      content: content.trim(),
+      userEmail: session.user.email,
+      source,
+      timestamp: timestamp ? new Date(timestamp) : new Date()
     });
-    
+
+    await note.save();
+
+    // Transform note to match expected interface
+    const transformedNote = {
+      id: note._id.toString(),
+      content: note.content,
+      source: note.source,
+      timestamp: note.timestamp || note.createdAt,
+      userId: session.user.email,
+      tags: note.tags || [],
+      archived: note.isArchived || false
+    };
+
     return NextResponse.json({
       success: true,
-      note: newNote,
-      message: 'Fleeting note saved successfully'
+      message: 'Fleeting note saved successfully',
+      note: transformedNote
     });
+
   } catch (error) {
-    console.error('Error creating fleeting note:', error);
+    console.error('Create fleeting note error:', error);
     return NextResponse.json(
-      { error: 'Failed to create note' },
+      { error: 'Failed to save fleeting note' },
       { status: 500 }
     );
   }
@@ -61,43 +104,55 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const body = await request.json();
-    
-    const noteIndex = fleetingNotes.findIndex(note => note.id === body.id);
-    if (noteIndex === -1) {
-      return NextResponse.json(
-        { error: 'Note not found' },
-        { status: 404 }
-      );
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    // Update the note
-    const updatedNote = {
-      ...fleetingNotes[noteIndex],
-      ...(body.content !== undefined && { content: body.content }),
-      ...(body.tags !== undefined && { tags: body.tags }),
-      ...(body.archived !== undefined && { archived: body.archived }),
-      updatedAt: new Date().toISOString()
+
+    const { id, content, tags, archived } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: 'Note ID is required' }, { status: 400 });
+    }
+
+    await connectDB();
+
+    const updateData: any = {};
+    if (content !== undefined) updateData.content = content.trim();
+    if (tags !== undefined) updateData.tags = tags;
+    if (archived !== undefined) updateData.isArchived = archived;
+
+    const note = await FleetingNote.findOneAndUpdate(
+      { _id: id, userEmail: session.user.email },
+      updateData,
+      { new: true }
+    );
+
+    if (!note) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
+    }
+
+    // Transform note to match expected interface
+    const transformedNote = {
+      id: note._id.toString(),
+      content: note.content,
+      source: note.source,
+      timestamp: note.timestamp || note.createdAt,
+      userId: session.user.email,
+      tags: note.tags || [],
+      archived: note.isArchived || false
     };
-    
-    fleetingNotes[noteIndex] = updatedNote;
-    
-    console.log('📝 [FLEETING NOTES] Note updated:', {
-      id: updatedNote.id,
-      content: updatedNote.content.substring(0, 50) + '...',
-      archived: updatedNote.archived
-    });
-    
+
     return NextResponse.json({
       success: true,
-      note: updatedNote,
-      message: 'Note updated successfully'
+      message: 'Fleeting note updated successfully',
+      note: transformedNote
     });
+
   } catch (error) {
-    console.error('Error updating fleeting note:', error);
+    console.error('Update fleeting note error:', error);
     return NextResponse.json(
-      { error: 'Failed to update note' },
+      { error: 'Failed to update fleeting note' },
       { status: 500 }
     );
   }
@@ -105,34 +160,38 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
-    const noteId = searchParams.get('id');
-    
-    if (!noteId) {
-      return NextResponse.json(
-        { error: 'Note ID required' },
-        { status: 400 }
-      );
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Note ID is required' }, { status: 400 });
     }
-    
-    const initialLength = fleetingNotes.length;
-    fleetingNotes = fleetingNotes.filter(note => note.id !== noteId);
-    
-    if (fleetingNotes.length === initialLength) {
-      return NextResponse.json(
-        { error: 'Note not found' },
-        { status: 404 }
-      );
+
+    await connectDB();
+
+    const note = await FleetingNote.findOneAndDelete({
+      _id: id,
+      userEmail: session.user.email
+    });
+
+    if (!note) {
+      return NextResponse.json({ error: 'Note not found' }, { status: 404 });
     }
-    
+
     return NextResponse.json({
       success: true,
-      message: 'Note deleted successfully'
+      message: 'Fleeting note deleted successfully'
     });
+
   } catch (error) {
-    console.error('Error deleting fleeting note:', error);
+    console.error('Delete fleeting note error:', error);
     return NextResponse.json(
-      { error: 'Failed to delete note' },
+      { error: 'Failed to delete fleeting note' },
       { status: 500 }
     );
   }

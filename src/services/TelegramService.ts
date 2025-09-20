@@ -53,31 +53,19 @@ class TelegramService {
     if (typeof window === 'undefined') return;
     
     try {
-      // Try to load from API first (database)
+      // Load user's Telegram configuration from API
       const response = await fetch('/api/settings/telegram');
       if (response.ok) {
         const data = await response.json();
-        if (data.telegramConfig && data.telegramConfig.enabled) {
+        if (data.telegramConfig && data.telegramConfig.enabled && data.telegramConfig.userId) {
+          // Use shared bot token from environment (handled by backend)
           this.config = {
-            botToken: data.telegramConfig.botToken,
-            chatId: data.telegramConfig.chatId
+            botToken: 'shared', // Placeholder - actual token is on backend
+            chatId: data.telegramConfig.userId // Using userId as chatId for compatibility
           };
-          if (this.config?.botToken && this.config?.chatId) {
-            this.isConnected = true;
-            console.log('🟢 [TELEGRAM SERVICE] Auto-connected with database config');
-            return;
-          }
-        }
-      }
-
-      // Fallback to localStorage for backward compatibility
-      const stored = localStorage.getItem('telegramConfig');
-      if (stored) {
-        this.config = JSON.parse(stored);
-        // Auto-connect if we have valid config
-        if (this.config?.botToken && this.config?.chatId) {
           this.isConnected = true;
-          console.log('🟢 [TELEGRAM SERVICE] Auto-connected with localStorage config');
+          console.log('🟢 [TELEGRAM SERVICE] Auto-connected with shared bot config');
+          return;
         }
       }
     } catch (error) {
@@ -91,25 +79,12 @@ class TelegramService {
     
     try {
       if (this.config) {
-        // Save to database via API
-        const response = await fetch('/api/settings/telegram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            botToken: this.config.botToken,
-            chatId: this.config.chatId,
-            enabled: true
-          })
-        });
-
-        if (response.ok) {
-          console.log('🟢 [TELEGRAM SERVICE] Config saved to database');
-        } else {
-          console.error('🔴 [TELEGRAM SERVICE] Failed to save config to database');
-        }
-
-        // Also save to localStorage as backup
-        localStorage.setItem('telegramConfig', JSON.stringify(this.config));
+        // For shared bot, we only save the user ID, not the bot token
+        localStorage.setItem('telegramConfig', JSON.stringify({
+          userId: this.config.chatId, // chatId is actually userId in our case
+          enabled: true
+        }));
+        console.log('🟢 [TELEGRAM SERVICE] Config saved to localStorage');
       }
     } catch (error) {
       console.error('Failed to save Telegram config:', error);
@@ -187,11 +162,15 @@ class TelegramService {
 
   // Configure Telegram connection
   async configure(config: TelegramConfig) {
-    this.config = config;
-    this.isConnected = true; // Set connected status immediately
+    // For shared bot, we don't store the actual bot token on frontend
+    this.config = {
+      botToken: 'shared', // Placeholder
+      chatId: config.chatId // This will be the user's Telegram user ID
+    };
+    this.isConnected = true;
     this.saveConfig();
     
-    console.log('🟢 [TELEGRAM SERVICE] ✅ Telegram configured and connected!');
+    console.log('🟢 [TELEGRAM SERVICE] ✅ Telegram configured with shared bot!');
     return true;
   }
 
@@ -277,30 +256,18 @@ class TelegramService {
 
       console.log('🟦 [TELEGRAM SERVICE] Configuration found, preparing to send message...');
       
-      // Prepare final message data
-      const messageData = {
-        text: message.text,
-        chatId: message.chatId || this.config.chatId,
-        parseMode: message.parseMode || 'Markdown'
-      };
-      
-      console.log('🟦 [TELEGRAM SERVICE] Final message data:', messageData);
-
-      // Send message via Telegram Bot API
-      console.log('🟦 [TELEGRAM SERVICE] Sending message to Telegram...');
-      
-      const telegramApiUrl = `https://api.telegram.org/bot${this.config.botToken}/sendMessage`;
-      console.log('🟦 [TELEGRAM SERVICE] API URL:', telegramApiUrl.replace(this.config.botToken, this.config.botToken.substring(0, 10) + '...'));
+      // For shared bot, we send via our backend API instead of directly to Telegram
+      console.log('🟦 [TELEGRAM SERVICE] Sending message via backend API...');
       
       const payload = {
-        chat_id: messageData.chatId,
-        text: messageData.text,
-        parse_mode: messageData.parseMode
+        userId: this.config.chatId, // This is actually the user's Telegram user ID
+        text: message.text,
+        parseMode: message.parseMode || 'Markdown'
       };
       
       console.log('🟦 [TELEGRAM SERVICE] Payload:', JSON.stringify(payload, null, 2));
       
-      const response = await fetch(telegramApiUrl, {
+      const response = await fetch('/api/telegram/send-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

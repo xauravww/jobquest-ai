@@ -87,8 +87,8 @@ export interface IUser extends Document {
     enabled: boolean;
   };
   telegramConfig?: {
-    botToken?: string;
-    chatId?: string;
+    userId?: string; // Telegram user ID instead of chat ID
+    username?: string; // Telegram username for reference
     enabled: boolean;
   };
   createdAt: Date;
@@ -203,8 +203,8 @@ const UserSchema = new Schema<IUser>(
       enabled: { type: Boolean, default: true },
     },
     telegramConfig: {
-      botToken: String,
-      chatId: String,
+      userId: String, // Telegram user ID
+      username: String, // Telegram username
       enabled: { type: Boolean, default: false },
     },
   },

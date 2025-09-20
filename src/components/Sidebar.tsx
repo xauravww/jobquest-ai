@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Atom, // New Icon for LaTeX
   StickyNote,
+  Search,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -580,6 +581,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           <NavLink href="/ai-filtering" icon={<Brain />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             AI Filtering
           </NavLink>
+          <NavLink href="/job-search" icon={<Search />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+            Job Search
+          </NavLink>
 
           {/* Application Management */}
           {!isCollapsed && (
@@ -614,15 +618,6 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           </NavLink>
           <NavLink href="/fleeting-notes" icon={<StickyNote />} pathname={pathname} isCollapsed={isCollapsed}>
             Fleeting Notes
-          </NavLink>
-          <NavLink href="/reminders" icon={<Bell />} pathname={pathname} isCollapsed={isCollapsed}>
-            Reminders (Legacy)
-          </NavLink>
-          <NavLink href="/events" icon={<Calendar />} pathname={pathname} isCollapsed={isCollapsed}>
-            Events (Legacy)
-          </NavLink>
-          <NavLink href="/reminders-calendar" icon={<Target />} pathname={pathname} isCollapsed={isCollapsed}>
-            Calendar (Legacy)
           </NavLink>
           <NavLink href="/settings" icon={<Settings />} pathname={pathname} isCollapsed={isCollapsed}>
             Settings

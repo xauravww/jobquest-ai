@@ -20,6 +20,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
+import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
 import { useSession } from 'next-auth/react';
 
 // --- Type Definitions ---
@@ -44,6 +45,7 @@ interface ApplicationStatus {
   name: string;
   value: number;
   color: string;
+  [key: string]: string | number;
 }
 interface TopSkill {
   id: number;
@@ -154,21 +156,55 @@ const DashboardPage = () => {
     if (status !== 'authenticated') return;
     setLoading(true);
     setError(null);
+    
+    console.log('Fetching dashboard data...');
+    
     try {
-      // Try the full stats API first
-      let response = await fetch('/api/dashboard/stats');
+      // Try the full stats API first with stronger cache busting
+      let response = await fetch('/api/dashboard/stats?' + new URLSearchParams({
+        t: Date.now().toString(),
+        bust: Math.random().toString()
+      }), {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      console.log('Stats API response status:', response.status);
       
       // If that fails, try the simple stats API
       if (!response.ok) {
         console.warn('Full stats API failed, trying simple stats API');
-        response = await fetch('/api/dashboard/simple-stats');
+        response = await fetch('/api/dashboard/simple-stats?' + new URLSearchParams({
+          t: Date.now().toString(),
+          bust: Math.random().toString()
+        }), {
+          method: 'GET',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
       }
       
       if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data from both APIs.');
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`Failed to fetch dashboard data. Status: ${response.status}`);
       }
       
       const fetchedData: DashboardData = await response.json();
+      console.log('Dashboard data fetched:', {
+        totalApplications: fetchedData.jobStats?.totalApplications,
+        activeApplications: fetchedData.jobStats?.activeApplications
+      });
+      
       setData(fetchedData);
     } catch (e) {
       console.error('Dashboard data fetch error:', e);
@@ -182,47 +218,16 @@ const DashboardPage = () => {
     fetchData();
   }, [fetchData]);
 
+  // Add a refresh function for manual refresh
+  const handleRefresh = useCallback(() => {
+    console.log('Manual refresh triggered');
+    fetchData();
+  }, [fetchData]);
+
   if (status === "loading" || loading) {
     return (
       <AppLayout showFooter={false}>
-        <div className="p-4 md:p-8 bg-bg min-h-screen">
-            {/* Header Skeleton */}
-            <div className="animate-pulse flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 mt-8">
-                <div className="flex-1">
-                    <div className="h-6 md:h-8 bg-bg-light rounded w-48 md:w-64 mb-2"></div>
-                    <div className="h-4 md:h-5 bg-bg-light rounded w-64 md:w-96"></div>
-                </div>
-                <div className="h-10 md:h-12 bg-bg-light rounded w-32 md:w-40"></div>
-            </div>
-            {/* Improved Grid Skeleton */}
-            <div className="space-y-6">
-                {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                    {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-32 md:h-40 bg-bg-card rounded-xl animate-pulse">
-                            <div className="p-4 md:p-6 space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-bg-light rounded-lg"></div>
-                                    <div className="h-4 bg-bg-light rounded w-20"></div>
-                                </div>
-                                <div className="h-8 bg-bg-light rounded w-16"></div>
-                                <div className="space-y-2">
-                                    <div className="h-3 bg-bg-light rounded w-full"></div>
-                                    <div className="h-3 bg-bg-light rounded w-3/4"></div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                {/* Charts Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                    <div className="lg:col-span-2 h-64 md:h-80 bg-bg-card rounded-xl animate-pulse"></div>
-                    <div className="h-64 md:h-80 bg-bg-card rounded-xl animate-pulse"></div>
-                </div>
-                {/* Skills Row */}
-                <div className="h-32 bg-bg-card rounded-xl animate-pulse"></div>
-            </div>
-        </div>
+        <DashboardSkeleton />
       </AppLayout>
     );
   }
@@ -253,10 +258,19 @@ const DashboardPage = () => {
             </h1>
             <p className="text-text-muted text-base md:text-lg">Here&apos;s your job search progress and insights.</p>
           </div>
-          <Link href="/application-tracking" className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
-            <Briefcase className="w-5 h-5" />
-            Manage Applications
-          </Link>
+          <div className="flex gap-3">
+            <button 
+              onClick={handleRefresh}
+              className="inline-flex items-center gap-2 px-4 py-3 bg-bg-light hover:bg-bg-card text-white rounded-lg transition-all duration-200 font-semibold border border-border hover:border-primary whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+            >
+              <TrendingUp className="w-5 h-5" />
+              Refresh
+            </button>
+            <Link href="/application-tracking" className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
+              <Briefcase className="w-5 h-5" />
+              Manage Applications
+            </Link>
+          </div>
         </div>
 
         <ResponsiveGridLayout

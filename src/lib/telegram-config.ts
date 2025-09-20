@@ -2,8 +2,8 @@ import User from '@/models/User';
 import connectDB from '@/lib/db';
 
 export interface TelegramConfig {
-  botToken?: string;
-  chatId?: string;
+  userId?: string;
+  username?: string;
   enabled: boolean;
 }
 
@@ -35,49 +35,59 @@ export async function getTelegramConfig(userEmail?: string): Promise<TelegramCon
   }
 }
 
-export async function getBotTokenFromDB(): Promise<string | null> {
-  try {
-    await connectDB();
-    
-    // For webhook, we need to find any user with a valid bot token
-    // In a real app, you might want to have a single bot for all users
-    // or implement user identification in the webhook
-    const user = await User.findOne({
-      'telegramConfig.botToken': { $exists: true, $ne: null },
-      'telegramConfig.enabled': true
-    });
-    
-    if (!user || !user.telegramConfig?.botToken) {
-      console.log('🟡 [TELEGRAM CONFIG] No bot token found in database');
-      return null;
-    }
-
-    console.log('🟢 [TELEGRAM CONFIG] Found bot token in database');
-    return user.telegramConfig.botToken;
-  } catch (error) {
-    console.error('🔴 [TELEGRAM CONFIG] Error fetching bot token from DB:', error);
+export function getSharedBotToken(): string | null {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) {
+    console.log('🟡 [TELEGRAM CONFIG] No shared bot token found in environment');
     return null;
   }
+  console.log('🟢 [TELEGRAM CONFIG] Using shared bot token from environment');
+  return botToken;
 }
 
-export async function getUserByTelegramChatId(chatId: string): Promise<any> {
+export async function getUserByTelegramUserId(userId: string): Promise<any> {
   try {
     await connectDB();
     
     const user = await User.findOne({
-      'telegramConfig.chatId': chatId,
+      'telegramConfig.userId': userId,
       'telegramConfig.enabled': true
     });
     
     if (!user) {
-      console.log('🟡 [TELEGRAM CONFIG] No user found for chat ID:', chatId);
+      console.log('🟡 [TELEGRAM CONFIG] No user found for Telegram user ID:', userId);
       return null;
     }
 
-    console.log('🟢 [TELEGRAM CONFIG] Found user for chat ID:', chatId);
+    console.log('🟢 [TELEGRAM CONFIG] Found user for Telegram user ID:', userId);
     return user;
   } catch (error) {
-    console.error('🔴 [TELEGRAM CONFIG] Error finding user by chat ID:', error);
+    console.error('🔴 [TELEGRAM CONFIG] Error finding user by Telegram user ID:', error);
     return null;
+  }
+}
+
+export async function linkTelegramUser(userEmail: string, telegramUserId: string, telegramUsername?: string): Promise<boolean> {
+  try {
+    await connectDB();
+    
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      console.log('🟡 [TELEGRAM CONFIG] User not found for linking:', userEmail);
+      return false;
+    }
+
+    user.telegramConfig = {
+      userId: telegramUserId,
+      username: telegramUsername,
+      enabled: true
+    };
+
+    await user.save();
+    console.log('🟢 [TELEGRAM CONFIG] Successfully linked Telegram user:', telegramUserId, 'to', userEmail);
+    return true;
+  } catch (error) {
+    console.error('🔴 [TELEGRAM CONFIG] Error linking Telegram user:', error);
+    return false;
   }
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
+import AuthSkeleton from '@/components/ui/AuthSkeleton';
 
 // react-icons
 import { FaBriefcase, FaLock, FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
@@ -103,18 +104,7 @@ const SignUpPage: React.FC = () => {
   };
 
   if (!isMounted || status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-indigo-600 mx-auto mb-4"></div>
-            <div className="animate-ping absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-4 w-4 bg-indigo-600 rounded-full opacity-75"></div>
-          </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Loading...</h3>
-          <p className="text-gray-400">Please wait while we prepare your experience</p>
-        </div>
-      </div>
-    );
+    return <AuthSkeleton />;
   }
 
   return (

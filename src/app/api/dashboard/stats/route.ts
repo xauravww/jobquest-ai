@@ -54,31 +54,34 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Connect to database
+    console.log('Dashboard stats API called for user:', session.user.email);
+
+    // Connect to database with better error handling
     try {
       await connectDB();
+      console.log('Database connected successfully');
     } catch (dbError) {
       console.error('Database connection error:', dbError);
       // Return fallback stats instead of error
-      return NextResponse.json({
-        totalApplications: 0,
-        totalReminders: 0,
-        totalEvents: 0,
-        totalActivities: 0,
-        pendingReminders: 0,
-        upcomingInterviews: 0,
-        overdueReminders: 0,
-        overdueFollowUps: 0,
-        activeContacts: 0,
-        weeklyProgress: { completed: 0, total: 0 },
-        completionRate: 0,
-        applicationsByStatus: {},
-        recentActivity: [],
-        trends: {
-          applications: { current: 0, previous: 0 },
-          interviews: { current: 0, previous: 0 }
-        }
-      });
+      const fallbackStats = {
+        jobStats: {
+          totalApplications: 0,
+          activeApplications: 0,
+          interviews: 0,
+          offers: 0,
+          responseRate: 0
+        },
+        userProfile: {
+          firstName: session.user.name?.split(' ')[0] || 'User',
+          targetRole: 'Job Seeker',
+          location: 'Remote'
+        },
+        applicationStatus: [],
+        applicationTrendData: [],
+        upcomingReminders: [],
+        topSkills: []
+      };
+      return NextResponse.json(fallbackStats);
     }
 
     // Get current date ranges
@@ -89,36 +92,66 @@ export async function GET() {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
 
-    // Dynamically import models to handle potential issues
+    // Find user first to get userId (same pattern as applications API)
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      console.log('User not found for email:', session.user.email);
+      // Return fallback stats if user not found
+      const fallbackStats = {
+        jobStats: {
+          totalApplications: 0,
+          activeApplications: 0,
+          interviews: 0,
+          offers: 0,
+          responseRate: 0
+        },
+        userProfile: {
+          firstName: session.user.name?.split(' ')[0] || 'User',
+          targetRole: 'Job Seeker',
+          location: 'Remote'
+        },
+        applicationStatus: [],
+        applicationTrendData: [],
+        upcomingReminders: [],
+        topSkills: []
+      };
+      return NextResponse.json(fallbackStats);
+    }
+
+    console.log('Fetching data from database for user:', user._id);
+    
+    // Use Mongoose models with userId (ObjectId) instead of userEmail
     let applications: any[] = [];
     let reminders: any[] = [];
     let events: any[] = [];
 
     try {
-      const { Application } = await import('@/models/Application');
-      applications = await Application.find({ 
-        userId: session.user.id 
-      }).populate('jobId').lean();
+      // Use Application model with userId
+      const Application = (await import('@/models/Application')).default;
+      applications = await Application.find({ userId: user._id }).populate('jobId');
+      console.log(`Found ${applications.length} applications`);
     } catch (error) {
       console.error('Error fetching applications:', error);
       applications = [];
     }
 
     try {
-      const { Reminder } = await import('@/models/Reminder');
-      reminders = await Reminder.find({ 
-        userId: session.user.id 
-      }).lean();
+      // Use Reminder model with userId
+      const Reminder = (await import('@/models/Reminder')).default;
+      reminders = await Reminder.find({ userId: user._id });
+      console.log(`Found ${reminders.length} reminders`);
     } catch (error) {
       console.error('Error fetching reminders:', error);
       reminders = [];
     }
 
     try {
-      const { CalendarEvent } = await import('@/models/CalendarEvent');
-      events = await CalendarEvent.find({ 
-        userId: session.user.id 
-      }).lean();
+      // Use CalendarEvent model with userId
+      const CalendarEvent = (await import('@/models/CalendarEvent')).default;
+      events = await CalendarEvent.find({ userId: user._id });
+      console.log(`Found ${events.length} events`);
     } catch (error) {
       console.error('Error fetching events:', error);
       events = [];
@@ -168,7 +201,21 @@ export async function GET() {
       ]
     };
 
-    return NextResponse.json(stats);
+    console.log('Returning dashboard stats:', {
+      totalApplications: stats.jobStats.totalApplications,
+      activeApplications: stats.jobStats.activeApplications,
+      interviews: stats.jobStats.interviews
+    });
+
+    // Return with no-cache headers to prevent caching issues
+    return NextResponse.json(stats, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+      }
+    });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     
@@ -192,6 +239,13 @@ export async function GET() {
       topSkills: []
     };
     
-    return NextResponse.json(fallbackStats);
+    return NextResponse.json(fallbackStats, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+      }
+    });
   }
 }

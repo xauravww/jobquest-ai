@@ -100,6 +100,9 @@ const JobSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  skippedBy: {
+    type: String
+  },
   skippedAt: {
     type: Date
   },

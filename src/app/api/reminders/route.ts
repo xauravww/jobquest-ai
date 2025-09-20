@@ -1,24 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-
-// In-memory storage for demo (replace with database in production)
-let reminders: any[] = [];
+import connectDB from '@/lib/db';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    // Sort by due date
-    const sortedReminders = reminders.sort((a, b) => {
-      const aDate = new Date(a.dueDate);
-      const bDate = new Date(b.dueDate);
-      return aDate.getTime() - bDate.getTime();
-    });
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Get reminders from database
+    const Reminder = (await import('@/models/Reminder')).default;
+    const reminders = await Reminder.find({ userId: user._id })
+      .sort({ dueDate: 1 })
+      .populate('applicationId')
+      .populate('jobId');
     
     return NextResponse.json({
       success: true,
-      reminders: sortedReminders
+      reminders
     });
   } catch (error) {
     console.error('Error fetching reminders:', error);
@@ -32,29 +44,43 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     
-    const newReminder = {
-      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+    // Create new reminder in database
+    const Reminder = (await import('@/models/Reminder')).default;
+    const newReminder = new Reminder({
+      userId: user._id,
       title: body.title,
       description: body.description,
-      dueDate: body.dueDate,
+      dueDate: new Date(body.dueDate),
       dueTime: body.dueTime || '09:00',
       type: body.type || 'custom',
       status: body.status || 'pending',
       priority: body.priority || 'medium',
       tags: body.tags || [],
       jobId: body.jobId || null,
-      applicationId: body.applicationId || null,
-      userId: session?.user?.email || 'anonymous',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      applicationId: body.applicationId || null
+    });
     
-    reminders.push(newReminder);
+    await newReminder.save();
     
     console.log('⏰ [REMINDERS] New reminder created:', {
-      id: newReminder.id,
+      id: newReminder._id,
       title: newReminder.title,
       dueDate: newReminder.dueDate
     });
@@ -75,6 +101,22 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const reminderId = searchParams.get('id');
     const body = await request.json();
@@ -86,30 +128,30 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const reminderIndex = reminders.findIndex(reminder => reminder.id === reminderId);
+    // Update reminder in database
+    const Reminder = (await import('@/models/Reminder')).default;
+    const updatedReminder = await Reminder.findOneAndUpdate(
+      { _id: reminderId, userId: user._id },
+      { ...body, updatedAt: new Date() },
+      { new: true }
+    );
     
-    if (reminderIndex === -1) {
+    if (!updatedReminder) {
       return NextResponse.json(
         { error: 'Reminder not found' },
         { status: 404 }
       );
     }
     
-    reminders[reminderIndex] = {
-      ...reminders[reminderIndex],
-      ...body,
-      updatedAt: new Date().toISOString()
-    };
-    
     console.log('⏰ [REMINDERS] Reminder updated:', {
-      id: reminders[reminderIndex].id,
-      status: reminders[reminderIndex].status,
-      title: reminders[reminderIndex].title
+      id: updatedReminder._id,
+      status: updatedReminder.status,
+      title: updatedReminder.title
     });
     
     return NextResponse.json({
       success: true,
-      reminder: reminders[reminderIndex],
+      reminder: updatedReminder,
       message: 'Reminder updated successfully'
     });
   } catch (error) {
@@ -123,6 +165,22 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Find user first to get userId
+    const User = (await import('@/models/User')).default;
+    const user = await User.findOne({ email: session.user.email });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const reminderId = searchParams.get('id');
     
@@ -133,10 +191,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const initialLength = reminders.length;
-    reminders = reminders.filter(reminder => reminder.id !== reminderId);
+    // Delete reminder from database
+    const Reminder = (await import('@/models/Reminder')).default;
+    const deletedReminder = await Reminder.findOneAndDelete({
+      _id: reminderId,
+      userId: user._id
+    });
     
-    if (reminders.length === initialLength) {
+    if (!deletedReminder) {
       return NextResponse.json(
         { error: 'Reminder not found' },
         { status: 404 }

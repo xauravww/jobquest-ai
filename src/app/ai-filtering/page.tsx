@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, MapPin, Calendar, Save, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, MapPin, Calendar, Save } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import { FormInput, FormInputNumber, FormDateInput } from '@/components/ui/FormInput';
+import JobCardSkeleton from '@/components/ui/JobCardSkeleton';
+import SearchSkeleton from '@/components/ui/SearchSkeleton';
 
 // Define types for Job and Props
 interface AIAnalysis {
@@ -223,21 +225,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
   );
 };
 
-// Loading Spinner Component
-const LoadingSpinner = () => (
-  <div className="flex flex-col items-center justify-center text-center py-20">
-    <div className="relative">
-      <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-      <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-primary/40 rounded-full animate-spin animation-delay-150"></div>
-    </div>
-    <p className="mt-6 text-text-muted text-lg">Searching for opportunities...</p>
-    <div className="mt-2 flex items-center gap-1">
-      <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-      <div className="w-2 h-2 bg-primary rounded-full animate-bounce animation-delay-100"></div>
-      <div className="w-2 h-2 bg-primary rounded-full animate-bounce animation-delay-200"></div>
-    </div>
-  </div>
-);
+// Loading Spinner Component - replaced with SearchSkeleton
 
 // Chunk Loading Spinner
 const ChunkLoadingSpinner = () => (
@@ -380,7 +368,7 @@ const JobSearchPage = () => {
   const [query, setQuery] = useState('mern hiring');
   const [hasSearched, setHasSearched] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [showHiddenJobs, setShowHiddenJobs] = useState(false);
+
   const [filters, setFilters] = useState<FilterState>({
     location: '',
     postedAfter: '',
@@ -390,21 +378,14 @@ const JobSearchPage = () => {
     onlyHiringPosts: true,
     minConfidence: '' as string | number
   });
-  const [isSaving, setIsSaving] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<{
-    toTrack: Job[];
-    toSkip: Job[];
-  }>({ toTrack: [], toSkip: [] });
+
 
   // New filter state for hasDate
   const [hasDate, setHasDate] = useState<boolean | undefined>(undefined);
 
-  // State for tracked and skipped job IDs
-  const [trackedJobIds, setTrackedJobIds] = useState<Set<string>>(new Set());
-  const [skippedJobIds, setSkippedJobIds] = useState<Set<string>>(new Set());
 
-  // Ref to maintain focus on the input
-  const maxPagesInputRef = useRef<HTMLInputElement | null>(null);
+
+
 
   // AI provider config state
   const [aiProvider, setAiProvider] = useState('lm-studio');
@@ -491,44 +472,7 @@ const JobSearchPage = () => {
     fetchActiveAIConfig();
   }, []);
 
-  // Fetch tracked and skipped jobs on mount
-  useEffect(() => {
-    const fetchTrackedAndSkippedJobs = async () => {
-      try {
-        // Fetch tracked jobs (applications)
-        const applicationsResponse = await fetch('/api/applications');
-        if (applicationsResponse.ok) {
-          const applicationsData = await applicationsResponse.json();
-          const trackedIds = new Set<string>();
-          applicationsData.applications?.forEach((app: any) => {
-            if (app.jobId) {
-              trackedIds.add(app.jobId.toString());
-            }
-          });
-          setTrackedJobIds(trackedIds);
-          console.log('Fetched tracked job IDs:', trackedIds.size);
-        }
 
-        // Fetch skipped jobs (jobs with isSkipped: true)
-        const skippedResponse = await fetch('/api/jobs/skipped');
-        if (skippedResponse.ok) {
-          const skippedData = await skippedResponse.json();
-          const skippedIds = new Set<string>();
-          skippedData.jobs?.forEach((job: any) => {
-            if (job._id) {
-              skippedIds.add(job._id.toString());
-            }
-          });
-          setSkippedJobIds(skippedIds);
-          console.log('Fetched skipped job IDs:', skippedIds.size);
-        }
-      } catch (error) {
-        console.error('Error fetching tracked/skipped jobs:', error);
-      }
-    };
-
-    fetchTrackedAndSkippedJobs();
-  }, []);
 
   // Save AI config to localStorage on change (debounced)
   useEffect(() => {
@@ -542,6 +486,32 @@ const JobSearchPage = () => {
   // Generate unique ID for job
   const generateJobId = (job: Job): string => {
     return `${job.url}-${job.title}-${job.company}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+  };
+
+  // Filter out tracked/skipped jobs
+  const filterTrackedJobs = async (jobs: Job[]) => {
+    try {
+      const jobIds = jobs.map(job => job.id || generateJobId(job)).join(',');
+      const response = await fetch(`/api/jobs/track?jobIds=${jobIds}`);
+      if (!response.ok) return jobs;
+      
+      const { trackedJobs } = await response.json();
+      
+      // Filter out skipped jobs and mark tracked ones
+      return jobs.filter(job => {
+        const jobId = job.id || generateJobId(job);
+        const tracked = trackedJobs[jobId];
+        if (tracked?.isSkipped) return false; // Hide skipped jobs
+        
+        if (tracked?.isBookmarked) {
+          job.userAction = 'track';
+        }
+        return true;
+      });
+    } catch (error) {
+      console.error('Error filtering tracked jobs:', error);
+      return jobs;
+    }
   };
 
   // Handle search function
@@ -585,11 +555,8 @@ const JobSearchPage = () => {
         id: generateJobId(job)
       }));
 
-      // Filter out tracked and skipped jobs
-      const filteredJobs = processedJobs.filter((job: Job) => {
-        const jobId = job.id || job.url;
-        return !trackedJobIds.has(jobId) && !skippedJobIds.has(jobId);
-      });
+      // Filter out tracked and skipped jobs using the new API
+      const filteredJobs = await filterTrackedJobs(processedJobs);
 
       const chunkSize = 20;
       const newChunks: Chunk[] = [];
@@ -616,79 +583,173 @@ const JobSearchPage = () => {
   };
 
   // Handle track job
-  const handleTrackJob = (job: Job) => {
-    setPendingChanges(prev => ({
-      ...prev,
-      toTrack: [...prev.toTrack, job]
-    }));
+  const handleTrackJob = async (job: Job) => {
+    try {
+      const response = await fetch('/api/jobs/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId: job.id || generateJobId(job),
+          action: 'track',
+          jobData: {
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            url: job.url,
+            description: job.content,
+            source: 'ai-search',
+            publishedDate: job.publishedDate
+          }
+        })
+      });
 
-    // Update job userAction in chunks
-    setChunks(prev => prev.map(chunk => ({
-      ...chunk,
-      jobs: chunk.jobs.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j),
-      filteredJobs: chunk.filteredJobs.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j)
-    })));
+      if (response.ok) {
+        // Update job userAction in chunks
+        setChunks(prev => prev.map(chunk => ({
+          ...chunk,
+          jobs: chunk.jobs.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j),
+          filteredJobs: chunk.filteredJobs.map(j => j.id === job.id ? { ...j, userAction: 'track' } : j)
+        })));
+        toast.success('Job tracked successfully');
+      } else {
+        toast.error('Failed to track job');
+      }
+    } catch (error) {
+      console.error('Error tracking job:', error);
+      toast.error('Failed to track job');
+    }
   };
 
   // Handle skip job
-  const handleSkipJob = (job: Job) => {
-    setPendingChanges(prev => ({
-      ...prev,
-      toSkip: [...prev.toSkip, job]
-    }));
+  const handleSkipJob = async (job: Job) => {
+    try {
+      const response = await fetch('/api/jobs/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId: job.id || generateJobId(job),
+          action: 'skip',
+          jobData: {
+            title: job.title,
+            company: job.company,
+            location: job.location,
+            url: job.url,
+            description: job.content,
+            source: 'ai-search',
+            publishedDate: job.publishedDate
+          }
+        })
+      });
 
-    // Update job userAction in chunks
-    setChunks(prev => prev.map(chunk => ({
-      ...chunk,
-      jobs: chunk.jobs.map(j => j.id === job.id ? { ...j, userAction: 'skip' } : j),
-      filteredJobs: chunk.filteredJobs.map(j => j.id === job.id ? { ...j, userAction: 'skip' } : j)
-    })));
+      if (response.ok) {
+        // Remove skipped job from chunks immediately
+        setChunks(prev => prev.map(chunk => ({
+          ...chunk,
+          jobs: chunk.jobs.filter(j => j.id !== job.id),
+          filteredJobs: chunk.filteredJobs.filter(j => j.id !== job.id)
+        })));
+        toast.success('Job skipped');
+      } else {
+        toast.error('Failed to skip job');
+      }
+    } catch (error) {
+      console.error('Error skipping job:', error);
+      toast.error('Failed to skip job');
+    }
   };
 
   // Handle track all in chunk
-  const handleTrackAllInChunk = (chunkId: number) => {
+  const handleTrackAllInChunk = async (chunkId: number) => {
     const chunk = chunks.find(c => c.id === chunkId);
     if (!chunk) return;
 
     const jobsToTrack = chunk.filteredJobs.filter(job => !job.userAction);
-    setPendingChanges(prev => ({
-      ...prev,
-      toTrack: [...prev.toTrack, ...jobsToTrack]
-    }));
+    
+    try {
+      // Track all jobs in parallel
+      await Promise.all(jobsToTrack.map(job => 
+        fetch('/api/jobs/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobId: job.id || generateJobId(job),
+            action: 'track',
+            jobData: {
+              title: job.title,
+              company: job.company,
+              location: job.location,
+              url: job.url,
+              description: job.content,
+              source: 'ai-search',
+              publishedDate: job.publishedDate
+            }
+          })
+        })
+      ));
 
-    // Update all jobs in chunk
-    setChunks(prev => prev.map(chunk =>
-      chunk.id === chunkId
-        ? {
-            ...chunk,
-            jobs: chunk.jobs.map(j => ({ ...j, userAction: 'track' })),
-            filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: 'track' }))
-          }
-        : chunk
-    ));
+      // Update all jobs in chunk
+      setChunks(prev => prev.map(chunk =>
+        chunk.id === chunkId
+          ? {
+              ...chunk,
+              jobs: chunk.jobs.map(j => ({ ...j, userAction: 'track' })),
+              filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: 'track' }))
+            }
+          : chunk
+      ));
+      
+      toast.success(`Tracked ${jobsToTrack.length} jobs`);
+    } catch (error) {
+      console.error('Error tracking jobs:', error);
+      toast.error('Failed to track some jobs');
+    }
   };
 
   // Handle skip all in chunk
-  const handleSkipAllInChunk = (chunkId: number) => {
+  const handleSkipAllInChunk = async (chunkId: number) => {
     const chunk = chunks.find(c => c.id === chunkId);
     if (!chunk) return;
 
     const jobsToSkip = chunk.filteredJobs.filter(job => !job.userAction);
-    setPendingChanges(prev => ({
-      ...prev,
-      toSkip: [...prev.toSkip, ...jobsToSkip]
-    }));
+    
+    try {
+      // Skip all jobs in parallel
+      await Promise.all(jobsToSkip.map(job => 
+        fetch('/api/jobs/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobId: job.id || generateJobId(job),
+            action: 'skip',
+            jobData: {
+              title: job.title,
+              company: job.company,
+              location: job.location,
+              url: job.url,
+              description: job.content,
+              source: 'ai-search',
+              publishedDate: job.publishedDate
+            }
+          })
+        })
+      ));
 
-    // Update all jobs in chunk
-    setChunks(prev => prev.map(chunk =>
-      chunk.id === chunkId
-        ? {
-            ...chunk,
-            jobs: chunk.jobs.map(j => ({ ...j, userAction: 'skip' })),
-            filteredJobs: chunk.filteredJobs.map(j => ({ ...j, userAction: 'skip' }))
-          }
-        : chunk
-    ));
+      // Remove all skipped jobs from chunk
+      setChunks(prev => prev.map(chunk =>
+        chunk.id === chunkId
+          ? {
+              ...chunk,
+              jobs: chunk.jobs.filter(j => !jobsToSkip.some(skip => skip.id === j.id)),
+              filteredJobs: chunk.filteredJobs.filter(j => !jobsToSkip.some(skip => skip.id === j.id))
+            }
+          : chunk
+      ));
+      
+      toast.success(`Skipped ${jobsToSkip.length} jobs`);
+    } catch (error) {
+      console.error('Error skipping jobs:', error);
+      toast.error('Failed to skip some jobs');
+    }
   };
 
   const handleChunkFilter = async (chunkId: number) => {
@@ -783,104 +844,7 @@ const JobSearchPage = () => {
     ));
   };
 
-  const handleSaveChanges = async () => {
-    setIsSaving(true);
-    try {
-      let savedCount = 0;
-      let skippedCount = 0;
 
-      // Save tracked jobs to applications
-      if (pendingChanges.toTrack.length > 0) {
-        const response = await fetch('/api/applications', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jobs: pendingChanges.toTrack.map(job => ({
-              jobTitle: job.title,
-              company: job.company || 'Unknown Company',
-              location: job.location || 'Unknown Location',
-              jobUrl: job.url,
-              description: job.content || '',
-              status: 'saved',
-              notes: `Added from AI search on ${new Date().toLocaleDateString()}`
-            }))
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          savedCount = data.savedCount || 0;
-        }
-      }
-
-      // Skip jobs
-      if (pendingChanges.toSkip.length > 0) {
-        const response = await fetch('/api/jobs/skip', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jobIds: pendingChanges.toSkip.map(job => job.id || job.url)
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          skippedCount = data.skippedCount || 0;
-        }
-      }
-
-      // Clear pending changes
-      setPendingChanges({ toTrack: [], toSkip: [] });
-
-      // Update tracked and skipped job IDs
-      let newTrackedIds = new Set(trackedJobIds);
-      let newSkippedIds = new Set(skippedJobIds);
-
-      if (savedCount > 0) {
-        pendingChanges.toTrack.forEach(job => {
-          const jobId = job.id || job.url;
-          newTrackedIds.add(jobId);
-        });
-        setTrackedJobIds(newTrackedIds);
-      }
-
-      if (skippedCount > 0) {
-        pendingChanges.toSkip.forEach(job => {
-          const jobId = job.id || job.url;
-          newSkippedIds.add(jobId);
-        });
-        setSkippedJobIds(newSkippedIds);
-      }
-
-      // Remove tracked and skipped jobs from chunks immediately using updated sets
-      setChunks(prev => prev.map(chunk => {
-        const remainingJobs = chunk.jobs.filter(job => {
-          const jobId = job.id || job.url;
-          return !newTrackedIds.has(jobId) && !newSkippedIds.has(jobId);
-        });
-        const remainingFilteredJobs = chunk.filteredJobs.filter(job => {
-          const jobId = job.id || job.url;
-          return !newTrackedIds.has(jobId) && !newSkippedIds.has(jobId);
-        });
-        return {
-          ...chunk,
-          jobs: remainingJobs,
-          filteredJobs: remainingFilteredJobs
-        };
-      }));
-
-      toast.success(`Changes saved successfully!\n- ${savedCount} jobs added to tracker\n- ${skippedCount} jobs permanently skipped`);
-    } catch (error) {
-      console.error('Error saving changes:', error);
-      toast.error('Failed to save changes. Please check the console for details.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleFilterChange = (key: keyof typeof filters, value: string | number | boolean) => {
     setFilters(prev => ({
@@ -894,32 +858,30 @@ const FilterPanel = ({
   handleFilterChange,
   hasDate,
   setShowFilters,
-  setHasDate,
-  maxPagesInputRef
+  setHasDate
 }: {
   filters: FilterState;
   handleFilterChange: (key: keyof FilterState, value: string | number | boolean) => void;
   hasDate: boolean | undefined;
   setShowFilters: (value: boolean) => void;
   setHasDate: (value: boolean | undefined) => void;
-  maxPagesInputRef: React.RefObject<HTMLInputElement | null>;
 }) => (
-  <div className="filter-panel rounded-xl p-6 mb-8">
+  <div className="bg-bg-card rounded-xl p-6 mb-8 border border-border">
     <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <div className="p-2 bg-primary/20 rounded-lg">
           <Filter className="w-5 h-5 text-primary" />
         </div>
-        <div className="text-xl font-semibold text-white">Advanced Filters</div>
+        <h3 className="text-xl font-semibold text-white">Advanced Filters</h3>
       </div>
-      <div
+      <button
         onClick={() => setShowFilters(false)}
-        className="w-8 h-8 cursor-pointer"
+        className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-white hover:bg-bg-light rounded-lg transition-colors"
       >
         ×
-      </div>
+      </button>
     </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {/* Date Filters - Your Core Feature */}
       <FormDateInput
         label="Posted After"
@@ -952,97 +914,19 @@ const FilterPanel = ({
       />
 
       {/* Max Pages Filter */}
-      <div className="w-full">
-        <label className="block text-sm font-medium text-white mb-2">
-          Max Pages
-        </label>
-        <div className="flex items-center gap-2">
-          <button
-            onMouseDown={() => {
-              if (maxPagesInputRef.current) {
-                const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
-                const newValue = Math.max(1, currentValue - 1);
-                maxPagesInputRef.current.value = newValue.toString();
-                handleFilterChange('maxPages', newValue.toString());
-              }
-              // Start continuous decrement
-              const interval = setInterval(() => {
-                if (maxPagesInputRef.current) {
-                  const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
-                  const newValue = Math.max(1, currentValue - 1);
-                  maxPagesInputRef.current.value = newValue.toString();
-                  handleFilterChange('maxPages', newValue.toString());
-                }
-              }, 150);
-              // Clear interval on mouse up
-              const clearIntervalOnUp = () => {
-                clearInterval(interval);
-                document.removeEventListener('mouseup', clearIntervalOnUp);
-              };
-              document.addEventListener('mouseup', clearIntervalOnUp);
-            }}
-            className="bg-bg-light hover:bg-bg-card border border-border rounded px-3 py-2 text-text hover:text-white transition-colors select-none"
-            type="button"
-          >
-            -
-          </button>
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary" />
-            <input
-              ref={maxPagesInputRef}
-              type="number"
-              defaultValue={filters.maxPages || 3}
-              onBlur={(e) => {
-                const value = parseInt(e.target.value) || 1;
-                const finalValue = Math.max(1, value).toString();
-                e.target.value = finalValue;
-                handleFilterChange('maxPages', finalValue);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.currentTarget.blur();
-                }
-              }}
-              className="w-full bg-bg-card border border-border rounded px-10 py-2 text-text focus:border-primary focus:outline-none"
-              min="1"
+      <FormInputNumber
+        label="Max Pages"
+        value={filters.maxPages ? parseInt(filters.maxPages) : 3}
+        onChange={(value) => handleFilterChange('maxPages', value?.toString() || '3')}
+        min={1}
+        max={20}
+        step={1}
               style={{
                 backgroundColor: 'var(--bg-card)',
                 borderColor: 'var(--border)',
                 color: 'var(--text)',
               }}
-            />
-          </div>
-          <button
-            onMouseDown={() => {
-              if (maxPagesInputRef.current) {
-                const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
-                const newValue = currentValue + 1;
-                maxPagesInputRef.current.value = newValue.toString();
-                handleFilterChange('maxPages', newValue.toString());
-              }
-              // Start continuous increment
-              const interval = setInterval(() => {
-                if (maxPagesInputRef.current) {
-                  const currentValue = parseInt(maxPagesInputRef.current.value) || 3;
-                  const newValue = currentValue + 1;
-                  maxPagesInputRef.current.value = newValue.toString();
-                  handleFilterChange('maxPages', newValue.toString());
-                }
-              }, 150);
-              // Clear interval on mouse up
-              const clearIntervalOnUp = () => {
-                clearInterval(interval);
-                document.removeEventListener('mouseup', clearIntervalOnUp);
-              };
-              document.addEventListener('mouseup', clearIntervalOnUp);
-            }}
-            className="bg-bg-light hover:bg-bg-card border border-border rounded px-3 py-2 text-text hover:text-white transition-colors select-none"
-            type="button"
-          >
-            +
-          </button>
-        </div>
-      </div>
+      />
 
         {/* Hiring Posts Filter */}
         <div className="md:col-span-2 lg:col-span-3">
@@ -1097,7 +981,7 @@ const FilterPanel = ({
     }
 
     if (isLoading) {
-      return <LoadingSpinner />;
+      return <SearchSkeleton />;
     }
 
     if (error) {
@@ -1123,7 +1007,6 @@ const FilterPanel = ({
               />
               <div className="space-y-4">
                 {chunk.filteredJobs
-                  .filter(job => showHiddenJobs || !job.userAction)
                   .map((job, index) => (
                     <JobCard
                       key={`${chunk.id}-${job.url || index}`}
@@ -1155,13 +1038,7 @@ const FilterPanel = ({
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => setShowHiddenJobs(!showHiddenJobs)}
-                      className="flex items-center gap-2 text-sm text-primary hover:text-white bg-primary/20 hover:bg-primary px-3 py-2 rounded-lg transition-all duration-200 font-medium"
-                    >
-                      <Eye size={14} />
-                      {showHiddenJobs ? 'Hide Marked' : 'Show Marked'}
-                    </button>
+
                   </div>
                 </div>
               )}
@@ -1273,43 +1150,8 @@ const FilterPanel = ({
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
               </button>
               
-              {(pendingChanges.toTrack.length > 0 || pendingChanges.toSkip.length > 0) && (
-                <>
-                  <button
-                    onClick={() => setShowHiddenJobs(!showHiddenJobs)}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105"
-                  >
-                    <Eye size={18} />
-                    {showHiddenJobs ? 'Hide Marked Jobs' : 'Show Marked Jobs'}
-                  </button>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="px-4 py-3 bg-gradient-to-r from-bg-card to-bg-light rounded-lg border border-border">
-                      <div className="text-sm font-medium text-white">
-                        Pending Changes
-                      </div>
-                      <div className="text-xs text-text-muted mt-1">
-                        {pendingChanges.toTrack.length} to track • {pendingChanges.toSkip.length} to skip
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleSaveChanges}
-                      disabled={isSaving}
-                      className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:from-gray-500 disabled:to-gray-400 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg disabled:cursor-not-allowed disabled:hover:scale-100"
-                    >
-                      <Save size={18} />
-                      {isSaving ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                          Saving...
-                        </div>
-                      ) : (
-                        'Save Changes'
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
+
+
             </div>
           </div>
 
@@ -1358,7 +1200,6 @@ const FilterPanel = ({
               hasDate={hasDate}
               setShowFilters={setShowFilters}
               setHasDate={setHasDate}
-              maxPagesInputRef={maxPagesInputRef}
             />
           )}
 
