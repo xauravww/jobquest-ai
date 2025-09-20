@@ -24,17 +24,13 @@ const OnboardingCheck: React.FC = () => {
           const response = await fetch('/api/user/onboarding');
           if (response.ok) {
             const data = await response.json();
-            if (data.user?.isOnboarded) {
-              // User is onboarded, redirect to dashboard if not already there
-              if (!pathname.startsWith('/dashboard')) {
-                router.push('/dashboard');
-              }
-            } else {
+            if (!data.user?.isOnboarded) {
               // User not onboarded, redirect to onboarding if not already there
               if (!pathname.startsWith('/onboarding')) {
                 router.push('/onboarding');
               }
             }
+            // If user is onboarded, let them navigate freely without forced redirects
           }
         } catch (error) {
           console.error('Failed to check onboarding status:', error);

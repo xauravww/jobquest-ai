@@ -131,6 +131,17 @@ const JobSearchPage = () => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+  const updateActiveFilters = useCallback(() => {
+    const active = [];
+    if (filters.jobType !== 'all') active.push(`Type: ${jobTypes.find(t => t.value === filters.jobType)?.label}`);
+    if (filters.salaryRange !== 'all') active.push(`Salary: ${salaryRanges.find(s => s.value === filters.salaryRange)?.label}`);
+    if (filters.datePosted !== 'all') active.push(`Posted: ${datePostedOptions.find(d => d.value === filters.datePosted)?.label}`);
+    if (filters.location) active.push(`Location: ${filters.location}`);
+    setActiveFilters(active);
+  }, [filters]);
+
   // Update active filters when filters change
   useEffect(() => {
     updateActiveFilters();
@@ -141,8 +152,6 @@ const JobSearchPage = () => {
     setCurrentPage(1);
     searchJobs();
   };
-
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const formatSalary = (salary?: string) => {
     if (!salary) return 'Salary not specified';
@@ -160,15 +169,6 @@ const JobSearchPage = () => {
     if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
     return `${Math.ceil(diffDays / 30)} months ago`;
   };
-
-  const updateActiveFilters = useCallback(() => {
-    const active = [];
-    if (filters.jobType !== 'all') active.push(`Type: ${jobTypes.find(t => t.value === filters.jobType)?.label}`);
-    if (filters.salaryRange !== 'all') active.push(`Salary: ${salaryRanges.find(s => s.value === filters.salaryRange)?.label}`);
-    if (filters.datePosted !== 'all') active.push(`Posted: ${datePostedOptions.find(d => d.value === filters.datePosted)?.label}`);
-    if (filters.location) active.push(`Location: ${filters.location}`);
-    setActiveFilters(active);
-  }, [filters, jobTypes, salaryRanges, datePostedOptions]);
 
   const clearFilters = () => {
     setFilters({

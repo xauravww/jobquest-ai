@@ -1,261 +1,162 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/db';
-import { CalendarEvent } from '@/models/CalendarEvent';
-import { Job } from '@/models/Job';
-import { Application } from '@/models/Application';
-import { Reminder } from '@/models/Reminder';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-interface EventQuery {
-  userId: string;
-  type?: string;
-  status?: string | { $in: string[] };
-  applicationId?: string;
-  jobId?: string;
-  $or?: Array<{ [key: string]: { $regex: string; $options: string } }>;
-  startDate?: { $gte?: Date; $lte?: Date };
-}
+// In-memory storage for demo (replace with database in production)
+let events: any[] = [];
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    await connectDB();
+    const session = await getServerSession(authOptions);
     
-    const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const type = searchParams.get('type');
-    const status = searchParams.get('status');
-    const applicationId = searchParams.get('applicationId');
-    const jobId = searchParams.get('jobId');
-    const search = searchParams.get('search'); // Added search param
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    
-    // TODO: Get userId from session
-    const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
-    
-    // Build query
-    const query: EventQuery = {
-      userId // Filter by user
-    };
-    
-    if (type && type !== 'all') {
-      query.type = type;
-    }
-    
-    if (status && status !== 'all') {
-      query.status = status;
-    }
-    
-    if (applicationId) {
-      query.applicationId = applicationId;
-    }
-    
-    if (jobId) {
-      query.jobId = jobId;
-    }
-    
-    // Add search functionality to the database query
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
-    }
-    
-    // Date filtering
-    if (startDate || endDate) {
-      query.startDate = {};
-      if (startDate) {
-        query.startDate.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        query.startDate.$lte = new Date(endDate);
-      }
-    }
-    
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    
-    // Fetch events
-    const events = await CalendarEvent.find(query)
-      .populate('applicationId', 'status jobId')
-      .populate('jobId', 'title company')
-      .populate('reminderId', 'title type')
-      .sort({ startDate: 1 })
-      .skip(skip)
-      .limit(limit);
-    
-    // Get upcoming events (next 7 days)
-    const upcomingQuery: EventQuery = {
-      ...query,
-      startDate: {
-        $gte: new Date(),
-        $lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      },
-      status: { $in: ['scheduled', 'confirmed'] }
-    };
-    
-    const upcomingEvents = await CalendarEvent.find(upcomingQuery)
-      .populate('applicationId', 'status jobId')
-      .populate('jobId', 'title company')
-      .sort({ startDate: 1 })
-      .limit(5);
-    
-    // Get stats
-    const stats = await CalendarEvent.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-    
-    const statusStats = {
-      scheduled: 0,
-      confirmed: 0,
-      completed: 0,
-      cancelled: 0,
-      rescheduled: 0
-    };
-    
-    stats.forEach(stat => {
-      statusStats[stat._id as keyof typeof statusStats] = stat.count;
+    // Sort by start date
+    const sortedEvents = events.sort((a, b) => {
+      const aDate = new Date(a.startDate);
+      const bDate = new Date(b.startDate);
+      return aDate.getTime() - bDate.getTime();
     });
     
     return NextResponse.json({
-      events,
-      upcomingEvents,
-      stats: statusStats,
-      pagination: {
-        page,
-        limit,
-        total: await CalendarEvent.countDocuments(query),
-        pages: Math.ceil(await CalendarEvent.countDocuments(query) / limit)
-      }
+      success: true,
+      events: sortedEvents
     });
-    
-    
   } catch (error) {
-    console.error('Error fetching calendar events:', error);
+    console.error('Error fetching events:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch events' },
       { status: 500 }
     );
   }
 }
 
-// POST - Create new calendar event
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
+    const session = await getServerSession(authOptions);
     const body = await request.json();
-    const {
-      title,
-      description,
-      startDate,
-      endDate,
-      isAllDay,
-      timezone,
-      location,
-      type,
-      attendees,
-      reminders,
-      applicationId,
-      jobId,
-      reminderId,
-      preparationNotes,
-      agenda,
-      documents,
-      tags,
-      color,
-      priority
-    } = body;
+    
+    const newEvent = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+      title: body.title,
+      description: body.description,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      type: body.type || 'event',
+      status: body.status || 'scheduled',
+      priority: body.priority || 'medium',
+      isAllDay: body.isAllDay || false,
+      location: body.location || null,
+      attendees: body.attendees || [],
+      tags: body.tags || [],
+      jobId: body.jobId || null,
+      applicationId: body.applicationId || null,
+      userId: session?.user?.email || 'anonymous',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    events.push(newEvent);
+    
+    console.log('📅 [EVENTS] New event created:', {
+      id: newEvent.id,
+      title: newEvent.title,
+      type: newEvent.type,
+      startDate: newEvent.startDate
+    });
+    
+    return NextResponse.json({
+      success: true,
+      event: newEvent,
+      message: 'Event created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating event:', error);
+    return NextResponse.json(
+      { error: 'Failed to create event' },
+      { status: 500 }
+    );
+  }
+}
 
-    // Validation
-    if (!title || !startDate || !endDate || !type) {
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get('id');
+    const body = await request.json();
+    
+    if (!eventId) {
       return NextResponse.json(
-        { error: 'Title, start date, end date, and type are required' },
+        { error: 'Event ID required' },
         { status: 400 }
       );
     }
-
-    // TODO: Get userId from session
-    const userId = '507f1f77bcf86cd799439011'; // Placeholder for now
-
-    // Validate application, job, and reminder associations
-    if (applicationId) {
-      const application = await Application.findOne({ _id: applicationId, userId });
-      if (!application) {
-        return NextResponse.json(
-          { error: 'Invalid application ID or access denied' },
-          { status: 400 }
-        );
-      }
+    
+    const eventIndex = events.findIndex(event => event.id === eventId);
+    
+    if (eventIndex === -1) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      );
     }
-
-    if (jobId) {
-      const job = await Job.findOne({ _id: jobId, userId });
-      if (!job) {
-        return NextResponse.json(
-          { error: 'Invalid job ID or access denied' },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (reminderId) {
-      const reminder = await Reminder.findOne({ _id: reminderId, userId });
-      if (!reminder) {
-        return NextResponse.json(
-          { error: 'Invalid reminder ID or access denied' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Create event
-    const event = new CalendarEvent({
-      userId,
-      title,
-      description,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      isAllDay: isAllDay || false,
-      timezone: timezone || 'UTC',
-      location: location || {},
-      type,
-      attendees: attendees || [],
-      reminders: reminders || [],
-      applicationId: applicationId || null,
-      jobId: jobId || null,
-      reminderId: reminderId || null,
-      preparationNotes,
-      agenda: agenda || [],
-      documents: documents || [],
-      tags: tags || [],
-      color: color || '#3b82f6',
-      priority: priority || 'medium'
+    
+    events[eventIndex] = {
+      ...events[eventIndex],
+      ...body,
+      updatedAt: new Date().toISOString()
+    };
+    
+    console.log('📅 [EVENTS] Event updated:', {
+      id: events[eventIndex].id,
+      status: events[eventIndex].status,
+      title: events[eventIndex].title
     });
-
-    await event.save();
-
-    // Populate references for response
-    await event.populate('applicationId', 'status jobId');
-    await event.populate('jobId', 'title company');
-    await event.populate('reminderId', 'title type');
-
+    
     return NextResponse.json({
       success: true,
-      event
-    }, { status: 201 });
-
+      event: events[eventIndex],
+      message: 'Event updated successfully'
+    });
   } catch (error) {
-    console.error('Error creating calendar event:', error);
+    console.error('Error updating event:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update event' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const eventId = searchParams.get('id');
+    
+    if (!eventId) {
+      return NextResponse.json(
+        { error: 'Event ID required' },
+        { status: 400 }
+      );
+    }
+    
+    const initialLength = events.length;
+    events = events.filter(event => event.id !== eventId);
+    
+    if (events.length === initialLength) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 404 }
+      );
+    }
+    
+    console.log('📅 [EVENTS] Event deleted:', { id: eventId });
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Event deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete event' },
       { status: 500 }
     );
   }

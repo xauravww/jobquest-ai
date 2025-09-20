@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "antd/dist/reset.css";
+@import "../styles/unified-dashboard.css";
 
 @custom-variant dark (&:is(.dark *));
 

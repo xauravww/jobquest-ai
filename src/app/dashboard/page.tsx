@@ -155,13 +155,23 @@ const DashboardPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/dashboard/stats');
+      // Try the full stats API first
+      let response = await fetch('/api/dashboard/stats');
+      
+      // If that fails, try the simple stats API
       if (!response.ok) {
-        throw new Error('Failed to fetch dashboard data.');
+        console.warn('Full stats API failed, trying simple stats API');
+        response = await fetch('/api/dashboard/simple-stats');
       }
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data from both APIs.');
+      }
+      
       const fetchedData: DashboardData = await response.json();
       setData(fetchedData);
     } catch (e) {
+      console.error('Dashboard data fetch error:', e);
       setError(e instanceof Error ? e.message : 'An unknown error occurred.');
     } finally {
       setLoading(false);
@@ -239,7 +249,7 @@ const DashboardPage = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 mt-8" >
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              Welcome back, {data?.userProfile.firstName || 'User'}!
+              Welcome back, {data?.userProfile?.firstName || 'User'}!
             </h1>
             <p className="text-text-muted text-base md:text-lg">Here&apos;s your job search progress and insights.</p>
           </div>
@@ -288,11 +298,11 @@ const DashboardPage = () => {
                     <div className="space-y-3 text-sm">
                         <div className="flex items-center gap-2">
                             <Target className="w-4 h-4 text-text-muted flex-shrink-0" />
-                            <span className="text-white truncate">{data?.userProfile.targetRole}</span>
+                            <span className="text-white truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-text-muted flex-shrink-0" />
-                            <span className="text-white truncate">{data?.userProfile.location}</span>
+                            <span className="text-white truncate">{data?.userProfile?.location || 'Remote'}</span>
                         </div>
                     </div>
                 </div>

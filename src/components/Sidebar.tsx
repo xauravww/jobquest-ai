@@ -19,6 +19,7 @@ import {
   Target,
   TrendingUp,
   Atom, // New Icon for LaTeX
+  StickyNote,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -563,6 +564,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           <NavLink href="/dashboard" icon={<Home />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
             Dashboard
           </NavLink>
+          <NavLink href="/unified-dashboard" icon={<TrendingUp />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+            Command Center
+          </NavLink>
 
           {/* Job Search & AI */}
           {!isCollapsed && (
@@ -608,14 +612,20 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           <NavLink href="/user-profile" icon={<User />} pathname={pathname} isCollapsed={isCollapsed}>
             Profile
           </NavLink>
+          <NavLink href="/fleeting-notes" icon={<StickyNote />} pathname={pathname} isCollapsed={isCollapsed}>
+            Fleeting Notes
+          </NavLink>
           <NavLink href="/reminders" icon={<Bell />} pathname={pathname} isCollapsed={isCollapsed}>
-            Reminders
+            Reminders (Legacy)
           </NavLink>
           <NavLink href="/events" icon={<Calendar />} pathname={pathname} isCollapsed={isCollapsed}>
-            Events
+            Events (Legacy)
           </NavLink>
           <NavLink href="/reminders-calendar" icon={<Target />} pathname={pathname} isCollapsed={isCollapsed}>
-            Calendar
+            Calendar (Legacy)
+          </NavLink>
+          <NavLink href="/settings" icon={<Settings />} pathname={pathname} isCollapsed={isCollapsed}>
+            Settings
           </NavLink>
           <NavLink href="/naukri-automation" icon={<Zap />} pathname={pathname} isCollapsed={isCollapsed} disabled>
             Auto Apply

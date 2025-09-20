@@ -12,6 +12,8 @@ import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 import CoverLetterModal from '@/components/modals/CoverLetterModal';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
+import { notificationService } from '@/services/NotificationService';
+import { telegramService } from '@/services/TelegramService';
 
 const { Search: AntSearch } = Input;
 const { RangePicker } = DatePicker;
@@ -598,9 +600,25 @@ const ApplicationTrackingPage = () => {
                         <span className="sr-only">Edit</span>
                       </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     setSelectedJobForReminder(record);
                     setReminderModalVisible(true);
+                    
+                    // Send notification about reminder creation
+                    await notificationService.createNotification({
+                      title: 'Reminder Setup',
+                      message: `Setting up follow-up reminder for ${record.title} at ${record.company}`,
+                      type: 'info'
+                    });
+                    
+                    // Send Telegram notification if connected
+                    if (telegramService.isConnectedToTelegram()) {
+                      await telegramService.sendNotification(
+                        'Follow-up Reminder',
+                        `Creating reminder for ${record.title} at ${record.company}`,
+                        'reminder'
+                      );
+                    }
                   }}
                   className="flex items-center justify-center w-9 h-9 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-500 hover:text-yellow-400 rounded-lg transition-all duration-200 hover:scale-105"
                   title="Set Follow-Up Reminder"

@@ -1,249 +1,158 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/db';
-import { Reminder } from '@/models/Reminder';
-import { Job } from '@/models/Job';
-import { Application } from '@/models/Application';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-type ReminderQuery = {
-  userId: string;
-  status?: string;
-  type?: string;
-  priority?: string;
-  applicationId?: string;
-  jobId?: string;
-  dueDate?: {
-    $gte?: Date;
-    $lte?: Date;
-  };
-  $or?: Array<{
-    title?: { $regex: string; $options: string };
-    description?: { $regex: string; $options: string };
-    tags?: { $regex: string; $options: string };
-  }>;
-};
+// In-memory storage for demo (replace with database in production)
+let reminders: any[] = [];
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    await connectDB();
-
     const session = await getServerSession(authOptions);
-    if (!session || !session.user || !('id' in session.user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const userId = (session.user as { id: string }).id;
-
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const status = searchParams.get('status');
-    const type = searchParams.get('type');
-    const priority = searchParams.get('priority');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
-    const applicationId = searchParams.get('applicationId');
-    const jobId = searchParams.get('jobId');
-    const search = searchParams.get('search');
-
-    // Build query
-    const query: ReminderQuery = {
-      userId // Filter by user
-    };
-
-    if (status && status !== 'all') {
-      query.status = status;
-    }
-
-    if (type && type !== 'all') {
-      query.type = type;
-    }
-
-    if (priority && priority !== 'all') {
-      query.priority = priority;
-    }
-
-    if (applicationId) {
-      query.applicationId = applicationId;
-    }
-
-    if (jobId) {
-      query.jobId = jobId;
-    }
-
-    // Add search functionality to the query
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { tags: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    // Date filtering
-    if (dateFrom || dateTo) {
-      query.dueDate = {};
-      if (dateFrom) {
-        query.dueDate.$gte = new Date(dateFrom);
-      }
-      if (dateTo) {
-        query.dueDate.$lte = new Date(dateTo);
-      }
-    }
-
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-
-    // Fetch reminders
-    const reminders = await Reminder.find(query)
-      .populate('applicationId', 'status jobId')
-      .populate('jobId', 'title company')
-      .sort({ dueDate: 1, priority: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    // Get total count for pagination
-    const total = await Reminder.countDocuments(query);
-
-    // Get stats
-    const stats = await Reminder.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const statusStats = {
-      pending: 0,
-      completed: 0,
-      snoozed: 0,
-      cancelled: 0
-    };
-
-    stats.forEach(stat => {
-      statusStats[stat._id as keyof typeof statusStats] = stat.count;
+    
+    // Sort by due date
+    const sortedReminders = reminders.sort((a, b) => {
+      const aDate = new Date(a.dueDate);
+      const bDate = new Date(b.dueDate);
+      return aDate.getTime() - bDate.getTime();
     });
-
+    
     return NextResponse.json({
-      reminders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      },
-      stats: statusStats
+      success: true,
+      reminders: sortedReminders
     });
-
   } catch (error) {
     console.error('Error fetching reminders:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch reminders' },
       { status: 500 }
     );
   }
 }
 
-// POST - Create new reminder
 export async function POST(request: NextRequest) {
   try {
-    await connectDB();
-
-    const body = await request.json();
-    const {
-      title,
-      description,
-      dueDate,
-      dueTime,
-      type,
-      priority,
-      applicationId,
-      jobId,
-      tags,
-      color,
-      notifications,
-      isRecurring,
-      recurrencePattern,
-      recurrenceInterval,
-      recurrenceEndDate
-    } = body;
-
-    // Validation
-    if (!title || !dueDate || !type) {
-      return NextResponse.json(
-        { error: 'Title, due date, and type are required' },
-        { status: 400 }
-      );
-    }
-
-    // Get userId from session
     const session = await getServerSession(authOptions);
-    if (!session || !session.user || !('id' in session.user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const userId = (session.user as { id: string }).id;
-
-    // Validate application and job associations
-    if (applicationId) {
-      const application = await Application.findOne({ _id: applicationId, userId });
-      if (!application) {
-        return NextResponse.json(
-          { error: 'Invalid application ID or access denied' },
-          { status: 400 }
-        );
-      }
-    }
-
-    if (jobId) {
-      console.log('Validating jobId:', jobId, 'for userId:', userId);
-      const job = await Job.findOne({ _id: jobId, userId });
-      if (!job) {
-        console.log('Job validation failed for jobId:', jobId, 'userId:', userId);
-        return NextResponse.json(
-          { error: 'Invalid job ID or access denied' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Create reminder
-    const reminder = new Reminder({
-      userId,
-      title,
-      description,
-      dueDate: new Date(dueDate),
-      dueTime: dueTime || '09:00',
-      type,
-      priority: priority || 'medium',
-      applicationId: applicationId || null,
-      jobId: jobId || null,
-      tags: tags || [],
-      color: color || '#3b82f6',
-      notifications: notifications || [],
-      isRecurring: isRecurring || false,
-      recurrencePattern,
-      recurrenceInterval,
-      recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate) : null
+    const body = await request.json();
+    
+    const newReminder = {
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
+      title: body.title,
+      description: body.description,
+      dueDate: body.dueDate,
+      dueTime: body.dueTime || '09:00',
+      type: body.type || 'custom',
+      status: body.status || 'pending',
+      priority: body.priority || 'medium',
+      tags: body.tags || [],
+      jobId: body.jobId || null,
+      applicationId: body.applicationId || null,
+      userId: session?.user?.email || 'anonymous',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    reminders.push(newReminder);
+    
+    console.log('⏰ [REMINDERS] New reminder created:', {
+      id: newReminder.id,
+      title: newReminder.title,
+      dueDate: newReminder.dueDate
     });
-
-    await reminder.save();
-
-    // Populate references for response
-    await reminder.populate('applicationId', 'status jobId');
-    await reminder.populate('jobId', 'title company');
-
+    
     return NextResponse.json({
       success: true,
-      reminder
-    }, { status: 201 });
-
+      reminder: newReminder,
+      message: 'Reminder created successfully'
+    });
   } catch (error) {
     console.error('Error creating reminder:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create reminder' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const reminderId = searchParams.get('id');
+    const body = await request.json();
+    
+    if (!reminderId) {
+      return NextResponse.json(
+        { error: 'Reminder ID required' },
+        { status: 400 }
+      );
+    }
+    
+    const reminderIndex = reminders.findIndex(reminder => reminder.id === reminderId);
+    
+    if (reminderIndex === -1) {
+      return NextResponse.json(
+        { error: 'Reminder not found' },
+        { status: 404 }
+      );
+    }
+    
+    reminders[reminderIndex] = {
+      ...reminders[reminderIndex],
+      ...body,
+      updatedAt: new Date().toISOString()
+    };
+    
+    console.log('⏰ [REMINDERS] Reminder updated:', {
+      id: reminders[reminderIndex].id,
+      status: reminders[reminderIndex].status,
+      title: reminders[reminderIndex].title
+    });
+    
+    return NextResponse.json({
+      success: true,
+      reminder: reminders[reminderIndex],
+      message: 'Reminder updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating reminder:', error);
+    return NextResponse.json(
+      { error: 'Failed to update reminder' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const reminderId = searchParams.get('id');
+    
+    if (!reminderId) {
+      return NextResponse.json(
+        { error: 'Reminder ID required' },
+        { status: 400 }
+      );
+    }
+    
+    const initialLength = reminders.length;
+    reminders = reminders.filter(reminder => reminder.id !== reminderId);
+    
+    if (reminders.length === initialLength) {
+      return NextResponse.json(
+        { error: 'Reminder not found' },
+        { status: 404 }
+      );
+    }
+    
+    console.log('⏰ [REMINDERS] Reminder deleted:', { id: reminderId });
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Reminder deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting reminder:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete reminder' },
       { status: 500 }
     );
   }

@@ -1,0 +1,1320 @@
+/* Unified Dashboard Styles */
+
+.custom-dark-tabs .ant-tabs-nav {
+    background: rgba(31, 41, 55, 0.7) !important;
+    border-radius: 12px !important;
+    padding: 6px !important;
+    margin-bottom: 24px !important;
+    border: 1px solid rgba(75, 85, 99, 0.5) !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab {
+    background: transparent !important;
+    border: none !important;
+    color: #d1d5db !important;
+    border-radius: 8px !important;
+    margin: 0 4px !important;
+    padding: 12px 20px !important;
+    transition: all 0.3s ease !important;
+    min-height: 44px !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab .ant-tabs-tab-btn {
+    color: #d1d5db !important;
+    font-weight: 500 !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab:hover {
+    background: rgba(75, 85, 99, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab:hover .ant-tabs-tab-btn {
+    color: #ffffff !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab-active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.custom-dark-tabs .ant-tabs-ink-bar {
+    display: none !important;
+}
+
+/* Additional tab overrides for better visibility */
+.custom-dark-tabs .ant-tabs-tab-btn {
+    color: #d1d5db !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #ffffff !important;
+}
+
+/* Override any conflicting Ant Design styles */
+.ant-tabs-dark .ant-tabs-tab {
+    color: #d1d5db !important;
+}
+
+.ant-tabs-dark .ant-tabs-tab-active {
+    color: #ffffff !important;
+}
+
+.ant-tabs-dark .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: #ffffff !important;
+}
+
+.custom-dark-tabs .ant-tabs-content-holder {
+    background: transparent;
+}
+
+/* Activity Hub Styles */
+.activity-hub-card {
+    background: rgba(31, 41, 55, 0.5);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.activity-hub-card:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.1);
+    transform: translateY(-2px);
+}
+
+.activity-item {
+    background: rgba(31, 41, 55, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.activity-item:hover {
+    background: rgba(31, 41, 55, 0.6);
+    border-color: rgba(16, 185, 129, 0.4);
+    transform: translateX(4px);
+}
+
+.activity-item.overdue {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.activity-item.completed {
+    opacity: 0.7;
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+/* Calendar Styles */
+.custom-dark-calendar .ant-picker-calendar {
+    background: rgba(31, 41, 55, 0.5) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    border-radius: 12px !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-header {
+    background: rgba(31, 41, 55, 0.7) !important;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3) !important;
+    padding: 16px !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-header .ant-picker-calendar-year-select,
+.custom-dark-calendar .ant-picker-calendar-header .ant-picker-calendar-month-select {
+    color: #ffffff !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-header .ant-select-selector {
+    background: rgba(55, 65, 81, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-header .ant-select-selection-item {
+    color: #ffffff !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-header .ant-radio-button-wrapper {
+    background: rgba(55, 65, 81, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-header .ant-radio-button-wrapper-checked {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.custom-dark-calendar .ant-picker-cell {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+.custom-dark-calendar .ant-picker-cell:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.custom-dark-calendar .ant-picker-cell-selected {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: #10b981 !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-date {
+    color: #ffffff !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-date-today {
+    border-color: #10b981 !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-month-panel,
+.custom-dark-calendar .ant-picker-calendar-year-panel {
+    background: rgba(31, 41, 55, 0.9) !important;
+}
+
+.custom-dark-calendar .ant-picker-calendar-month-panel .ant-picker-cell,
+.custom-dark-calendar .ant-picker-calendar-year-panel .ant-picker-cell {
+    color: #ffffff !important;
+}
+
+.calendar-date-cell {
+    min-height: 80px;
+    padding: 4px;
+}
+
+.calendar-date-cell .ant-tag {
+    margin: 1px 0;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Follow-up Tracker Styles */
+.follow-up-card {
+    background: rgba(31, 41, 55, 0.5) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.follow-up-card:hover {
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.1) !important;
+}
+
+.follow-up-card .ant-card-body {
+    background: transparent !important;
+    color: #ffffff !important;
+}
+
+.follow-up-card .ant-card-head {
+    background: rgba(31, 41, 55, 0.7) !important;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3) !important;
+}
+
+.follow-up-card .ant-card-head-title {
+    color: #ffffff !important;
+}
+
+.follow-up-item {
+    background: rgba(31, 41, 55, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.follow-up-item:hover {
+    background: rgba(31, 41, 55, 0.6);
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.follow-up-item.overdue {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.contact-card {
+    background: rgba(31, 41, 55, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+    background: rgba(31, 41, 55, 0.6);
+    border-color: rgba(34, 197, 94, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Notification Styles */
+.notification-item {
+    background: rgba(31, 41, 55, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 10;
+}
+
+.notification-item:hover {
+    background: rgba(31, 41, 55, 0.6);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.notification-item.unread {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #3b82f6;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Toast notifications z-index fix */
+.Toastify__toast-container {
+    z-index: 9999 !important;
+}
+
+/* React hot toast z-index fix */
+div[data-hot-toast] {
+    z-index: 9999 !important;
+}
+
+/* React hot toast wrapper */
+#react-hot-toast-container {
+    z-index: 9999 !important;
+}
+
+/* All toast notifications should be above navbar */
+[data-sonner-toaster] {
+    z-index: 9999 !important;
+}
+
+/* Ant Design notification fix */
+.ant-notification {
+    z-index: 9999 !important;
+}
+
+/* General notification container */
+.notification-container {
+    z-index: 9999 !important;
+    position: fixed !important;
+}
+
+/* Pagination Styles */
+.custom-dark-pagination .ant-pagination-item {
+    background: rgba(31, 41, 55, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.custom-dark-pagination .ant-pagination-item a {
+    color: #d1d5db !important;
+}
+
+.custom-dark-pagination .ant-pagination-item:hover {
+    border-color: #10b981 !important;
+}
+
+.custom-dark-pagination .ant-pagination-item:hover a {
+    color: #10b981 !important;
+}
+
+.custom-dark-pagination .ant-pagination-item-active {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.custom-dark-pagination .ant-pagination-item-active a {
+    color: #ffffff !important;
+}
+
+.custom-dark-pagination .ant-pagination-prev,
+.custom-dark-pagination .ant-pagination-next {
+    color: #d1d5db !important;
+}
+
+.custom-dark-pagination .ant-pagination-prev:hover,
+.custom-dark-pagination .ant-pagination-next:hover {
+    color: #10b981 !important;
+}
+
+.custom-dark-pagination .ant-pagination-jump-prev,
+.custom-dark-pagination .ant-pagination-jump-next {
+    color: #d1d5db !important;
+}
+
+.custom-dark-pagination .ant-pagination-options-quick-jumper input {
+    background: rgba(55, 65, 81, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.custom-dark-pagination .ant-pagination-total-text {
+    color: #9ca3af !important;
+}
+
+/* Filter Panel Styles */
+.filter-panel {
+    background: rgba(31, 41, 55, 0.4);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.filter-panel .ant-input,
+.filter-panel .ant-select-selector {
+    background: rgba(55, 65, 81, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.filter-panel .ant-input:focus,
+.filter-panel .ant-select-focused .ant-select-selector {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Stats Card Styles */
+.stats-card {
+    background: rgba(31, 41, 55, 0.4);
+    border: 1px solid rgba(75, 85, 99, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.1);
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+/* Progress Styles */
+.progress-container {
+    background: rgba(31, 41, 55, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.progress-bar {
+    background: rgba(75, 85, 99, 0.3);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, #10b981, #059669);
+    height: 8px;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+/* Modal Styles */
+.custom-dark-modal .ant-modal-content {
+    background: rgba(17, 24, 39, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.custom-dark-modal .ant-modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3) !important;
+}
+
+.custom-dark-modal .ant-modal-title {
+    color: #ffffff !important;
+}
+
+.custom-dark-modal .ant-modal-body {
+    background: transparent !important;
+}
+
+.custom-dark-modal .ant-input,
+.custom-dark-modal .ant-select-selector,
+.custom-dark-modal .ant-picker {
+    background: rgba(55, 65, 81, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.4) !important;
+    color: #ffffff !important;
+}
+
+.custom-dark-modal .ant-input:focus,
+.custom-dark-modal .ant-select-focused .ant-select-selector,
+.custom-dark-modal .ant-picker:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(75, 85, 99, 0.3);
+    border: 1px solid rgba(75, 85, 99, 0.5);
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: rgba(75, 85, 99, 0.5);
+    border-color: rgba(75, 85, 99, 0.7);
+    transform: translateY(-1px);
+}
+
+/* Tag Styles */
+.tag-priority-urgent {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.tag-priority-high {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.tag-priority-medium {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.tag-priority-low {
+    background: rgba(107, 114, 128, 0.2);
+    color: #d1d5db;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.tag-status-completed {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.tag-status-pending {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.tag-status-overdue {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .activity-hub-card,
+    .follow-up-card,
+    .stats-card {
+        margin-bottom: 16px;
+    }
+
+    .filter-panel {
+        padding: 16px;
+    }
+
+    .filter-panel .ant-row {
+        flex-direction: column;
+    }
+
+    .filter-panel .ant-col {
+        width: 100% !important;
+        margin-bottom: 12px;
+    }
+    
+    /* Mobile-specific improvements */
+    .custom-dark-tabs .ant-tabs-tab {
+        padding: 8px 12px !important;
+        min-height: 36px !important;
+        font-size: 14px !important;
+    }
+    
+    .stats-card {
+        padding: 16px !important;
+    }
+    
+    .activity-item {
+        padding: 12px !important;
+    }
+    
+    /* Stack buttons vertically on mobile */
+    .mobile-stack {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    /* Reduce padding on mobile */
+    .mobile-reduce-padding {
+        padding: 16px !important;
+    }
+    
+    /* Hide less important elements on mobile */
+    .mobile-hide {
+        display: none !important;
+    }
+    
+    /* Make text smaller on mobile */
+    .mobile-text-sm {
+        font-size: 14px !important;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Extra small screens */
+    .custom-dark-tabs .ant-tabs-nav {
+        padding: 4px !important;
+    }
+    
+    .custom-dark-tabs .ant-tabs-tab {
+        padding: 6px 8px !important;
+        min-height: 32px !important;
+        font-size: 12px !important;
+        margin: 0 2px !important;
+    }
+    
+    /* Single column layout for filters */
+    .filter-grid-mobile {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Compact pagination */
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next {
+        min-width: 32px !important;
+        height: 32px !important;
+        line-height: 30px !important;
+    }
+}
+
+/* Dark theme scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(75, 85, 99, 0.7);
+}
+
+/* Loading states */
+.loading-skeleton {
+    background: linear-gradient(90deg, rgba(75, 85, 99, 0.2) 25%, rgba(75, 85, 99, 0.4) 50%, rgba(75, 85, 99, 0.2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Improved focus states */
+.ant-btn:focus,
+.ant-input:focus,
+.ant-select-selector:focus {
+    outline: 2px solid rgba(16, 185, 129, 0.5) !important;
+    outline-offset: 2px !important;
+}
+
+/* Better hover states */
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Improved empty states */
+.empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    background: rgba(31, 41, 55, 0.2);
+    border: 2px dashed rgba(75, 85, 99, 0.3);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* Status indicators */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-dot.pending {
+    background: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.status-dot.completed {
+    background: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.status-dot.overdue {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    animation: pulse 2s infinite;
+}
+
+/* Priority indicators */
+.priority-bar {
+    width: 4px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 0 2px 2px 0;
+}
+
+.priority-bar.urgent {
+    background: linear-gradient(to bottom, #ef4444, #dc2626);
+}
+
+.priority-bar.high {
+    background: linear-gradient(to bottom, #f59e0b, #d97706);
+}
+
+.priority-bar.medium {
+    background: linear-gradient(to bottom, #3b82f6, #2563eb);
+}
+
+.priority-bar.low {
+    background: linear-gradient(to bottom, #6b7280, #4b5563);
+}
+
+/* Slider Styles */
+.custom-dark-slider .ant-slider-rail {
+    background: rgba(75, 85, 99, 0.3) !important;
+}
+
+.custom-dark-slider .ant-slider-track {
+    background: #10b981 !important;
+}
+
+.custom-dark-slider .ant-slider-handle {
+    border-color: #10b981 !important;
+    background: #10b981 !important;
+}
+
+.custom-dark-slider .ant-slider-handle:hover {
+    border-color: #059669 !important;
+}
+
+.custom-dark-slider .ant-slider-handle:focus {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.2) !important;
+}
+
+.custom-dark-slider .ant-slider-dot {
+    background: rgba(75, 85, 99, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+}
+
+.custom-dark-slider .ant-slider-dot-active {
+    border-color: #10b981 !important;
+}
+
+.custom-dark-slider .ant-slider-mark-text {
+    color: #9ca3af !important;
+}
+
+/* Dark theme overrides */
+.ant-card {
+    background: rgba(31, 41, 55, 0.4) !important;
+    border-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.ant-card-head {
+    background: transparent !important;
+    border-bottom-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.ant-card-head-title {
+    color: #ffffff !important;
+}
+
+.ant-statistic-title {
+    color: #9ca3af !important;
+}
+
+.ant-statistic-content {
+    color: #ffffff !important;
+}
+
+.ant-progress-text {
+    color: #ffffff !important;
+}
+
+.ant-badge-count {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+/* Fix Ant Design input and select dark theme */
+.ant-input {
+    background: rgba(55, 65, 81, 0.8) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #ffffff !important;
+}
+
+.ant-input:focus,
+.ant-input-focused {
+    background: rgba(55, 65, 81, 0.9) !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-input::placeholder {
+    color: #9ca3af !important;
+}
+
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    background: rgba(55, 65, 81, 0.8) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #ffffff !important;
+}
+
+.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-select-selection-placeholder {
+    color: #9ca3af !important;
+}
+
+.ant-select-selection-item {
+    color: #ffffff !important;
+}
+
+.ant-select-arrow {
+    color: #9ca3af !important;
+}
+
+/* Dropdown styling */
+.ant-select-dropdown {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.ant-select-item {
+    color: #ffffff !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #10b981 !important;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background: rgba(75, 85, 99, 0.3) !important;
+}
+
+/* Button styling fixes */
+.ant-btn {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.ant-btn-default {
+    background: rgba(75, 85, 99, 0.3) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #ffffff !important;
+}
+
+.ant-btn-default:hover {
+    background: rgba(75, 85, 99, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.7) !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+}
+
+.ant-btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+.ant-btn-primary:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Icon-only button styling */
+.ant-btn-text {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+}
+
+.ant-btn-text:hover {
+    background: rgba(75, 85, 99, 0.2) !important;
+    transform: none !important;
+}
+
+/* Specific icon button colors */
+.ant-btn-text.text-green-400:hover {
+    background: rgba(34, 197, 94, 0.1) !important;
+}
+
+.ant-btn-text.text-red-400:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.ant-btn-text.text-gray-400:hover {
+    background: rgba(107, 114, 128, 0.1) !important;
+}
+
+/* Tag styling */
+.ant-tag {
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    border: 1px solid !important;
+}
+
+/* DatePicker and TimePicker styling */
+.ant-picker {
+    background: rgba(55, 65, 81, 0.8) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #ffffff !important;
+}
+
+.ant-picker:hover,
+.ant-picker-focused {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+}
+
+.ant-picker-input > input {
+    color: #ffffff !important;
+    background: transparent !important;
+}
+
+.ant-picker-input > input::placeholder {
+    color: #9ca3af !important;
+}
+
+.ant-picker-suffix {
+    color: #9ca3af !important;
+}
+
+/* Time picker specific styling */
+.ant-picker-time-panel {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+}
+
+.ant-picker-time-panel-column {
+    background: transparent !important;
+}
+
+.ant-picker-time-panel-cell {
+    color: #ffffff !important;
+}
+
+.ant-picker-time-panel-cell:hover {
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.ant-picker-time-panel-cell-selected {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.ant-picker-time-panel-cell-disabled {
+    color: #6b7280 !important;
+}
+
+/* Fix time picker dropdown background */
+.ant-picker-dropdown .ant-picker-time-panel {
+    background: rgba(31, 41, 55, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+/* Calendar cell improvements */
+.ant-picker-calendar-date-content {
+    height: auto !important;
+    min-height: 80px !important;
+    padding: 4px !important;
+    cursor: pointer !important;
+}
+
+.ant-picker-cell-inner {
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.ant-picker-cell:hover .ant-picker-cell-inner {
+    background: rgba(16, 185, 129, 0.1) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Activity calendar items */
+.calendar-activity-item {
+    font-size: 10px !important;
+    padding: 2px 4px !important;
+    margin: 1px 0 !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.calendar-activity-item:hover {
+    transform: scale(1.05) !important;
+    z-index: 10 !important;
+}
+
+/* Badge improvements */
+.tab-badge {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #10b981 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    min-width: 18px !important;
+    text-align: center !important;
+}
+
+/* Form validation error styling */
+.ant-form-item-has-error .ant-input,
+.ant-form-item-has-error .ant-select-selector,
+.ant-form-item-has-error .ant-picker {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.form-error-message {
+    color: #fca5a5 !important;
+    font-size: 12px !important;
+    margin-top: 4px !important;
+    display: block !important;
+}
+
+/* Improved modal styling */
+.custom-dark-modal .ant-modal-content {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.custom-dark-modal .ant-modal-footer {
+    background: transparent !important;
+    border-top: 1px solid rgba(75, 85, 99, 0.3) !important;
+}
+
+/* Loading state improvements */
+.ant-btn-loading-icon {
+    color: inherit !important;
+}
+
+/* Tooltip styling */
+.ant-tooltip-inner {
+    background: rgba(17, 24, 39, 0.95) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.ant-tooltip-arrow::before {
+    background: rgba(17, 24, 39, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+}
+
+/* Dropdown panels */
+.ant-picker-dropdown {
+    background: rgba(31, 41, 55, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.ant-picker-panel {
+    background: transparent !important;
+    border: none !important;
+}
+
+.ant-picker-header {
+    border-bottom-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.ant-picker-header button {
+    color: #ffffff !important;
+}
+
+.ant-picker-header button:hover {
+    color: #10b981 !important;
+}
+
+.ant-picker-content th {
+    color: #9ca3af !important;
+}
+
+.ant-picker-cell {
+    color: #ffffff !important;
+}
+
+.ant-picker-cell:hover:not(.ant-picker-cell-selected):not(.ant-picker-cell-range-start):not(.ant-picker-cell-range-end):not(.ant-picker-cell-range-hover-start):not(.ant-picker-cell-range-hover-end) .ant-picker-cell-inner {
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.ant-picker-cell-selected .ant-picker-cell-inner {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.ant-picker-today .ant-picker-cell-inner {
+    border-color: #10b981 !important;
+}
+
+/* TextArea styling */
+.ant-input {
+    background: rgba(55, 65, 81, 0.8) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #ffffff !important;
+}
+
+/* Search input styling */
+.ant-input-search .ant-input-group .ant-input {
+    background: rgba(55, 65, 81, 0.8) !important;
+    border-color: rgba(75, 85, 99, 0.5) !important;
+    color: #ffffff !important;
+}
+
+.ant-input-search .ant-input-search-button {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    color: #10b981 !important;
+}
+
+.ant-input-search .ant-input-search-button:hover {
+    background: rgba(16, 185, 129, 0.3) !important;
+    border-color: #10b981 !important;
+}
+
+/* Modal improvements */
+.ant-modal-mask {
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+.ant-modal-content {
+    background: rgba(17, 24, 39, 0.95) !important;
+    border: 1px solid rgba(75, 85, 99, 0.3) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.ant-modal-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(75, 85, 99, 0.3) !important;
+}
+
+.ant-modal-title {
+    color: #ffffff !important;
+}
+
+.ant-modal-close-x {
+    color: #9ca3af !important;
+}
+
+.ant-modal-close-x:hover {
+    color: #ffffff !important;
+}
+
+/* Pagination improvements */
+.ant-pagination-item {
+    background: rgba(31, 41, 55, 0.5) !important;
+    border-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.ant-pagination-item a {
+    color: #d1d5db !important;
+}
+
+.ant-pagination-item:hover {
+    border-color: #10b981 !important;
+}
+
+.ant-pagination-item:hover a {
+    color: #10b981 !important;
+}
+
+.ant-pagination-item-active {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+}
+
+.ant-pagination-item-active a {
+    color: #ffffff !important;
+}
+
+.ant-pagination-prev,
+.ant-pagination-next {
+    color: #d1d5db !important;
+}
+
+.ant-pagination-prev:hover,
+.ant-pagination-next:hover {
+    color: #10b981 !important;
+}
+
+/* Table styling for better contrast */
+.ant-table {
+    background: rgba(31, 41, 55, 0.4) !important;
+}
+
+.ant-table-thead > tr > th {
+    background: rgba(31, 41, 55, 0.6) !important;
+    border-bottom-color: rgba(75, 85, 99, 0.3) !important;
+    color: #ffffff !important;
+}
+
+.ant-table-tbody > tr > td {
+    border-bottom-color: rgba(75, 85, 99, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+    background: rgba(16, 185, 129, 0.05) !important;
+}
