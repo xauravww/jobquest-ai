@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
 import Job from '@/models/Job';
+import Application from '@/models/Application';
 import connectDB from '@/lib/db';
 
 export async function POST(request: NextRequest) {
@@ -49,6 +50,29 @@ export async function POST(request: NextRequest) {
         job.isBookmarked = true;
         job.isSkipped = false;
         job.status = 'saved';
+        
+        // Also create an Application record for tracking
+        const existingApplication = await Application.findOne({ 
+          userId: session.user.id, 
+          jobId: job._id 
+        });
+        
+        if (!existingApplication) {
+          const newApplication = new Application({
+            userId: session.user.id,
+            jobId: job._id,
+            applicationId: `${session.user.id}_${job._id}_${Date.now()}`,
+            status: 'saved',
+            applicationMethod: 'manual',
+            platform: job.source === 'findwork' ? 'other' : 
+                     job.source === 'jooble' ? 'other' : 
+                     job.source === 'usajobs' ? 'other' : 'other',
+            notes: `Tracked from job search on ${new Date().toLocaleDateString()}`,
+            priority: 'medium'
+          });
+          
+          await newApplication.save();
+        }
         break;
       case 'skip':
         job.isSkipped = true;
@@ -59,6 +83,12 @@ export async function POST(request: NextRequest) {
       case 'untrack':
         job.isBookmarked = false;
         job.status = 'saved';
+        
+        // Remove the Application record
+        await Application.deleteOne({ 
+          userId: session.user.id, 
+          jobId: job._id 
+        });
         break;
       case 'unskip':
         job.isSkipped = false;
@@ -70,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     job.lastUpdated = new Date();
-    await job.save();
+    const savedJob = await job.save();
 
     return NextResponse.json({
       success: true,
@@ -127,7 +157,7 @@ export async function GET(request: NextRequest) {
     console.error('Get tracked jobs error:', error);
     return NextResponse.json(
       { error: 'Failed to get tracked jobs' },
-      { status: 500 })
-    }
-
+      { status: 500 }
+    );
   }
+}

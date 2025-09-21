@@ -4,8 +4,7 @@ const JobSchema = new mongoose.Schema({
   // Job Details
   jobId: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   title: {
     type: String,
@@ -118,8 +117,8 @@ const JobSchema = new mongoose.Schema({
 JobSchema.index({ userId: 1, status: 1 });
 JobSchema.index({ userId: 1, datePosted: -1 });
 JobSchema.index({ userId: 1, aiScore: -1 });
-// Removed duplicate index on jobId to fix warning
-// JobSchema.index({ jobId: 1 }, { unique: true });
+// Compound unique index for jobId per user
+JobSchema.index({ jobId: 1, userId: 1 }, { unique: true });
 
 export const Job = mongoose.models.Job || mongoose.model('Job', JobSchema);
 export default Job;

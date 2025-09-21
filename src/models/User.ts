@@ -29,6 +29,13 @@ interface Experience {
   description: string;
 }
 
+interface Certification {
+  name: string;
+  issuer: string;
+  date?: Date;
+  url?: string;
+}
+
 export interface IUser extends Document {
   _id: string;
   email: string;
@@ -47,6 +54,7 @@ export interface IUser extends Document {
   profile: {
     firstName?: string;
     lastName?: string;
+    phone?: string;
     title?: string;
     company?: string;
     location?: string;
@@ -62,6 +70,7 @@ export interface IUser extends Document {
     achievements?: Achievement[];
     education?: Education[];
     workExperience?: Experience[];
+    certifications?: Certification[];
   };
   preferences: {
     jobTypes: string[];
@@ -140,6 +149,7 @@ const UserSchema = new Schema<IUser>(
     profile: {
       firstName: String,
       lastName: String,
+      phone: String,
       title: String,
       company: String,
       location: String,
@@ -177,6 +187,12 @@ const UserSchema = new Schema<IUser>(
         startDate: Date,
         endDate: Date,
         description: String,
+      }],
+      certifications: [{
+        name: String,
+        issuer: String,
+        date: Date,
+        url: String,
       }],
     },
     preferences: {

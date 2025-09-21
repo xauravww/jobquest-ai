@@ -21,6 +21,7 @@ interface CoverLetterRequestBody {
   aiConfig?: AIConfig;
   jobUrl?: string;
   profileDetails?: string;
+  coverLetterType?: 'concise' | 'detailed' | 'professional';
 }
 
 // Import AI service dynamically
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     type Education = { degree: string; field: string; institution: string };
 
     const body: CoverLetterRequestBody = await request.json();
-    const { jobId, jobTitle, company, jobDescription, location, aiConfig, jobUrl, profileDetails } = body;
+    const { jobId, jobTitle, company, jobDescription, location, aiConfig, jobUrl, profileDetails, coverLetterType = 'detailed' } = body;
 
     if (!jobTitle || !company) {
       return NextResponse.json({ error: 'Job title and company are required' }, { status: 400 });
@@ -76,10 +77,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get user profile data for personalization
+    // Get comprehensive user profile data for personalization
     const userProfile = {
-      name: user.name || (user.profile?.firstName && user.profile?.lastName ? `${user.profile.firstName} ${user.profile.lastName}` : '') || '',
+      name: user.name || '',
       email: user.email,
+      phone: user.profile?.phone || '',
       location: user.profile?.location || '',
       bio: user.profile?.bio || user.profile?.summary || '',
       skills: user.profile?.skills || [],
@@ -88,31 +90,62 @@ export async function POST(request: NextRequest) {
       education: user.profile?.education || [],
       workExperience: user.profile?.workExperience || [],
       projects: user.profile?.projects || [],
+      achievements: user.profile?.achievements || [],
+      certifications: user.profile?.certifications || [],
       linkedinUrl: user.profile?.linkedinUrl || '',
       githubUrl: user.profile?.githubUrl || '',
       portfolioUrl: user.profile?.portfolioUrl || '',
     };
 
-    // Create system prompt for cover letter generation
-    let systemPrompt = `You are an expert career counselor and professional writer specializing in creating compelling cover letters. Your task is to generate a personalized, professional cover letter based on the provided information.
+    // Create system prompt based on cover letter type
+    const coverLetterTypePrompts = {
+      concise: `You are an expert career counselor specializing in concise, impactful cover letters. Generate a brief but compelling cover letter.
 
 Key requirements:
-1. Only output the cover letter text, no explanations or additional text
-2. Keep the cover letter to 2-3 paragraphs maximum, aiming for 300-400 words total
-3. Make it personalized using the candidate's background and experience
-4. Highlight relevant skills and experiences that match the job requirements
-5. Show enthusiasm for the company and role
-6. Use natural, conversational language like you're speaking directly to a hiring manager - avoid buzzwords, jargon, or overly formal phrases
-7. Write it in a friendly, authentic tone as if you're telling your story to help them understand why you'd be great for the role
-8. Keep it concise but impactful
-9. End with a strong call to action
+1. Keep it to 150-200 words maximum (2-3 short paragraphs)
+2. Get straight to the point - no fluff
+3. Highlight 2-3 most relevant experiences/skills
+4. Use bullet points if needed for clarity
+5. Professional but direct tone
+6. Strong opening and closing
 
-Structure:
-- Opening paragraph: Introduce yourself and express genuine interest in the position
-- Middle paragraph(s): Share specific experiences and skills in a storytelling way
-- Closing paragraph: Reiterate interest and call to action
+Structure: Brief intro → Key qualifications → Call to action`,
 
-Make the cover letter sound natural and authentic, like a personal conversation, not generic or AI-generated.`;
+      detailed: `You are an expert career counselor specializing in comprehensive cover letters. Generate a detailed, storytelling cover letter.
+
+Key requirements:
+1. 300-400 words (3-4 paragraphs)
+2. Tell a compelling story using specific examples
+3. Include multiple relevant experiences, projects, and achievements
+4. Show personality and passion
+5. Conversational, engaging tone
+6. Detailed examples of impact and results
+
+Structure: Engaging intro → Detailed experience stories → Achievements/projects → Strong closing`,
+
+      professional: `You are an expert career counselor specializing in formal, corporate cover letters. Generate a polished, professional cover letter.
+
+Key requirements:
+1. 250-350 words (3 paragraphs)
+2. Formal but warm tone
+3. Focus on qualifications and fit
+4. Use professional language without jargon
+5. Emphasize value proposition
+6. Traditional business letter structure
+
+Structure: Professional introduction → Qualifications and fit → Professional closing`
+    };
+
+    let systemPrompt = coverLetterTypePrompts[coverLetterType] + `
+
+Universal requirements for all types:
+- Only output the cover letter text, no explanations
+- Make it personalized using the candidate's actual background
+- Never use placeholders like [Your Name] - use actual provided information
+- Highlight relevant skills that match the job requirements
+- Show genuine interest in the company and role
+- End with a strong call to action
+- Use the candidate's real experiences and achievements to make it compelling`;
 
     // If jobUrl is provided and not null, fetch content and append to system prompt
     if (jobUrl && jobUrl.trim() !== '') {
@@ -138,6 +171,8 @@ Job Information:
 
 ${profileDetails ? `Candidate Profile Details:\n${profileDetails}` : `Candidate Profile:
 - Name: ${userProfile.name}
+- Email: ${userProfile.email}
+- Phone: ${userProfile.phone}
 - Current Role: ${userProfile.currentRole}
 - Years of Experience: ${userProfile.experience} years
 - Location: ${userProfile.location}
@@ -145,15 +180,27 @@ ${profileDetails ? `Candidate Profile Details:\n${profileDetails}` : `Candidate 
 - Bio/Summary: ${userProfile.bio}
 
 ${userProfile.workExperience && userProfile.workExperience.length > 0 ? `Work Experience:
-${(userProfile.workExperience as WorkExp[]).slice(0, 3).map(exp => `- ${exp.position} at ${exp.company} (${exp.startDate ? new Date(exp.startDate).getFullYear() : 'Present'} - ${exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present'}): ${exp.description}`).join('\n')}` : ''}
+${(userProfile.workExperience as WorkExp[]).map(exp => `- ${exp.position} at ${exp.company} (${exp.startDate ? new Date(exp.startDate).getFullYear() : 'Present'} - ${exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present'})
+  ${exp.description || 'No description provided'}`).join('\n\n')}` : ''}
 
 ${userProfile.projects && userProfile.projects.length > 0 ? `Key Projects:
-${(userProfile.projects as Project[]).slice(0, 2).map(proj => `- ${proj.name}: ${proj.description}`).join('\n')}` : ''}
+${(userProfile.projects as Project[]).filter(proj => proj.name && proj.description).map(proj => `- ${proj.name}: ${proj.description}`).join('\n')}` : ''}
+
+${userProfile.achievements && userProfile.achievements.length > 0 ? `Achievements:
+${userProfile.achievements.map((achievement: any) => `- ${achievement.title}: ${achievement.description}`).join('\n')}` : ''}
+
+${userProfile.certifications && userProfile.certifications.length > 0 ? `Certifications:
+${userProfile.certifications.map((cert: any) => `- ${cert.name} from ${cert.issuer}`).join('\n')}` : ''}
 
 ${userProfile.education && userProfile.education.length > 0 ? `Education:
-${(userProfile.education as Education[]).slice(0, 2).map(edu => `- ${edu.degree} in ${edu.field} from ${edu.institution}`).join('\n')}` : ''}`}
+${(userProfile.education as Education[]).map(edu => `- ${edu.degree} in ${edu.field} from ${edu.institution}`).join('\n')}` : ''}
 
-Please generate a compelling cover letter that highlights the candidate's relevant qualifications and shows genuine interest in this specific role and company. Focus on specific achievements and experiences rather than using generic placeholders.`;
+Contact Information:
+- LinkedIn: ${userProfile.linkedinUrl || 'Not provided'}
+- GitHub: ${userProfile.githubUrl || 'Not provided'}
+- Portfolio: ${userProfile.portfolioUrl || 'Not provided'}`}
+
+Please generate a compelling cover letter that highlights the candidate's specific achievements, work experience, and projects. Use the actual details provided rather than generic placeholders. Make it personal and authentic by referencing specific experiences and accomplishments.`;
 
     // Generate cover letter using AI service
     const coverLetterContent = await aiFilterService.generateCoverLetter(systemPrompt, userPrompt);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Card, Spin, Alert, Input, Collapse } from 'antd';
+import { Modal, Button, Card, Spin, Alert, Input, Collapse, Select } from 'antd';
 import { FileText, Sparkles, Briefcase, X, Copy, ChevronDown, ChevronUp, ChevronsRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -72,6 +72,7 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
   const [profileDetails, setProfileDetails] = useState('');
   const [extractedContent, setExtractedContent] = useState('');
   const [isExtracted, setIsExtracted] = useState(false);
+  const [coverLetterType, setCoverLetterType] = useState<'concise' | 'detailed' | 'professional'>('detailed');
 
   useEffect(() => {
     if (visible) {
@@ -83,13 +84,20 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
       setIsExtracted(false);
 
       // Pre-populate profile details from the userProfile prop
-      const profileString = userProfile ? JSON.stringify({
-          name: `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim(),
-          email: userProfile.email,
-          location: userProfile.location,
-          skills: userProfile.skills,
-          experience: userProfile.workExperience,
-      }, null, 2) : '';
+      const profileString = userProfile ? `Profile Summary:
+Name: ${userProfile.name || `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()}
+Email: ${userProfile.email || ''}
+Location: ${userProfile.location || ''}
+Current Role: ${userProfile.targetRole || ''}
+Skills: ${Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills || ''}
+Experience: ${userProfile.experienceYears || 0} years
+
+${userProfile.workExperience && userProfile.workExperience.length > 0 ? `Work Experience:
+${userProfile.workExperience.map((exp: WorkExperience) => `• ${exp.position} at ${exp.company} (${exp.startDate || ''} - ${exp.endDate || 'Present'})
+  ${exp.description || ''}`).join('\n\n')}` : ''}
+
+${userProfile.education && userProfile.education.length > 0 ? `Education:
+${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.field} from ${edu.institution} ${edu.gpa ? `(GPA: ${edu.gpa})` : ''}`).join('\n')}` : ''}` : '';
       setProfileDetails(profileString);
     }
   }, [visible, userProfile]);
@@ -123,6 +131,7 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
           jobDescription: extractedContent,
           location: job.location,
           profileDetails: profileDetails,
+          coverLetterType: coverLetterType,
         }),
       });
 
@@ -226,6 +235,42 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
               />
           </Card>
           
+          <Card
+            title={<span className="text-white font-medium">Cover Letter Style</span>}
+            className="bg-bg-card border-border"
+            bodyStyle={{ padding: '16px' }}
+          >
+            <Select
+              value={coverLetterType}
+              onChange={setCoverLetterType}
+              className="w-full"
+              size="large"
+              options={[
+                {
+                  value: 'concise',
+                  label: 'Concise (150-200 words)',
+                  description: 'Brief and to the point, perfect for busy hiring managers'
+                },
+                {
+                  value: 'detailed',
+                  label: 'Detailed (300-400 words)',
+                  description: 'Comprehensive storytelling with specific examples'
+                },
+                {
+                  value: 'professional',
+                  label: 'Professional (250-350 words)',
+                  description: 'Formal corporate style, traditional structure'
+                }
+              ]}
+              optionRender={(option) => (
+                <div className="py-2">
+                  <div className="font-medium">{option.label}</div>
+                  <div className="text-sm text-gray-500">{option.data.description}</div>
+                </div>
+              )}
+            />
+          </Card>
+
           <Collapse ghost expandIcon={({ isActive }) => isActive ? <ChevronUp /> : <ChevronDown />} items={[{
             key: '1',
             label: <span className="text-white font-medium">Customize Your Profile for this Letter</span>,

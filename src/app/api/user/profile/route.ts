@@ -18,24 +18,39 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Return simplified profile data for dashboard
+    // Return complete profile data
     const profileData = {
-      firstName: user.name?.split(' ')[0] || '',
-      lastName: user.name?.split(' ').slice(1).join(' ') || '',
-      email: user.email || '',
-      targetRole: user.profile?.title || 'Software Developer',
-      location: user.profile?.location || 'Remote',
-      skills: user.profile?.skills || [],
-      experienceYears: user.profile?.experienceYears || 0,
-      bio: user.profile?.bio || '',
+      personalInfo: {
+        fullName: user.name || '',
+        email: user.email || '',
+        phone: user.profile?.phone || '',
+        location: user.profile?.location || 'Remote',
+        website: user.profile?.portfolioUrl || '',
+        linkedin: user.profile?.linkedinUrl || '',
+        github: user.profile?.githubUrl || ''
+      },
+      professionalInfo: {
+        currentRole: user.profile?.title || 'Software Developer',
+        experience: user.profile?.experienceYears?.toString() || '0',
+        skills: user.profile?.skills || [],
+        bio: user.profile?.bio || '',
+        workExperience: user.profile?.workExperience || [],
+        education: user.profile?.education || [],
+        projects: user.profile?.projects || [],
+        achievements: user.profile?.achievements || [],
+        certifications: user.profile?.certifications || []
+      },
       preferences: {
         jobTypes: user.preferences?.jobTypes || [],
         locations: user.preferences?.locations || [],
         salaryRange: {
           min: user.preferences?.salaryRange?.min || 0,
-          max: user.preferences?.salaryRange?.max || 0
+          max: user.preferences?.salaryRange?.max || 0,
+          currency: user.preferences?.salaryRange?.currency || 'USD'
         },
-        remoteWork: user.preferences?.remoteWork || false
+        remoteWork: user.preferences?.remoteWork || false,
+        targetRole: user.profile?.title || 'Software Developer',
+        targetCompanies: user.preferences?.targetCompanies || []
       },
       aiConfig: {
         provider: user.aiConfig?.provider || 'lm-studio',
@@ -76,6 +91,8 @@ export async function PUT(request: NextRequest) {
     // Handle personal info updates
     if (personalInfo) {
       if (personalInfo.fullName !== undefined) updateData.name = personalInfo.fullName;
+      if (personalInfo.email !== undefined) updateData.email = personalInfo.email;
+      if (personalInfo.phone !== undefined) updateData['profile.phone'] = personalInfo.phone;
       if (personalInfo.location !== undefined) updateData['profile.location'] = personalInfo.location;
       if (personalInfo.website !== undefined) updateData['profile.portfolioUrl'] = personalInfo.website;
       if (personalInfo.linkedin !== undefined) updateData['profile.linkedinUrl'] = personalInfo.linkedin;
@@ -88,6 +105,55 @@ export async function PUT(request: NextRequest) {
       if (professionalInfo.experience !== undefined) updateData['profile.experienceYears'] = professionalInfo.experience ? parseInt(professionalInfo.experience) : 0;
       if (professionalInfo.skills !== undefined) updateData['profile.skills'] = professionalInfo.skills;
       if (professionalInfo.bio !== undefined) updateData['profile.bio'] = professionalInfo.bio;
+      
+      // Handle detailed professional data
+      if (professionalInfo.workExperience !== undefined) {
+        updateData['profile.workExperience'] = professionalInfo.workExperience.map((exp: any) => ({
+          company: exp.company,
+          position: exp.position,
+          startDate: exp.startDate ? new Date(exp.startDate) : undefined,
+          endDate: exp.endDate ? new Date(exp.endDate) : undefined,
+          current: exp.current,
+          description: exp.description,
+          location: exp.location
+        }));
+      }
+      
+      if (professionalInfo.education !== undefined) {
+        updateData['profile.education'] = professionalInfo.education.map((edu: any) => ({
+          institution: edu.institution,
+          degree: edu.degree,
+          field: edu.field,
+          startDate: edu.startDate ? new Date(edu.startDate) : undefined,
+          endDate: edu.endDate ? new Date(edu.endDate) : undefined,
+          current: edu.current,
+          gpa: edu.gpa
+        }));
+      }
+      
+      if (professionalInfo.projects !== undefined) {
+        updateData['profile.projects'] = professionalInfo.projects.map((project: any) => ({
+          name: project.name,
+          description: project.description,
+          technologies: project.technologies,
+          url: project.url,
+          github: project.github,
+          startDate: project.startDate ? new Date(project.startDate) : undefined,
+          endDate: project.endDate ? new Date(project.endDate) : undefined
+        }));
+      }
+      
+      if (professionalInfo.achievements !== undefined) {
+        updateData['profile.achievements'] = professionalInfo.achievements.map((achievement: any) => ({
+          title: achievement.title,
+          description: achievement.description,
+          date: achievement.date ? new Date(achievement.date) : undefined
+        }));
+      }
+      
+      if (professionalInfo.certifications !== undefined) {
+        updateData['profile.certifications'] = professionalInfo.certifications;
+      }
     }
 
     // Handle preferences updates
