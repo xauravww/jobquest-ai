@@ -258,21 +258,19 @@ Let's land your dream job! 💼✨`;
 
       case '/status':
         try {
-          // Get base URL for API calls - fix localhost issue
+          // Use separate bot route that doesn't require authentication
           let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
           if (!baseUrl) {
-            // If no environment URL, construct from request headers
             const host = req.headers.get('host');
-            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            const protocol = req.headers.get('x-forwarded-proto') || 'http';
             baseUrl = `${protocol}://${host}`;
           }
-          const apiUrl = `${baseUrl}/api/dashboard/stats`;
+          const apiUrl = `${baseUrl}/api/telegram/bot/stats?telegramUserId=${user.telegramConfig.userId}`;
           
           console.log('🟦 [TELEGRAM WEBHOOK] Fetching stats from:', apiUrl);
           
           const response = await fetch(apiUrl, {
             headers: {
-              'Cookie': req.headers.get('cookie') || '',
               'User-Agent': 'TelegramBot/1.0'
             }
           });
@@ -290,7 +288,7 @@ Let's land your dream job! 💼✨`;
 📞 Overdue Follow-ups: ${stats.overdueFollowUps || 0}
 👥 Active Contacts: ${stats.activeContacts || 0}
 
-📈 Completion Rate: ${stats.completionRate || 0}%
+� ACompletion Rate: ${stats.completionRate || 0}%
 
 Keep up the great work! 💪`;
           } else {
@@ -304,25 +302,23 @@ Keep up the great work! 💪`;
 
       case '/reminders':
         try {
-          // Get base URL for API calls - fix localhost issue
+          // Use separate bot route that doesn't require authentication
           let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
           if (!baseUrl) {
-            // If no environment URL, construct from request headers
             const host = req.headers.get('host');
-            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            const protocol = req.headers.get('x-forwarded-proto') || 'http';
             baseUrl = `${protocol}://${host}`;
           }
-          const apiUrl = `${baseUrl}/api/reminders?limit=5&status=pending`;
+          const apiUrl = `${baseUrl}/api/telegram/bot/reminders?telegramUserId=${user.telegramConfig.userId}&limit=5&status=pending`;
           
           console.log('🟦 [TELEGRAM WEBHOOK] Fetching reminders from:', apiUrl);
           
           const response = await fetch(apiUrl, {
             headers: {
-              'Cookie': req.headers.get('cookie') || '',
               'User-Agent': 'TelegramBot/1.0'
             }
           });
-          console.log('🟦 [TELEGRAM WEBHOOK] Reminders response status:', response.status);
+          console.log('� [T[ELEGRAM WEBHOOK] Reminders response status:', response.status);
           
           if (response.ok) {
             const data = await response.json();
@@ -357,18 +353,16 @@ Keep up the great work! 💪`;
 
       case '/interviews':
         try {
-          // Get base URL for API calls - fix localhost issue
+          // Use separate bot route that doesn't require authentication
           let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
           if (!baseUrl) {
-            // If no environment URL, construct from request headers
             const host = req.headers.get('host');
-            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            const protocol = req.headers.get('x-forwarded-proto') || 'http';
             baseUrl = `${protocol}://${host}`;
           }
           
-          const response = await fetch(`${baseUrl}/api/calendar/events?type=interview&status=scheduled`, {
+          const response = await fetch(`${baseUrl}/api/telegram/bot/interviews?telegramUserId=${user.telegramConfig.userId}&type=interview&status=scheduled`, {
             headers: {
-              'Cookie': req.headers.get('cookie') || '',
               'User-Agent': 'TelegramBot/1.0'
             }
           });
@@ -403,18 +397,16 @@ Keep up the great work! 💪`;
 
       case '/followups':
         try {
-          // Get base URL for API calls - fix localhost issue
+          // Use separate bot route that doesn't require authentication
           let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
           if (!baseUrl) {
-            // If no environment URL, construct from request headers
             const host = req.headers.get('host');
-            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            const protocol = req.headers.get('x-forwarded-proto') || 'http';
             baseUrl = `${protocol}://${host}`;
           }
           
-          const response = await fetch(`${baseUrl}/api/follow-ups`, {
+          const response = await fetch(`${baseUrl}/api/telegram/bot/followups?telegramUserId=${user.telegramConfig.userId}`, {
             headers: {
-              'Cookie': req.headers.get('cookie') || '',
               'User-Agent': 'TelegramBot/1.0'
             }
           });
@@ -432,9 +424,8 @@ Keep up the great work! 💪`;
 
             let text = `📞 *Pending Follow-ups (${pendingFollowUps.length})*\n\n`;
             
-            const contactsResponse = await fetch(`${baseUrl}/api/contacts`, {
+            const contactsResponse = await fetch(`${baseUrl}/api/telegram/bot/contacts?telegramUserId=${user.telegramConfig.userId}`, {
               headers: {
-                'Cookie': req.headers.get('cookie') || '',
                 'User-Agent': 'TelegramBot/1.0'
               }
             });
@@ -482,8 +473,6 @@ Keep up the great work! 💪`;
 
 💡 *Quick Actions:*
 • \`fleeting: Your idea here\` - Save a fleeting note
-• \`reminder: Title | Date | Time\` - Create a reminder
-• \`application: Company | Position | Status\` - Add job application
 
 🎯 *Interactive Features:*
 • Receive notifications with action buttons
@@ -498,7 +487,6 @@ Need more help? Visit the web app for full features!`;
 
 Choose an action:
 • Type \`fleeting: Your note\` to save a quick thought
-• Type \`reminder: Task | tomorrow | 2pm\` to set a reminder
 • Type \`/status\` to see your current progress
 • Type \`/interviews\` to see upcoming interviews
 • Type \`/followups\` to see pending follow-ups
@@ -511,9 +499,7 @@ Choose an action:
 Type /help to see all available commands.
 
 💡 You can also use:
-• \`fleeting: Your note\` - Save quick thoughts
-• \`reminder: Task | Date | Time\` - Set reminders
-• \`application: Company | Position | Status\` - Track applications`;
+• \`fleeting: Your note\` - Save quick thoughts`;
     }
   } catch (error) {
     console.error('Error handling command:', error);
@@ -529,15 +515,14 @@ export async function handleTextMessage(text: string, chatId: string, user: any,
       const note = text.replace('fleeting:', '').trim();
       
       try {
-        // Get base URL for API calls - fix localhost issue
+        // Use separate bot route that doesn't require authentication
         let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
         if (!baseUrl) {
-          // If no environment URL, construct from request headers
           const host = req.headers.get('host');
-          const protocol = req.headers.get('x-forwarded-proto') || 'https';
+          const protocol = req.headers.get('x-forwarded-proto') || 'http';
           baseUrl = `${protocol}://${host}`;
         }
-        const apiUrl = `${baseUrl}/api/notes/fleeting`;
+        const apiUrl = `${baseUrl}/api/telegram/bot/fleeting`;
         
         console.log('🟦 [TELEGRAM WEBHOOK] Saving fleeting note to:', apiUrl);
         
@@ -545,13 +530,13 @@ export async function handleTextMessage(text: string, chatId: string, user: any,
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'Cookie': req.headers.get('cookie') || '',
             'User-Agent': 'TelegramBot/1.0'
           },
           body: JSON.stringify({
             content: note,
             source: 'telegram',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            telegramUserId: user.telegramConfig.userId
           })
         });
 
@@ -569,70 +554,7 @@ export async function handleTextMessage(text: string, chatId: string, user: any,
       }
     }
 
-    // Handle reminders
-    if (text.startsWith('reminder:')) {
-      const reminderText = text.replace('reminder:', '').trim();
-      const parts = reminderText.split('|').map(p => p.trim());
-      
-      if (parts.length >= 2) {
-        const title = parts[0];
-        const dateStr = parts[1];
-        const timeStr = parts[2] || '9:00 AM';
 
-        const response = await fetch('/api/reminders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title,
-            dueDate: parseDate(dateStr),
-            dueTime: timeStr,
-            type: 'custom',
-            priority: 'medium',
-            source: 'telegram'
-          })
-        });
-
-        if (response.ok) {
-          return `⏰ *Reminder Created*\n\n📋 ${title}\n📅 ${dateStr} at ${timeStr}\n\n✅ I'll notify you when it's time!`;
-        } else {
-          return '❌ Failed to create reminder. Please try again.';
-        }
-      } else {
-        return '❌ Invalid reminder format. Use: `reminder: Title | Date | Time`';
-      }
-    }
-
-    // Handle applications
-    if (text.startsWith('application:')) {
-      const appText = text.replace('application:', '').trim();
-      const parts = appText.split('|').map(p => p.trim());
-      
-      if (parts.length >= 3) {
-        const company = parts[0];
-        const position = parts[1];
-        const status = parts[2];
-
-        const response = await fetch('/api/applications', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            company,
-            position,
-            status: status.toLowerCase(),
-            appliedDate: new Date().toISOString(),
-            source: 'telegram'
-          })
-        });
-
-        if (response.ok) {
-          return `💼 *Job Application Added*\n\n🏢 ${company}\n💼 ${position}\n📊 Status: ${status}\n\n✅ Added to your application tracker!`;
-        } else {
-          return '❌ Failed to add application. Please try again.';
-        }
-      } else {
-        return '❌ Invalid application format. Use: `application: Company | Position | Status`';
-      }
-    }
 
     // Handle reschedule
     if (text.startsWith('reschedule:')) {

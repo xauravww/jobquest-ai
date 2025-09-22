@@ -278,7 +278,10 @@ export default function ApplicationTrackingOptimized() {
               type="text" 
               icon={<EditOutlined />} 
               size="small"
-              onClick={() => {/* Handle edit */}}
+              onClick={() => {
+                // TODO: Implement edit functionality
+                toast('Edit functionality coming soon');
+              }}
             />
           </Tooltip>
           <Tooltip title="Delete">
