@@ -72,7 +72,7 @@ export async function PATCH(
     delete body._id;
 
     // Handle job-related updates
-    if (body.jobTitle || body.company || body.location || body.description) {
+    if (body.jobTitle || body.company || body.location || body.description || body.datePosted !== undefined) {
       // Find the application first to get the jobId
       const Application = (await import('@/models/Application')).default;
       const application = await Application.findOne({ _id: id, userId: user._id });
@@ -88,6 +88,9 @@ export async function PATCH(
           if (body.location) job.location = body.location;
           if (body.description) job.description = body.description;
           if (body.jobUrl) job.url = body.jobUrl;
+          if (body.datePosted !== undefined) {
+            job.datePosted = body.datePosted ? new Date(body.datePosted as string) : null;
+          }
           await job.save();
         }
 
@@ -97,6 +100,7 @@ export async function PATCH(
         delete body.location;
         delete body.description;
         delete body.jobUrl;
+        delete body.datePosted;
       }
     }
 

@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
           notes: job.notes || `Added on ${new Date().toLocaleDateString()}`,
           priority: job.priority || 'medium',
           resumeUsed: job.resumeUsed || null,
-          datePosted: job.datePosted ? new Date(job.datePosted) : new Date()
+          datePosted: job.datePosted ? new Date(job.datePosted) : null
         };
       } else {
         // Legacy format - transform to new format
@@ -242,9 +242,22 @@ export async function PATCH(request: NextRequest) {
       delete updateData.description;
     }
 
-    // Map frontend fields to Application model fields
-    if (updateData.datePosted) {
-      updateData.appliedDate = new Date(updateData.datePosted);
+    // Handle job-related updates (datePosted belongs to Job model, not Application)
+    if (updateData.datePosted !== undefined) {
+      // Find the associated job and update its datePosted
+      const Job = (await import('@/models/Job')).default;
+      const job = await Job.findById(application.jobId);
+
+      if (job) {
+        if (updateData.datePosted) {
+          job.datePosted = new Date(updateData.datePosted as string);
+        } else {
+          job.datePosted = null;
+        }
+        await job.save();
+      }
+
+      // Remove datePosted from application update since it doesn't belong to Application model
       delete updateData.datePosted;
     }
     if (updateData.applicationId === undefined && updateData.jobId) {

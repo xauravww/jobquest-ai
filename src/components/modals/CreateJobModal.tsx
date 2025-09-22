@@ -235,7 +235,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         status,
         priority,
         platform,
-        datePosted: datePosted ? datePosted.toISOString() : new Date().toISOString(),
+        datePosted: datePosted ? datePosted.toISOString() : null,
         description: description.trim(),
         notes: notes.trim(),
         applicationMethod: 'manual',

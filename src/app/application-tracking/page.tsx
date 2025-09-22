@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Modal, Select, Tag, Table, Popconfirm, Input, DatePicker, Button } from 'antd';
+import { Modal, Select, Tag, Table, Popconfirm, Input, DatePicker, Button, TimePicker } from 'antd';
 import {
-  Briefcase, Plus, Search, RefreshCw, Edit, Sparkles
+  Briefcase, Plus, Search, RefreshCw, Edit, Sparkles, Bell
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 import CoverLetterModal from '@/components/modals/CoverLetterModal';
-import CreateReminderModal from '@/components/modals/CreateReminderModal';
+// Removed deprecated CreateReminderModal - using modern inline reminder creation
 import { notificationService } from '@/services/NotificationService';
 import { telegramService } from '@/services/TelegramService';
 
@@ -119,9 +119,18 @@ const ApplicationTrackingPage = () => {
   const [coverLetterModalVisible, setCoverLetterModalVisible] = useState(false);
   const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
 
-  // New state for reminder modal visibility and selected job for reminder
+  // Modern reminder creation state
   const [reminderModalVisible, setReminderModalVisible] = useState(false);
   const [selectedJobForReminder, setSelectedJobForReminder] = useState<Job | undefined>(undefined);
+  const [reminderForm, setReminderForm] = useState({
+    title: '',
+    description: '',
+    dueDate: null as dayjs.Dayjs | null,
+    dueTime: dayjs().hour(9).minute(0),
+    priority: 'medium',
+    type: 'follow_up'
+  });
+  const [creatingReminder, setCreatingReminder] = useState(false);
 
   // New state for user profile
   const [userProfile, setUserProfile] = useState<UserProfile>({
@@ -205,7 +214,7 @@ const ApplicationTrackingPage = () => {
           company: (jobData as PopulatedJob)?.company || app.company || 'Unknown Company',
           location: (jobData as PopulatedJob)?.location || app.location || 'Unknown Location',
           status: app.status || 'saved',
-          datePosted: app.appliedDate || (jobData as PopulatedJob)?.datePosted || app.createdAt || app.datePosted || new Date().toISOString(),
+          datePosted: (jobData as PopulatedJob)?.datePosted || app.datePosted || app.createdAt || new Date().toISOString(),
           description: (jobData as PopulatedJob)?.description || app.description || '',
           priority: app.priority || 'medium',
           platform: app.platform || 'other',
@@ -276,6 +285,63 @@ const ApplicationTrackingPage = () => {
       toast.error('Failed to delete application');
     }
   }, [jobs]);
+
+  // Modern reminder creation function
+  const handleCreateReminder = async () => {
+    try {
+      if (!reminderForm.title?.trim()) {
+        toast.error('Please enter a reminder title');
+        return;
+      }
+      
+      if (!reminderForm.dueDate) {
+        toast.error('Please select a due date');
+        return;
+      }
+      
+      setCreatingReminder(true);
+
+      const payload = {
+        title: reminderForm.title,
+        description: reminderForm.description,
+        dueDate: reminderForm.dueDate.toISOString(),
+        dueTime: reminderForm.dueTime.format('HH:mm'),
+        type: reminderForm.type,
+        priority: reminderForm.priority,
+        status: 'pending',
+        tags: [],
+        applicationId: selectedJobForReminder?._id || null
+      };
+
+      const response = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast.success('Reminder created successfully!');
+        setReminderModalVisible(false);
+        setReminderForm({
+          title: '',
+          description: '',
+          dueDate: null,
+          dueTime: dayjs().hour(9).minute(0),
+          priority: 'medium',
+          type: 'follow_up'
+        });
+        setSelectedJobForReminder(undefined);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to create reminder');
+      }
+    } catch (error) {
+      console.error('Error creating reminder:', error);
+      toast.error('Failed to create reminder');
+    } finally {
+      setCreatingReminder(false);
+    }
+  };
 
 
 
@@ -602,6 +668,14 @@ const ApplicationTrackingPage = () => {
                 <button
                   onClick={async () => {
                     setSelectedJobForReminder(record);
+                    setReminderForm({
+                      title: `Follow up on ${record.title} at ${record.company}`,
+                      description: '',
+                      dueDate: dayjs().add(1, 'week'),
+                      dueTime: dayjs().hour(9).minute(0),
+                      priority: 'medium',
+                      type: 'follow_up'
+                    });
                     setReminderModalVisible(true);
                     
                     // Send notification about reminder creation
@@ -701,7 +775,7 @@ const ApplicationTrackingPage = () => {
                   company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
                   location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
                   status: newJob.status || 'submitted',
-                  datePosted: newJob.appliedDate || (jobData as PopulatedJob)?.datePosted || newJob.createdAt || newJob.datePosted || new Date().toISOString(),
+                  datePosted: (jobData as PopulatedJob)?.datePosted || newJob.datePosted || newJob.createdAt || new Date().toISOString(),
                   description: (jobData as PopulatedJob)?.description || newJob.description || '',
                   priority: newJob.priority || 'medium',
                   platform: newJob.platform || 'other',
@@ -735,24 +809,136 @@ const ApplicationTrackingPage = () => {
             userProfile={userProfile}
           />
 
-          {/* Create Reminder Modal */}
-          <CreateReminderModal
-            isOpen={reminderModalVisible}
-            onClose={() => setReminderModalVisible(false)}
-            onSuccess={() => {
+          {/* Modern Reminder Creation Modal */}
+          <Modal
+            title={
+              <div className="flex items-center gap-2 text-white">
+                <Bell className="w-5 h-5 text-primary" />
+                Create Reminder
+              </div>
+            }
+            open={reminderModalVisible}
+            onCancel={() => {
               setReminderModalVisible(false);
-              toast.success('Reminder created successfully');
+              setReminderForm({
+                title: '',
+                description: '',
+                dueDate: null,
+                dueTime: dayjs().hour(9).minute(0),
+                priority: 'medium',
+                type: 'follow_up'
+              });
+              setSelectedJobForReminder(undefined);
             }}
-            editingReminder={undefined}
-            defaultApplication={selectedJobForReminder ? {
-              _id: selectedJobForReminder._id,
-              jobId: {
-                title: selectedJobForReminder.title,
-                company: selectedJobForReminder.company,
-                location: selectedJobForReminder.location
-              }
-            } : undefined}
-          />
+            width={600}
+            className="custom-dark-modal"
+            footer={[
+              <Button key="cancel" onClick={() => setReminderModalVisible(false)}>
+                Cancel
+              </Button>,
+              <Button 
+                key="create" 
+                type="primary" 
+                loading={creatingReminder} 
+                onClick={handleCreateReminder}
+                className="bg-primary hover:bg-primary/80"
+              >
+                Create Reminder
+              </Button>,
+            ]}
+          >
+            <div className="space-y-4 text-white">
+              {selectedJobForReminder && (
+                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                  <div className="text-sm text-primary font-medium">
+                    Reminder for: {selectedJobForReminder.title} at {selectedJobForReminder.company}
+                  </div>
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={reminderForm.title}
+                  onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
+                  placeholder="Enter reminder title"
+                  size="large"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <Input.TextArea
+                  value={reminderForm.description}
+                  onChange={(e) => setReminderForm({ ...reminderForm, description: e.target.value })}
+                  placeholder="Enter reminder description (optional)"
+                  rows={3}
+                  size="large"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Due Date <span className="text-red-500">*</span>
+                  </label>
+                  <DatePicker
+                    value={reminderForm.dueDate}
+                    onChange={(date) => setReminderForm({ ...reminderForm, dueDate: date })}
+                    size="large"
+                    className="w-full"
+                    format="MMM DD, YYYY"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Due Time</label>
+                  <TimePicker
+                    value={reminderForm.dueTime}
+                    onChange={(time) => setReminderForm({ ...reminderForm, dueTime: time || dayjs().hour(9).minute(0) })}
+                    size="large"
+                    className="w-full"
+                    format="HH:mm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+                  <Select
+                    value={reminderForm.type}
+                    onChange={(value) => setReminderForm({ ...reminderForm, type: value })}
+                    size="large"
+                    className="w-full"
+                  >
+                    <Select.Option value="follow_up">Follow Up</Select.Option>
+                    <Select.Option value="interview_prep">Interview Preparation</Select.Option>
+                    <Select.Option value="application_deadline">Application Deadline</Select.Option>
+                    <Select.Option value="interview_scheduled">Interview Scheduled</Select.Option>
+                    <Select.Option value="offer_response">Offer Response</Select.Option>
+                    <Select.Option value="networking">Networking</Select.Option>
+                    <Select.Option value="custom">Custom</Select.Option>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
+                  <Select
+                    value={reminderForm.priority}
+                    onChange={(value) => setReminderForm({ ...reminderForm, priority: value })}
+                    size="large"
+                    className="w-full"
+                  >
+                    <Select.Option value="low">Low</Select.Option>
+                    <Select.Option value="medium">Medium</Select.Option>
+                    <Select.Option value="high">High</Select.Option>
+                    <Select.Option value="urgent">Urgent</Select.Option>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </Modal>
         </div>
       </div>
     </AppLayout>
