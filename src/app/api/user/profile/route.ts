@@ -50,7 +50,13 @@ export async function GET() {
         },
         remoteWork: user.preferences?.remoteWork || false,
         targetRole: user.profile?.title || 'Software Developer',
-        targetCompanies: user.preferences?.targetCompanies || []
+        targetCompanies: user.preferences?.targetCompanies || [],
+        notifications: {
+          email: user.preferences?.notifications?.email ?? true,
+          push: user.preferences?.notifications?.push ?? true,
+          jobAlerts: user.preferences?.notifications?.jobAlerts ?? true,
+          applicationUpdates: user.preferences?.notifications?.applicationUpdates ?? true
+        }
       },
       aiConfig: {
         provider: user.aiConfig?.provider || 'lm-studio',
@@ -163,6 +169,7 @@ export async function PUT(request: NextRequest) {
       if (preferences.salaryRange?.min !== undefined) updateData['preferences.salaryRange.min'] = preferences.salaryRange.min;
       if (preferences.salaryRange?.max !== undefined) updateData['preferences.salaryRange.max'] = preferences.salaryRange.max;
       if (preferences.remoteWork !== undefined) updateData['preferences.remoteWork'] = preferences.remoteWork;
+      if (preferences.targetCompanies !== undefined) updateData['preferences.targetCompanies'] = preferences.targetCompanies;
     }
 
     // Handle AI config updates

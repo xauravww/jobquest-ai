@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
     // Connect to DB before querying
     await connectDB();
 
-    // Find user first to get userId
+    // Find user first to get userId - use lean() for better performance
     const User = (await import('@/models/User')).default;
-    const user = await User.findOne({ email: session.user.email });
+    const user = await User.findOne({ email: session.user.email }).lean();
     
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const platform = searchParams.get('platform');
     const search = searchParams.get('search');
     const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
+    const limit = Math.min(parseInt(searchParams.get('limit') || '10'), 50); // Cap limit at 50
     
     // If date range is provided, get jobs by date range
     if (dateFrom || dateTo) {
@@ -50,10 +50,15 @@ export async function GET(request: NextRequest) {
       search,
       dateFrom,
       dateTo,
-      page,
-      limit
+      page: page.toString(),
+      limit: limit.toString()
     });
-    return NextResponse.json({ applications, totalCount });
+    
+    // Add cache headers for better performance
+    const response = NextResponse.json({ applications, totalCount });
+    response.headers.set('Cache-Control', 'private, max-age=60'); // Cache for 1 minute
+    
+    return response;
     
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -83,6 +88,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log('POST /api/applications - Received body:', JSON.stringify(body, null, 2));
+    
     const { jobs } = body;
     
     if (!jobs || !Array.isArray(jobs)) {
@@ -92,29 +99,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate and normalize platform values
+    const validPlatforms = ['naukri', 'linkedin', 'indeed', 'company_website', 'other'];
+    const platformMap: Record<string, string> = {
+      'linkedin': 'linkedin',
+      'indeed': 'indeed', 
+      'glassdoor': 'other',
+      'company-website': 'company_website',
+      'company_website': 'company_website',
+      'referral': 'other',
+      'other': 'other',
+      'naukri': 'naukri'
+    };
+
+    // Validate and normalize status values
+    const validStatuses = ['draft', 'applied', 'submitted', 'saved', 'under_review', 'phone_screening', 'technical_interview', 'final_interview', 'offer_received', 'accepted', 'rejected', 'withdrawn', 'expired'];
+    const statusMap: Record<string, string> = {
+      'applied': 'applied',
+      'submitted': 'submitted', 
+      'saved': 'saved',
+      'draft': 'draft'
+    };
+
     // Handle different data structures - from AI filtering vs direct application creation
-    const applications = jobs.map(job => {
+    const applications = jobs.map((job, index) => {
+      console.log(`Processing job ${index}:`, job);
+      
       // If it's from AI filtering (has jobTitle, company, etc.)
       if (job.jobTitle && job.company) {
+        const normalizedPlatform = platformMap[job.platform] || 'other';
+        const normalizedStatus = statusMap[job.status] || 'draft';
+        
+        console.log(`Job ${index} - Platform: ${job.platform} -> ${normalizedPlatform}, Status: ${job.status} -> ${normalizedStatus}`);
+        
         return {
           userId: user._id,
           jobTitle: job.jobTitle,
           company: job.company,
           location: job.location || 'Unknown Location',
           jobUrl: job.jobUrl || '',
-          description: job.description || '',
-          status: job.status || 'draft',
-          applicationMethod: 'manual',
-          platform: 'other',
-          notes: job.notes || `Added from AI search on ${new Date().toLocaleDateString()}`,
-          priority: 'medium' // Default priority for AI filtered jobs
+          description: job.description || 'No description provided',
+          status: normalizedStatus,
+          applicationMethod: job.applicationMethod || 'manual',
+          platform: normalizedPlatform,
+          notes: job.notes || `Added on ${new Date().toLocaleDateString()}`,
+          priority: job.priority || 'medium',
+          resumeUsed: job.resumeUsed || null,
+          datePosted: job.datePosted ? new Date(job.datePosted) : new Date()
         };
       } else {
         // Legacy format - transform to new format
         return {
           userId: user._id,
           jobId: job.id,
-          status: job.status || 'draft',
+          status: statusMap[job.status] || 'draft',
           applicationMethod: 'manual',
           platform: 'other',
           notes: job.aiReason || '',
@@ -125,7 +163,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    console.log('Processed applications:', JSON.stringify(applications, null, 2));
+
     const savedApplications = await mongodbService.saveApplicationsFromAI(applications);
+
+    console.log('Saved applications count:', savedApplications.length);
 
     return NextResponse.json({
       success: true,
@@ -136,7 +178,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating applications:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

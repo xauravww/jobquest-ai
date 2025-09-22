@@ -120,10 +120,10 @@ export async function POST(request: NextRequest) {
         
         // Check if it's a command (starts with /)
         if (text.startsWith('/')) {
-          response = await handleCommand(text, chatId.toString(), user);
+          response = await handleCommand(text, chatId.toString(), user, request);
         } else {
           // Handle special text formats (fleeting:, reminder:, etc.)
-          response = await handleTextMessage(text, chatId.toString(), user);
+          response = await handleTextMessage(text, chatId.toString(), user, request);
         }
         
         if (response) {
@@ -232,7 +232,7 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string, botTo
 }
 
 // Handle Telegram commands
-export async function handleCommand(text: string, chatId: string, user: any): Promise<string | null> {
+export async function handleCommand(text: string, chatId: string, user: any, req: NextRequest): Promise<string | null> {
   try {
     const parts = text.trim().split(' ');
     const command = parts[0].toLowerCase();
@@ -258,13 +258,24 @@ Let's land your dream job! 💼✨`;
 
       case '/status':
         try {
-          // Get base URL for API calls
-          const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+          // Get base URL for API calls - fix localhost issue
+          let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
+          if (!baseUrl) {
+            // If no environment URL, construct from request headers
+            const host = req.headers.get('host');
+            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            baseUrl = `${protocol}://${host}`;
+          }
           const apiUrl = `${baseUrl}/api/dashboard/stats`;
           
           console.log('🟦 [TELEGRAM WEBHOOK] Fetching stats from:', apiUrl);
           
-          const response = await fetch(apiUrl);
+          const response = await fetch(apiUrl, {
+            headers: {
+              'Cookie': req.headers.get('cookie') || '',
+              'User-Agent': 'TelegramBot/1.0'
+            }
+          });
           console.log('🟦 [TELEGRAM WEBHOOK] Stats response status:', response.status);
           
           if (response.ok) {
@@ -293,12 +304,24 @@ Keep up the great work! 💪`;
 
       case '/reminders':
         try {
-          const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+          // Get base URL for API calls - fix localhost issue
+          let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
+          if (!baseUrl) {
+            // If no environment URL, construct from request headers
+            const host = req.headers.get('host');
+            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            baseUrl = `${protocol}://${host}`;
+          }
           const apiUrl = `${baseUrl}/api/reminders?limit=5&status=pending`;
           
           console.log('🟦 [TELEGRAM WEBHOOK] Fetching reminders from:', apiUrl);
           
-          const response = await fetch(apiUrl);
+          const response = await fetch(apiUrl, {
+            headers: {
+              'Cookie': req.headers.get('cookie') || '',
+              'User-Agent': 'TelegramBot/1.0'
+            }
+          });
           console.log('🟦 [TELEGRAM WEBHOOK] Reminders response status:', response.status);
           
           if (response.ok) {
@@ -334,7 +357,21 @@ Keep up the great work! 💪`;
 
       case '/interviews':
         try {
-          const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/calendar/events?type=interview&status=scheduled`);
+          // Get base URL for API calls - fix localhost issue
+          let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
+          if (!baseUrl) {
+            // If no environment URL, construct from request headers
+            const host = req.headers.get('host');
+            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            baseUrl = `${protocol}://${host}`;
+          }
+          
+          const response = await fetch(`${baseUrl}/api/calendar/events?type=interview&status=scheduled`, {
+            headers: {
+              'Cookie': req.headers.get('cookie') || '',
+              'User-Agent': 'TelegramBot/1.0'
+            }
+          });
           if (response.ok) {
             const data = await response.json();
             const interviews = data.events || [];
@@ -366,7 +403,21 @@ Keep up the great work! 💪`;
 
       case '/followups':
         try {
-          const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/follow-ups`);
+          // Get base URL for API calls - fix localhost issue
+          let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
+          if (!baseUrl) {
+            // If no environment URL, construct from request headers
+            const host = req.headers.get('host');
+            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            baseUrl = `${protocol}://${host}`;
+          }
+          
+          const response = await fetch(`${baseUrl}/api/follow-ups`, {
+            headers: {
+              'Cookie': req.headers.get('cookie') || '',
+              'User-Agent': 'TelegramBot/1.0'
+            }
+          });
           if (response.ok) {
             const data = await response.json();
             const followUps = data.followUps || [];
@@ -381,7 +432,12 @@ Keep up the great work! 💪`;
 
             let text = `📞 *Pending Follow-ups (${pendingFollowUps.length})*\n\n`;
             
-            const contactsResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/contacts`);
+            const contactsResponse = await fetch(`${baseUrl}/api/contacts`, {
+              headers: {
+                'Cookie': req.headers.get('cookie') || '',
+                'User-Agent': 'TelegramBot/1.0'
+              }
+            });
             const contactsData = contactsResponse.ok ? await contactsResponse.json() : { contacts: [] };
             const contacts = contactsData.contacts || [];
             
@@ -466,21 +522,32 @@ Type /help to see all available commands.
 }
 
 // Handle text messages for fleeting notes, reminders, etc.
-export async function handleTextMessage(text: string, chatId: string, user: any): Promise<string | null> {
+export async function handleTextMessage(text: string, chatId: string, user: any, req: NextRequest): Promise<string | null> {
   try {
     // Handle fleeting notes
     if (text.startsWith('fleeting:')) {
       const note = text.replace('fleeting:', '').trim();
       
       try {
-        const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        // Get base URL for API calls - fix localhost issue
+        let baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL;
+        if (!baseUrl) {
+          // If no environment URL, construct from request headers
+          const host = req.headers.get('host');
+          const protocol = req.headers.get('x-forwarded-proto') || 'https';
+          baseUrl = `${protocol}://${host}`;
+        }
         const apiUrl = `${baseUrl}/api/notes/fleeting`;
         
         console.log('🟦 [TELEGRAM WEBHOOK] Saving fleeting note to:', apiUrl);
         
         const response = await fetch(apiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cookie': req.headers.get('cookie') || '',
+            'User-Agent': 'TelegramBot/1.0'
+          },
           body: JSON.stringify({
             content: note,
             source: 'telegram',

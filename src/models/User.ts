@@ -81,6 +81,7 @@ export interface IUser extends Document {
       currency: string;
     };
     remoteWork: boolean;
+    targetCompanies: string[];
     notifications: {
       email: boolean;
       push: boolean;
@@ -204,6 +205,7 @@ const UserSchema = new Schema<IUser>(
         currency: { type: String, default: 'USD' },
       },
       remoteWork: { type: Boolean, default: false },
+      targetCompanies: [String],
       notifications: {
         email: { type: Boolean, default: true },
         push: { type: Boolean, default: true },

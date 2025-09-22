@@ -30,6 +30,13 @@ export async function POST(request: NextRequest) {
     // Send message via Telegram Bot API
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
     
+    console.log('🟦 [SEND MESSAGE] Sending to Telegram API:', {
+      url: telegramApiUrl.replace(botToken, 'BOT_TOKEN_HIDDEN'),
+      chat_id: userId,
+      text_preview: text.substring(0, 50) + '...',
+      parse_mode: parseMode
+    });
+    
     const response = await fetch(telegramApiUrl, {
       method: 'POST',
       headers: {
@@ -42,8 +49,11 @@ export async function POST(request: NextRequest) {
       })
     });
 
+    const responseText = await response.text();
+    console.log('🟦 [SEND MESSAGE] Telegram API raw response:', responseText);
+
     if (response.ok) {
-      const responseData = await response.json();
+      const responseData = JSON.parse(responseText);
       console.log('🟢 [SEND MESSAGE] Message sent successfully to user:', userId);
       return NextResponse.json({ 
         success: true, 
@@ -51,12 +61,45 @@ export async function POST(request: NextRequest) {
         telegramResponse: responseData
       });
     } else {
-      const errorData = await response.text();
-      console.error('🔴 [SEND MESSAGE] Telegram API error:', response.status, errorData);
+      console.error('🔴 [SEND MESSAGE] Telegram API error:', response.status, responseText);
+      
+      // Parse error for better debugging
+      let errorDetails = responseText;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorDetails = errorJson;
+        
+        // Handle specific Telegram errors
+        if (errorJson.error_code === 404) {
+          console.error('🔴 [SEND MESSAGE] 404 Error - Possible causes:');
+          console.error('  - Bot token is invalid');
+          console.error('  - User ID is incorrect');
+          console.error('  - User has not started the bot yet');
+          console.error('  - User has blocked the bot');
+          
+          return NextResponse.json({ 
+            error: 'Failed to send message - User not found or bot not started',
+            details: 'The user may need to start the bot first by sending /start',
+            telegramError: errorJson
+          }, { status: 404 });
+        }
+        
+        if (errorJson.error_code === 403) {
+          return NextResponse.json({ 
+            error: 'Failed to send message - Bot blocked by user',
+            details: 'The user has blocked the bot or the bot lacks permissions',
+            telegramError: errorJson
+          }, { status: 403 });
+        }
+        
+      } catch (parseError) {
+        console.error('🔴 [SEND MESSAGE] Could not parse error response:', parseError);
+      }
+      
       return NextResponse.json({ 
         error: 'Failed to send message via Telegram API',
-        details: errorData
-      }, { status: 500 });
+        details: errorDetails
+      }, { status: response.status });
     }
 
   } catch (error) {

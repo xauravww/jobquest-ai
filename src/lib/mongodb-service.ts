@@ -8,12 +8,40 @@ export class MongoDBService {
 
   // Helper method to normalize status values to valid enum values
   private normalizeStatus(status: unknown): string {
-    // Remove normalization and mapping, accept status as is
-    if (typeof status === 'string') {
-      return status;
+    if (typeof status !== 'string') {
+      return 'draft';
     }
-    // Default to 'submitted' if not a string
-    return 'submitted';
+    
+    // Valid status values from Application model
+    const validStatuses = [
+      'draft', 'applied', 'submitted', 'saved', 'under_review', 
+      'phone_screening', 'technical_interview', 'final_interview', 
+      'offer_received', 'accepted', 'rejected', 'withdrawn', 'expired'
+    ];
+    
+    // Status mapping for common variations
+    const statusMap: Record<string, string> = {
+      'applied': 'applied',
+      'submitted': 'submitted',
+      'saved': 'saved',
+      'draft': 'draft',
+      'pending': 'submitted',
+      'in_review': 'under_review',
+      'under_review': 'under_review',
+      'phone_screening': 'phone_screening',
+      'technical_interview': 'technical_interview',
+      'final_interview': 'final_interview',
+      'offer_received': 'offer_received',
+      'accepted': 'accepted',
+      'rejected': 'rejected',
+      'withdrawn': 'withdrawn',
+      'expired': 'expired'
+    };
+    
+    const normalizedStatus = statusMap[status.toLowerCase()] || status;
+    
+    // Return the status if it's valid, otherwise default to 'draft'
+    return validStatuses.includes(normalizedStatus) ? normalizedStatus : 'draft';
   }
 
   async saveJobResults(jobs: Record<string, unknown>[]) {
@@ -184,64 +212,90 @@ export class MongoDBService {
       await connectDB();
       
       const savedApplications = [];
+      const errors = [];
       
-      for (const appData of applications) {
+      for (let i = 0; i < applications.length; i++) {
+        const appData = applications[i];
         try {
+          console.log(`Processing application ${i}:`, appData);
+          
           // First, create or find the job
           let job = null;
           
           if (appData.jobUrl) {
             // Try to find existing job by URL
             job = await Job.findOne({ url: appData.jobUrl });
+            console.log(`Found existing job for URL ${appData.jobUrl}:`, !!job);
           }
           
           if (!job) {
             // Create a new job entry
-            job = new Job({
+            const jobData = {
               jobId: `job-${Date.now()}-${Math.random()}`,
               title: appData.jobTitle,
               company: appData.company,
-              location: appData.location,
-              description: appData.description || '',
+              location: appData.location || 'Unknown Location',
+              description: appData.description || 'No description provided',
               url: appData.jobUrl || '',
-              datePosted: new Date(),
+              datePosted: appData.datePosted || new Date(),
               isActive: true,
               isBookmarked: false,
               isSkipped: false,
-              source: 'ai-filtered'
-            });
+              source: 'manual-entry'
+            };
             
+            console.log(`Creating new job:`, jobData);
+            job = new Job(jobData);
             await job.save();
+            console.log(`Job saved with ID: ${job._id}`);
           }
 
-          // Create the application
-          const application = new Application({
+          // Create the application with proper validation
+          const applicationData = {
             userId: appData.userId,
             jobId: job._id,
-            applicationId: `app-${Date.now()}-${Math.random()}`,
-            status: this.normalizeStatus(appData.status) || 'draft',
-            appliedDate: new Date(),
+            applicationId: `app-${Date.now()}-${Math.random()}-${i}`,
+            status: appData.status || 'draft',
+            appliedDate: appData.datePosted && typeof appData.datePosted === 'string' ? new Date(appData.datePosted) : new Date(),
             lastStatusUpdate: new Date(),
             applicationMethod: appData.applicationMethod || 'manual',
             platform: appData.platform || 'other',
             notes: appData.notes || '',
             priority: appData.priority || 'medium',
             communications: [],
-            interviews: []
-          });
+            interviews: [],
+            resumeUsed: appData.resumeUsed || null
+          };
+
+          console.log(`Creating application:`, applicationData);
+          const application = new Application(applicationData);
+          
+          // Validate before saving
+          const validationError = application.validateSync();
+          if (validationError) {
+            console.error(`Validation error for application ${i}:`, validationError);
+            errors.push(`Application ${i}: ${validationError.message}`);
+            continue;
+          }
 
           await application.save();
+          console.log(`Application saved with ID: ${application._id}`);
           
           // Populate the jobId for the response
           await application.populate('jobId');
           savedApplications.push(application);
           
         } catch (appError) {
-          console.error('Error saving individual application:', appError);
+          console.error(`Error saving individual application ${i}:`, appError);
+          errors.push(`Application ${i}: ${appError instanceof Error ? appError.message : 'Unknown error'}`);
         }
       }
 
       console.log(`Saved ${savedApplications.length} applications from AI filtering to database`);
+      if (errors.length > 0) {
+        console.error('Errors encountered:', errors);
+      }
+      
       return savedApplications;
       
     } catch (error) {
@@ -323,25 +377,40 @@ export class MongoDBService {
         query.appliedDate = dateQuery;
       }
 
+      // Text search filter - use MongoDB text search if available
+      if (filters.search) {
+        const searchTerm = String(filters.search);
+        // Use $or query for better performance than post-processing
+        query.$or = [
+          { notes: { $regex: searchTerm, $options: 'i' } }
+        ];
+      }
+
       // Pagination params
       const page = parseInt(String(filters.page), 10) || 1;
-      const limit = parseInt(String(filters.limit), 10) || 10;
+      const limit = Math.min(parseInt(String(filters.limit), 10) || 10, 50); // Cap at 50
       const skip = (page - 1) * limit;
 
-      // Get total count for pagination
-      const totalCount = await Application.countDocuments(query);
+      // Use Promise.all for parallel execution
+      const [totalCount, applications] = await Promise.all([
+        Application.countDocuments(query),
+        Application.find(query)
+          .populate({
+            path: 'jobId',
+            select: 'title company location description url datePosted' // Only select needed fields
+          })
+          .select('-communications -interviews') // Exclude heavy fields
+          .sort({ appliedDate: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean() // Use lean() for better performance
+      ]);
 
-      // Fetch paginated results
-      let applications = await Application.find(query)
-        .populate('jobId')
-        .sort({ appliedDate: -1 })
-        .skip(skip)
-        .limit(limit);
-
-      // Text search filter (applied after population)
+      // Additional text search filter for job fields (if needed)
+      let filteredApplications = applications;
       if (filters.search) {
         const searchTerm = String(filters.search).toLowerCase();
-        applications = applications.filter(app => {
+        filteredApplications = applications.filter(app => {
           const job = app.jobId as Record<string, unknown>;
           return (
             (job?.title as string)?.toLowerCase().includes(searchTerm) ||
@@ -353,7 +422,7 @@ export class MongoDBService {
         });
       }
 
-      return { applications, totalCount };
+      return { applications: filteredApplications, totalCount };
 
     } catch (error) {
       console.error('Error getting applications with filters:', error);

@@ -20,7 +20,8 @@ const JobSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true
+    required: false,
+    default: 'No description provided'
   },
   salary: {
     type: String
