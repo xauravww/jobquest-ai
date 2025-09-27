@@ -5,128 +5,77 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Override Ant Design Calendar for dark theme */
+/* Consolidated Calendar and Picker Styles */
 .ant-picker-calendar,
-.ant-calendar {
-  background-color: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  color: var(--text) !important;
-}
-
 .ant-calendar,
-.ant-calendar * {
-  background-color: var(--bg-card) !important;
-  color: var(--text) !important;
+.ant-picker-panel,
+.ant-calendar-body,
+.ant-picker-header,
+.ant-picker-footer,
+.ant-calendar-header {
+  background-color: var(--bg-card);
+  border-color: var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
 }
 
-.ant-calendar-header {
-  background-color: var(--bg-card) !important;
-  border-bottom: 1px solid var(--border) !important;
-  color: var(--text) !important;
+.ant-calendar * {
+  background-color: var(--bg-card);
+  color: var(--text);
 }
 
 .ant-calendar-header-year-select {
-  display: none !important;
+  display: none;
 }
 
-.ant-calendar-body {
-  background-color: var(--bg-card) !important;
-  color: var(--text) !important;
-}
-
-.ant-calendar-date {
-  color: var(--text) !important;
-  border: 1px solid transparent !important;
-  background-color: transparent !important;
-  /* Ensure text color is white or light for dark background */
-  color: #f9fafb !important;
-}
-
-.ant-calendar-date:hover {
-  background-color: rgba(16, 185, 129, 0.15) !important;
-}
-
-.ant-calendar-selected-date .ant-calendar-date {
-  background-color: var(--primary-lightest) !important;
-  color: var(--primary-foreground) !important;
-}
-
-.ant-calendar-today .ant-calendar-date {
-  border: 1px solid var(--primary) !important;
-  color: var(--primary) !important;
-  font-weight: 600;
-}
-
-.ant-picker-panel {
-  background-color: var(--bg-card) !important;
-  border-radius: var(--radius) !important;
-  color: var(--text) !important;
-}
-
+.ant-calendar-date,
 .ant-picker-cell {
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius) !important;
-  color: var(--text) !important;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background-color: transparent;
 }
 
+.ant-calendar-date:hover,
 .ant-picker-cell-in-view:hover {
-  background-color: rgba(16, 185, 129, 0.15) !important;
+  background-color: rgba(16, 185, 129, 0.15);
   cursor: pointer;
 }
 
-.ant-picker-cell-selected,
-.ant-picker-cell-selected:hover {
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
-  border-color: var(--primary) !important;
+.ant-calendar-selected-date .ant-calendar-date,
+.ant-picker-cell-selected {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
 }
 
+.ant-calendar-today .ant-calendar-date,
 .ant-picker-cell-today .ant-picker-cell-inner {
-  border: 1px solid var(--primary) !important;
-  color: var(--primary) !important;
+  border-color: var(--primary);
+  color: var(--primary);
   font-weight: 600;
-}
-
-.ant-picker-header {
-  background-color: var(--bg-card) !important;
-  border-bottom: 1px solid var(--border) !important;
-  color: var(--text) !important;
-}
-
-.ant-picker-header-view {
-  color: var(--text) !important;
 }
 
 .ant-picker-header-super-prev-btn,
 .ant-picker-header-prev-btn,
 .ant-picker-header-next-btn,
 .ant-picker-header-super-next-btn {
-  color: var(--text) !important;
+  color: var(--text);
 }
 
 .ant-picker-header-super-prev-btn:hover,
 .ant-picker-header-prev-btn:hover,
 .ant-picker-header-next-btn:hover,
 .ant-picker-header-super-next-btn:hover {
-  color: var(--primary) !important;
-}
-
-.ant-picker-footer {
-  background-color: var(--bg-card) !important;
-  border-top: 1px solid var(--border) !important;
-  color: var(--text) !important;
+  color: var(--primary);
 }
 
 .ant-picker-footer-btns .ant-btn-primary {
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .ant-picker-footer-btns .ant-btn-primary:hover {
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
   opacity: 0.8;
 }
 
@@ -543,7 +492,7 @@ textarea:not(.ant-input).success {
 }
 
 .text-dark {
-  color: var(--bg-dark)
+  color: var(--bg-dark);
 }
 
 .border-border {
@@ -636,7 +585,7 @@ h2 {
 
 h3 {
   font-size: 1.5rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 }
 
 h4 {
@@ -818,56 +767,11 @@ h4 {
   }
 }
 
-/* Ant Design Input Placeholder Styling */
-.ant-input::placeholder,
-.ant-input-number input::placeholder,
-.ant-picker input::placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-.ant-input::-webkit-input-placeholder,
-.ant-input-number input::-webkit-input-placeholder,
-.ant-picker input::-webkit-input-placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-.ant-input::-moz-placeholder,
-.ant-input-number input::-moz-placeholder,
-.ant-picker input::-moz-placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-.ant-input:-ms-input-placeholder,
-.ant-input-number input:-ms-input-placeholder,
-.ant-picker input:-ms-input-placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-/* Regular HTML input placeholders */
-input::placeholder,
-textarea::placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-input::-webkit-input-placeholder,
-textarea::-webkit-input-placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-input::-moz-placeholder,
-textarea::-moz-placeholder {
-  color: var(--text-muted) !important;
-  opacity: 1 !important;
-}
-
-input:-ms-input-placeholder,
-textarea:-ms-input-placeholder {
+/* Consolidated Placeholder Styling */
+::placeholder,
+::-webkit-input-placeholder,
+::-moz-placeholder,
+:-ms-input-placeholder {
   color: var(--text-muted) !important;
   opacity: 1 !important;
 }
@@ -876,25 +780,25 @@ textarea:-ms-input-placeholder {
 * Auth pages specific styling */
 .ant-input.placeholder-gray-500::placeholder,
 .ant-input.placeholder-gray-500 input::placeholder {
-  color: #6b7280 !important;
+  color: var(--border-muted) !important;
   opacity: 1 !important;
 }
 
 .ant-input.placeholder-gray-500::-webkit-input-placeholder,
 .ant-input.placeholder-gray-500 input::-webkit-input-placeholder {
-  color: #6b7280 !important;
+  color: var(--border-muted) !important;
   opacity: 1 !important;
 }
 
 .ant-input.placeholder-gray-500::-moz-placeholder,
 .ant-input.placeholder-gray-500 input::-moz-placeholder {
-  color: #6b7280 !important;
+  color: var(--border-muted) !important;
   opacity: 1 !important;
 }
 
 .ant-input.placeholder-gray-500:-ms-input-placeholder,
 .ant-input.placeholder-gray-500 input:-ms-input-placeholder {
-  color: #6b7280 !important;
+  color: var(--border-muted) !important;
   opacity: 1 !important;
 }
 
@@ -1766,4 +1670,55 @@ box-shadow: none;
   background: var(--bg-light);
   border-radius: var(--radius);
   height: 2.5rem;
+}
+
+
+/* Performance and Hardware Acceleration Optimizations */
+html {
+  scroll-behavior: smooth;
+  /* Enable GPU acceleration for the entire page */
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize elements that frequently animate */
+.animate-float,
+.animate-float-reverse,
+.animate-particle,
+.animate-glow-pulse,
+.loading-skeleton,
+.shimmer {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Optimize filtered elements */
+.ant-modal,
+.ant-popover,
+.filter-panel,
+.glass-modal-mask {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Optimize scrollable containers */
+.react-grid-layout,
+.react-grid-item {
+  will-change: scroll-position;
+}
+
+/* Reduce paint on hover states */
+.ant-picker-cell-in-view:hover,
+.ant-btn:hover,
+.button-primary:hover,
+.button-secondary:hover {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+}
+
+/* Optimize gradient animations */
+.button-primary::before {
+  will-change: transform;
 }
