@@ -1,56 +1,54 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Form, Input, Checkbox } from 'antd';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
-import AuthSkeleton from '@/components/ui/AuthSkeleton';
+import { Briefcase, Mail, Lock, Eye, EyeOff, LoaderCircle } from 'lucide-react';
 
-// react-icons
-import { FaBriefcase, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
-import { FcGoogle } from "react-icons/fc";
-import { FaTwitter } from "react-icons/fa";
+// --- Reusable Input Component ---
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  icon: React.ReactNode;
+}
 
-// --- Button Component ---
-const Button = ({
-  children,
-  className = '',
-  ...props
-}: { children: React.ReactNode; className?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors 
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 
-      disabled:opacity-50 disabled:pointer-events-none bg-indigo-600 text-white hover:bg-indigo-600/90 ${className}`}
-    {...props}
-  >
-    {children}
-  </button>
-);
+const FormInput = React.forwardRef<HTMLInputElement, InputProps>(({ icon, ...props }, ref) => (
+  <div className="flex items-center bg-slate-800/50 border border-slate-700 rounded-lg focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-colors overflow-hidden">
+    <span className="px-4 flex-shrink-0 text-slate-500">{icon}</span>
+    <input
+      ref={ref}
+      className="flex-1 px-4 py-3 bg-transparent border-none outline-none text-slate-300 placeholder-slate-500 rounded-none rounded-r-lg"
+      {...props}
+    />
+  </div>
+));
+FormInput.displayName = 'FormInput';
 
 
+// --- Main Sign-In Page Component ---
 const SignInPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
-  const [form] = Form.useForm();
-
   const { status } = useSession();
 
-  React.useEffect(() => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (status === 'authenticated') {
       router.push('/dashboard');
     }
-  }, [status, router]);
+  }, [status]);
 
-  const handleSubmit = async (values: { email: string; password: string }) => {
-    if (!values.email || !values.password) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!email || !password) {
       toast.error('Please fill in both fields.');
       return;
     }
@@ -58,14 +56,15 @@ const SignInPage: React.FC = () => {
 
     try {
       const result = await signIn('credentials', {
-        email: values.email,
-        password: values.password,
+        email,
+        password,
         redirect: false,
       });
 
       if (result?.error) {
         toast.error(result.error);
       } else if (result?.ok) {
+        toast.success('Signed in successfully!');
         // Check onboarding status
         const onboardingResponse = await fetch('/api/user/onboarding');
         const onboardingData = await onboardingResponse.json();
@@ -83,120 +82,133 @@ const SignInPage: React.FC = () => {
     }
   };
 
-  if (!isMounted || status === 'loading') {
-    return <AuthSkeleton />;
+  // Render a skeleton or nothing until mounted to avoid flash of unstyled content
+  if (!isMounted || status === 'loading' || status === 'authenticated') {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-900">
+        <LoaderCircle className="w-8 h-8 text-emerald-500 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <>
-      <Toaster position="top-right" />
-      <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <Link href="/" className="inline-flex items-center justify-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                <FaBriefcase className="w-7 h-7 text-white" />
-              </div>
-              <span className="text-3xl font-bold text-white tracking-wider">Jobquest AI</span>
-            </Link>
-            <h2 className="text-3xl font-bold text-white">Welcome Back!</h2>
-            <p className="text-gray-400 mt-2">Let&apos;s find your next opportunity.</p>
-          </div>
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          background: '#1e293b',
+          color: '#e2e8f0',
+          border: '1px solid #334155',
+        }
+      }} />
+      <main className="min-h-screen w-full bg-slate-900 text-slate-300 flex font-sans">
+        <div className="flex-1 hidden lg:flex flex-col items-center justify-center p-12 bg-gradient-to-br from-slate-900 to-slate-800 border-r border-slate-800">
+            <div className="w-full max-w-md space-y-6">
+                 <Link href="/" className="inline-flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
+                        <Briefcase className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <span className="text-xl font-bold text-white tracking-tight">Jobquest</span>
+                </Link>
+                <h1 className="text-4xl font-bold tracking-tight text-white">
+                    Unlock your next career move, faster.
+                </h1>
+                <p className="text-slate-400">
+                    Welcome back. Manage your applications, track your progress, and get hired with the power of AI.
+                </p>
+            </div>
+            <div className="absolute bottom-0 left-0 w-1/2 h-32 bg-gradient-to-t from-emerald-500/10 to-transparent blur-3xl"></div>
+        </div>
 
-          {/* Form */}
-          <Form form={form} onFinish={handleSubmit} className="space-y-6" layout="vertical">
-            <Form.Item
-              name="email"
-              rules={[
-                { required: true, message: 'Please enter your email address' },
-                { type: 'email', message: 'Please enter a valid email address' },
-              ]}
-            >
-              <Input
-                prefix={<MdEmail className="h-5 w-5 text-gray-500" />}
-                placeholder="you@example.com"
-                size="large"
-                className="bg-gray-900/70 text-gray-300 placeholder-gray-500 border-gray-700 hover:border-indigo-500 focus:border-indigo-500 px-4 py-3 rounded-lg"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              rules={[{ required: true, message: 'Please enter your password' }]}
-            >
-              <Input.Password
-                prefix={<FaLock className="h-5 w-5 text-gray-500" />}
-                placeholder="••••••••"
-                size="large"
-                iconRender={(visible:boolean) =>
-                  visible ? (
-                    <FaEyeSlash className="h-5 w-5 text-gray-500 hover:text-gray-300" />
-                  ) : (
-                    <FaEye className="h-5 w-5 text-gray-500 hover:text-gray-300" />
-                  )
-                }
-                className="bg-gray-900/70 text-gray-300 placeholder-gray-500 border-gray-700 hover:border-indigo-500 focus:border-indigo-500 px-4 py-3 rounded-lg"
-              />
-            </Form.Item>
-
-            <div className="flex items-center justify-between">
-              <Form.Item name="remember" valuePropName="checked" noStyle>
-                <Checkbox className="text-text">Remember me</Checkbox>
-              </Form.Item>
-              <Link href="/auth/forgot-password" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                Forgot password?
-              </Link>
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-left">
+              <h2 className="text-3xl font-bold text-white">Sign In</h2>
+              <p className="text-slate-400 mt-2">Enter your credentials to access your account.</p>
             </div>
 
-            <Form.Item>
-              <Button
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-400 mb-2">Email Address</label>
+                    <FormInput
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        icon={<Mail strokeWidth={1.5} className="w-5 h-5" />}
+                    />
+                </div>
+
+                <div>
+                    <div className="flex items-center justify-between mb-2">
+                        <label htmlFor="password"className="block text-sm font-medium text-slate-400">Password</label>
+                         <Link href="/auth/forgot-password" className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+                            Forgot password?
+                        </Link>
+                    </div>
+                    <div className="relative">
+                       <FormInput
+                            id="password"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            autoComplete="current-password"
+                            required
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            icon={<Lock strokeWidth={1.5} className="w-5 h-5" />}
+                        />
+                        <button 
+                            type="button" 
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 hover:text-slate-300"
+                        >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                    </div>
+                </div>
+              
+              <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 text-base font-semibold shadow-lg shadow-indigo-600/30 transform hover:scale-105 transition-transform"
+                className="w-full py-3 px-4 inline-flex items-center justify-center text-base font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 disabled:bg-emerald-500/50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20"
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <>
+                    <LoaderCircle className="w-5 h-5 mr-2 animate-spin" />
                     <span>Signing In...</span>
-                  </div>
+                  </>
                 ) : (
                   'Sign In'
                 )}
-              </Button>
-            </Form.Item>
-          </Form>
+              </button>
+            </form>
 
-          {/* Social */}
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-gray-800 text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              <div className="text-center p-4 bg-gray-800/30 rounded-lg border border-gray-700">
-                <p className="text-sm text-gray-400 mb-2">Social login coming soon</p>
-                <div className="flex justify-center gap-4 opacity-50">
-                  <FcGoogle size={24} />
-                  <FaTwitter size={24} className="text-sky-400" />
+            <div className="space-y-6">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-slate-700" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-3 bg-slate-900 text-slate-500">Or continue with</span>
+                    </div>
                 </div>
-              </div>
+                <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+                    <p className="text-sm text-slate-400">Social login is coming soon.</p>
+                </div>
             </div>
-          </div>
 
-          {/* Signup */}
-          <div className="text-center">
-            <p className="text-sm text-gray-400">
-              Don&apos;t have an account?{' '}
-              <Link href="/auth/signup" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-                Sign up for free
-              </Link>
-            </p>
+            <div className="text-center">
+              <p className="text-sm text-slate-400">
+                Don't have an account?{' '}
+                <Link href="/auth/signup" className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+                  Sign up for free
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </main>

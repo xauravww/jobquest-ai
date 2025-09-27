@@ -1,29 +1,119 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Form, Input } from 'antd';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
-import AuthSkeleton from '@/components/ui/AuthSkeleton';
+import { Briefcase, Mail, Lock, User, Eye, EyeOff, LoaderCircle, Shield } from 'lucide-react';
 
-// react-icons
-import { FaBriefcase, FaLock, FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
-import { FcGoogle } from "react-icons/fc";
-import { FaTwitter } from "react-icons/fa";
+// Password strength logic
+const getPasswordStrength = (password: string) => {
+  let strength = 0;
+  if (password.length >= 8) strength += 1;
+  if (/[a-z]/.test(password)) strength += 1;
+  if (/[A-Z]/.test(password)) strength += 1;
+  if (/\d/.test(password)) strength += 1;
+  if (/[^a-zA-Z\d]/.test(password)) strength += 1;
+  return Math.min(strength / 5, 1); // Normalize to 0-1
+};
 
-// --- Real signup function ---
-const signUp = async (
-  { name, email, password }: { name: string; email: string; password: string }
-): Promise<{ ok: boolean; error: string | null }> => {
+const getStrengthColor = (strength: number) => {
+  if (strength < 0.4) return 'bg-red-500';
+  if (strength < 0.7) return 'bg-yellow-500';
+  return 'bg-green-500';
+};
+
+const getStrengthText = (strength: number) => {
+  if (strength < 0.4) return 'Weak';
+  if (strength < 0.7) return 'Medium';
+  return 'Strong';
+};
+
+// --- Reusable Input Component (flex-based) ---
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  icon: React.ReactNode;
+}
+
+const FormInput = React.forwardRef<HTMLInputElement, InputProps>(({ icon, ...props }, ref) => (
+  <div className="flex items-center bg-slate-800/50 border border-slate-700 rounded-lg focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition-colors overflow-hidden">
+    <span className="px-4 flex-shrink-0 text-slate-500">{icon}</span>
+    <input
+      ref={ref}
+      className="flex-1 px-4 py-3 bg-transparent border-none outline-none text-slate-300 placeholder-slate-500 rounded-none rounded-r-lg"
+      {...props}
+    />
+  </div>
+));
+FormInput.displayName = 'FormInput';
+
+// Password input with strength indicator and eye toggle
+const PasswordInput = ({ 
+  value, 
+  onChange, 
+  showPassword, 
+  onTogglePassword, 
+  label, 
+  id, 
+  placeholder,
+  strength = 0,
+  autoComplete
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  showPassword: boolean;
+  onTogglePassword: () => void;
+  label: string;
+  id: string;
+  placeholder: string;
+  strength?: number;
+  autoComplete?: string;
+}) => (
+  <div className="space-y-2">
+    <label htmlFor={id} className="block text-sm font-medium text-slate-400">
+      {label}
+    </label>
+    <div className="relative">
+      <FormInput
+        id={id}
+        type={showPassword ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        icon={<Lock strokeWidth={1.5} className="w-5 h-5" />}
+      />
+      <button
+        type="button"
+        onClick={onTogglePassword}
+        className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-r-lg"
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
+      >
+        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+      </button>
+    </div>
+    {value && (
+      <div className="flex items-center space-x-1">
+        <div className={`flex-1 h-1 rounded-full overflow-hidden ${getStrengthColor(strength)}`} role="img" aria-label={`Password strength: ${getStrengthText(strength)}`}>
+          <div className="h-full transition-all duration-300" style={{ width: `${strength * 100}%` }} />
+        </div>
+        <span className="text-xs text-slate-400">{getStrengthText(strength)}</span>
+      </div>
+    )}
+    {strength < 1 && value && (
+      <p className="text-xs text-slate-500 mt-1">
+        For a stronger password: Use 8+ characters, mix uppercase/lowercase, numbers, and symbols.
+      </p>
+    )}
+  </div>
+);
+
+// --- Signup API Function ---
+const signUp = async ({ name, email, password }: { name: string; email: string; password: string }) => {
   try {
     const response = await fetch('/api/auth/signup', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
     });
 
@@ -40,29 +130,21 @@ const signUp = async (
   }
 };
 
-// --- Button Component ---
-const Button = ({
-  children,
-  className = '',
-  ...props
-}: { children: React.ReactNode; className?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors 
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 
-      disabled:opacity-50 disabled:pointer-events-none bg-indigo-600 text-white hover:bg-indigo-600/90 ${className}`}
-    {...props}
-  >
-    {children}
-  </button>
-);
-
-// --- SignUpPage ---
+// --- Main Sign-Up Page Component ---
 const SignUpPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
-  const [form] = Form.useForm();
   const { status } = useSession();
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
@@ -72,22 +154,31 @@ const SignUpPage: React.FC = () => {
     if (status === 'authenticated') {
       router.push('/dashboard');
     }
-  }, [status, router]);
+  }, [status]);
 
-  const handleSubmit = async (values: { name: string; email: string; password: string; confirmPassword: string }) => {
-    if (values.password !== values.confirmPassword) {
+  useEffect(() => {
+    setPasswordStrength(getPasswordStrength(password));
+    setPasswordsMatch(password === confirmPassword);
+  }, [password, confirmPassword]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!name || !email || !password || !confirmPassword) {
+      toast.error('Please fill in all fields.');
+      return;
+    }
+    if (password !== confirmPassword) {
       toast.error('Passwords do not match.');
       return;
     }
-
+    if (passwordStrength < 0.6) {
+      toast.error('Password is too weak. Please use a stronger one.');
+      return;
+    }
     setIsLoading(true);
 
     try {
-      const result = await signUp({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      });
+      const result = await signUp({ name, email, password });
 
       if (result?.error) {
         toast.error(result.error);
@@ -103,145 +194,158 @@ const SignUpPage: React.FC = () => {
     }
   };
 
-  if (!isMounted || status === 'loading') {
-    return <AuthSkeleton />;
+  if (!isMounted || status === 'loading' || status === 'authenticated') {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-900">
+        <LoaderCircle className="w-8 h-8 text-emerald-500 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <>
-      <Toaster position="top-right" />
-      <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
-        <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <Link href="/" className="inline-flex items-center justify-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                <FaBriefcase className="w-7 h-7 text-white" />
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          background: '#1e293b',
+          color: '#e2e8f0',
+          border: '1px solid #334155',
+        }
+      }} />
+      <main className="min-h-screen w-full bg-slate-900 text-slate-300 flex font-sans">
+        <div className="flex-1 hidden lg:flex flex-col items-center justify-center p-12 bg-gradient-to-br from-slate-900 to-slate-800 border-r border-slate-800">
+          <div className="w-full max-w-md space-y-6">
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
+                <Briefcase className="w-5 h-5 text-emerald-400" />
               </div>
-              <span className="text-3xl font-bold text-white tracking-wider">Jobquest AI</span>
+              <span className="text-xl font-bold text-white tracking-tight">Jobquest</span>
             </Link>
-            <h2 className="text-3xl font-bold text-white">Create your account</h2>
-            <p className="text-gray-400 mt-2">Join us and start your journey.</p>
+            <h1 className="text-4xl font-bold tracking-tight text-white">
+              Start your career journey today.
+            </h1>
+            <p className="text-slate-400">
+              Join thousands of professionals unlocking AI-powered job search and tracking.
+            </p>
           </div>
+          <div className="absolute bottom-0 left-0 w-1/2 h-32 bg-gradient-to-t from-emerald-500/10 to-transparent blur-3xl"></div>
+        </div>
 
-          {/* Form */}
-          <Form form={form} onFinish={handleSubmit} className="space-y-6" layout="vertical">
-            <Form.Item
-              name="name"
-              rules={[{ required: true, message: 'Please enter your full name' }]}
-            >
-              <Input
-                prefix={<FaUser className="h-5 w-5 text-gray-500" />}
-                placeholder="Your Name"
-                size="large"
-                className="bg-gray-900/70 text-gray-300 placeholder-gray-500 border-gray-700 hover:border-indigo-500 focus:border-indigo-500 px-4 py-3 rounded-lg"
-              />
-            </Form.Item>
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-left">
+              <h2 className="text-3xl font-bold text-white">Sign Up</h2>
+              <p className="text-slate-400 mt-2">Create your account to get started.</p>
+            </div>
 
-            <Form.Item
-              name="email"
-              rules={[
-                { required: true, message: 'Please enter your email address' },
-                { type: 'email', message: 'Please enter a valid email address' },
-              ]}
-            >
-              <Input
-                prefix={<MdEmail className="h-5 w-5 text-gray-500" />}
-                placeholder="you@example.com"
-                size="large"
-                className="bg-gray-900/70 text-gray-300 placeholder-gray-500 border-gray-700 hover:border-indigo-500 focus:border-indigo-500 px-4 py-3 rounded-lg"
-              />
-            </Form.Item>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-400 mb-2">Full Name</label>
+                <FormInput
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  icon={<User strokeWidth={1.5} className="w-5 h-5" />}
+                />
+              </div>
 
-            <Form.Item
-              name="password"
-              rules={[{ required: true, message: 'Please enter your password' }]}
-            >
-              <Input.Password
-                prefix={<FaLock className="h-5 w-5 text-gray-500" />}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-400 mb-2">Email Address</label>
+                <FormInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={<Mail strokeWidth={1.5} className="w-5 h-5" />}
+                />
+              </div>
+
+              <PasswordInput
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                showPassword={showPassword}
+                onTogglePassword={() => setShowPassword(!showPassword)}
+                label="Password"
+                id="password"
                 placeholder="••••••••"
-                size="large"
-                iconRender={(visible:boolean) =>
-                  visible ? (
-                    <FaEyeSlash className="h-5 w-5 text-gray-500 hover:text-gray-300" />
-                  ) : (
-                    <FaEye className="h-5 w-5 text-gray-500 hover:text-gray-300" />
-                  )
-                }
-                className="bg-gray-900/70 text-gray-300 placeholder-gray-500 border-gray-700 hover:border-indigo-500 focus:border-indigo-500 px-4 py-3 rounded-lg"
+                strength={passwordStrength}
+                autoComplete="new-password"
               />
-            </Form.Item>
 
-            <Form.Item
-              name="confirmPassword"
-              rules={[{ required: true, message: 'Please confirm your password' }]}
-            >
-              <Input.Password
-                prefix={<FaLock className="h-5 w-5 text-gray-500" />}
-                placeholder="Confirm Password"
-                size="large"
-                iconRender={(visible:boolean) =>
-                  visible ? (
-                    <FaEyeSlash className="h-5 w-5 text-gray-500 hover:text-gray-300" />
-                  ) : (
-                    <FaEye className="h-5 w-5 text-gray-500 hover:text-gray-300" />
-                  )
-                }
-                className="bg-gray-900/70 text-gray-300 placeholder-gray-500 border-gray-700 hover:border-indigo-500 focus:border-indigo-500 px-4 py-3 rounded-lg"
-              />
-            </Form.Item>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-400 mb-2">
+                  Confirm Password {passwordsMatch ? '' : <span className="text-red-400">(Does not match)</span>}
+                </label>
+                <div className="relative">
+                  <FormInput
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    required
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    icon={<Lock strokeWidth={1.5} className="w-5 h-5" />}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 hover:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-r-lg"
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
 
-            <Form.Item>
-              <Button
+              <button
                 type="submit"
-                disabled={isLoading}
-                className="w-full py-3 text-base font-semibold shadow-lg shadow-indigo-600/30 transform hover:scale-105 transition-transform"
+                disabled={isLoading || passwordStrength < 0.6 || !passwordsMatch}
+                className="w-full py-3 px-4 inline-flex items-center justify-center text-base font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 disabled:bg-emerald-500/50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20"
+                aria-disabled={isLoading || passwordStrength < 0.6 || !passwordsMatch}
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Signing Up...</span>
-                  </div>
+                  <>
+                    <LoaderCircle className="w-5 h-5 mr-2 animate-spin" />
+                    <span>Creating Account...</span>
+                  </>
                 ) : (
                   'Sign Up'
                 )}
-              </Button>
-            </Form.Item>
-          </Form>
+              </button>
+            </form>
 
-          {/* Social */}
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700" />
+            <div className="space-y-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-slate-700" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-slate-900 text-slate-500">Or continue with</span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-gray-800 text-gray-500">Or sign up with</span>
+              <div className="text-center p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+                <p className="text-sm text-slate-400">Social login is coming soon.</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Disabled Google and Twitter sign-up buttons */}
-              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12 opacity-50 cursor-not-allowed" disabled>
-                <FcGoogle size={20} />
-                <span>Google (Disabled)</span>
-              </button>
-              <button type="button" className="social-btn flex items-center justify-center gap-2 h-12 opacity-50 cursor-not-allowed" disabled>
-                <FaTwitter size={20} className="text-sky-400" />
-                <span>Twitter (Disabled)</span>
-              </button>
+            <div className="text-center">
+              <p className="text-sm text-slate-400">
+                Already have an account?{' '}
+                <Link href="/auth/signin" className="font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+                  Sign in here
+                </Link>
+              </p>
             </div>
-            {/* Mobile sidebar design note: Use the same design as the dashboard drawer/sidebar for mobile */}
-          </div>
-
-          {/* Already have account */}
-          <div className="text-center">
-            <p className="text-sm text-gray-400">
-              Already have an account?{' '}
-              <Link href="/auth/signin" className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-                Sign in
-              </Link>
-            </p>
           </div>
         </div>
       </main>
