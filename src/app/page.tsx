@@ -119,9 +119,9 @@ const HeroSection = memo(() => (
         Jobquest AI is your career co-pilot. We use intelligent automation to find your perfect job, optimize your resume, and manage your applications—so you can focus on acing the interview.
       </p>
       <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a 
-          href="#get-started" 
-          className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 text-base font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-transform hover:scale-105 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
+        <a
+          href="#get-started"
+          className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 text-lg font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-transform hover:scale-105 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
         >
           Get Started for Free
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 ml-2" aria-hidden="true">
@@ -129,9 +129,9 @@ const HeroSection = memo(() => (
             <path d="m12 5 7 7-7 7"/>
           </svg>
         </a>
-        <a 
-          href="#features" 
-          className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 text-base font-semibold text-gray-300 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-800 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
+        <a
+          href="#features"
+          className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 text-lg font-semibold text-gray-300 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-800 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
         >
           See Features
         </a>
@@ -299,10 +299,10 @@ const FeatureCard = memo(({
 }) => (
   <div className={`grid gap-8 md:grid-cols-2 lg:gap-12 items-center ${reverse ? 'flex-col-reverse md:flex-row-reverse' : 'flex-col md:flex-row'}`}>
     <div className={`space-y-2 text-center ${reverse ? 'md:order-2' : 'md:order-1'}`}>
-      <div className="inline-flex items-center gap-3 py-1 px-3 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-0">
-        <Icon className="w-5 h-5 text-emerald-400" />
-        <h3 className="text-xl font-semibold text-white mb-0">{title}</h3>
-      </div>
+       <div className="inline-flex items-center gap-3 py-2 px-4 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-0">
+         <Icon className="w-5 h-5 text-emerald-400" />
+         <h3 className="text-xl md:text-2xl font-semibold text-white mb-0">{title}</h3>
+       </div>
       <p className="text-gray-400 leading-relaxed mt-2">{description}</p>
     </div>
     <div className={`bg-slate-800/50 p-3 rounded-lg border border-slate-700 shadow-xl ${reverse ? 'md:order-1' : 'md:order-2'}`}>
@@ -328,17 +328,17 @@ FeatureCard.displayName = 'FeatureCard';
 const FeaturesSection = memo(() => (
   <section id="features" className="py-20 sm:py-32 bg-[#111827]" aria-labelledby="features-heading">
     <div className="container mx-auto px-6">
-      <div className="text-center max-w-3xl mx-auto mb-16">
-        <h2 
+      <div className="text-center max-w-3xl mx-auto mb-20">
+        <h2
           id="features-heading"
-          className="text-3xl md:text-4xl font-bold tracking-tight text-white"
+          className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
         >
           Your All-in-One Career Command Center
         </h2>
         <p className="mt-4 text-lg text-gray-400">Everything you need to accelerate your job search, powered by AI.</p>
       </div>
 
-      <div className="space-y-16">
+       <div className="space-y-20 lg:space-y-24">
         <FeatureCard
           icon={() => (
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-emerald-400">
@@ -414,16 +414,16 @@ TestimonialCard.displayName = 'TestimonialCard';
 const TestimonialsSection = memo(() => (
   <section id="testimonials" className="py-20 sm:py-32 bg-[#0a0f1c]" aria-labelledby="testimonials-heading">
     <div className="container mx-auto px-6">
-      <div className="text-center max-w-3xl mx-auto">
-        <h2 
+      <div className="text-center max-w-3xl mx-auto mb-20">
+        <h2
           id="testimonials-heading"
-          className="text-3xl md:text-4xl font-bold tracking-tight text-white"
+          className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
         >
           The modern job hunt is overwhelming. We fixed it.
         </h2>
-        <p className="mt-4 text-lg text-gray-400">You're tired of endlessly scrolling and tracking applications in spreadsheets. There's a smarter way.</p>
+        <p className="mt-6 text-lg text-gray-400">You're tired of endlessly scrolling and tracking applications in spreadsheets. There's a smarter way.</p>
       </div>
-      <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         <TestimonialCard
           quote="The AI filtering saved me hours scrolling through irrelevant jobs. I found my current role in less than a week!"
           name="Alex Johnson"

@@ -183,7 +183,7 @@ const UnifiedDashboard = () => {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <h1 className="text-4xl md:text-5xl font-bold text-white flex items-center gap-3">
                 <div className="p-3 bg-gradient-to-r from-primary/20 to-primary/10 rounded-xl border border-primary/30">
                   <TrendingUp className="w-8 h-8 text-primary" />
                 </div>

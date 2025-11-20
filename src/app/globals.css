@@ -767,6 +767,20 @@ h4 {
   }
 }
 
+/* Override Ant Design link color override for auth buttons */
+.get-started-link {
+  color: white !important;
+}
+
+/* Override for drawer nav links */
+.drawer-nav-link {
+  color: rgb(243 244 246) !important; /* text-gray-100 for better contrast */
+}
+
+.drawer-nav-link.active {
+  color: white !important;
+}
+
 /* Consolidated Placeholder Styling */
 ::placeholder,
 ::-webkit-input-placeholder,

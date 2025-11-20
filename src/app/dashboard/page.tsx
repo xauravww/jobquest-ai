@@ -132,7 +132,7 @@ const StatCard = ({ title, value, icon, link, children }: { title: string, value
                     <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                         {icon}
                     </div>
-                    <h3 className="text-sm md:text-md font-semibold text-text-muted truncate group-hover:text-white transition-colors">{title}</h3>
+                    <h3 className="text-base md:text-lg font-semibold text-text-muted truncate group-hover:text-white transition-colors">{title}</h3>
                 </div>
                 <div className="text-2xl md:text-4xl font-bold text-white mb-4 group-hover:text-primary transition-colors">
                     {value}
@@ -308,7 +308,7 @@ const DashboardPage = () => {
             </div>
             <div key="profile">
                 <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col justify-center">
-                    <h3 className="text-md font-semibold text-text-muted mb-3 flex items-center gap-3"><Users className="w-6 h-6 text-primary" /> Profile Snapshot</h3>
+                    <h3 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-3"><Users className="w-6 h-6 text-primary" /> Profile Snapshot</h3>
                     <div className="space-y-3 text-sm">
                         <div className="flex items-center gap-2">
                             <Target className="w-4 h-4 text-text-muted flex-shrink-0" />
@@ -323,7 +323,7 @@ const DashboardPage = () => {
             </div>
             <div key="reminders">
                 <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col">
-                    <h3 className="text-md font-semibold text-text-muted mb-3 flex items-center gap-3"><Bell className="w-6 h-6 text-warning" /> Upcoming Reminders</h3>
+                    <h3 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-3"><Bell className="w-6 h-6 text-warning" /> Upcoming Reminders</h3>
                     <div className="space-y-2 flex-grow overflow-y-auto pr-2">
                         {data?.upcomingReminders && data.upcomingReminders.length > 0 ? (
                             data.upcomingReminders.map(r => (
