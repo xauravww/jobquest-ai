@@ -4,7 +4,7 @@ import React, { memo, useEffect, useState, Suspense, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Quote, Star, Check } from "lucide-react";
 
 // Skip link for accessibility
 const SkipLink = memo(() => (
@@ -352,13 +352,13 @@ const FeatureCard = memo(({
 }) => (
   <div className={`grid gap-8 md:grid-cols-2 lg:gap-12 items-center ${reverse ? 'flex-col-reverse md:flex-row-reverse' : 'flex-col md:flex-row'}`}>
     <div className={`space-y-2 text-center ${reverse ? 'md:order-2' : 'md:order-1'}`}>
-       <div className="inline-flex items-center gap-3 py-2 px-4 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-0">
-         <Icon className="w-5 h-5 text-emerald-400" />
-         <h3 className="text-xl md:text-2xl font-semibold text-white mb-0">{title}</h3>
-       </div>
-      <p className="text-gray-400 leading-relaxed mt-2">{description}</p>
+        <div className="inline-flex items-center gap-3 py-3 px-5 bg-emerald-500/20 border border-emerald-500/30 rounded-full mb-2 shadow-lg shadow-emerald-500/10">
+          <Icon className="w-6 h-6 text-emerald-300" />
+          <h3 className="text-2xl md:text-3xl font-bold text-emerald-400 mb-0">{title}</h3>
+        </div>
+       <p className="text-gray-300 leading-relaxed mt-3 text-base md:text-lg">{description}</p>
     </div>
-    <div className={`bg-slate-800/50 p-3 rounded-lg border border-slate-700 shadow-xl ${reverse ? 'md:order-1' : 'md:order-2'}`}>
+    <div className={`bg-slate-800/50 p-3 rounded-lg border border-slate-700 shadow-xl hover:shadow-2xl transition-shadow duration-300 ${reverse ? 'md:order-1' : 'md:order-2'}`}>
       <Suspense fallback={<div className="w-full h-48 bg-slate-700 rounded-md animate-pulse"></div>}>
         <Image
           src={imageSrc}
@@ -406,7 +406,7 @@ const FeaturesSection = memo(() => (
               <path d="m4.93 4.93 2.83 2.83"/>
             </svg>
           )}
-          title="Intelligent Job Filtering"
+          title="AI Job Matchmaker"
           description="Our AI doesn't just match keywords; it understands context. It scans thousands of listings to eliminate spam and find genuine hiring posts, scored for relevance to your unique profile."
           imageSrc="/ai-filtered-job-results.png"
           imageAlt="Analytics Dashboard"
@@ -420,7 +420,7 @@ const FeaturesSection = memo(() => (
               <line x1="3" x2="21" y1="10" y2="10"/>
             </svg>
           )}
-          title="Unified Application Tracking"
+          title="Application Pipeline Maestro"
           description="From 'Saved' to 'Offer Received,' manage every application's lifecycle in one place. Add notes, link reminders, and see your entire pipeline at a glance, just like a professional project manager."
           imageSrc="/unified-application-tracking.png"
           imageAlt="Kanban board"
@@ -436,7 +436,7 @@ const FeaturesSection = memo(() => (
               <polyline points="10 9 9 9 8 9"/>
             </svg>
           )}
-          title="Resume & ATS Optimization"
+           title="Resume Optimization Maestro"
           description="Manage multiple resume versions and see how they stack up. Our platform can analyze your resume's effectiveness with an ATS score, helping you tailor it for each application."
           imageSrc="/resume-and-ats-optimization.png"
           imageAlt="Document editor"
@@ -449,17 +449,33 @@ const FeaturesSection = memo(() => (
 FeaturesSection.displayName = 'FeaturesSection';
 
 // Testimonial Card
-const TestimonialCard = memo(({ quote, name, role }: { quote: string; name: string; role: string; }) => (
-  <div className="bg-gradient-to-br from-[#1f2937] to-[#111827] p-8 rounded-xl border border-slate-800 shadow-lg">
-    <blockquote className="text-gray-300">
-      <p>{`"${quote}"`}</p>
-    </blockquote>
-    <figcaption className="mt-6 flex items-center gap-x-4">
-      <div className="font-semibold text-white">{name}</div>
-      <div className="text-gray-500 text-sm">{role}</div>
-    </figcaption>
-  </div>
-));
+const TestimonialCard = memo(({ quote, name, role }: { quote: string; name: string; role: string; }) => {
+  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
+  return (
+    <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+      <div className="absolute top-4 left-4 opacity-10">
+        <Quote className="w-12 h-12 text-emerald-400" />
+      </div>
+      <blockquote className="text-gray-200 relative z-10">
+        <p className="text-lg italic leading-relaxed">"{quote}"</p>
+      </blockquote>
+      <div className="flex items-center gap-1 mt-4 relative z-10">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="w-4 h-4 fill-emerald-400 text-emerald-400" />
+        ))}
+      </div>
+      <figcaption className="mt-6 flex items-center gap-4 relative z-10">
+        <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+          {initials}
+        </div>
+        <div>
+          <div className="font-semibold text-white">{name}</div>
+          <div className="text-gray-400 text-sm">{role}</div>
+        </div>
+      </figcaption>
+    </div>
+  );
+});
 
 TestimonialCard.displayName = 'TestimonialCard';
 
@@ -472,11 +488,11 @@ const TestimonialsSection = memo(() => (
           id="testimonials-heading"
           className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
         >
-          The modern job hunt is overwhelming. We fixed it.
+          Success Stories from Our Users
         </h2>
-        <p className="mt-6 text-lg text-gray-400">You're tired of endlessly scrolling and tracking applications in spreadsheets. There's a smarter way.</p>
+        <p className="mt-6 text-lg text-gray-400">See how Jobquest AI has transformed job searches for professionals like you.</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
         <TestimonialCard
           quote="The AI filtering saved me hours scrolling through irrelevant jobs. I found my current role in less than a week!"
           name="Alex Johnson"
@@ -487,12 +503,146 @@ const TestimonialsSection = memo(() => (
           name="Maria Garcia"
           role="Product Manager"
         />
+        <TestimonialCard
+          quote="Jobquest AI's resume optimization helped me beat the ATS and land interviews at top tech companies. Game changer!"
+          name="David Chen"
+          role="Data Scientist"
+        />
       </div>
     </div>
   </section>
 ));
 
 TestimonialsSection.displayName = 'TestimonialsSection';
+
+// Pricing Card Component
+const PricingCard = memo(({
+  title,
+  price,
+  originalPrice,
+  period,
+  description,
+  features,
+  popular = false,
+  ctaText,
+  ctaHref
+}: {
+  title: string;
+  price: string;
+  originalPrice?: string;
+  period: string;
+  description: string;
+  features: string[];
+  popular?: boolean;
+  ctaText: string;
+  ctaHref: string;
+}) => (
+  <div className={`relative bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border ${popular ? 'border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-slate-700'} transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
+    {popular && (
+      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+        Most Popular
+      </div>
+    )}
+    <div className="text-center">
+      <h3 className="text-2xl font-bold text-white mb-2">{title}</h3>
+      <div className="flex items-baseline justify-center gap-1 mb-4">
+        {originalPrice && (
+          <span className="text-gray-500 line-through text-2xl mr-2">{originalPrice}</span>
+        )}
+        <span className="text-4xl font-bold text-emerald-400">{price}</span>
+        <span className="text-gray-400">{period}</span>
+      </div>
+      <p className="text-gray-300 mb-6">{description}</p>
+    </div>
+    <ul className="space-y-3 mb-8">
+      {features.map((feature, index) => (
+        <li key={index} className="flex items-center gap-3">
+          <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+          <span className="text-gray-300">{feature}</span>
+        </li>
+      ))}
+    </ul>
+    <a
+      href={ctaHref}
+      className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${popular ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg' : 'bg-slate-700 hover:bg-slate-600 text-white'}`}
+    >
+      {ctaText}
+    </a>
+  </div>
+));
+
+PricingCard.displayName = 'PricingCard';
+
+// Pricing Section
+const PricingSection = memo(() => (
+  <section id="pricing" className="py-20 sm:py-32 bg-[#111827]" aria-labelledby="pricing-heading">
+    <div className="container mx-auto px-6">
+      <div className="text-center max-w-3xl mx-auto mb-20">
+        <h2
+          id="pricing-heading"
+          className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
+        >
+          Choose Your Plan
+        </h2>
+        <p className="mt-6 text-lg text-gray-400">🎉 <strong className="text-emerald-400">Beta Access - Everything Free!</strong> Start free and upgrade as you grow. All plans include our core AI-powered features.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+        <PricingCard
+          title="Free"
+          price="$0"
+          period="/month"
+          description="Perfect for getting started with job search automation. Beta access included!"
+          features={[
+            "AI job filtering",
+            "Basic application tracking",
+            "5 resume versions",
+            "Email notifications",
+            "Community support"
+          ]}
+          ctaText="Get Started Free"
+          ctaHref="#get-started"
+        />
+        <PricingCard
+          title="Pro"
+          price="$0"
+          originalPrice="$19"
+          period="/month"
+          description="For serious job seekers ready to accelerate their career. Free during beta!"
+          features={[
+            "Everything in Free",
+            "Advanced AI matching",
+            "Unlimited applications",
+            "Resume optimization",
+            "Interview prep tools",
+            "Priority support"
+          ]}
+          popular={true}
+          ctaText="Start Pro Trial"
+          ctaHref="#get-started"
+        />
+        <PricingCard
+          title="Enterprise"
+          price="$0"
+          originalPrice="$49"
+          period="/month"
+          description="For teams and organizations managing multiple hires. Free beta access!"
+          features={[
+            "Everything in Pro",
+            "Team collaboration",
+            "Advanced analytics",
+            "Custom integrations",
+            "Dedicated account manager",
+            "Phone support"
+          ]}
+          ctaText="Contact Sales"
+          ctaHref="#contact"
+        />
+      </div>
+    </div>
+  </section>
+));
+
+PricingSection.displayName = 'PricingSection';
 
 // Final CTA Section
 const FinalCTA = memo(() => (
@@ -545,6 +695,9 @@ export default function HomePage() {
         </SectionLoader>
         <SectionLoader>
           <TestimonialsSection />
+        </SectionLoader>
+        <SectionLoader>
+          <PricingSection />
         </SectionLoader>
         <SectionLoader>
           <FinalCTA />
