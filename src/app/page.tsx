@@ -101,27 +101,80 @@ Header.displayName = 'Header';
 // Hero Section
 const HeroSection = memo(() => (
   <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden" aria-labelledby="hero-heading">
-    <div 
-      className="absolute inset-0 z-0 bg-grid-[#10b981]/5"
-      style={{
-        maskImage: 'radial-gradient(100% 50% at 50% 0%, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 100%)'
-      }}
-    />
-    <div className="absolute inset-x-0 top-0 h-[500px] z-0 bg-gradient-to-b from-emerald-500/10 to-transparent"></div>
+    <div className="absolute inset-x-0 top-0 h-[500px] z-0 bg-gradient-to-b from-emerald-500/5 to-transparent"></div>
     <div className="container mx-auto px-6 relative z-10 text-center">
-      <h1 
-        id="hero-heading" 
-        className="text-4xl md:text-6xl font-black tracking-tight bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent leading-tight max-w-4xl mx-auto"
+      <h1
+        id="hero-heading"
+        className="text-4xl md:text-6xl font-black tracking-tight text-white leading-tight max-w-4xl mx-auto"
       >
         Stop Searching, Start Interviewing
       </h1>
-      <p className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-gray-400 leading-relaxed">
-        Jobquest AI is your career co-pilot. We use intelligent automation to find your perfect job, optimize your resume, and manage your applications—so you can focus on acing the interview.
-      </p>
-      <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+
+      <div className="mt-8 flex items-center justify-center gap-3 md:gap-5">
+        <div className="flex items-center gap-2 text-gray-300">
+          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <span className="text-xs font-medium">AI Search</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+          <path d="M5 12h14"/>
+          <path d="m12 5 7 7-7 7"/>
+        </svg>
+        <div className="flex items-center gap-2 text-emerald-400">
+          <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
+              <path d="M12 2v4"/>
+              <path d="m16.24 7.76 2.83 2.83"/>
+              <path d="M22 12h-4"/>
+              <path d="m16.24 16.24 2.83 2.83"/>
+              <path d="M12 22v-4"/>
+              <path d="m4.93 19.07 2.83-2.83"/>
+              <path d="M2 12h4"/>
+              <path d="m4.93 4.93 2.83 2.83"/>
+            </svg>
+          </div>
+          <span className="text-sm font-semibold">Smart Filters</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+          <path d="M5 12h14"/>
+          <path d="m12 5 7 7-7 7"/>
+        </svg>
+        <div className="flex items-center gap-2 text-gray-300">
+          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+              <line x1="16" x2="16" y1="2" y2="6"/>
+              <line x1="8" x2="8" y1="2" y2="6"/>
+              <line x1="3" x2="21" y1="10" y2="10"/>
+            </svg>
+          </div>
+          <span className="text-xs font-medium">Auto Apply</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+          <path d="M5 12h14"/>
+          <path d="m12 5 7 7-7 7"/>
+        </svg>
+        <div className="flex items-center gap-2 text-gray-300">
+          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 6.1H3"/>
+              <path d="M21 12.1H3"/>
+              <path d="M15.1 18H3"/>
+            </svg>
+          </div>
+          <span className="text-xs font-medium">Ace Interviews</span>
+        </div>
+      </div>
+
+      <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
         <a
           href="#get-started"
-          className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 text-lg font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-transform hover:scale-105 shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
+          className="inline-flex items-center justify-center w-full sm:w-auto px-10 py-4 text-lg font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all hover:scale-105 shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
         >
           Get Started for Free
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 ml-2" aria-hidden="true">
@@ -131,15 +184,15 @@ const HeroSection = memo(() => (
         </a>
         <a
           href="#features"
-          className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3 text-lg font-semibold text-gray-300 bg-slate-800/50 border border-slate-700 rounded-lg hover:bg-slate-800 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
+          className="inline-flex items-center justify-center w-full sm:w-auto px-10 py-4 text-lg font-semibold text-gray-300 border border-slate-600 rounded-lg hover:bg-slate-700 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
         >
           See Features
         </a>
       </div>
-      <div className="mt-16 md:mt-24 max-w-5xl mx-auto">
-        <div className="rounded-xl bg-[#111827]/50 border border-slate-800 shadow-2xl shadow-emerald-500/10 p-2 backdrop-blur-sm">
-          <Suspense fallback={<div className="w-full h-64 bg-slate-700 rounded-lg animate-pulse"></div>}>
-            <div className="relative w-full h-64 rounded-lg">
+      <div className="mt-16 md:mt-20 max-w-6xl mx-auto">
+        <div className="rounded-xl border border-slate-700 shadow-2xl p-3">
+          <Suspense fallback={<div className="w-full h-80 bg-slate-700 rounded-lg animate-pulse"></div>}>
+            <div className="relative w-full h-80 rounded-lg">
               <Image
                 src="/make-data-drive-analytics.png"
                 alt="Jobquest AI Dashboard"
