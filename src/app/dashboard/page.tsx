@@ -126,19 +126,19 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 const StatCard = ({ title, value, icon, link, children }: { title: string, value: string | number, icon: React.ReactNode, link: string, children: React.ReactNode }) => (
     <Link href={link} className="block h-full group">
-        <div className="bg-bg-card hover:bg-bg-light transition-all duration-300 rounded-xl shadow-lg border border-border hover:border-primary/50 p-4 md:p-6 flex flex-col justify-between h-full overflow-hidden group-hover:shadow-xl group-hover:shadow-primary/10">
+        <div className="bg-bg-card hover:bg-bg-light transition-all duration-300 rounded-xl shadow-lg border border-border hover:border-primary/50 p-6 flex flex-col justify-between h-full overflow-hidden group-hover:shadow-xl group-hover:shadow-primary/10">
             <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                         {icon}
                     </div>
-                    <h3 className="text-base md:text-lg font-semibold text-text-muted truncate group-hover:text-white transition-colors">{title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-300 truncate group-hover:text-white transition-colors">{title}</h3>
                 </div>
-                <div className="text-2xl md:text-4xl font-bold text-white mb-4 group-hover:text-primary transition-colors">
+                <div className="text-3xl md:text-5xl font-bold text-white mb-6 group-hover:text-primary transition-colors">
                     {value}
                 </div>
             </div>
-            <div className="space-y-2 text-xs md:text-sm border-t border-border/50 pt-4">
+            <div className="space-y-3 text-sm border-t border-border/50 pt-4">
                 {children}
             </div>
         </div>
@@ -251,29 +251,31 @@ const DashboardPage = () => {
   return (
     <AppLayout showFooter={false}>
       <div className="p-4 md:p-8 bg-bg min-h-screen">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 mt-8" >
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              Welcome back, {data?.userProfile?.firstName || 'User'}!
-            </h1>
-            <p className="text-text-muted text-base md:text-lg">Here&apos;s your job search progress and insights.</p>
-          </div>
-          <div className="flex gap-3">
-            <button 
-              onClick={handleRefresh}
-              className="inline-flex items-center gap-2 px-4 py-3 bg-bg-light hover:bg-bg-card text-white rounded-lg transition-all duration-200 font-semibold border border-border hover:border-primary whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-            >
-              <TrendingUp className="w-5 h-5" />
-              Refresh
-            </button>
-            <Link href="/application-tracking" className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
-              <Briefcase className="w-5 h-5" />
-              Manage Applications
-            </Link>
-          </div>
-        </div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12 mt-8" >
+           <div>
+             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
+               Welcome back, {data?.userProfile?.firstName || 'User'}!
+             </h1>
+             <p className="text-gray-300 text-lg md:text-xl leading-relaxed">Here&apos;s your job search progress and insights.</p>
+           </div>
+           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+             <button
+               onClick={handleRefresh}
+               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-bg-light hover:bg-bg-card text-white rounded-lg transition-all duration-200 font-semibold border border-border hover:border-primary hover:shadow-md whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+             >
+               <TrendingUp className="w-5 h-5" />
+               Refresh Data
+             </button>
+             <Link href="/application-tracking" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
+               <Briefcase className="w-5 h-5" />
+               Manage Applications
+             </Link>
+           </div>
+         </div>
 
-        <ResponsiveGridLayout
+         <div className="border-t border-border/30 mb-8"></div>
+
+         <ResponsiveGridLayout
             className="layout"
             layouts={layouts}
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
@@ -307,23 +309,23 @@ const DashboardPage = () => {
                 </StatCard>
             </div>
             <div key="profile">
-                <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col justify-center">
-                    <h3 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-3"><Users className="w-6 h-6 text-primary" /> Profile Snapshot</h3>
-                    <div className="space-y-3 text-sm">
-                        <div className="flex items-center gap-2">
-                            <Target className="w-4 h-4 text-text-muted flex-shrink-0" />
-                            <span className="text-white truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-text-muted flex-shrink-0" />
-                            <span className="text-white truncate">{data?.userProfile?.location || 'Remote'}</span>
-                        </div>
-                    </div>
+                 <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col justify-center">
+                     <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Users className="w-6 h-6 text-primary" /> Profile Snapshot</h3>
+                     <div className="space-y-4 text-sm">
+                         <div className="flex items-center gap-3 p-2 rounded-md bg-bg-light/50">
+                             <Target className="w-4 h-4 text-primary flex-shrink-0" />
+                             <span className="text-white font-medium truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
+                         </div>
+                         <div className="flex items-center gap-3 p-2 rounded-md bg-bg-light/50">
+                             <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                             <span className="text-white font-medium truncate">{data?.userProfile?.location || 'Remote'}</span>
+                         </div>
+                     </div>
                 </div>
             </div>
             <div key="reminders">
-                <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col">
-                    <h3 className="text-lg font-semibold text-text-muted mb-4 flex items-center gap-3"><Bell className="w-6 h-6 text-warning" /> Upcoming Reminders</h3>
+                 <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col">
+                     <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Bell className="w-6 h-6 text-warning" /> Upcoming Reminders</h3>
                     <div className="space-y-2 flex-grow overflow-y-auto pr-2">
                         {data?.upcomingReminders && data.upcomingReminders.length > 0 ? (
                             data.upcomingReminders.map(r => (
@@ -342,8 +344,8 @@ const DashboardPage = () => {
                     </div>
                 </div>
             </div>
-            <div key="activity-chart" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Application Activity (Last 30 Days)</h3>
+             <div key="activity-chart" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
+                 <h3 className="text-xl font-semibold text-white mb-6">Application Activity (Last 30 Days)</h3>
                  {data?.applicationTrendData && data.applicationTrendData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="90%">
                         <BarChart data={data.applicationTrendData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -358,8 +360,8 @@ const DashboardPage = () => {
                     <div className="h-full flex items-center justify-center text-text-muted">No activity data for this period.</div>
                  )}
             </div>
-             <div key="status-pie" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Application Status</h3>
+              <div key="status-pie" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
+                 <h3 className="text-xl font-semibold text-white mb-6">Application Status</h3>
                 {data?.applicationStatus && data.applicationStatus.length > 0 ? (
                     <ResponsiveContainer width="100%" height="90%">
                         <PieChart>
@@ -376,8 +378,8 @@ const DashboardPage = () => {
                     <div className="h-full flex items-center justify-center text-text-muted">No application data yet.</div>
                 )}
             </div>
-            <div key="skills" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
-                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-3"><Brain className="w-6 h-6 text-secondary" /> Top Skills</h3>
+             <div key="skills" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
+                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Brain className="w-6 h-6 text-secondary" /> Top Skills</h3>
                 <div className="flex flex-wrap gap-3">
                     {data?.topSkills && data.topSkills.length > 0 ? (
                         data.topSkills.map(skill => (

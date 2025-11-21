@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { Form, Input } from 'antd';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import toast, { Toaster } from 'react-hot-toast';
+import { useToast } from '@/contexts/ToastContext';
 
 // react-icons
 import { FaBriefcase, FaArrowLeft, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -29,6 +29,7 @@ const Button = ({
 );
 
 const ResetPasswordForm: React.FC = () => {
+  const { success, error } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
@@ -39,29 +40,29 @@ const ResetPasswordForm: React.FC = () => {
 
   useEffect(() => {
     if (!token) {
-      toast.error('Invalid reset link. Please request a new password reset.');
+      error('Invalid reset link. Please request a new password reset.');
       router.push('/auth/forgot-password');
     }
   }, [token, router]);
 
   const handleSubmit = async (values: { password: string; confirmPassword: string }) => {
     if (!values.password || !values.confirmPassword) {
-      toast.error('Please fill in all fields.');
+      error('Please fill in all fields.');
       return;
     }
 
     if (values.password !== values.confirmPassword) {
-      toast.error('Passwords do not match.');
+      error('Passwords do not match.');
       return;
     }
 
     if (values.password.length < 6) {
-      toast.error('Password must be at least 6 characters long.');
+      error('Password must be at least 6 characters long.');
       return;
     }
 
     if (!token) {
-      toast.error('Invalid reset token.');
+      error('Invalid reset token.');
       return;
     }
 
@@ -83,16 +84,16 @@ const ResetPasswordForm: React.FC = () => {
 
       if (response.ok) {
         setIsSuccess(true);
-        toast.success('Password reset successfully!');
+        success('Password reset successfully!');
         // Redirect to sign in after a short delay
         setTimeout(() => {
           router.push('/auth/signin');
         }, 2000);
       } else {
-        toast.error(data.error || 'Failed to reset password.');
+        error(data.error || 'Failed to reset password.');
       }
     } catch (err) {
-      toast.error('An unexpected error occurred. Please try again.');
+      error('An unexpected error occurred. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -102,7 +103,7 @@ const ResetPasswordForm: React.FC = () => {
   if (isSuccess) {
     return (
       <>
-        <Toaster position="top-right" />
+
         <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
           <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
             {/* Header */}
@@ -163,7 +164,7 @@ const ResetPasswordForm: React.FC = () => {
 
   return (
     <>
-      <Toaster position="top-right" />
+
       <main className="min-h-screen bg-gray-900 text-gray-100 flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-md mx-auto bg-gray-800/60 rounded-2xl shadow-2xl shadow-indigo-900/20 p-8 space-y-8">
           {/* Header */}

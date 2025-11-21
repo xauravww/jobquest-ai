@@ -80,28 +80,71 @@ const GlassNavbar: React.FC = () => {
          { href: "/contact", label: "Contact", icon: <LuPhone /> },
      ];
 
-      if (inDrawer) {
-          return (
-              <div className="flex flex-col space-y-4 p-4">
-                  {navItems.map(item => {
-                      const isActive = pathname === item.href;
-                      return (
-                           <Link
-                               key={item.href}
-                               href={item.href}
-                               onClick={closeDrawer}
-                               className={`group drawer-nav-link ${isActive ? 'active' : ''} flex items-center gap-3 p-4 rounded-lg ${isActive ? 'text-lg font-semibold' : 'text-base font-medium'} transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 ${isActive ? 'bg-primary/20 border border-primary' : 'bg-transparent hover:bg-bg-card hover:shadow-sm border border-transparent'}`}
-                           >
-                               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isActive ? 'bg-primary text-white shadow-sm' : 'bg-gray-600 text-white group-hover:bg-primary group-hover:text-white group-hover:shadow-sm'}`}>
-                                  {item.icon}
-                              </div>
-                              <span>{item.label}</span>
-                          </Link>
-                      );
-                  })}
-              </div>
-          );
-      }
+       if (inDrawer) {
+           return (
+               <div className="flex flex-col h-full">
+                   <div className="flex flex-col space-y-4 p-4 flex-1">
+                       {navItems.map(item => {
+                           const isActive = pathname === item.href;
+                           return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={closeDrawer}
+                                    className={`group drawer-nav-link ${isActive ? 'active' : ''} flex items-center gap-3 p-4 rounded-lg ${isActive ? 'text-lg font-semibold' : 'text-base font-medium'} transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 ${isActive ? 'bg-primary/20 border border-primary' : 'bg-transparent hover:bg-bg-card hover:shadow-sm border border-transparent'}`}
+                                >
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isActive ? 'bg-primary text-white shadow-sm' : 'bg-gray-600 text-white group-hover:bg-primary group-hover:text-white group-hover:shadow-sm'}`}>
+                                       {item.icon}
+                                   </div>
+                                   <span>{item.label}</span>
+                               </Link>
+                           );
+                       })}
+                   </div>
+                   {/* Creative logo placement at bottom */}
+                   <div className="p-4 border-t border-border">
+                       <Link href="/" onClick={closeDrawer} className="group flex items-center justify-center gap-3 p-3 rounded-xl bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 hover:from-primary/20 hover:via-primary/10 hover:to-secondary/20 transition-all duration-300 border border-primary/20 hover:border-primary/30">
+                           <div className="relative">
+                               <div className="w-12 h-12 bg-gradient-to-br from-primary via-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
+                                   <svg
+                                     className="w-6 h-6 text-white"
+                                     viewBox="0 0 24 24"
+                                     fill="none"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                   >
+                                     <path
+                                       d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
+                                       stroke="currentColor"
+                                       strokeWidth="2"
+                                       strokeLinecap="round"
+                                       strokeLinejoin="round"
+                                     />
+                                     <path
+                                       d="M9 11L10.5 12.5L13.5 9.5"
+                                       stroke="currentColor"
+                                       strokeWidth="2"
+                                       strokeLinecap="round"
+                                       strokeLinejoin="round"
+                                     />
+                                   </svg>
+                               </div>
+                               <div className="absolute -top-1 -right-1 w-4 h-4 bg-secondary rounded-full flex items-center justify-center">
+                                   <span className="text-xs font-bold text-white">AI</span>
+                               </div>
+                           </div>
+                           <div className="flex flex-col text-center">
+                               <span className="text-lg font-black text-white tracking-tight group-hover:text-primary transition-colors duration-300">
+                                   JobQuest
+                               </span>
+                               <span className="text-xs font-semibold text-primary tracking-wider uppercase group-hover:text-secondary transition-colors duration-300">
+                                   AI Powered
+                               </span>
+                           </div>
+                       </Link>
+                   </div>
+               </div>
+           );
+       }
 
 
       // Mobile-first: navigation always in drawer, show desktop nav links on larger screens
@@ -164,7 +207,7 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
       {status === 'authenticated' ? (
         <Dropdown menu={{ items: menuItems }} trigger={['click']} overlayClassName="glass-dropdown">
           <a onClick={(e) => e.preventDefault()}>
-            <Avatar size="large" icon={<FaUser />} className="bg-gradient-to-br from-primary to-secondary cursor-pointer border-2 border-primary" />
+            <Avatar size="large" src={session.user.avatar} icon={<FaUser />} className="bg-gradient-to-br from-primary to-secondary cursor-pointer border-2 border-primary" />
           </a>
         </Dropdown>
       ) : (
@@ -288,13 +331,15 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
               {/* Auth Buttons and Mobile Menu Button - shown on all screens */}
               <div className="navbar-actions flex items-center gap-4">
                 <AuthButtons />
-               <button
-                 onClick={showDrawer}
-                 className="2xl:hidden w-11 h-11 bg-gradient-to-br from-bg-card to-bg-light hover:from-bg-light hover:to-bg-card text-white rounded-xl transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg shadow-black hover:shadow-xl hover:shadow-black border border-border"
-                 aria-label="Open navigation menu"
-               >
-                 <FiMenu className="w-6 h-6" />
-               </button>
+                <button
+                  onClick={showDrawer}
+                  className="2xl:hidden relative w-12 h-12 bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 hover:from-primary/30 hover:via-primary/20 hover:to-secondary/30 text-primary hover:text-white rounded-2xl transition-all duration-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/20 border border-primary/30 hover:border-primary/50 group overflow-hidden"
+                  aria-label="Open navigation menu"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <FiMenu className="w-6 h-6 relative z-10 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-180" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse"></div>
+                </button>
              </div>
           </div>
 
@@ -311,50 +356,54 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
       {/* Mobile Drawer */}
       <Drawer
         title={
-          <div className="flex items-center justify-between w-full">
-            <Link href="/" className="flex items-center gap-3" onClick={closeDrawer}>
-                <div className="w-9 h-9 bg-gradient-to-br from-primary via-primary to-secondary rounded-xl flex items-center justify-center shadow-lg shadow-primary">
-                <svg
-                  className="w-5 h-5 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M9 11L10.5 12.5L13.5 9.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-black text-white tracking-tight">
-                  JobQuest
-                </span>
-                <span className="text-xs font-semibold text-primary tracking-wider uppercase">
-                  AI Powered
-                </span>
-              </div>
-            </Link>
+          <div className="flex items-center justify-end w-full">
               {/* Enhanced view toggle with better UX */}
               {session && (
-                  <button
-                    onClick={toggleDrawerView}
-                    className="flex items-center gap-2 text-sm font-medium text-text-muted hover:text-white transition-all duration-200 px-3 py-2 rounded-lg hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-                    aria-label="Toggle between navigation and app menu"
-                  >
-                    <div className={`w-2 h-2 rounded-full transition-colors ${drawerView === 'nav' ? 'bg-primary' : 'bg-secondary'}`}></div>
-                    {drawerView === 'nav' ? 'App Menu' : 'Navigation'}
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={toggleDrawerView}
+                      className="group relative flex items-center bg-bg-card/50 backdrop-blur-sm border border-border rounded-full p-1 transition-all duration-300 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+                      aria-label="Toggle between navigation and app menu"
+                    >
+                      <div className={`relative flex items-center transition-all duration-300 ${drawerView === 'nav' ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div className={`w-8 h-8 rounded-full transition-all duration-300 flex items-center justify-center ${
+                          drawerView === 'nav'
+                            ? 'bg-gradient-to-br from-primary to-secondary text-white shadow-lg shadow-primary/25'
+                            : 'bg-bg-light text-text-muted group-hover:text-white'
+                        }`}>
+                          {drawerView === 'nav' ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 010 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 010 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 2L3 7v11a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 00-1-1V7l-7-5z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className={`px-3 py-1 text-xs font-medium transition-all duration-300 ${
+                          drawerView === 'nav'
+                            ? 'text-primary opacity-0 max-w-0'
+                            : 'text-text-muted opacity-100 max-w-20'
+                        }`}>
+                          Nav
+                        </div>
+                        <div className={`px-3 py-1 text-xs font-medium transition-all duration-300 ${
+                          drawerView === 'nav'
+                            ? 'text-white opacity-100 max-w-20'
+                            : 'text-text-muted opacity-0 max-w-0'
+                        }`}>
+                          App
+                        </div>
+                      </div>
+                    </button>
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                      <div className="bg-bg-card text-text text-xs px-2 py-1 rounded shadow-lg border border-border whitespace-nowrap">
+                        {drawerView === 'nav' ? 'Switch to App Menu' : 'Switch to Navigation'}
+                      </div>
+                    </div>
+                  </div>
               )}
           </div>
         }

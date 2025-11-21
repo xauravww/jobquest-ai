@@ -1,36 +1,22 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { Toaster } from 'react-hot-toast';
+import { ToastProvider } from "@/contexts/ToastContext";
+import ToastContainer from "@/components/ui/ToastContainer";
+import { useToast } from "@/contexts/ToastContext";
+
+function ToastContainerWrapper() {
+  const { toasts, removeToast } = useToast();
+  return <ToastContainer toasts={toasts} onRemove={removeToast} />;
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <>
+      <ToastProvider>
         {children}
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#333',
-              color: '#fff',
-              zIndex: 2147483647,
-              position: 'fixed',
-              top: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-            },
-          }}
-          containerStyle={{
-            zIndex: 2147483650,  // Increased z-index to be above ant-modal-wrap
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-          }}
-        />
-      </>
+        <ToastContainerWrapper />
+      </ToastProvider>
     </SessionProvider>
   );
 }

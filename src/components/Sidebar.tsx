@@ -5,6 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import React, { useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { useSession, signOut } from 'next-auth/react';
+import { Avatar } from 'antd';
+import { FaUser } from 'react-icons/fa';
+import { LogOut } from 'lucide-react';
 import {
   Home,
   User,
@@ -202,6 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
   const pathname = usePathname();
   const [accountType, setAccountType] = useState('job-seeker');
   const sidebarRef = useRef<HTMLElement>(null);
+  const { data: session } = useSession();
 
   useEffect(() => {
     // Set default account type for job seekers
@@ -560,6 +565,30 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           )}
         </div>
 
+        {/* User Info Section */}
+        {session && (
+          <div className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
+            isCollapsed ? 'justify-center' : 'justify-start'
+          }`} style={{ background: 'var(--bg-light)', border: '1px solid var(--border)' }}>
+            <Avatar
+              size={isCollapsed ? 32 : 40}
+              src={session.user.avatar}
+              icon={<FaUser />}
+              className="border-2 border-primary"
+            />
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0 flex-1">
+                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text)' }}>
+                  {session.user.name}
+                </p>
+                <p className="text-xs opacity-70 truncate" style={{ color: 'var(--text-muted)' }}>
+                  {session.user.email}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         <nav className="flex flex-col gap-1">
           {/* Main Dashboard */}
           <NavLink href="/dashboard" icon={<Home />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
@@ -639,11 +668,63 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
             Analytics
           </NavLink>
 
-          <NavLink href="/admin/job-actions" icon={<Settings />} pathname={pathname} isCollapsed={isCollapsed} disabled>
-            Job Actions
-          </NavLink>
-        </nav>
-      </aside>
+           <NavLink href="/admin/job-actions" icon={<Settings />} pathname={pathname} isCollapsed={isCollapsed} disabled>
+             Job Actions
+           </NavLink>
+         </nav>
+
+         {/* Logout Section */}
+         {session && (
+           <div className="mt-auto pt-4 border-t border-border">
+             <button
+               onClick={() => signOut({ redirect: false })}
+               className={`nav-item flex gap-2 items-center transition-all duration-300 ease-in-out cursor-pointer group px-3 py-3 ${
+                 isCollapsed ? 'justify-center' : 'justify-start'
+               } w-full text-left`}
+               style={{
+                 background: 'transparent',
+                 color: 'var(--text-muted)',
+                 fontWeight: 500,
+                 position: 'relative',
+                 zIndex: 3
+               }}
+             >
+               <div
+                 className="nav-icon transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
+                 style={{
+                   color: 'var(--text-muted)',
+                   fontSize: '18px',
+                   zIndex: 4,
+                   position: 'relative',
+                   minWidth: '24px',
+                   display: 'flex',
+                   justifyContent: 'center',
+                   alignItems: 'center'
+                 }}
+               >
+                 <LogOut />
+               </div>
+               {!isCollapsed && (
+                 <p
+                   className="text-sm font-semibold leading-normal whitespace-nowrap transition-all duration-300 group-hover:translate-x-1"
+                   style={{
+                     color: 'var(--text)',
+                     textShadow: 'none',
+                     letterSpacing: '0',
+                     zIndex: 4,
+                     position: 'relative',
+                     fontWeight: '500',
+                     margin: 0,
+                     flexGrow: 1
+                   }}
+                 >
+                   Sign Out
+                 </p>
+               )}
+             </button>
+           </div>
+         )}
+       </aside>
     </>
   );
 };

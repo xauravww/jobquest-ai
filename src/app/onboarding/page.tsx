@@ -13,7 +13,7 @@ import {
   ArrowRight,
   ArrowLeft
 } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import { useToast } from '@/contexts/ToastContext';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -37,6 +37,7 @@ interface OnboardingData {
 }
 
 const OnboardingPage: React.FC = () => {
+  const { success, error } = useToast();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -101,14 +102,14 @@ const OnboardingPage: React.FC = () => {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Profile setup complete!');
+        success('Profile setup complete!');
         // Onboarding will be marked complete after OTP verification
       } else {
-        toast.error(data.error || 'Failed to save profile');
+        error(data.error || 'Failed to save profile');
       }
     } catch (error) {
       console.error('Onboarding error:', error);
-      toast.error('Network error. Please try again.');
+      error('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -119,7 +120,7 @@ const OnboardingPage: React.FC = () => {
     console.log('Sending OTP to email:', email);
     if (!email) {
       console.error('Email is required');
-      toast.error('Email is required');
+      error('Email is required');
       return;
     }
     try {
@@ -132,23 +133,23 @@ const OnboardingPage: React.FC = () => {
       console.log('Response status:', response.status);
       if (response.ok) {
         console.log('OTP sent successfully');
-        toast.success('OTP sent to your email');
+        success('OTP sent to your email');
         setOtpSent(true);
       } else {
         const errorData = await response.json();
         console.error('Failed to send OTP:', errorData);
-        toast.error(errorData.error || 'Failed to send OTP');
+        error(errorData.error || 'Failed to send OTP');
       }
     } catch (error) {
       console.error('Network error while sending OTP:', error);
-      toast.error('Network error while sending OTP');
+      error('Network error while sending OTP');
     }
   };
 
   const verifyOtp = async () => {
     const email = form.getFieldValue('email');
     if (!email) {
-      toast.error('Email is required');
+      error('Email is required');
       return;
     }
     try {
@@ -158,16 +159,16 @@ const OnboardingPage: React.FC = () => {
         body: JSON.stringify({ email, otp }),
       });
       if (response.ok) {
-        toast.success('Email verified successfully');
+        success('Email verified successfully');
         setOtpVerified(true);
         // Onboarding is now complete after OTP verification
         router.push('/dashboard');
       } else {
-        toast.error('Invalid OTP');
+        error('Invalid OTP');
       }
     } catch (error) {
       console.error(error);
-      toast.error('Network error while verifying OTP');
+      error('Network error while verifying OTP');
     }
   };
 
@@ -467,7 +468,7 @@ const OnboardingPage: React.FC = () => {
         }
       `}</style>
 
-      <Toaster position="top-right" />
+
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
         <div className="w-full max-w-2xl mx-auto">
           {/* Progress Bar */}

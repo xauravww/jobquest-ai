@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import toast, { Toaster } from 'react-hot-toast';
+import { useToast } from '@/contexts/ToastContext';
 import { Briefcase, Mail, Lock, User, Eye, EyeOff, LoaderCircle, Shield, ArrowRight } from 'lucide-react';
 
 // Password strength logic
@@ -133,6 +133,7 @@ const signUp = async ({ name, email, password }: { name: string; email: string; 
 
 // --- Main Sign-Up Page Component ---
 const SignUpPage: React.FC = () => {
+  const { success, error } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
@@ -165,15 +166,15 @@ const SignUpPage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!name || !email || !password || !confirmPassword) {
-      toast.error('Please fill in all fields.');
+      error('Please fill in all fields.');
       return;
     }
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match.');
+      error('Passwords do not match.');
       return;
     }
     if (passwordStrength < 0.6) {
-      toast.error('Password is too weak. Please use a stronger one.');
+      error('Password is too weak. Please use a stronger one.');
       return;
     }
     setIsLoading(true);
@@ -182,13 +183,13 @@ const SignUpPage: React.FC = () => {
       const result = await signUp({ name, email, password });
 
       if (result?.error) {
-        toast.error(result.error);
+        error(result.error);
       } else {
-        toast.success('Account created successfully!');
+        success('Account created successfully!');
         router.push('/onboarding');
       }
     } catch (err) {
-      toast.error('An unexpected error occurred. Please try again.');
+      error('An unexpected error occurred. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -205,13 +206,7 @@ const SignUpPage: React.FC = () => {
 
   return (
     <>
-      <Toaster position="top-right" toastOptions={{
-        style: {
-          background: '#1e293b',
-          color: '#e2e8f0',
-          border: '1px solid #334155',
-        }
-      }} />
+
       <div className="min-h-screen bg-slate-900 relative overflow-hidden">
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 min-h-screen">

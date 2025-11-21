@@ -13,6 +13,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials');
           return null;
         }
 
@@ -22,15 +23,18 @@ export const authOptions: NextAuthOptions = {
           const user = await User.findOne({ email: credentials.email });
 
           if (!user) {
+            console.log('User not found:', credentials.email);
             return null;
           }
 
           const isPasswordValid = await user.comparePassword(credentials.password);
 
           if (!isPasswordValid) {
+            console.log('Invalid password for user:', credentials.email);
             return null;
           }
 
+          console.log('User authenticated:', credentials.email);
           return {
             id: user._id.toString(),
             email: user.email,
