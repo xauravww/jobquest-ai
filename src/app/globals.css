@@ -1016,7 +1016,3 @@ input:-internal-autofill-selected {
   box-shadow: none !important;
   transform: none !important;
 }
-
-* {
-  border: 1px solid red;
-}
