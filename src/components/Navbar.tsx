@@ -160,7 +160,7 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
   }
 
   return (
-    <div className={inDrawer ? 'flex flex-col space-y-3 p-4 mt-auto border-t border-border' : 'hidden lg:flex flex-col gap-2 justify-end xl:flex-row xl:items-center xl:gap-4 xl:justify-end'}>
+    <div className={inDrawer ? 'flex flex-col space-y-3 p-4 mt-auto border-t border-border' : 'hidden 2xl:flex flex-col gap-2 justify-end xl:flex-row xl:items-center xl:gap-4 xl:justify-end'}>
       {status === 'authenticated' ? (
         <Dropdown menu={{ items: menuItems }} trigger={['click']} overlayClassName="glass-dropdown">
           <a onClick={(e) => e.preventDefault()}>
@@ -284,50 +284,18 @@ const AuthButtons: React.FC<{ inDrawer?: boolean }> = ({ inDrawer = false }) => 
             </div>
 
             {/* Desktop Auth Buttons & Features */}
-            <div className="navbar-actions">
-              {/* Smart Search - only show when authenticated */}
-              {session && (
-                <button
-                  onClick={() => {
-                    // Could integrate with a global search modal
-                    console.log('Open smart search');
-                  }}
-                   className="hidden lg:flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-white hover:bg-primary rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary relative group"
-                  aria-label="Smart search (Ctrl+K)"
-                  title="Smart search (Ctrl+K)"
-                >
-                  <FiSearch className="w-4 h-4" />
-                  <span className="hidden xl:inline">Search</span>
-                  <kbd className="hidden xl:inline ml-2 px-1.5 py-0.5 text-xs bg-bg-light text-text-muted rounded border border-border">⌘K</kbd>
-                </button>
-              )}
 
-              {/* User Progress Indicator - only show when authenticated */}
-              {session && (
-                  <div className="hidden lg:flex items-center gap-2 px-3 py-2 text-xs text-text-muted relative">
-                  <LuTrendingUp className="w-4 h-4 text-primary" />
-                  <span>Level 2</span>
-                  {/* Notification dot for updates */}
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-warning rounded-full animate-pulse shadow-sm" title="New features available"></div>
-                </div>
-              )}
-
-
-            </div>
-
-              {/* Mobile Menu Button - always shown for drawer access */}
+              {/* Auth Buttons and Mobile Menu Button - shown on all screens */}
               <div className="navbar-actions flex items-center gap-4">
-                <div className="hidden xl:block">
-                  <AuthButtons />
-                </div>
+                <AuthButtons />
                <button
                  onClick={showDrawer}
-                 className="lg:hidden w-11 h-11 bg-gradient-to-br from-bg-card to-bg-light hover:from-bg-light hover:to-bg-card text-white rounded-xl transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg shadow-black hover:shadow-xl hover:shadow-black border border-border"
-                aria-label="Open navigation menu"
-              >
-                <FiMenu className="w-6 h-6" />
-              </button>
-            </div>
+                 className="2xl:hidden w-11 h-11 bg-gradient-to-br from-bg-card to-bg-light hover:from-bg-light hover:to-bg-card text-white rounded-xl transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900 shadow-lg shadow-black hover:shadow-xl hover:shadow-black border border-border"
+                 aria-label="Open navigation menu"
+               >
+                 <FiMenu className="w-6 h-6" />
+               </button>
+             </div>
           </div>
 
           {/* Scroll Progress Indicator */}

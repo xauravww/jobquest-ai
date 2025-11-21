@@ -275,7 +275,7 @@ a.button:hover {
 button:focus:not(:disabled),
 a.button:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+  box-shadow: none;
 }
 
 button:disabled {
@@ -366,7 +366,6 @@ button:disabled {
 input:not(.ant-input),
 select:not(.ant-select-selector),
 textarea:not(.ant-input) {
-  border: 1px solid var(--border);
   background-color: var(--bg-card);
   color: var(--text);
   padding: 0.75rem;
@@ -381,7 +380,6 @@ select:not(.ant-select-selector):focus,
 textarea:not(.ant-input):focus {
   border-color: var(--primary);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
   background-color: var(--bg-card);
 }
 
@@ -1271,12 +1269,41 @@ body {
   }
 }
 
+/* Remove unwanted outlines and box shadows on focus */
+.ant-btn:focus,
+.ant-input:focus,
+.ant-select-selector:focus,
+.ant-input-affix-wrapper:focus,
+.ant-input-number:focus,
+.ant-picker:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Enhanced Dark Theme for All Ant Design Components */
+
+/* Select Tags Styling for Better Visibility */
+.ant-select-selection-item {
+  background-color: var(--primary) !important;
+  color: white !important;
+  border: 1px solid var(--primary) !important;
+  border-radius: 4px !important;
+}
+
+.ant-select-selection-item .ant-select-selection-item-remove {
+  color: white !important;
+  opacity: 0.8 !important;
+}
+
+.ant-select-selection-item .ant-select-selection-item-remove:hover {
+  opacity: 1 !important;
+  color: white !important;
+}
 
 /* Global Input Styles - Fix background coverage */
 .ant-input,
 .ant-input-affix-wrapper {
-  background-color: var(--bg-card) !important;
+  background-color: #374151 !important; /* Darker background for better visibility */
   border-color: var(--border) !important;
   color: var(--text) !important;
   box-shadow: none !important;
@@ -1735,4 +1762,30 @@ html {
 /* Optimize gradient animations */
 .button-primary::before {
   will-change: transform;
+}
+
+/* Autofill CSS overrides for dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-card) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+input:-moz-autofill {
+  box-shadow: 0 0 0 1000px var(--bg-card) inset !important;
+  -moz-text-fill-color: var(--text) !important;
+}
+
+input:-internal-autofill-selected {
+  background-color: var(--bg-card) !important;
+  color: var(--text) !important;
+}
+
+/* Password toggle button hover override */
+.password-toggle-btn:hover {
+  box-shadow: none !important;
+  transform: none !important;
 }

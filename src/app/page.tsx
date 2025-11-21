@@ -100,74 +100,152 @@ Header.displayName = 'Header';
 
 // Hero Section
 const HeroSection = memo(() => (
-  <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden" aria-labelledby="hero-heading">
-    <div className="absolute inset-x-0 top-0 h-[500px] z-0 bg-gradient-to-b from-emerald-500/5 to-transparent"></div>
-    <div className="container mx-auto px-6 relative z-10 text-center">
+  <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-28 lg:pt-48 lg:pb-32 overflow-hidden" aria-labelledby="hero-heading">
+    <div className="absolute inset-x-0 top-0 h-[400px] sm:h-[500px] z-0 bg-gradient-to-b from-emerald-500/5 to-transparent"></div>
+    <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
       <h1
         id="hero-heading"
-        className="text-4xl md:text-6xl font-black tracking-tight text-white leading-tight max-w-4xl mx-auto"
+        className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight text-white leading-tight max-w-5xl mx-auto"
       >
         Stop Searching, Start Interviewing
       </h1>
 
-      <div className="mt-8 flex items-center justify-center gap-3 md:gap-5">
-        <div className="flex items-center gap-2 text-gray-300">
-          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.35-4.35"/>
-            </svg>
+      {/* Process Flow - Responsive Design */}
+      <div className="mt-8 sm:mt-10 lg:mt-12">
+        {/* Mobile: Vertical Stack */}
+        <div className="flex flex-col items-center gap-4 sm:hidden">
+          <div className="flex items-center gap-3 text-gray-300">
+            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </div>
+            <span className="text-sm font-medium">AI Search</span>
           </div>
-          <span className="text-xs font-medium">AI Search</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 rotate-90">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+
+          <div className="flex items-center gap-3 text-emerald-400">
+            <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
+                <path d="M12 2v4"/>
+                <path d="m16.24 7.76 2.83 2.83"/>
+                <path d="M22 12h-4"/>
+                <path d="m16.24 16.24 2.83 2.83"/>
+                <path d="M12 22v-4"/>
+                <path d="m4.93 19.07 2.83-2.83"/>
+                <path d="M2 12h4"/>
+                <path d="m4.93 4.93 2.83 2.83"/>
+              </svg>
+            </div>
+            <span className="text-base font-semibold">Smart Filters</span>
+          </div>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 rotate-90">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+
+          <div className="flex items-center gap-3 text-gray-300">
+            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                <line x1="16" x2="16" y1="2" y2="6"/>
+                <line x1="8" x2="8" y1="2" y2="6"/>
+                <line x1="3" x2="21" y1="10" y2="10"/>
+              </svg>
+            </div>
+            <span className="text-sm font-medium">Auto Apply</span>
+          </div>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 rotate-90">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+
+          <div className="flex items-center gap-3 text-gray-300">
+            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 6.1H3"/>
+                <path d="M21 12.1H3"/>
+                <path d="M15.1 18H3"/>
+              </svg>
+            </div>
+            <span className="text-sm font-medium">Ace Interviews</span>
+          </div>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
-          <path d="M5 12h14"/>
-          <path d="m12 5 7 7-7 7"/>
-        </svg>
-        <div className="flex items-center gap-2 text-emerald-400">
-          <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
-              <path d="M12 2v4"/>
-              <path d="m16.24 7.76 2.83 2.83"/>
-              <path d="M22 12h-4"/>
-              <path d="m16.24 16.24 2.83 2.83"/>
-              <path d="M12 22v-4"/>
-              <path d="m4.93 19.07 2.83-2.83"/>
-              <path d="M2 12h4"/>
-              <path d="m4.93 4.93 2.83 2.83"/>
-            </svg>
+
+        {/* Tablet and Desktop: Horizontal Flow */}
+        <div className="hidden sm:flex items-center justify-center gap-2 md:gap-3 lg:gap-4 xl:gap-5 flex-wrap">
+          <div className="flex items-center gap-2 md:gap-3 text-gray-300">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </div>
+            <span className="text-xs md:text-sm font-medium whitespace-nowrap">AI Search</span>
           </div>
-          <span className="text-sm font-semibold">Smart Filters</span>
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
-          <path d="M5 12h14"/>
-          <path d="m12 5 7 7-7 7"/>
-        </svg>
-        <div className="flex items-center gap-2 text-gray-300">
-          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-              <line x1="16" x2="16" y1="2" y2="6"/>
-              <line x1="8" x2="8" y1="2" y2="6"/>
-              <line x1="3" x2="21" y1="10" y2="10"/>
-            </svg>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 flex-shrink-0">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+
+          <div className="flex items-center gap-2 md:gap-3 text-emerald-400">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
+                <path d="M12 2v4"/>
+                <path d="m16.24 7.76 2.83 2.83"/>
+                <path d="M22 12h-4"/>
+                <path d="m16.24 16.24 2.83 2.83"/>
+                <path d="M12 22v-4"/>
+                <path d="m4.93 19.07 2.83-2.83"/>
+                <path d="M2 12h4"/>
+                <path d="m4.93 4.93 2.83 2.83"/>
+              </svg>
+            </div>
+            <span className="text-sm md:text-base font-semibold whitespace-nowrap">Smart Filters</span>
           </div>
-          <span className="text-xs font-medium">Auto Apply</span>
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
-          <path d="M5 12h14"/>
-          <path d="m12 5 7 7-7 7"/>
-        </svg>
-        <div className="flex items-center gap-2 text-gray-300">
-          <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 6.1H3"/>
-              <path d="M21 12.1H3"/>
-              <path d="M15.1 18H3"/>
-            </svg>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 flex-shrink-0">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+
+          <div className="flex items-center gap-2 md:gap-3 text-gray-300">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                <line x1="16" x2="16" y1="2" y2="6"/>
+                <line x1="8" x2="8" y1="2" y2="6"/>
+                <line x1="3" x2="21" y1="10" y2="10"/>
+              </svg>
+            </div>
+            <span className="text-xs md:text-sm font-medium whitespace-nowrap">Auto Apply</span>
           </div>
-          <span className="text-xs font-medium">Ace Interviews</span>
+
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 flex-shrink-0">
+            <path d="M5 12h14"/>
+            <path d="m12 5 7 7-7 7"/>
+          </svg>
+
+          <div className="flex items-center gap-2 md:gap-3 text-gray-300">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 6.1H3"/>
+                <path d="M21 12.1H3"/>
+                <path d="M15.1 18H3"/>
+              </svg>
+            </div>
+            <span className="text-xs md:text-sm font-medium whitespace-nowrap">Ace Interviews</span>
+          </div>
         </div>
       </div>
 

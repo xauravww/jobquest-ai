@@ -115,29 +115,47 @@ const OnboardingPage: React.FC = () => {
   };
 
   const sendOtp = async () => {
+    const email = form.getFieldValue('email');
+    console.log('Sending OTP to email:', email);
+    if (!email) {
+      console.error('Email is required');
+      toast.error('Email is required');
+      return;
+    }
     try {
+      console.log('Making fetch request to /api/user/send-otp');
       const response = await fetch('/api/user/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formValues.email }),
+        body: JSON.stringify({ email }),
       });
+      console.log('Response status:', response.status);
       if (response.ok) {
+        console.log('OTP sent successfully');
         toast.success('OTP sent to your email');
         setOtpSent(true);
       } else {
-        toast.error('Failed to send OTP');
+        const errorData = await response.json();
+        console.error('Failed to send OTP:', errorData);
+        toast.error(errorData.error || 'Failed to send OTP');
       }
     } catch (error) {
+      console.error('Network error while sending OTP:', error);
       toast.error('Network error while sending OTP');
     }
   };
 
   const verifyOtp = async () => {
+    const email = form.getFieldValue('email');
+    if (!email) {
+      toast.error('Email is required');
+      return;
+    }
     try {
       const response = await fetch('/api/user/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formValues.email, otp }),
+        body: JSON.stringify({ email, otp }),
       });
       if (response.ok) {
         toast.success('Email verified successfully');
@@ -158,10 +176,10 @@ const OnboardingPage: React.FC = () => {
       case 0:
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">Welcome to JobQuest AI!</h2>
-              <p className="text-gray-400">Let&apos;s set up your profile to find the perfect job opportunities.</p>
-            </div>
+             <div className="text-center mb-8">
+               <h2 className="text-xl font-semibold text-white mb-3">Welcome to JobQuest AI!</h2>
+               <p className="text-gray-300 text-base">Let&apos;s set up your profile to find the perfect job opportunities.</p>
+             </div>
 
             <Form.Item name="name" rules={[{ required: true, message: 'Please enter your full name' }]}>
               <Input
@@ -210,10 +228,10 @@ const OnboardingPage: React.FC = () => {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">Professional Background</h2>
-              <p className="text-gray-400">Tell us about your experience and skills.</p>
-            </div>
+             <div className="text-center mb-8">
+               <h2 className="text-xl font-semibold text-white mb-3">Professional Background</h2>
+               <p className="text-gray-300 text-base">Tell us about your experience and skills.</p>
+             </div>
 
             <Form.Item name="experienceYears" rules={[{ required: true, message: 'Please enter your years of experience' }]}>
               <Input
@@ -227,24 +245,24 @@ const OnboardingPage: React.FC = () => {
               />
             </Form.Item>
 
-            <Form.Item name="skills" rules={[{ required: true, message: 'Please add at least one skill' }]}>
-              <Select
-                mode="tags"
-                placeholder="Add your skills (e.g., React, Python, Project Management)"
-                size="large"
-                className="bg-gray-800/70 text-white rounded-md"
-                classNames={{
-                  root: '',
-                  popup: { root: 'select-dark-popup' }, // ✅ new API
-                }}
-              >
-                <Option value="JavaScript">JavaScript</Option>
-                <Option value="TypeScript">TypeScript</Option>
-                <Option value="React">React</Option>
-                <Option value="Node.js">Node.js</Option>
-                <Option value="Python">Python</Option>
-              </Select>
-            </Form.Item>
+             <Form.Item name="skills" rules={[{ required: true, message: 'Please add at least one skill' }]}>
+               <Select
+                 mode="tags"
+                 placeholder="Add your skills (e.g., React, Python, Project Management)"
+                 size="large"
+                 className="bg-gray-700 text-white rounded-md border-gray-600"
+                 classNames={{
+                   root: '',
+                   popup: { root: 'select-dark-popup' },
+                 }}
+               >
+                 <Option value="JavaScript">JavaScript</Option>
+                 <Option value="TypeScript">TypeScript</Option>
+                 <Option value="React">React</Option>
+                 <Option value="Node.js">Node.js</Option>
+                 <Option value="Python">Python</Option>
+               </Select>
+             </Form.Item>
 
             <Form.Item name="summary" rules={[{ required: true, message: 'Please provide a professional summary' }]}>
               <TextArea
@@ -259,10 +277,10 @@ const OnboardingPage: React.FC = () => {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">Job Preferences</h2>
-              <p className="text-gray-400">What kind of opportunities are you looking for?</p>
-            </div>
+             <div className="text-center mb-8">
+               <h2 className="text-xl font-semibold text-white mb-3">Job Preferences</h2>
+               <p className="text-gray-300 text-base">What kind of opportunities are you looking for?</p>
+             </div>
 
             <Form.Item name="jobTypes" rules={[{ required: true, message: 'Please select at least one job type' }]}>
               <Select
@@ -358,11 +376,11 @@ const OnboardingPage: React.FC = () => {
       case 3:
         return (
           <div className="text-center space-y-6">
-            <div className="mb-6">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
-              <h2 className="text-2xl font-bold text-white mb-2">You&apos;re All Set!</h2>
-              <p className="text-gray-300">Your profile is ready. Let&apos;s find you some amazing job opportunities.</p>
-            </div>
+             <div className="mb-6">
+               <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+               <h2 className="text-xl font-semibold text-white mb-3">You&apos;re All Set!</h2>
+               <p className="text-gray-300 text-base">Your profile is ready. Let&apos;s find you some amazing job opportunities.</p>
+             </div>
 
             <div className="rounded-lg p-6 border border-border bg-bg-card">
               <h3 className="text-lg font-semibold text-white mb-4 text-center">What&apos;s Next?</h3>
@@ -390,11 +408,11 @@ const OnboardingPage: React.FC = () => {
 
       case 4:
         return (
-          <div className="space-y-6 max-w-md mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-4">Verify Your Email</h2>
+           <div className="space-y-6 max-w-md mx-auto">
+             <h2 className="text-xl font-semibold text-white mb-4">Verify Your Email</h2>
             {!otpSent ? (
               <Button type="primary" onClick={sendOtp} className="w-full">
-                Send OTP to {formValues.email}
+                Send OTP to {form.getFieldValue('email') || 'your email'}
               </Button>
             ) : otpVerified ? (
               <p className="text-green-500 font-semibold">Email verified successfully!</p>
@@ -453,11 +471,11 @@ const OnboardingPage: React.FC = () => {
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
         <div className="w-full max-w-2xl mx-auto">
           {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold">Complete Your Profile</h1>
-              <span className="text-gray-400">Step {currentStep + 1} of {steps.length}</span>
-            </div>
+           <div className="mb-8">
+             <div className="flex justify-between items-center mb-4">
+               <h1 className="text-4xl font-bold text-white tracking-tight">Complete Your Profile</h1>
+               <span className="text-gray-300 text-lg">Step {currentStep + 1} of {steps.length}</span>
+             </div>
             <Progress
               percent={((currentStep + 1) / steps.length) * 100}
               showInfo={false}
