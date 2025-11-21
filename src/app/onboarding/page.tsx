@@ -52,12 +52,12 @@ const OnboardingPage: React.FC = () => {
         const res = await fetch('/api/user/profile');
         if (res.ok) {
           const data = await res.json();
-          const fullName = data.firstName + (data.lastName ? ' ' + data.lastName : '');
+          const fullName = data.personalInfo.fullName;
           form.setFieldsValue({
             name: fullName,
-            email: data.email,
+            email: data.personalInfo.email,
           });
-          setFormValues((prev) => ({ ...prev, name: fullName, email: data.email }));
+          setFormValues((prev) => ({ ...prev, name: fullName, email: data.personalInfo.email }));
         }
       } catch (error) {
         console.error('Failed to fetch profile:', error);
@@ -425,14 +425,14 @@ const OnboardingPage: React.FC = () => {
                   size="large"
                   className="bg-bg-card text-white placeholder-gray-500 border-border hover:border-indigo-500 focus:border-indigo-500"
                 />
-                <div className="flex justify-between mt-4">
-                  <Button type="primary" onClick={verifyOtp} className="w-1/2 mr-2">
-                    Verify OTP
-                  </Button>
-                  <Button type="default" onClick={sendOtp} className="w-1/2 ml-2">
-                    Resend OTP
-                  </Button>
-                </div>
+                 <div className="flex justify-between mt-4 gap-4">
+                   <Button type="primary" onClick={verifyOtp} className="w-1/2 mr-2">
+                     Verify OTP
+                   </Button>
+                   <Button type="default" onClick={sendOtp} className="w-1/2 ml-2">
+                     Resend OTP
+                   </Button>
+                 </div>
               </>
             )}
           </div>

@@ -100,29 +100,7 @@ const SignInPage: React.FC = () => {
           border: '1px solid #334155',
         }
       }} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl animate-bounce" style={{ animationDelay: '2s' }}></div>
-        </div>
-
-        {/* Floating Particles */}
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-emerald-400/30 rounded-full animate-ping"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${2 + Math.random() * 2}s`
-              }}
-            />
-          ))}
-        </div>
+      <div className="min-h-screen bg-slate-900 relative overflow-hidden">
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 min-h-screen">
           {/* Left Column - Branding */}
@@ -160,7 +138,7 @@ const SignInPage: React.FC = () => {
               {/* Form Card */}
               <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 p-8 relative">
                 {/* Card Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-2xl blur-xl -z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 rounded-2xl blur-xl -z-10"></div>
 
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Sign In</h2>
