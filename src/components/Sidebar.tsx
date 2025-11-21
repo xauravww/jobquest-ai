@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
     <aside
       ref={sidebarRef}
       id="sidebar"
-      className={`flex-shrink-0 flex flex-col gap-4 p-4 h-full overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin bg-[var(--bg-glass)] backdrop-blur-xl border-r border-[var(--border-glass)] transition-all duration-300 ${className || ''}`}
+      className={`flex-shrink-0 flex flex-col gap-4 p-4 flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin bg-[var(--bg-glass)] backdrop-blur-xl border-r border-[var(--border-glass)] transition-all duration-300 ${className || ''}`}
       style={{
         width: isCollapsed ? '80px' : '320px',
       }}

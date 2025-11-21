@@ -113,29 +113,29 @@ export default function LandingPage() {
 
       {/* Navigation */}
       <nav className="fixed w-full z-50 top-0 border-b border-white/5 bg-[var(--bg-deep)]/80 backdrop-blur-xl transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="w-10 h-10 rounded-xl overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl overflow-hidden">
               <Image src="/logo.png" alt="Applytron Logo" width={40} height={40} className="object-contain" />
             </div>
-            <span className="font-display font-bold text-xl tracking-tight">Applytron</span>
+            <span className="font-display font-bold text-lg sm:text-xl tracking-tight">Applytron</span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
             <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
             <a href="#dashboard-preview" className="text-sm text-gray-400 hover:text-white transition-colors">Demo</a>
             <a href="#testimonials" className="text-sm text-gray-400 hover:text-white transition-colors">Stories</a>
             <a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Link href="/auth/signin" className="text-sm text-gray-400 hover:text-white hidden sm:block">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/auth/signin" className="text-xs sm:text-sm text-gray-400 hover:text-white hidden sm:block">
               Sign In
             </Link>
             <Link href="/auth/signup">
-              <button className="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+              <button className="relative inline-flex h-9 sm:h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
                 <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]"></span>
-                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-1 text-sm font-medium text-white backdrop-blur-3xl hover:bg-slate-900 transition-colors">
+                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-4 sm:px-6 py-1 text-xs sm:text-sm font-medium text-white backdrop-blur-3xl hover:bg-slate-900 transition-colors">
                   Get Started
                 </span>
               </button>
@@ -144,39 +144,40 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      <main className="relative z-10 pt-32">
+      <main className="relative z-10 pt-20 sm:pt-32">
         {/* Hero Section */}
-        <section ref={heroRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 text-center max-w-5xl mx-auto mb-20">
+        <section ref={heroRef} className="relative min-h-[80vh] sm:min-h-[90vh] flex flex-col items-center justify-center px-4 sm:px-6 text-center max-w-5xl mx-auto mb-12 sm:mb-20">
           {/* Announcement Pill */}
-          <div className="gsap-hero-elem mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm text-indigo-300 text-sm hover:bg-indigo-500/20 transition-colors cursor-pointer">
+          <div className="gsap-hero-elem mb-6 sm:mb-8 inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm text-indigo-300 text-xs sm:text-sm hover:bg-indigo-500/20 transition-colors cursor-pointer">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            <span>AI-Powered Job Search • Automated Applications</span>
+            <span className="hidden sm:inline">AI-Powered Job Search • Automated Applications</span>
+            <span className="sm:hidden">AI-Powered • Automated</span>
             <ArrowRight className="w-3 h-3 ml-1" />
           </div>
 
           {/* Headline */}
-          <h1 className="gsap-hero-elem font-display text-6xl md:text-8xl font-bold leading-[1.1] tracking-tight mb-8">
+          <h1 className="gsap-hero-elem font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.1] tracking-tight mb-6 sm:mb-8">
             Career Growth,<br />
             <span className="text-gradient-primary">On Autopilot.</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="gsap-hero-elem text-lg md:text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed">
+          <p className="gsap-hero-elem text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mb-8 sm:mb-10 leading-relaxed px-4">
             The AI agent that tailors your resume for every application, tracks opportunities, and manages follow-ups while you focus on interviews.
           </p>
 
           {/* CTA Buttons */}
-          <div className="gsap-hero-elem flex flex-col sm:flex-row gap-4 items-center">
-            <Link href="/auth/signup">
-              <button className="px-8 py-4 bg-white text-black rounded-full font-bold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center gap-2 [text-shadow:_0_0_1px_rgb(0_0_0_/_40%)]">
+          <div className="gsap-hero-elem flex flex-col sm:flex-row gap-3 sm:gap-4 items-center w-full sm:w-auto px-4">
+            <Link href="/auth/signup" className="w-full sm:w-auto">
+              <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-white text-black rounded-full font-bold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2 [text-shadow:_0_0_1px_rgb(0_0_0_/_40%)]">
                 Start Free Trial
                 <Zap className="w-4 h-4 fill-black stroke-black" />
               </button>
             </Link>
-            <button className="px-8 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 transition-all flex items-center gap-2 text-white font-medium">
+            <button className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 transition-all flex items-center justify-center gap-2 text-white font-medium">
               <PlayCircle className="w-5 h-5" />
               Watch Demo
             </button>
@@ -195,35 +196,35 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Dashboard Preview Section */}
-        <section id="dashboard-preview" className="relative py-20 px-4">
+        {/* Dashboard Preview */}
+        <section id="dashboard-preview" className="relative py-12 sm:py-16 md:py-20 px-4">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">Mission Control for Your Career</h2>
-              <p className="text-gray-400">A real-time view of your automated job hunt.</p>
+            <div className="text-center mb-10 sm:mb-12 md:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-3 sm:mb-4">Mission Control for Your Career</h2>
+              <p className="text-sm sm:text-base text-gray-400">A real-time view of your automated job hunt.</p>
             </div>
 
             {/* Dashboard Container with 3D Tilt */}
             <div
               ref={dashboardRef}
-              className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 hover:shadow-[0_0_50px_rgba(79,70,229,0.15)]"
+              className="glass-panel rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 hover:shadow-[0_0_50px_rgba(79,70,229,0.15)]"
               style={{ transform: 'perspective(2000px) rotateX(6deg)' }}
             >
               {/* Window Controls */}
-              <div className="h-12 bg-[#0a0a0a]/50 border-b border-white/5 flex items-center px-4 gap-2">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+              <div className="h-10 sm:h-12 bg-[#0a0a0a]/50 border-b border-white/5 flex items-center px-3 sm:px-4 gap-2">
+                <div className="flex gap-1.5 sm:gap-2">
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500/50"></div>
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-yellow-500/50"></div>
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500/50"></div>
                 </div>
-                <div className="flex-1 text-center text-xs font-mono text-gray-600">app.applytron.ai/dashboard</div>
-                <div className="w-20"></div>
+                <div className="flex-1 text-center text-[10px] sm:text-xs font-mono text-gray-600">app.applytron.ai/dashboard</div>
+                <div className="w-12 sm:w-20"></div>
               </div>
 
               {/* Dashboard Body */}
-              <div className="flex h-[700px] bg-[#050505]">
+              <div className="flex h-[500px] sm:h-[600px] md:h-[700px] bg-[#050505]">
                 {/* Sidebar */}
-                <div className="w-64 border-r border-white/5 bg-[#0a0a0a]/30 p-4 hidden md:flex flex-col">
+                <div className="w-64 flex-1 border-r border-white/5 bg-[#0a0a0a]/30 p-4 hidden md:flex flex-col overflow-y-auto">
                   <div className="space-y-1">
                     <a href="#" className="dashboard-sidebar-link active">
                       <LayoutDashboard className="w-4 h-4 mr-3" /> Overview
@@ -375,21 +376,21 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-32 max-w-6xl mx-auto px-4">
-          <div className="mb-20 text-center">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">AI-Powered Career Acceleration</h2>
-            <p className="text-xl text-gray-400">Three steps to complete automation.</p>
+        <section id="features" className="py-16 sm:py-24 md:py-32 max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="mb-12 sm:mb-16 md:mb-20 text-center">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4 sm:mb-6">AI-Powered Career Acceleration</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-400">Three steps to complete automation.</p>
           </div>
 
-          <div className="space-y-32">
+          <div className="space-y-16 sm:space-y-24 md:space-y-32">
             {/* Feature 1 */}
-            <div className="flex flex-col md:flex-row items-center gap-16">
-              <div className="flex-1 space-y-6">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 mb-4">
-                  <span className="font-mono font-bold text-lg">01</span>
+            <div className="flex flex-col md:flex-row items-center gap-8 sm:gap-12 md:gap-16">
+              <div className="flex-1 space-y-4 sm:space-y-6">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 mb-3 sm:mb-4">
+                  <span className="font-mono font-bold text-base sm:text-lg">01</span>
                 </div>
-                <h3 className="text-3xl font-bold">Smart Resume Tailoring</h3>
-                <p className="text-gray-400 text-lg leading-relaxed">
+                <h3 className="text-2xl sm:text-3xl font-bold">Smart Resume Tailoring</h3>
+                <p className="text-gray-400 text-base sm:text-lg leading-relaxed">
                   Upload your base resume. Our AI analyzes each job description and automatically customizes your resume to match keywords, skills, and requirements—increasing your ATS pass rate dramatically.
                 </p>
                 <ul className="space-y-3 mt-4">
@@ -406,16 +407,16 @@ export default function LandingPage() {
               </div>
               <div className="flex-1 relative group">
                 <div className="absolute inset-0 bg-indigo-600/20 blur-3xl rounded-full opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden">
-                  <div className="relative w-full h-80 rounded-lg overflow-hidden">
-                    <Image
+                <div className="glass-panel rounded-2xl p-4 sm:p-6 md:p-8 relative overflow-hidden">
+                  <div className="relative w-full flex items-center justify-center rounded-lg overflow-hidden bg-white/5 py-4">
+                    <img
                       src="/ai-resume.png"
                       alt="AI Resume Scanner"
-                      fill
-                      className="object-cover rounded-lg"
+                      className="w-full max-w-full h-auto rounded-lg"
+                      style={{ maxHeight: '400px', objectFit: 'contain' }}
                     />
                   </div>
-                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-indigo-500/10 to-transparent animate-scan"></div>
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-indigo-500/10 to-transparent animate-scan pointer-events-none"></div>
                 </div>
               </div>
             </div>
@@ -444,13 +445,13 @@ export default function LandingPage() {
               </div>
               <div className="flex-1 relative group">
                 <div className="absolute inset-0 bg-purple-600/20 blur-3xl rounded-full opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden border-purple-500/20">
-                  <div className="relative w-full h-80 rounded-lg overflow-hidden">
-                    <Image
+                <div className="glass-panel rounded-2xl p-4 sm:p-6 md:p-8 relative overflow-hidden border-purple-500/20">
+                  <div className="relative w-full flex items-center justify-center rounded-lg overflow-hidden bg-white/5 py-4">
+                    <img
                       src="/dashboard-preview.png"
                       alt="Dashboard Preview"
-                      fill
-                      className="object-cover rounded-lg"
+                      className="w-full max-w-full h-auto rounded-lg"
+                      style={{ maxHeight: '400px', objectFit: 'contain' }}
                     />
                   </div>
                 </div>
@@ -505,47 +506,47 @@ export default function LandingPage() {
         </section>
 
         {/* How It Works Section */}
-        <section className="py-32 bg-gradient-to-b from-transparent via-indigo-900/10 to-transparent">
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">How It Works</h2>
-              <p className="text-xl text-gray-400">Get started in minutes, land your dream job in weeks</p>
+        <section className="py-16 sm:py-24 md:py-32 bg-gradient-to-b from-transparent via-indigo-900/10 to-transparent">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-12 sm:mb-16 md:mb-20">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold mb-4 sm:mb-6">How It Works</h2>
+              <p className="text-base sm:text-lg md:text-xl text-gray-400">Get started in minutes, land your dream job in weeks</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="glass-panel p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+              <div className="glass-panel p-6 sm:p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
                   1
                 </div>
-                <FileText className="w-16 h-16 mx-auto mb-6 text-indigo-400 mt-4" />
-                <h3 className="text-xl font-bold mb-4">Upload Your Resume</h3>
-                <p className="text-gray-400">Simply upload your base resume. Our AI will analyze your experience, skills, and achievements.</p>
+                <FileText className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 text-indigo-400 mt-4" />
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Upload Your Resume</h3>
+                <p className="text-sm sm:text-base text-gray-400">Simply upload your base resume. Our AI will analyze your experience, skills, and achievements.</p>
               </div>
 
-              <div className="glass-panel p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
+              <div className="glass-panel p-6 sm:p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
                   2
                 </div>
-                <Bot className="w-16 h-16 mx-auto mb-6 text-purple-400 mt-4" />
-                <h3 className="text-xl font-bold mb-4">AI Does the Work</h3>
-                <p className="text-gray-400">Our AI finds matching jobs, customizes your resume for each, and submits applications automatically.</p>
+                <Bot className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 text-purple-400 mt-4" />
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">AI Does the Work</h3>
+                <p className="text-sm sm:text-base text-gray-400">Our AI finds matching jobs, customizes your resume for each, and submits applications automatically.</p>
               </div>
 
-              <div className="glass-panel p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
+              <div className="glass-panel p-6 sm:p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-gradient-to-br from-pink-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
                   3
                 </div>
-                <MessageSquare className="w-16 h-16 mx-auto mb-6 text-pink-400 mt-4" />
-                <h3 className="text-xl font-bold mb-4">Get Interviews</h3>
-                <p className="text-gray-400">Receive interview requests, track your progress, and land your dream job faster than ever.</p>
+                <MessageSquare className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 text-pink-400 mt-4" />
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Get Interviews</h3>
+                <p className="text-sm sm:text-base text-gray-400">Receive interview requests, track your progress, and land your dream job faster than ever.</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Stats Section */}
-        <section className="py-20 max-w-7xl mx-auto px-4">
-          <div className="glass-panel rounded-3xl p-12 md:p-16">
+        <section className="py-12 sm:py-16 md:py-20 max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="glass-panel rounded-2xl sm:rounded-3xl p-8 sm:p-12 md:p-16">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
               <div className="text-center">
                 <div className="text-4xl md:text-5xl font-bold text-gradient-primary mb-2">50K+</div>
