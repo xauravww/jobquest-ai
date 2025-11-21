@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get applications for this user with optional filtering and pagination
-    const { applications, totalCount } = await mongodbService.getApplicationsWithFilters(user._id, {
+    const { applications, totalCount } = await mongodbService.getApplicationsWithFilters(user._id.toString(), {
       status,
       priority,
       platform,

@@ -1,10 +1,10 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Select, DatePicker, Button } from 'antd';
-import type { DefaultOptionType } from 'antd/es/select';
+import Modal from '@/components/ui/Modal';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
-
-const { TextArea } = Input;
+import { Briefcase, MapPin, Globe, Calendar, FileText, AlertCircle } from 'lucide-react';
 
 interface Job {
   createdAt: string;
@@ -49,7 +49,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
   const [status, setStatus] = useState('saved');
   const [priority, setPriority] = useState('medium');
   const [platform, setPlatform] = useState('other');
-  const [datePosted, setDatePosted] = useState<dayjs.Dayjs | null>(null);
+  const [datePosted, setDatePosted] = useState<string>(dayjs().format('YYYY-MM-DD'));
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
 
   // New states for resumes
   const [resumes, setResumes] = useState<{ _id: string; title: string }[]>([]);
-  const [selectedResumeId, setSelectedResumeId] = useState<string | undefined>(undefined);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('');
 
   // Fetch resumes when modal opens
   useEffect(() => {
@@ -87,7 +87,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
       setStatus(job.status || 'saved');
       setPriority(job.priority || 'medium');
       setPlatform(job.platform || 'other');
-      setDatePosted(job.datePosted ? dayjs(job.datePosted) : null);
+      setDatePosted(job.datePosted ? dayjs(job.datePosted).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'));
       setDescription(job.description || '');
       setNotes(job.notes || '');
       setErrors({});
@@ -102,12 +102,12 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           // Handle mongoose ObjectId case
           setSelectedResumeId((id as { toString: () => string }).toString());
         } else {
-          setSelectedResumeId(undefined);
+          setSelectedResumeId('');
         }
       }
     } else if (!job && visible) {
       resetForm();
-      setSelectedResumeId(undefined);
+      setSelectedResumeId('');
     }
   }, [job, visible]);
 
@@ -119,11 +119,11 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     setStatus('saved');
     setPriority('medium');
     setPlatform('other');
-    setDatePosted(null);
+    setDatePosted(dayjs().format('YYYY-MM-DD'));
     setDescription('');
     setNotes('');
     setErrors({});
-    setSelectedResumeId(undefined);
+    setSelectedResumeId('');
   };
 
   const validateField = (field: string, value: string): string | undefined => {
@@ -197,24 +197,12 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     setErrors(prev => ({ ...prev, [field]: error }));
 
     switch (field) {
-      case 'title':
-        setTitle(value);
-        break;
-      case 'company':
-        setCompany(value);
-        break;
-      case 'location':
-        setLocation(value);
-        break;
-      case 'jobUrl':
-        setJobUrl(value);
-        break;
-      case 'description':
-        setDescription(value);
-        break;
-      case 'notes':
-        setNotes(value);
-        break;
+      case 'title': setTitle(value); break;
+      case 'company': setCompany(value); break;
+      case 'location': setLocation(value); break;
+      case 'jobUrl': setJobUrl(value); break;
+      case 'description': setDescription(value); break;
+      case 'notes': setNotes(value); break;
     }
   };
 
@@ -235,7 +223,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         status,
         priority,
         platform,
-        datePosted: datePosted ? datePosted.toISOString() : null,
+        datePosted: datePosted ? new Date(datePosted).toISOString() : null,
         description: description.trim(),
         notes: notes.trim(),
         applicationMethod: 'manual',
@@ -280,182 +268,209 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
 
   return (
     <Modal
-      title={job ? "Edit Job Application" : "Add New Job Application"}
-      open={visible}
-      onCancel={() => {
+      isOpen={visible}
+      onClose={() => {
         resetForm();
         onClose();
       }}
-      footer={[
-        <Button key="cancel" onClick={() => {
-          resetForm();
-          onClose();
-        }}>
-          Cancel
-        </Button>,
-        <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
-          {job ? "Update Job" : "Add Job"}
-        </Button>,
-      ]}
-    style={{ maxWidth: '700px', width: '90vw' }}
-    className="custom-dark-modal"
-    bodyStyle={{ backgroundColor: '#000000' }}
-  >
-      <div className="space-y-4 text-text">
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">
-            Job Title <span className="text-red-500">*</span>
-          </label>
-          <Input
-            value={title}
-            onChange={(e) => handleFieldChange('title', e.target.value)}
-            placeholder="Job Title"
-            size="large"
-            status={errors.title ? 'error' : ''}
-          />
-          {errors.title && <div className="text-red-500 text-sm mt-1">{errors.title}</div>}
+      title={job ? "Edit Job Application" : "Add New Job Application"}
+      width="max-w-2xl"
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+              Job Title <span className="text-[var(--danger)]">*</span>
+            </label>
+            <div className="relative">
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => handleFieldChange('title', e.target.value)}
+                placeholder="e.g. Senior Frontend Developer"
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.title ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+              />
+            </div>
+            {errors.title && <p className="text-[var(--danger)] text-xs mt-1">{errors.title}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+              Company <span className="text-[var(--danger)]">*</span>
+            </label>
+            <div className="relative">
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={company}
+                onChange={(e) => handleFieldChange('company', e.target.value)}
+                placeholder="e.g. Tech Corp"
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.company ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+              />
+            </div>
+            {errors.company && <p className="text-[var(--danger)] text-xs mt-1">{errors.company}</p>}
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">
-            Company <span className="text-red-500">*</span>
-          </label>
-          <Input
-            value={company}
-            onChange={(e) => handleFieldChange('company', e.target.value)}
-            placeholder="Company"
-            size="large"
-            status={errors.company ? 'error' : ''}
-          />
-          {errors.company && <div className="text-red-500 text-sm mt-1">{errors.company}</div>}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Location</label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => handleFieldChange('location', e.target.value)}
+                placeholder="e.g. Remote, New York"
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.location ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+              />
+            </div>
+            {errors.location && <p className="text-[var(--danger)] text-xs mt-1">{errors.location}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Job URL</label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={jobUrl}
+                onChange={(e) => handleFieldChange('jobUrl', e.target.value)}
+                placeholder="https://..."
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.jobUrl ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+              />
+            </div>
+            {errors.jobUrl && <p className="text-[var(--danger)] text-xs mt-1">{errors.jobUrl}</p>}
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Location</label>
-          <Input
-            value={location}
-            onChange={(e) => handleFieldChange('location', e.target.value)}
-            placeholder="Location"
-            size="large"
-            status={errors.location ? 'error' : ''}
-          />
-          {errors.location && <div className="text-red-500 text-sm mt-1">{errors.location}</div>}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Status</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+            >
+              <option value="saved">Saved</option>
+              <option value="applied">Applied</option>
+              <option value="interviewing">Interviewing</option>
+              <option value="offered">Offered</option>
+              <option value="rejected">Rejected</option>
+              <option value="submitted">Submitted</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+            >
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Platform</label>
+            <select
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value)}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+            >
+              <option value="linkedin">LinkedIn</option>
+              <option value="indeed">Indeed</option>
+              <option value="glassdoor">Glassdoor</option>
+              <option value="company-website">Company Website</option>
+              <option value="referral">Referral</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Job URL</label>
-          <Input
-            value={jobUrl}
-            onChange={(e) => handleFieldChange('jobUrl', e.target.value)}
-            placeholder="https://example.com/job-posting"
-            size="large"
-            status={errors.jobUrl ? 'error' : ''}
-          />
-          {errors.jobUrl && <div className="text-red-500 text-sm mt-1">{errors.jobUrl}</div>}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date Posted</label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="date"
+                value={datePosted}
+                onChange={(e) => setDatePosted(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Resume Used</label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <select
+                value={selectedResumeId}
+                onChange={(e) => setSelectedResumeId(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+              >
+                <option value="">Select a resume...</option>
+                {resumes.map((resume) => (
+                  <option key={resume._id} value={resume._id}>
+                    {resume.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-white mb-1">Status</label>
-          <Select
-            value={status}
-            onChange={setStatus}
-            size="large"
-            className="w-full"
-          >
-            <Select.Option value="saved">Saved</Select.Option>
-            <Select.Option value="applied">Applied</Select.Option>
-            <Select.Option value="interviewing">Interviewing</Select.Option>
-            <Select.Option value="offered">Offered</Select.Option>
-            <Select.Option value="rejected">Rejected</Select.Option>
-            <Select.Option value="submitted">Submitted</Select.Option>
-            <Select.Option value="expired">Expired</Select.Option>
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Priority</label>
-          <Select
-            value={priority}
-            onChange={setPriority}
-            size="large"
-            className="w-full"
-          >
-            <Select.Option value="high">High</Select.Option>
-            <Select.Option value="medium">Medium</Select.Option>
-            <Select.Option value="low">Low</Select.Option>
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Platform</label>
-          <Select
-            value={platform}
-            onChange={setPlatform}
-            size="large"
-            className="w-full"
-          >
-            <Select.Option value="linkedin">LinkedIn</Select.Option>
-            <Select.Option value="indeed">Indeed</Select.Option>
-            <Select.Option value="glassdoor">Glassdoor</Select.Option>
-            <Select.Option value="company-website">Company Website</Select.Option>
-            <Select.Option value="referral">Referral</Select.Option>
-            <Select.Option value="other">Other</Select.Option>
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Date Posted</label>
-          <DatePicker
-            value={datePosted}
-            onChange={setDatePosted}
-            size="large"
-            className="w-full"
-            format="MMM DD, YYYY"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Description</label>
-          <TextArea
+          <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Description</label>
+          <textarea
             value={description}
             onChange={(e) => handleFieldChange('description', e.target.value)}
-            placeholder="Job description"
+            placeholder="Job description..."
             rows={3}
-            size="large"
-            status={errors.description ? 'error' : ''}
+            className={`w-full px-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none resize-none transition-colors ${errors.description ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
           />
-          {errors.description && <div className="text-red-500 text-sm mt-1">{errors.description}</div>}
-          <div className="text-gray-400 text-xs mt-1">{description.length}/5000 characters</div>
+          {errors.description && <p className="text-[var(--danger)] text-xs mt-1">{errors.description}</p>}
+          <p className="text-[var(--text-dim)] text-xs text-right">{description.length}/5000</p>
         </div>
+
         <div>
-          <label className="block text-sm font-semibold text-white mb-1">Notes</label>
-          <TextArea
+          <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
+          <textarea
             value={notes}
             onChange={(e) => handleFieldChange('notes', e.target.value)}
-            placeholder="Additional notes"
+            placeholder="Additional notes..."
             rows={2}
-            size="large"
-            status={errors.notes ? 'error' : ''}
+            className={`w-full px-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none resize-none transition-colors ${errors.notes ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
           />
-          {errors.notes && <div className="text-red-500 text-sm mt-1">{errors.notes}</div>}
-          <div className="text-gray-400 text-xs mt-1">{notes.length}/2000 characters</div>
+          {errors.notes && <p className="text-[var(--danger)] text-xs mt-1">{errors.notes}</p>}
+          <p className="text-[var(--text-dim)] text-xs text-right">{notes.length}/2000</p>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-white mb-1">Resume</label>
-      <Select
-        showSearch
-        placeholder="Select a resume"
-        optionFilterProp="children"
-        value={selectedResumeId}
-        onChange={(value) => setSelectedResumeId(value)}
-        size="large"
-        className="w-full"
-        filterOption={(input: string, option?: DefaultOptionType) => {
-          if (typeof option?.children === 'string') {
-            return (option.children as string).toLowerCase().includes(input.toLowerCase());
-          }
-          return false;
-        }}
-        allowClear={true}
-      >
-        {resumes.map((resume: { _id: string; title: string }) => (
-          <Select.Option key={resume._id} value={resume._id}>
-            {resume.title || resume._id}
-          </Select.Option>
-        ))}
-      </Select>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-glass)]">
+          <button
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+            className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
+            {job ? "Update Job" : "Add Job"}
+          </button>
         </div>
       </div>
     </Modal>

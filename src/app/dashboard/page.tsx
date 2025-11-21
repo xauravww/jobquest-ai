@@ -52,9 +52,9 @@ interface TopSkill {
   skill: string;
 }
 interface UpcomingReminder {
-    _id: string;
-    title: string;
-    dueDate: string;
+  _id: string;
+  title: string;
+  dueDate: string;
 }
 interface DashboardData {
   jobStats: JobStats;
@@ -109,7 +109,7 @@ interface TooltipEntry {
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-bg-light/80 backdrop-blur-sm border border-border p-3 rounded-lg shadow-lg text-sm">
+      <div className="bg-[var(--bg-surface)]/90 backdrop-blur-md border border-[var(--border-glass)] p-3 rounded-lg shadow-xl text-sm">
         <p className="font-bold text-white mb-2">{`Date: ${label}`}</p>
         {payload.map((entry, index) => (
           <p key={`item-${index}`} style={{ color: entry.color }}>{`${entry.name}: ${entry.value}`}</p>
@@ -125,24 +125,24 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 
 const StatCard = ({ title, value, icon, link, children }: { title: string, value: string | number, icon: React.ReactNode, link: string, children: React.ReactNode }) => (
-    <Link href={link} className="block h-full group">
-        <div className="bg-bg-card hover:bg-bg-light transition-all duration-300 rounded-xl shadow-lg border border-border hover:border-primary/50 p-6 flex flex-col justify-between h-full overflow-hidden group-hover:shadow-xl group-hover:shadow-primary/10">
-            <div className="flex-1">
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        {icon}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-300 truncate group-hover:text-white transition-colors">{title}</h3>
-                </div>
-                <div className="text-3xl md:text-5xl font-bold text-white mb-6 group-hover:text-primary transition-colors">
-                    {value}
-                </div>
-            </div>
-            <div className="space-y-3 text-sm border-t border-border/50 pt-4">
-                {children}
-            </div>
+  <Link href={link} className="block h-full group">
+    <div className="bg-[var(--bg-glass)] backdrop-blur-xl hover:bg-[var(--bg-surface)] transition-all duration-300 rounded-xl shadow-lg border border-[var(--border-glass)] hover:border-[var(--primary)]/50 p-6 flex flex-col justify-between h-full overflow-hidden group-hover:shadow-[0_0_20px_var(--primary-glow)]">
+      <div className="flex-1">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-3 bg-[var(--primary)]/10 rounded-lg group-hover:bg-[var(--primary)]/20 transition-colors shadow-[0_0_10px_var(--primary-glow)]">
+            {icon}
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--text-muted)] truncate group-hover:text-white transition-colors">{title}</h3>
         </div>
-    </Link>
+        <div className="text-3xl md:text-5xl font-bold text-white mb-6 group-hover:text-[var(--primary)] transition-colors drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]">
+          {value}
+        </div>
+      </div>
+      <div className="space-y-3 text-sm border-t border-[var(--border-glass)] pt-4">
+        {children}
+      </div>
+    </div>
+  </Link>
 );
 
 
@@ -156,9 +156,9 @@ const DashboardPage = () => {
     if (status !== 'authenticated') return;
     setLoading(true);
     setError(null);
-    
+
     console.log('Fetching dashboard data...');
-    
+
     try {
       // Try the full stats API first with stronger cache busting
       let response = await fetch('/api/dashboard/stats?' + new URLSearchParams({
@@ -173,9 +173,9 @@ const DashboardPage = () => {
           'Expires': '0'
         }
       });
-      
+
       console.log('Stats API response status:', response.status);
-      
+
       // If that fails, try the simple stats API
       if (!response.ok) {
         console.warn('Full stats API failed, trying simple stats API');
@@ -192,19 +192,19 @@ const DashboardPage = () => {
           }
         });
       }
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', errorText);
         throw new Error(`Failed to fetch dashboard data. Status: ${response.status}`);
       }
-      
+
       const fetchedData: DashboardData = await response.json();
       console.log('Dashboard data fetched:', {
         totalApplications: fetchedData.jobStats?.totalApplications,
         activeApplications: fetchedData.jobStats?.activeApplications
       });
-      
+
       setData(fetchedData);
     } catch (e) {
       console.error('Dashboard data fetch error:', e);
@@ -250,148 +250,148 @@ const DashboardPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-4 md:p-8 bg-bg min-h-screen">
+      <div className="p-4 md:p-8 bg-[var(--bg-deep)] min-h-screen">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12 mt-8" >
-           <div>
-             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
-               Welcome back, {data?.userProfile?.firstName || 'User'}!
-             </h1>
-             <p className="text-gray-300 text-lg md:text-xl leading-relaxed">Here&apos;s your job search progress and insights.</p>
-           </div>
-           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-             <button
-               onClick={handleRefresh}
-               className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-bg-light hover:bg-bg-card text-white rounded-lg transition-all duration-200 font-semibold border border-border hover:border-primary hover:shadow-md whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
-             >
-               <TrendingUp className="w-5 h-5" />
-               Refresh Data
-             </button>
-             <Link href="/application-tracking" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900">
-               <Briefcase className="w-5 h-5" />
-               Manage Applications
-             </Link>
-           </div>
-         </div>
+          <div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
+              Welcome back, <span className="text-gradient-primary">{data?.userProfile?.firstName || 'User'}</span>!
+            </h1>
+            <p className="text-[var(--text-muted)] text-lg md:text-xl leading-relaxed">Here&apos;s your job search progress and insights.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button
+              onClick={handleRefresh}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--bg-surface)] hover:bg-[var(--bg-glass)] text-white rounded-lg transition-all duration-200 font-semibold border border-[var(--border-glass)] hover:border-[var(--primary)] hover:shadow-[0_0_15px_var(--primary-glow)] whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            >
+              <TrendingUp className="w-5 h-5" />
+              Refresh Data
+            </button>
+            <Link href="/application-tracking" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-90 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-[0_0_20px_var(--primary-glow)] transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
+              <Briefcase className="w-5 h-5" />
+              Manage Applications
+            </Link>
+          </div>
+        </div>
 
-         <div className="border-t border-border/30 mb-8"></div>
+        <div className="border-t border-[var(--border-glass)] mb-8"></div>
 
-         <ResponsiveGridLayout
-            className="layout"
-            layouts={layouts}
-            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-            cols={{ lg: 12, md: 10, sm: 6, xs: 6 }}
-            rowHeight={100}
-            isDraggable={false}
-            isResizable={false}
-            margin={[24, 24]}
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 6 }}
+          rowHeight={100}
+          isDraggable={false}
+          isResizable={false}
+          margin={[24, 24]}
         >
-            <div key="stats-total">
-                <StatCard title="Total Applications" value={data?.jobStats.totalApplications ?? 0} icon={<TrendingUp className="w-6 h-6 text-primary" />} link="/application-tracking">
-                    <div className="flex justify-between">
-                        <span className="text-text-muted">Active:</span>
-                        <span className="text-success font-medium">{data?.jobStats.activeApplications ?? 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-text-muted">Response Rate:</span>
-                        <span className="text-primary font-medium">{data?.jobStats.responseRate ?? 0}%</span>
-                    </div>
-                </StatCard>
-            </div>
-            <div key="stats-interviews">
-                <StatCard title="Interviews" value={data?.jobStats.interviews ?? 0} icon={<Calendar className="w-6 h-6 text-success" />} link="/events">
-                    <div className="flex justify-between">
-                        <span className="text-text-muted">Offers:</span>
-                        <span className="text-success font-medium">{data?.jobStats.offers ?? 0}</span>
-                    </div>
-                    <div className="w-full bg-border-muted rounded-full h-2.5 mt-1">
-                        <div className="bg-success h-2.5 rounded-full" style={{ width: `${data?.jobStats.responseRate}%` }}></div>
-                    </div>
-                </StatCard>
-            </div>
-            <div key="profile">
-                 <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col justify-center">
-                     <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Users className="w-6 h-6 text-primary" /> Profile Snapshot</h3>
-                     <div className="space-y-4 text-sm">
-                         <div className="flex items-center gap-3 p-2 rounded-md bg-bg-light/50">
-                             <Target className="w-4 h-4 text-primary flex-shrink-0" />
-                             <span className="text-white font-medium truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
-                         </div>
-                         <div className="flex items-center gap-3 p-2 rounded-md bg-bg-light/50">
-                             <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                             <span className="text-white font-medium truncate">{data?.userProfile?.location || 'Remote'}</span>
-                         </div>
-                     </div>
+          <div key="stats-total">
+            <StatCard title="Total Applications" value={data?.jobStats.totalApplications ?? 0} icon={<TrendingUp className="w-6 h-6 text-[var(--primary)]" />} link="/application-tracking">
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Active:</span>
+                <span className="text-[var(--success)] font-medium">{data?.jobStats.activeApplications ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Response Rate:</span>
+                <span className="text-[var(--primary)] font-medium">{data?.jobStats.responseRate ?? 0}%</span>
+              </div>
+            </StatCard>
+          </div>
+          <div key="stats-interviews">
+            <StatCard title="Interviews" value={data?.jobStats.interviews ?? 0} icon={<Calendar className="w-6 h-6 text-[var(--success)]" />} link="/events">
+              <div className="flex justify-between">
+                <span className="text-[var(--text-muted)]">Offers:</span>
+                <span className="text-[var(--success)] font-medium">{data?.jobStats.offers ?? 0}</span>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-2.5 mt-1">
+                <div className="bg-[var(--success)] h-2.5 rounded-full" style={{ width: `${data?.jobStats.responseRate}%` }}></div>
+              </div>
+            </StatCard>
+          </div>
+          <div key="profile">
+            <div className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6 h-full flex flex-col justify-center">
+              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Users className="w-6 h-6 text-[var(--primary)]" /> Profile Snapshot</h3>
+              <div className="space-y-4 text-sm">
+                <div className="flex items-center gap-3 p-2 rounded-md bg-white/5">
+                  <Target className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
+                  <span className="text-white font-medium truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
                 </div>
-            </div>
-            <div key="reminders">
-                 <div className="bg-bg-card rounded-xl shadow-lg border border-border p-6 h-full flex flex-col">
-                     <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Bell className="w-6 h-6 text-warning" /> Upcoming Reminders</h3>
-                    <div className="space-y-2 flex-grow overflow-y-auto pr-2">
-                        {data?.upcomingReminders && data.upcomingReminders.length > 0 ? (
-                            data.upcomingReminders.map(r => (
-                                <Link key={r._id} href="/reminders" className="flex items-center gap-3 p-2 bg-bg-light rounded-md hover:bg-bg-dark transition-colors">
-                                    <Clock className="w-4 h-4 text-warning flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-white truncate">{r.title}</p>
-                                        <p className="text-xs text-text-muted">{new Date(r.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
-                                    </div>
-                                    <ExternalLink className="w-3 h-3 text-text-muted" />
-                                </Link>
-                            ))
-                        ) : (
-                            <div className="text-center text-xs text-text-muted pt-4">No upcoming reminders.</div>
-                        )}
-                    </div>
+                <div className="flex items-center gap-3 p-2 rounded-md bg-white/5">
+                  <MapPin className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
+                  <span className="text-white font-medium truncate">{data?.userProfile?.location || 'Remote'}</span>
                 </div>
+              </div>
             </div>
-             <div key="activity-chart" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
-                 <h3 className="text-xl font-semibold text-white mb-6">Application Activity (Last 30 Days)</h3>
-                 {data?.applicationTrendData && data.applicationTrendData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="90%">
-                        <BarChart data={data.applicationTrendData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-                            <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
-                            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(110, 118, 140, 0.1)' }} />
-                            <Bar dataKey="applications" fill="var(--primary)" name="Applications" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="interviews" fill="var(--success)" name="Interviews" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                 ) : (
-                    <div className="h-full flex items-center justify-center text-text-muted">No activity data for this period.</div>
-                 )}
-            </div>
-              <div key="status-pie" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
-                 <h3 className="text-xl font-semibold text-white mb-6">Application Status</h3>
-                {data?.applicationStatus && data.applicationStatus.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="90%">
-                        <PieChart>
-                            <Pie data={data.applicationStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" nameKey="name">
-                                {data.applicationStatus.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip content={<CustomTooltip />} />
-                            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px' }} />
-                        </PieChart>
-                    </ResponsiveContainer>
+          </div>
+          <div key="reminders">
+            <div className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6 h-full flex flex-col">
+              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Bell className="w-6 h-6 text-[var(--warning)]" /> Upcoming Reminders</h3>
+              <div className="space-y-2 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                {data?.upcomingReminders && data.upcomingReminders.length > 0 ? (
+                  data.upcomingReminders.map(r => (
+                    <Link key={r._id} href="/reminders" className="flex items-center gap-3 p-2 bg-white/5 rounded-md hover:bg-white/10 transition-colors">
+                      <Clock className="w-4 h-4 text-[var(--warning)] flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-white truncate">{r.title}</p>
+                        <p className="text-xs text-[var(--text-muted)]">{new Date(r.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-[var(--text-muted)]" />
+                    </Link>
+                  ))
                 ) : (
-                    <div className="h-full flex items-center justify-center text-text-muted">No application data yet.</div>
+                  <div className="text-center text-xs text-[var(--text-muted)] pt-4">No upcoming reminders.</div>
                 )}
+              </div>
             </div>
-             <div key="skills" className="bg-bg-card rounded-xl shadow-lg border border-border p-6">
-                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Brain className="w-6 h-6 text-secondary" /> Top Skills</h3>
-                <div className="flex flex-wrap gap-3">
-                    {data?.topSkills && data.topSkills.length > 0 ? (
-                        data.topSkills.map(skill => (
-                            <Link key={skill.id} href={`/job-search?q=${encodeURIComponent(skill.skill)}`} className="px-4 py-2 rounded-full text-sm font-medium bg-secondary/20 border border-secondary/30 text-secondary hover:bg-secondary/30 transition-colors">
-                                {skill.skill}
-                            </Link>
-                        ))
-                    ) : (
-                        <p className="text-text-muted text-sm">Add resumes to see your top skills here.</p>
-                    )}
-                </div>
+          </div>
+          <div key="activity-chart" className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6">
+            <h3 className="text-xl font-semibold text-white mb-6">Application Activity (Last 30 Days)</h3>
+            {data?.applicationTrendData && data.applicationTrendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="90%">
+                <BarChart data={data.applicationTrendData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border-glass)' }} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border-glass)' }} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
+                  <Bar dataKey="applications" fill="var(--primary)" name="Applications" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="interviews" fill="var(--success)" name="Interviews" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-[var(--text-muted)]">No activity data for this period.</div>
+            )}
+          </div>
+          <div key="status-pie" className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6">
+            <h3 className="text-xl font-semibold text-white mb-6">Application Status</h3>
+            {data?.applicationStatus && data.applicationStatus.length > 0 ? (
+              <ResponsiveContainer width="100%" height="90%">
+                <PieChart>
+                  <Pie data={data.applicationStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" nameKey="name">
+                    {data.applicationStatus.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(0,0,0,0)" />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-[var(--text-muted)]">No application data yet.</div>
+            )}
+          </div>
+          <div key="skills" className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6">
+            <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Brain className="w-6 h-6 text-[var(--secondary)]" /> Top Skills</h3>
+            <div className="flex flex-wrap gap-3">
+              {data?.topSkills && data.topSkills.length > 0 ? (
+                data.topSkills.map(skill => (
+                  <Link key={skill.id} href={`/job-search?q=${encodeURIComponent(skill.skill)}`} className="px-4 py-2 rounded-full text-sm font-medium bg-[var(--secondary)]/10 border border-[var(--secondary)]/30 text-[var(--secondary)] hover:bg-[var(--secondary)]/20 transition-colors shadow-[0_0_10px_rgba(188,19,254,0.1)]">
+                    {skill.skill}
+                  </Link>
+                ))
+              ) : (
+                <p className="text-[var(--text-muted)] text-sm">Add resumes to see your top skills here.</p>
+              )}
             </div>
+          </div>
         </ResponsiveGridLayout>
       </div>
     </AppLayout>

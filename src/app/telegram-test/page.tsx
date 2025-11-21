@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import Button from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/FormInput';
 
 export default function TelegramTestPage() {
@@ -13,10 +13,10 @@ export default function TelegramTestPage() {
   const testCommand = async () => {
     setLoading(true);
     setResponse('');
-    
+
     try {
       console.log('🧪 Testing command:', command);
-      
+
       const res = await fetch('/api/telegram/local-test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,10 +25,10 @@ export default function TelegramTestPage() {
           chatId
         })
       });
-      
+
       const data = await res.json();
       console.log('🧪 Test result:', data);
-      
+
       if (data.success) {
         setResponse(data.response || 'No response generated');
       } else {
@@ -45,10 +45,10 @@ export default function TelegramTestPage() {
   const testTextMessage = async (text: string) => {
     setLoading(true);
     setResponse('');
-    
+
     try {
       console.log('🧪 Testing text message:', text);
-      
+
       // Import and use the text handler
       const res = await fetch('/api/telegram/local-test', {
         method: 'POST',
@@ -59,10 +59,10 @@ export default function TelegramTestPage() {
           isTextMessage: true
         })
       });
-      
+
       const data = await res.json();
       console.log('🧪 Text test result:', data);
-      
+
       if (data.success) {
         setResponse(data.response || 'No response generated');
       } else {
@@ -79,7 +79,7 @@ export default function TelegramTestPage() {
   const quickCommands = [
     '/start',
     '/status',
-    '/reminders', 
+    '/reminders',
     '/interviews',
     '/followups',
     '/help',
@@ -120,15 +120,15 @@ export default function TelegramTestPage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-white text-lg font-semibold mb-4">Test Commands</h3>
-              
+
               <div className="flex gap-2 mb-4">
                 <FormInput
                   value={command}
-                  onChange={setCommand}
+                  onChange={(e) => setCommand(e.target.value)}
                   placeholder="Enter command (e.g., /start)"
                   className="flex-1"
                 />
-                <Button 
+                <Button
                   onClick={testCommand}
                   disabled={loading}
                   className="bg-blue-600 hover:bg-blue-500"
@@ -147,7 +147,7 @@ export default function TelegramTestPage() {
                       setTimeout(() => testCommand(), 100);
                     }}
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={loading}
                   >
                     {cmd}
@@ -165,7 +165,7 @@ export default function TelegramTestPage() {
                     key={text}
                     onClick={() => testTextMessage(text)}
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={loading}
                     className="text-xs"
                   >

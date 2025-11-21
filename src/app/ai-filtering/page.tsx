@@ -886,30 +886,39 @@ const FilterPanel = ({
       <FormDateInput
         label="Posted After"
         value={filters.postedAfter}
-        onChange={(value) => handleFilterChange('postedAfter', value)}
+        onChange={(e) => handleFilterChange('postedAfter', e.target.value)}
       />
       <FormDateInput
         label="Posted Before"
         value={filters.postedBefore}
-        onChange={(value) => handleFilterChange('postedBefore', value)}
+        onChange={(e) => handleFilterChange('postedBefore', e.target.value)}
       />
 
       {/* Location Filter */}
       <FormInput
         label="Location"
         value={filters.location}
-        onChange={(value) => handleFilterChange('location', value)}
-        placeholder="e.g., Remote, New York"
-        icon={<MapPin className="w-4 h-4" />}
+        onChange={(e) => handleFilterChange('location', e.target.value)}
+        placeholder="e.g., San Francisco, CA"
       />
 
       {/* Confidence Filter */}
       <FormInputNumber
         label="Min Confidence (%)"
         value={filters.minConfidence}
-        onChange={(value) => handleFilterChange('minConfidence', value !== null ? value : 60)}
+        onChange={(e) => handleFilterChange('minConfidence', parseInt(e.target.value) || 60)}
         min={0}
         max={100}
+        step={1}
+      />
+
+      {/* Max Pages Filter */}
+      <FormInputNumber
+        label="Max Pages"
+        value={filters.maxPages ? parseInt(filters.maxPages) : 3}
+        onChange={(e) => handleFilterChange('maxPages', e.target.value)}
+        min={1}
+        max={20}
         step={1}
       />
 
@@ -1092,7 +1101,7 @@ const FilterPanel = ({
               <div className="flex-grow">
                 <FormInput
                   value={query}
-                  onChange={(value: string) => setQuery(value)}
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder="e.g., React Developer, MERN Stack, Full Stack Engineer"
                   icon={<Search className="w-5 h-5" />}
                   className="text-lg py-4"

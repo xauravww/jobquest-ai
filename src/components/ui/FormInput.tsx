@@ -1,194 +1,74 @@
 import React from 'react';
-import { Input, InputNumber, Select } from 'antd';
-import type { InputProps, InputNumberProps, SelectProps } from 'antd';
-import dayjs from 'dayjs';
 
-const { TextArea } = Input;
-
-interface FormInputProps extends Omit<InputProps, 'onChange' | 'prefix'> {
-  icon?: React.ReactNode;
-  label?: string;
-  error?: string;
-  required?: boolean;
-  onChange?: (value: string) => void;
-}
-
-interface FormInputNumberProps extends Omit<InputNumberProps, 'prefix'> {
+interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
   label?: string;
   error?: string;
   required?: boolean;
 }
 
-interface FormDateInputProps {
-  value?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
+interface FormInputNumberProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  icon?: React.ReactNode;
   label?: string;
   error?: string;
-  className?: string;
   required?: boolean;
 }
 
-interface FormSelectProps extends Omit<SelectProps, 'onChange'> {
+interface FormDateInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  required?: boolean;
+}
+
+interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   options: Array<{ value: string; label: string }>;
-  onChange?: (value: string) => void;
   required?: boolean;
 }
 
-interface FormTextareaProps {
-  value?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
+interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
-  className?: string;
-  rows?: number;
   required?: boolean;
 }
 
-export const FormInput: React.FC<FormInputProps> = ({ 
-  icon, 
-  label, 
-  error, 
+export const FormInput: React.FC<FormInputProps> = ({
+  icon,
+  label,
+  error,
   className = '',
   required = false,
-  value = '',
-  onChange,
-  ...props 
+  ...props
 }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange?.(e.target.value);
-  };
-
   return (
     <div className={`w-full ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500 ml-1">*</span>}
+        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
+          {label} {required && <span className="text-[var(--danger)] ml-1">*</span>}
         </label>
       )}
       <div className="relative">
-        <Input
-          {...props}
-          value={value}
-          allowClear
-          prefix={icon && <span className="text-primary mr-1">{icon}</span>}
-          className={`bg-bg-card border-border hover:border-primary focus:border-primary transition-all duration-200 ${
-            error ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' : 'focus:ring-2 focus:ring-primary/20'
-          }`}
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            borderColor: error ? '#ef4444' : 'var(--border)',
-            color: 'var(--text)',
-            height: '44px',
-          }}
-          onChange={handleChange}
-        />
-        {error && (
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary)]">
+            {icon}
           </div>
         )}
-      </div>
-      {error && (
-        <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
-          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          {error}
-        </p>
-      )}
-    </div>
-  );
-};
-
-export const FormInputNumber: React.FC<FormInputNumberProps> = ({ 
-  icon, 
-  label, 
-  error, 
-  className = '',
-  required = false,
-  ...props 
-}) => {
-  return (
-    <div className={`w-full ${className}`}>
-      {label && (
-        <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
-        </label>
-      )}
-      <InputNumber
-        {...props}
-        prefix={icon && <span className="text-primary">{icon}</span>}
-        className={`w-full bg-bg-card border-border hover:border-primary focus:border-primary ${error ? 'border-red-500' : ''}`}
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: error ? '#ef4444' : 'var(--border)',
-          color: 'var(--text)',
-          width: '100%'
-        }}
-      />
-      {error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
-      )}
-    </div>
-  );
-};
-
-export const FormDateInput: React.FC<FormDateInputProps> = ({ 
-  value, 
-  onChange, 
-  placeholder, 
-  label, 
-  error, 
-  className = '',
-  required = false
-}) => {
-  // Check if value is a valid date string
-  const dateValue = value && value !== '' && !isNaN(Date.parse(value)) ? value : '';
-
-  return (
-    <div className={`w-full ${className}`}>
-      {label && (
-        <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-      )}
-      <div className="relative">
         <input
-          type="date"
-          value={dateValue}
-          onChange={(e) => onChange?.(e.target.value)}
-          placeholder={placeholder}
-          className={`bg-bg-card border border-border hover:border-primary focus:border-primary rounded-lg px-4 py-3 text-text w-full transition-all duration-200 focus:outline-none focus:ring-2 ${
-            error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'focus:ring-primary/20'
-          }`}
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            borderColor: error ? '#ef4444' : 'var(--border)',
-            color: 'var(--text)',
-            height: '44px',
-          }}
-          required={required}
+          {...props}
+          className={`w-full bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl px-4 py-2.5 text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-all duration-200 ${icon ? 'pl-10' : ''
+            } ${error ? 'border-[var(--danger)] focus:border-[var(--danger)]' : ''}`}
         />
         {error && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="h-5 w-5 text-[var(--danger)]" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
           </div>
         )}
       </div>
       {error && (
-        <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
-          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
+        <p className="text-[var(--danger)] text-xs mt-2 flex items-center gap-1">
           {error}
         </p>
       )}
@@ -196,76 +76,124 @@ export const FormDateInput: React.FC<FormDateInputProps> = ({
   );
 };
 
-export const FormSelect: React.FC<FormSelectProps> = ({ 
-  label, 
-  error, 
-  options, 
-  onChange, 
+export const FormInputNumber: React.FC<FormInputNumberProps> = ({
+  icon,
+  label,
+  error,
   className = '',
   required = false,
-  ...props 
+  ...props
 }) => {
   return (
     <div className={`w-full ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
+          {label} {required && <span className="text-[var(--danger)] ml-1">*</span>}
         </label>
       )}
-      <Select
-        {...props}
-        onChange={onChange}
-        options={options}
-        className={`w-full ant-select-dark ${error ? 'border-red-500' : ''}`}
-        popupClassName="ant-select-dropdown-dark"
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: error ? '#ef4444' : 'var(--border)',
-        }}
-        dropdownStyle={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: 'var(--border)',
-          color: 'var(--text)',
-        }}
-      />
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--primary)]">
+            {icon}
+          </div>
+        )}
+        <input
+          type="number"
+          {...props}
+          className={`w-full bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl px-4 py-2.5 text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-all duration-200 ${icon ? 'pl-10' : ''
+            } ${error ? 'border-[var(--danger)] focus:border-[var(--danger)]' : ''}`}
+        />
+      </div>
       {error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
+        <span className="text-[var(--danger)] text-xs mt-1">{error}</span>
       )}
     </div>
   );
 };
 
-export const FormTextarea: React.FC<FormTextareaProps> = ({ 
-  value, 
-  onChange, 
-  placeholder, 
-  label, 
-  error, 
+export const FormDateInput: React.FC<FormDateInputProps> = ({
+  label,
+  error,
   className = '',
-  rows = 3,
-  required = false
+  required = false,
+  ...props
 }) => {
   return (
     <div className={`w-full ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-white mb-2">
-          {label} {required && <span className="text-red-500">*</span>}
+        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
+          {label} {required && <span className="text-[var(--danger)] ml-1">*</span>}
         </label>
       )}
-      <TextArea
-        value={value}
-        onChange={(e) => onChange?.(e.target.value)}
-        placeholder={placeholder}
-        rows={rows}
-        className={`bg-bg-card border-border hover:border-primary focus:border-primary ${error ? 'border-red-500' : ''}`}
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderColor: error ? '#ef4444' : 'var(--border)',
-          color: 'var(--text)',
-        }}
+      <input
+        type="date"
+        {...props}
+        className={`w-full bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl px-4 py-2.5 text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-all duration-200 ${error ? 'border-[var(--danger)] focus:border-[var(--danger)]' : ''
+          }`}
       />
       {error && (
-        <span className="text-red-500 text-xs mt-1">{error}</span>
+        <p className="text-[var(--danger)] text-xs mt-2 flex items-center gap-1">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+};
+
+export const FormSelect: React.FC<FormSelectProps> = ({
+  label,
+  error,
+  options,
+  className = '',
+  required = false,
+  ...props
+}) => {
+  return (
+    <div className={`w-full ${className}`}>
+      {label && (
+        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
+          {label} {required && <span className="text-[var(--danger)] ml-1">*</span>}
+        </label>
+      )}
+      <select
+        {...props}
+        className={`w-full bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl px-4 py-2.5 text-white focus:border-[var(--primary)] focus:outline-none appearance-none transition-all duration-200 ${error ? 'border-[var(--danger)]' : ''
+          }`}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <span className="text-[var(--danger)] text-xs mt-1">{error}</span>
+      )}
+    </div>
+  );
+};
+
+export const FormTextarea: React.FC<FormTextareaProps> = ({
+  label,
+  error,
+  className = '',
+  required = false,
+  ...props
+}) => {
+  return (
+    <div className={`w-full ${className}`}>
+      {label && (
+        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
+          {label} {required && <span className="text-[var(--danger)] ml-1">*</span>}
+        </label>
+      )}
+      <textarea
+        {...props}
+        className={`w-full bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl px-4 py-2.5 text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-all duration-200 resize-none ${error ? 'border-[var(--danger)] focus:border-[var(--danger)]' : ''
+          }`}
+      />
+      {error && (
+        <span className="text-[var(--danger)] text-xs mt-1">{error}</span>
       )}
     </div>
   );

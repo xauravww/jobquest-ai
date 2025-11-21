@@ -44,12 +44,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-bg text-text min-h-screen flex flex-col`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-[var(--bg-deep)] text-[var(--text-main)] min-h-screen flex flex-col overflow-x-hidden`}
       >
         <Providers>
           <OnboardingCheck />
-          <Navbar />
-          <main className="pt-16 flex-grow">{children}</main>
+          <main className="flex-grow relative z-10">{children}</main>
         </Providers>
       </body>
     </html>

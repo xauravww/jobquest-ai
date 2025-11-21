@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Input, Pagination } from 'antd';
 import AppLayout from '@/components/AppLayout';
 import {
   Calendar,
@@ -10,13 +9,16 @@ import {
   Search,
   Target,
   Zap,
-  FileText
+  FileText,
+  MapPin,
+  Video,
+  Plus,
+  Trash2
 } from 'lucide-react';
-import { RiDeleteBin6Line } from 'react-icons/ri';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EventsSkeleton from '@/components/ui/EventsSkeleton';
 import CreateEventModal from '@/components/modals/CreateEventModal';
-const { Search: AntSearch } = Input;
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface CalendarEvent {
   _id: string;
@@ -63,7 +65,6 @@ const EventsPage = () => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -72,7 +73,6 @@ const EventsPage = () => {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Fetch data from backend on page load, search, page change, or refreshCounter change
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -93,7 +93,7 @@ const EventsPage = () => {
           setEvents([]);
           setTotal(0);
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Error fetching events:', error);
         setEvents([]);
         setTotal(0);
@@ -105,31 +105,22 @@ const EventsPage = () => {
   }, [currentPage, debouncedQuery, itemsPerPage, refreshCounter]);
 
   const refetchData = () => {
-    // Increment refreshCounter to trigger fetch useEffect
     setRefreshCounter(prev => prev + 1);
   };
 
-  // Add an effect to listen for the refetch event
-  useEffect(() => {
-    const refetchDataListener = () => {
-      refetchData();
-    };
-    window.addEventListener('refetchEvents', refetchDataListener);
-    return () => {
-      window.removeEventListener('refetchEvents', refetchDataListener);
-    };
-  }, []);
-
   const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this event?')) return;
     try {
       const response = await fetch(`/api/calendar/events/${id}`, { method: 'DELETE' });
       if (response.ok) {
-        // Dispatch event to trigger refetch
-        const event = new Event('refetchEvents');
-        window.dispatchEvent(event);
+        toast.success('Event deleted successfully');
+        refetchData();
+      } else {
+        toast.error('Failed to delete event');
       }
     } catch (error) {
       console.error('Error deleting event:', error);
+      toast.error('Error deleting event');
     }
   };
 
@@ -152,7 +143,7 @@ const EventsPage = () => {
         return filtered;
     }
   };
-  
+
   const filteredEvents = getFilteredEvents();
 
   const getTimeDisplay = (event: CalendarEvent) => {
@@ -163,156 +154,231 @@ const EventsPage = () => {
     if (date.toDateString() === tomorrow.toDateString()) return `Tomorrow at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
-  
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-white bg-green-600';
-      case 'pending': return 'text-white bg-blue-600';
-      case 'snoozed': return 'text-white bg-yellow-600';
-      case 'cancelled': return 'text-white bg-red-600';
-      case 'scheduled': return 'text-white bg-blue-600';
-      case 'confirmed': return 'text-white bg-green-600';
-      default: return 'text-white bg-gray-600';
+      case 'completed': return 'text-[var(--success)] bg-[var(--success)]/10 border-[var(--success)]/20';
+      case 'pending': return 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20';
+      case 'snoozed': return 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]/20';
+      case 'cancelled': return 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20';
+      case 'scheduled': return 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20';
+      case 'confirmed': return 'text-[var(--success)] bg-[var(--success)]/10 border-[var(--success)]/20';
+      default: return 'text-[var(--text-muted)] bg-[var(--bg-surface)] border-[var(--border-glass)]';
     }
   };
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
-        {/* Header and Search/Filter controls are now always visible */}
-        <div className="text-center mb-8 mt-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="p-3 bg-gradient-to-br from-blue-600/20 to-blue-600/10 rounded-xl border border-blue-600/30">
-                <Calendar className="w-8 h-8 text-blue-600" />
+      <div className="p-6 lg:p-8 min-h-screen space-y-8">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+                <Calendar className="w-8 h-8 text-[var(--primary)]" />
               </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                My Events
-              </h1>
+              My Events
+            </h1>
+            <p className="text-[var(--text-muted)] mt-2 ml-16">Manage your job search events and important deadlines</p>
+          </div>
+
+          <button
+            onClick={() => { setEditingEvent(undefined); setShowCreateModal(true); }}
+            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Event</span>
+          </button>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-glass)] space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex-1 w-full relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                placeholder="Search your events..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+              />
             </div>
-            <p className="text-text-muted text-lg max-w-2xl mx-auto">
-              Manage your job search events and important deadlines
-            </p>
-        </div>
-        <div className="flex justify-center gap-4 mb-8">
-            <button
-              onClick={() => { setEditingEvent(undefined); setShowCreateModal(true); }}
-              className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
-            >
-              <Calendar className="w-5 h-5" /> Add Event
-            </button>
-        </div>
-        <div className="max-w-4xl mx-auto mb-8">
-            <div className="filter-panel rounded-xl p-6">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="flex-1 w-full">
-                  <AntSearch
-                    placeholder="Search your events..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    size="large"
-                    allowClear
-                    enterButton={<Search className="w-5 h-5" />}
-                    className="max-w-full rounded-lg"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  {[ { key: 'all', label: 'All', icon: Target }, { key: 'today', label: 'Today', icon: Zap }, { key: 'upcoming', label: 'Upcoming', icon: Clock }, { key: 'overdue', label: 'Overdue', icon: Calendar } ]
-                  .map(({ key, label, icon: Icon }) => (
-                    <button key={key} onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${activeFilter === key ? 'bg-blue-600 text-white shadow-lg' : 'bg-bg-light hover:bg-bg-card text-text-secondary hover:text-white'}`}>
-                      <Icon className="w-4 h-4" /> {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
+              {[
+                { key: 'all', label: 'All', icon: Target },
+                { key: 'today', label: 'Today', icon: Zap },
+                { key: 'upcoming', label: 'Upcoming', icon: Clock },
+                { key: 'overdue', label: 'Overdue', icon: Calendar }
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all whitespace-nowrap ${activeFilter === key
+                      ? 'bg-[var(--primary)] text-black shadow-lg shadow-[var(--primary)]/20'
+                      : 'bg-[var(--bg-deep)] text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-glass)] border border-[var(--border-glass)]'
+                    }`}
+                >
+                  <Icon className="w-4 h-4" /> {label}
+                </button>
+              ))}
             </div>
-        </div>
-        <div className="max-w-4xl mx-auto mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">
-                All Events ({filteredEvents.length})
-            </h2>
-            {debouncedQuery && <span className="text-text-muted text-sm">Searching for &quot;{debouncedQuery}&quot;</span>}
           </div>
         </div>
 
-        {/* This section now handles the loading, empty, and data states */}
-        <div className="max-w-4xl mx-auto">
-          {loading ? (
-            <EventsSkeleton count={5} />
-           ) : filteredEvents.length === 0 ? (
-            <div className="text-center py-20">
-               <div className="w-24 h-24 bg-gradient-to-br from-blue-600/20 to-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-600/30">
-                 <Target className="w-12 h-12 text-blue-600" />
-               </div>
-               <h3 className="text-2xl font-bold text-white mb-4">
-                 {debouncedQuery ? 'No matches found' : 'No events yet'}
-               </h3>
-               <p className="text-text-muted text-lg max-w-md mx-auto leading-relaxed mb-6">
-                 {debouncedQuery ? 'Try adjusting your search terms' : 'Start by adding your first event to stay organized'}
-               </p>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <span className="w-2 h-8 bg-[var(--secondary)] rounded-full"></span>
+            All Events ({filteredEvents.length})
+          </h2>
+          {debouncedQuery && <span className="text-[var(--text-muted)] text-sm">Searching for &quot;{debouncedQuery}&quot;</span>}
+        </div>
+
+        {/* Events List */}
+        {loading ? (
+          <EventsSkeleton count={5} />
+        ) : filteredEvents.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-[var(--border-glass)] rounded-2xl bg-[var(--bg-surface)]/20">
+            <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-6 border border-[var(--border-glass)]">
+              <Target className="w-10 h-10 text-[var(--text-muted)]" />
             </div>
-          ) : (
-            <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-white mb-2">
+              {debouncedQuery ? 'No matches found' : 'No events yet'}
+            </h3>
+            <p className="text-[var(--text-muted)] max-w-md mx-auto mb-6">
+              {debouncedQuery ? 'Try adjusting your search terms' : 'Start by adding your first event to stay organized'}
+            </p>
+            {!debouncedQuery && (
+              <button
+                onClick={() => { setEditingEvent(undefined); setShowCreateModal(true); }}
+                className="px-6 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
+              >
+                Add Your First Event
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <AnimatePresence mode="popLayout">
               {filteredEvents.map((event) => (
-                <div key={event._id}
-                  className={`bg-gradient-to-r from-bg-card to-bg-card/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${event.status === 'completed' ? 'border-green-500/30 bg-green-500/5' : 'border-border hover:border-blue-600/50'}`}>
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 mt-1"><Calendar className="w-5 h-5 text-blue-600" /></div>
+                <motion.div
+                  key={event._id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className={`rounded-xl p-6 border transition-all duration-300 hover:shadow-lg hover:shadow-[var(--primary)]/5 group ${event.status === 'completed'
+                      ? 'bg-[var(--success)]/5 border-[var(--success)]/20'
+                      : 'bg-[var(--bg-surface)]/50 border-[var(--border-glass)] hover:border-[var(--primary)]/50'
+                    }`}
+                >
+                  <div className="flex flex-col md:flex-row items-start gap-4">
+                    <div className="flex-shrink-0 mt-1 p-3 bg-[var(--bg-deep)] rounded-xl border border-[var(--border-glass)]">
+                      <Calendar className="w-6 h-6 text-[var(--primary)]" />
+                    </div>
+
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`text-lg font-semibold ${event.status === 'completed' ? 'line-through text-text-muted' : 'text-white'}`}>{event.title}</h3>
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(event.status)}`}>
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h3 className={`text-xl font-bold ${event.status === 'completed' ? 'line-through text-[var(--text-muted)]' : 'text-white'}`}>
+                          {event.title}
+                        </h3>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full border ${getStatusColor(event.status)}`}>
                           {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                         </span>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full border ${event.priority === 'high' ? 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20' :
+                            event.priority === 'medium' ? 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]/20' :
+                              'text-[var(--success)] bg-[var(--success)]/10 border-[var(--success)]/20'
+                          }`}>
+                          {event.priority.charAt(0).toUpperCase() + event.priority.slice(1)} Priority
+                        </span>
                       </div>
-                      <div className="flex items-center gap-6 text-sm text-text-muted mt-2">
-                        <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-blue-600" /><span className="font-medium">{getTimeDisplay(event)}</span></div>
-                        {event.jobId && typeof event.jobId === 'object' && <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-blue-500" /><span>{event.jobId.title} at {event.jobId.company}</span></div>}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-sm text-[var(--text-muted)] mt-3">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-[var(--secondary)]" />
+                          <span className="font-medium text-white">{getTimeDisplay(event)}</span>
+                        </div>
+
+                        {event.location && (
+                          <div className="flex items-center gap-2">
+                            {event.location.isVirtual ? <Video className="w-4 h-4 text-[var(--primary)]" /> : <MapPin className="w-4 h-4 text-[var(--primary)]" />}
+                            <span>
+                              {event.location.isVirtual
+                                ? 'Virtual Meeting'
+                                : event.location.address || 'No location specified'}
+                            </span>
+                          </div>
+                        )}
+
+                        {event.jobId && typeof event.jobId === 'object' && (
+                          <div className="flex items-center gap-2 md:col-span-2">
+                            <FileText className="w-4 h-4 text-[var(--warning)]" />
+                            <span>{event.jobId.title} at <span className="text-white font-medium">{event.jobId.company}</span></span>
+                          </div>
+                        )}
                       </div>
+
+                      {event.description && (
+                        <p className="mt-3 text-[var(--text-muted)] text-sm line-clamp-2">{event.description}</p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => { setEditingEvent(event); setShowCreateModal(true); }}
-                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105" title="Edit">
-                        <Edit className="w-5 h-5" /><span className="sr-only">Edit</span>
+
+                    <div className="flex items-center gap-2 w-full md:w-auto mt-4 md:mt-0">
+                      <button
+                        onClick={() => { setEditingEvent(event); setShowCreateModal(true); }}
+                        className="flex-1 md:flex-none p-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="w-5 h-5" />
                       </button>
-                      <button onClick={() => handleDeleteEvent(event._id)}
-                        className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105" title="Delete">
-                        <RiDeleteBin6Line className="w-5 h-5" /><span className="sr-only">Delete</span>
+                      <button
+                        onClick={() => handleDeleteEvent(event._id)}
+                        className="flex-1 md:flex-none p-2 bg-[var(--danger)]/10 hover:bg-[var(--danger)]/20 text-[var(--danger)] border border-[var(--danger)]/20 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
-          )}
+            </AnimatePresence>
+          </div>
+        )}
 
-          {/* Conditional Pagination */}
-          {total > 0 && (
-            <div className="flex justify-center mt-8">
-              <Pagination
-                current={currentPage}
-                total={total}
-                pageSize={itemsPerPage}
-                onChange={(page) => setCurrentPage(page)}
-                showSizeChanger={false}
-                showQuickJumper
-                className="rounded-lg p-4"
-                style={{ display: 'block' }}
-              />
+        {/* Pagination */}
+        {total > itemsPerPage && (
+          <div className="flex justify-center mt-8">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 text-[var(--text-muted)]">
+                Page {currentPage} of {Math.ceil(total / itemsPerPage)}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(total / itemsPerPage), p + 1))}
+                disabled={currentPage === Math.ceil(total / itemsPerPage)}
+                className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
+              >
+                Next
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {showCreateModal && (
-            <CreateEventModal
-              isOpen={showCreateModal}
-              onClose={() => { setShowCreateModal(false); setEditingEvent(undefined); }}
-              onSuccess={() => { refetchData(); setEditingEvent(undefined); }}
-              editingEvent={editingEvent}
-            />
-          )}
-        </div>
+        {showCreateModal && (
+          <CreateEventModal
+            isOpen={showCreateModal}
+            onClose={() => { setShowCreateModal(false); setEditingEvent(undefined); }}
+            onSuccess={() => { refetchData(); setEditingEvent(undefined); }}
+            editingEvent={editingEvent}
+          />
+        )}
       </div>
     </AppLayout>
   );

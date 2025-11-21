@@ -1,28 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Switch, Input, Button, Select, Slider, Divider, Tag, Alert } from 'antd';
 import {
   Settings,
   Bell,
   MessageSquare,
   Mail,
-  Phone,
   Shield,
   Zap,
   Save,
   TestTube,
   CheckCircle,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { notificationService, NotificationPreferences } from '@/services/NotificationService';
 import { telegramService } from '@/services/TelegramService';
 import toast from 'react-hot-toast';
-
-const { Option } = Select;
-const { TextArea } = Input;
+import { motion } from 'framer-motion';
 
 const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -238,9 +235,9 @@ const SettingsPage = () => {
   }) => (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${isActive
-          ? 'bg-primary text-white shadow-lg'
-          : 'text-gray-400 hover:text-white hover:bg-gray-700'
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all w-full text-left ${isActive
+        ? 'bg-[var(--primary)] text-black shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]'
+        : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-surface)]'
         }`}
     >
       <Icon className="w-5 h-5" />
@@ -248,20 +245,31 @@ const SettingsPage = () => {
     </button>
   );
 
+  const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: (checked: boolean) => void, disabled?: boolean }) => (
+    <button
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative w-12 h-6 rounded-full transition-colors ${checked ? 'bg-[var(--primary)]' : 'bg-[var(--bg-deep)] border border-[var(--border-glass)]'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'
+        }`} />
+    </button>
+  );
+
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
+      <div className="p-6 lg:p-8 min-h-screen">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-r from-gray-500/20 to-gray-500/10 rounded-xl border border-gray-500/30">
-                  <Settings className="w-8 h-8 text-gray-400" />
+                <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border-glass)]">
+                  <Settings className="w-8 h-8 text-[var(--text-muted)]" />
                 </div>
                 Settings
               </h1>
-              <p className="text-gray-400 mt-2 text-lg">
+              <p className="text-[var(--text-muted)] mt-2 text-lg ml-16">
                 Configure your notifications, integrations, and preferences
               </p>
             </div>
@@ -270,7 +278,7 @@ const SettingsPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700 space-y-2">
+              <div className="bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-4 border border-[var(--border-glass)] space-y-2">
                 <TabButton
                   id="notifications"
                   label="Notifications"
@@ -304,152 +312,152 @@ const SettingsPage = () => {
 
             {/* Content */}
             <div className="lg:col-span-3">
-              {activeTab === 'notifications' && (
-                <Card className="bg-gray-800/50 border-gray-700">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                        <Bell className="w-5 h-5 text-yellow-400" />
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-[var(--bg-surface)]/50 backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-6"
+              >
+                {activeTab === 'notifications' && (
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between border-b border-[var(--border-glass)] pb-6">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Bell className="w-5 h-5 text-[var(--warning)]" />
                         Notification Preferences
                       </h2>
-                      <Button
-                        type="primary"
-                        icon={<Save className="w-4 h-4" />}
+                      <button
                         onClick={saveNotificationSettings}
-                        loading={loading}
-                        className="bg-primary hover:bg-primary/80"
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50"
                       >
-                        Save Changes
-                      </Button>
+                        <Save className="w-4 h-4" />
+                        {loading ? 'Saving...' : 'Save Changes'}
+                      </button>
                     </div>
-
-                    <Divider className="border-gray-600" />
 
                     {/* Notification Channels */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">Notification Channels</h3>
+                      <h3 className="text-lg font-semibold text-white">Notification Channels</h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)]/50 border border-[var(--border-glass)] rounded-xl hover:border-[var(--primary)]/30 transition-colors">
                           <div className="flex items-center gap-3">
                             <Bell className="w-5 h-5 text-blue-400" />
                             <div>
                               <p className="font-medium text-white">In-App Notifications</p>
-                              <p className="text-sm text-gray-400">Show notifications in the app</p>
+                              <p className="text-sm text-[var(--text-muted)]">Show notifications in the app</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
+                          <div className="flex items-center gap-3">
+                            <ToggleSwitch
                               checked={notificationPrefs.inApp}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, inApp: checked }))}
                             />
-                            <Button
-                              size="small"
-                              icon={<TestTube className="w-3 h-3" />}
+                            <button
                               onClick={() => testNotification('inApp')}
+                              className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                              title="Test Notification"
                             >
-                              Test
-                            </Button>
+                              <TestTube className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)]/50 border border-[var(--border-glass)] rounded-xl hover:border-[var(--primary)]/30 transition-colors">
                           <div className="flex items-center gap-3">
-                            <Zap className="w-5 h-5 text-green-400" />
+                            <Zap className="w-5 h-5 text-[var(--success)]" />
                             <div>
                               <p className="font-medium text-white">Push Notifications</p>
-                              <p className="text-sm text-gray-400">Browser push notifications</p>
+                              <p className="text-sm text-[var(--text-muted)]">Browser push notifications</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
+                          <div className="flex items-center gap-3">
+                            <ToggleSwitch
                               checked={notificationPrefs.push}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, push: checked }))}
                             />
-                            <Button
-                              size="small"
-                              icon={<TestTube className="w-3 h-3" />}
+                            <button
                               onClick={() => testNotification('push')}
+                              className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                              title="Test Notification"
                             >
-                              Test
-                            </Button>
+                              <TestTube className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)]/50 border border-[var(--border-glass)] rounded-xl hover:border-[var(--primary)]/30 transition-colors">
                           <div className="flex items-center gap-3">
                             <MessageSquare className="w-5 h-5 text-purple-400" />
                             <div>
                               <p className="font-medium text-white">Telegram</p>
-                              <p className="text-sm text-gray-400">Send to Telegram bot</p>
+                              <p className="text-sm text-[var(--text-muted)]">Send to Telegram bot</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
+                          <div className="flex items-center gap-3">
+                            <ToggleSwitch
                               checked={notificationPrefs.telegram}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, telegram: checked }))}
                               disabled={!telegramStatus.connected}
                             />
-                            <Button
-                              size="small"
-                              icon={<TestTube className="w-3 h-3" />}
+                            <button
                               onClick={() => testNotification('telegram')}
                               disabled={!telegramStatus.connected}
+                              className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors disabled:opacity-50"
+                              title="Test Notification"
                             >
-                              Test
-                            </Button>
+                              <TestTube className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)]/50 border border-[var(--border-glass)] rounded-xl hover:border-[var(--primary)]/30 transition-colors">
                           <div className="flex items-center gap-3">
-                            <Mail className="w-5 h-5 text-red-400" />
+                            <Mail className="w-5 h-5 text-[var(--danger)]" />
                             <div>
                               <p className="font-medium text-white">Email</p>
-                              <p className="text-sm text-gray-400">Send email notifications</p>
+                              <p className="text-sm text-[var(--text-muted)]">Send email notifications</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
+                          <div className="flex items-center gap-3">
+                            <ToggleSwitch
                               checked={notificationPrefs.email}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, email: checked }))}
                             />
-                            <Button
-                              size="small"
-                              icon={<TestTube className="w-3 h-3" />}
+                            <button
                               onClick={() => testNotification('email')}
+                              className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                              title="Test Notification"
                             >
-                              Test
-                            </Button>
+                              <TestTube className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <Divider className="border-gray-600" />
-
-                    {/* Notification Types */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">Notification Types</h3>
+                    <div className="border-t border-[var(--border-glass)] pt-6 space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Notification Types</h3>
 
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
-                          <span className="text-white">Interview Reminders</span>
-                          <Switch
+                        <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
+                          <span className="text-white font-medium">Interview Reminders</span>
+                          <ToggleSwitch
                             checked={notificationPrefs.interviewReminders}
                             onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, interviewReminders: checked }))}
                           />
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
-                          <span className="text-white">Follow-up Reminders</span>
-                          <Switch
+                        <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
+                          <span className="text-white font-medium">Follow-up Reminders</span>
+                          <ToggleSwitch
                             checked={notificationPrefs.followUpReminders}
                             onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, followUpReminders: checked }))}
                           />
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
-                          <span className="text-white">Application Deadlines</span>
-                          <Switch
+                        <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
+                          <span className="text-white font-medium">Application Deadlines</span>
+                          <ToggleSwitch
                             checked={notificationPrefs.applicationDeadlines}
                             onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, applicationDeadlines: checked }))}
                           />
@@ -457,260 +465,247 @@ const SettingsPage = () => {
                       </div>
                     </div>
 
-                    <Divider className="border-gray-600" />
-
-                    {/* Timing Settings */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">Timing</h3>
+                    <div className="border-t border-[var(--border-glass)] pt-6 space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Timing</h3>
 
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                          <label className="block text-sm font-medium text-[var(--text-muted)] mb-4">
                             Reminder Notification Time (minutes before)
                           </label>
-                          <Slider
-                            min={5}
-                            max={120}
-                            step={5}
+                          <input
+                            type="range"
+                            min="5"
+                            max="120"
+                            step="5"
                             value={notificationPrefs.remindersBefore}
-                            onChange={(value) => setNotificationPrefs(prev => ({ ...prev, remindersBefore: value }))}
-                            marks={{
-                              5: { style: { color: '#9ca3af' }, label: '5m' },
-                              15: { style: { color: '#9ca3af' }, label: '15m' },
-                              30: { style: { color: '#9ca3af' }, label: '30m' },
-                              60: { style: { color: '#9ca3af' }, label: '1h' },
-                              120: { style: { color: '#9ca3af' }, label: '2h' }
-                            }}
-                            className="mb-4 custom-dark-slider"
+                            onChange={(e) => setNotificationPrefs(prev => ({ ...prev, remindersBefore: parseInt(e.target.value) }))}
+                            className="w-full h-2 bg-[var(--bg-deep)] rounded-lg appearance-none cursor-pointer accent-[var(--primary)]"
                           />
-                          <p className="text-sm text-gray-400">
+                          <div className="flex justify-between text-xs text-[var(--text-muted)] mt-2">
+                            <span>5m</span>
+                            <span>15m</span>
+                            <span>30m</span>
+                            <span>1h</span>
+                            <span>2h</span>
+                          </div>
+                          <p className="text-sm text-[var(--primary)] font-medium mt-2 text-center">
                             Current: {notificationPrefs.remindersBefore} minutes before
                           </p>
                         </div>
                       </div>
                     </div>
                   </div>
-                </Card>
-              )}
+                )}
 
-              {activeTab === 'telegram' && (
-                <Card className="bg-gray-800/50 border-gray-700">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                {activeTab === 'telegram' && (
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between border-b border-[var(--border-glass)] pb-6">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         <MessageSquare className="w-5 h-5 text-purple-400" />
                         Telegram Integration
                       </h2>
-                      <div className="flex items-center gap-2">
-                        <Tag color={telegramStatus.connected ? 'green' : 'red'}>
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${telegramStatus.connected
+                            ? 'bg-[var(--success)]/10 border-[var(--success)]/20 text-[var(--success)]'
+                            : 'bg-[var(--danger)]/10 border-[var(--danger)]/20 text-[var(--danger)]'
+                          }`}>
                           {telegramStatus.connected ? 'Connected' : 'Disconnected'}
-                        </Tag>
-                        <Button
-                          type="primary"
-                          icon={<Save className="w-4 h-4" />}
+                        </span>
+                        <button
                           onClick={saveTelegramSettings}
-                          loading={loading}
-                          className="bg-purple-600 hover:bg-purple-500"
+                          disabled={loading}
+                          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50"
                         >
-                          Save & Connect
-                        </Button>
+                          <Save className="w-4 h-4" />
+                          {loading ? 'Saving...' : 'Save & Connect'}
+                        </button>
                       </div>
                     </div>
 
-                    <Alert
-                      message="Telegram Integration Setup"
-                      description={
-                        <div className="space-y-2">
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-4">
+                      <Info className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-blue-400">Telegram Integration Setup</h4>
+                        <div className="text-sm text-blue-200/80 space-y-2">
                           <p>To enable Telegram notifications:</p>
-                          <ol className="list-decimal list-inside space-y-1 text-sm">
-                            <li>Send /start to our shared bot on Telegram</li>
+                          <ol className="list-decimal list-inside space-y-1 ml-2">
+                            <li>Send <code className="bg-blue-500/20 px-1 rounded">/start</code> to our shared bot on Telegram</li>
                             <li>Copy your Telegram User ID from the bot's response</li>
                             <li>Enter your User ID below and save</li>
-                            <li>Start using commands like <code>fleeting: Your note here</code></li>
+                            <li>Start using commands like <code className="bg-blue-500/20 px-1 rounded">fleeting: Your note here</code></li>
                           </ol>
-                          <p className="text-xs text-gray-400 mt-2">
+                          <p className="text-xs opacity-70 mt-2">
                             <strong>Shared Bot:</strong> All users use the same bot for simplicity
                           </p>
                         </div>
-                      }
-                      type="info"
-                      showIcon
-                      className="bg-blue-500/10 border-blue-500/30"
-                    />
+                      </div>
+                    </div>
 
-                    <Divider className="border-gray-600" />
-
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
                           Telegram User ID
                         </label>
-                        <Input
+                        <input
+                          type="text"
                           placeholder="Enter your Telegram User ID (e.g., 123456789)"
                           value={telegramConfig.userId}
                           onChange={(e) => setTelegramConfig(prev => ({ ...prev, userId: e.target.value }))}
-                          className="bg-gray-700 border-gray-600"
+                          className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-all"
                         />
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-[var(--text-muted)] mt-2">
                           Send /start to our bot to get your User ID
                         </p>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
                           Telegram Username (Optional)
                         </label>
-                        <Input
+                        <input
+                          type="text"
                           placeholder="Your Telegram username (without @)"
                           value={telegramConfig.username}
                           onChange={(e) => setTelegramConfig(prev => ({ ...prev, username: e.target.value }))}
-                          className="bg-gray-700 border-gray-600"
+                          className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-all"
                         />
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-[var(--text-muted)] mt-2">
                           Optional: Your @username for reference
                         </p>
                       </div>
                     </div>
 
-                    <Divider className="border-gray-600" />
-
-                    {/* Status */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">Connection Status</h3>
+                    <div className="border-t border-[var(--border-glass)] pt-6 space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Connection Status</h3>
 
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="flex items-center gap-2 p-3 bg-gray-700/20 rounded-lg">
+                        <div className="flex items-center gap-3 p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
                           {telegramStatus.hasUserId ? (
-                            <CheckCircle className="w-5 h-5 text-green-400" />
+                            <CheckCircle className="w-5 h-5 text-[var(--success)]" />
                           ) : (
-                            <AlertCircle className="w-5 h-5 text-red-400" />
+                            <AlertCircle className="w-5 h-5 text-[var(--danger)]" />
                           )}
-                          <span className="text-sm text-white">User ID</span>
+                          <span className="text-sm text-white font-medium">User ID</span>
                         </div>
 
-                        <div className="flex items-center gap-2 p-3 bg-gray-700/20 rounded-lg">
+                        <div className="flex items-center gap-3 p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
                           {telegramStatus.hasUsername ? (
-                            <CheckCircle className="w-5 h-5 text-green-400" />
+                            <CheckCircle className="w-5 h-5 text-[var(--success)]" />
                           ) : (
-                            <AlertCircle className="w-5 h-5 text-gray-400" />
+                            <AlertCircle className="w-5 h-5 text-[var(--text-muted)]" />
                           )}
-                          <span className="text-sm text-white">Username</span>
+                          <span className="text-sm text-white font-medium">Username</span>
                         </div>
 
-                        <div className="flex items-center gap-2 p-3 bg-gray-700/20 rounded-lg">
+                        <div className="flex items-center gap-3 p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
                           {telegramStatus.connected ? (
-                            <CheckCircle className="w-5 h-5 text-green-400" />
+                            <CheckCircle className="w-5 h-5 text-[var(--success)]" />
                           ) : (
-                            <AlertCircle className="w-5 h-5 text-red-400" />
+                            <AlertCircle className="w-5 h-5 text-[var(--danger)]" />
                           )}
-                          <span className="text-sm text-white">Linked</span>
+                          <span className="text-sm text-white font-medium">Linked</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Available Commands */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-medium text-white">Available Commands</h3>
+                    <div className="border-t border-[var(--border-glass)] pt-6 space-y-4">
+                      <h3 className="text-lg font-semibold text-white">Available Commands</h3>
 
-                      <div className="bg-gray-700/20 rounded-lg p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                          <div className="flex justify-between">
-                            <code className="text-blue-400">/start</code>
-                            <span className="text-gray-400">Start the assistant</span>
+                      <div className="bg-[var(--bg-deep)]/50 rounded-xl p-4 border border-[var(--border-glass)]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="flex justify-between items-center p-2 hover:bg-[var(--bg-surface)] rounded-lg transition-colors">
+                            <code className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">/start</code>
+                            <span className="text-[var(--text-muted)]">Start the assistant</span>
                           </div>
-                          <div className="flex justify-between">
-                            <code className="text-blue-400">/status</code>
-                            <span className="text-gray-400">Get job search status</span>
+                          <div className="flex justify-between items-center p-2 hover:bg-[var(--bg-surface)] rounded-lg transition-colors">
+                            <code className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">/status</code>
+                            <span className="text-[var(--text-muted)]">Get job search status</span>
                           </div>
-                          <div className="flex justify-between">
-                            <code className="text-blue-400">/reminders</code>
-                            <span className="text-gray-400">List pending reminders</span>
+                          <div className="flex justify-between items-center p-2 hover:bg-[var(--bg-surface)] rounded-lg transition-colors">
+                            <code className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">/reminders</code>
+                            <span className="text-[var(--text-muted)]">List pending reminders</span>
                           </div>
-                          <div className="flex justify-between">
-                            <code className="text-blue-400">/interviews</code>
-                            <span className="text-gray-400">List upcoming interviews</span>
+                          <div className="flex justify-between items-center p-2 hover:bg-[var(--bg-surface)] rounded-lg transition-colors">
+                            <code className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">/interviews</code>
+                            <span className="text-[var(--text-muted)]">List upcoming interviews</span>
                           </div>
-                          <div className="flex justify-between">
-                            <code className="text-blue-400">/followups</code>
-                            <span className="text-gray-400">List pending follow-ups</span>
+                          <div className="flex justify-between items-center p-2 hover:bg-[var(--bg-surface)] rounded-lg transition-colors">
+                            <code className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">/followups</code>
+                            <span className="text-[var(--text-muted)]">List pending follow-ups</span>
                           </div>
-                          <div className="flex justify-between">
-                            <code className="text-blue-400">/help</code>
-                            <span className="text-gray-400">Show all commands</span>
+                          <div className="flex justify-between items-center p-2 hover:bg-[var(--bg-surface)] rounded-lg transition-colors">
+                            <code className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">/help</code>
+                            <span className="text-[var(--text-muted)]">Show all commands</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </Card>
-              )}
+                )}
 
-              {activeTab === 'email' && (
-                <Card className="bg-gray-800/50 border-gray-700">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-red-400" />
+                {activeTab === 'email' && (
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between border-b border-[var(--border-glass)] pb-6">
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Mail className="w-5 h-5 text-[var(--danger)]" />
                         Email Settings
                       </h2>
-                      <Button
-                        type="primary"
-                        icon={<Save className="w-4 h-4" />}
+                      <button
                         onClick={saveEmailSettings}
-                        loading={loading}
-                        className="bg-red-600 hover:bg-red-500"
+                        disabled={loading}
+                        className="flex items-center gap-2 px-4 py-2 bg-[var(--danger)] text-white font-bold rounded-xl hover:bg-[var(--danger)]/90 transition-colors disabled:opacity-50"
                       >
-                        Save Changes
-                      </Button>
+                        <Save className="w-4 h-4" />
+                        {loading ? 'Saving...' : 'Save Changes'}
+                      </button>
                     </div>
 
-                    <Divider className="border-gray-600" />
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-700/30 rounded-lg">
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)]/50 border border-[var(--border-glass)] rounded-xl">
                         <div>
                           <p className="font-medium text-white">Email Notifications</p>
-                          <p className="text-sm text-gray-400">Enable email notifications</p>
+                          <p className="text-sm text-[var(--text-muted)]">Enable email notifications</p>
                         </div>
-                        <Switch
+                        <ToggleSwitch
                           checked={emailSettings.enabled}
                           onChange={(checked) => setEmailSettings(prev => ({ ...prev, enabled: checked }))}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
                           Email Address
                         </label>
-                        <Input
+                        <input
                           type="email"
                           placeholder="your.email@example.com"
                           value={emailSettings.address}
                           onChange={(e) => setEmailSettings(prev => ({ ...prev, address: e.target.value }))}
-                          className="bg-gray-700 border-gray-600"
+                          className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-all"
                         />
                       </div>
 
-                      <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white">Email Types</h3>
+                      <div className="border-t border-[var(--border-glass)] pt-6 space-y-4">
+                        <h3 className="text-lg font-semibold text-white">Email Types</h3>
 
-                        <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
-                          <span className="text-white">Daily Digest</span>
-                          <Switch
+                        <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
+                          <span className="text-white font-medium">Daily Digest</span>
+                          <ToggleSwitch
                             checked={emailSettings.dailyDigest}
                             onChange={(checked) => setEmailSettings(prev => ({ ...prev, dailyDigest: checked }))}
                           />
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
-                          <span className="text-white">Weekly Report</span>
-                          <Switch
+                        <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
+                          <span className="text-white font-medium">Weekly Report</span>
+                          <ToggleSwitch
                             checked={emailSettings.weeklyReport}
                             onChange={(checked) => setEmailSettings(prev => ({ ...prev, weeklyReport: checked }))}
                           />
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-gray-700/20 rounded-lg">
-                          <span className="text-white">Instant Alerts</span>
-                          <Switch
+                        <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
+                          <span className="text-white font-medium">Instant Alerts</span>
+                          <ToggleSwitch
                             checked={emailSettings.instantAlerts}
                             onChange={(checked) => setEmailSettings(prev => ({ ...prev, instantAlerts: checked }))}
                           />
@@ -718,43 +713,43 @@ const SettingsPage = () => {
                       </div>
                     </div>
                   </div>
-                </Card>
-              )}
+                )}
 
-              {activeTab === 'security' && (
-                <Card className="bg-gray-800/50 border-gray-700">
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-green-400" />
-                      Security & Privacy
-                    </h2>
+                {activeTab === 'security' && (
+                  <div className="space-y-8">
+                    <div className="flex items-center gap-2 border-b border-[var(--border-glass)] pb-6">
+                      <Shield className="w-6 h-6 text-[var(--success)]" />
+                      <h2 className="text-xl font-bold text-white">Security & Privacy</h2>
+                    </div>
 
-                    <Alert
-                      message="Security Features"
-                      description="Advanced security features will be available in the next update."
-                      type="info"
-                      showIcon
-                      className="bg-blue-500/10 border-blue-500/30"
-                    />
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-4">
+                      <Info className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-blue-400">Security Features</h4>
+                        <p className="text-sm text-blue-200/80">
+                          Advanced security features will be available in the next update.
+                        </p>
+                      </div>
+                    </div>
 
                     <div className="space-y-4">
-                      <div className="p-4 bg-gray-700/20 rounded-lg">
-                        <h3 className="font-medium text-white mb-2">Data Privacy</h3>
-                        <p className="text-sm text-gray-400">
+                      <div className="p-6 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)]">
+                        <h3 className="font-bold text-white mb-2">Data Privacy</h3>
+                        <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                           Your job search data is stored locally and encrypted. We never share your personal information.
                         </p>
                       </div>
 
-                      <div className="p-4 bg-gray-700/20 rounded-lg">
-                        <h3 className="font-medium text-white mb-2">API Security</h3>
-                        <p className="text-sm text-gray-400">
+                      <div className="p-6 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)]">
+                        <h3 className="font-bold text-white mb-2">API Security</h3>
+                        <p className="text-sm text-[var(--text-muted)] leading-relaxed">
                           All API communications are encrypted using HTTPS. Telegram credentials are stored securely.
                         </p>
                       </div>
                     </div>
                   </div>
-                </Card>
-              )}
+                )}
+              </motion.div>
             </div>
           </div>
         </div>

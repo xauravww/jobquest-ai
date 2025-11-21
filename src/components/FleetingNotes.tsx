@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
+import Button from '@/components/ui/Button';
 import { StickyNote, Plus, Trash2, MessageSquare } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

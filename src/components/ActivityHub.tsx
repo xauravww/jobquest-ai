@@ -1,37 +1,32 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as AntCalendar, Input, Select, Tag, Button, Modal, DatePicker, TimePicker, Pagination } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   Bell,
-  Edit,
   Users,
-  MapPin,
-  FileText,
   Target,
   Plus,
   Filter,
-  MoreHorizontal,
-  Phone,
   Video,
   AlertCircle,
   TrendingUp,
   CheckCircle,
   Trash2,
-  ChevronDown,
   X,
-  BarChart3
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  MoreHorizontal
 } from 'lucide-react';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import ActivitySkeleton from '@/components/ui/ActivitySkeleton';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '@/components/ui/Modal';
 
-const { Search: AntSearch } = Input;
-const { Option } = Select;
-
+// --- Types ---
 interface ActivityItem {
   id: string;
   title: string;
@@ -59,53 +54,264 @@ interface ActivityItem {
   isAllDay?: boolean;
   meetingLink?: string;
   notes?: string;
-  followUpHistory?: Array<{
-    date: string;
-    type: string;
-    notes: string;
-  }>;
 }
 
 interface ActivityHubProps {
   className?: string;
 }
 
+// --- Components ---
+
+const ActivityCard = ({ activity, onClick, onDelete, onComplete }: { activity: ActivityItem; onClick: () => void; onDelete: (e: any) => void; onComplete: (e: any) => void }) => {
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'reminder': return <Bell className="w-4 h-4" />;
+      case 'event': return <CalendarIcon className="w-4 h-4" />;
+      case 'interview': return <Video className="w-4 h-4" />;
+      case 'follow_up': return <Users className="w-4 h-4" />;
+      case 'deadline': return <AlertCircle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'reminder': return 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]/20';
+      case 'interview': return 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20';
+      case 'event': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+      case 'follow_up': return 'text-[var(--secondary)] bg-[var(--secondary)]/10 border-[var(--secondary)]/20';
+      default: return 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20';
+    }
+  };
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      onClick={onClick}
+      className="group relative bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg hover:shadow-[var(--primary)]/5 hover:-translate-y-0.5"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className={`p-2.5 rounded-lg border ${getTypeColor(activity.type)}`}>
+            {getTypeIcon(activity.type)}
+          </div>
+          <div>
+            <h4 className="font-semibold text-white group-hover:text-[var(--primary)] transition-colors line-clamp-1">{activity.title}</h4>
+            <div className="flex items-center gap-2 mt-1 text-xs text-[var(--text-muted)]">
+              <span className="flex items-center gap-1">
+                <CalendarIcon className="w-3 h-3" />
+                {activity.date.format('MMM D, YYYY')}
+              </span>
+              {activity.time && (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {activity.time}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {activity.status !== 'completed' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onComplete(activity); }}
+              className="p-2 hover:bg-[var(--success)]/20 text-[var(--text-muted)] hover:text-[var(--success)] rounded-lg transition-colors"
+              title="Mark as completed"
+            >
+              <CheckCircle className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(activity); }}
+            className="p-2 hover:bg-[var(--danger)]/20 text-[var(--text-muted)] hover:text-[var(--danger)] rounded-lg transition-colors"
+            title="Delete activity"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {activity.status === 'completed' && (
+        <div className="absolute top-2 right-2">
+          <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-full">
+            Completed
+          </span>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+const CustomCalendar = ({ activities, onDateSelect, selectedDate }: { activities: ActivityItem[], onDateSelect: (date: Dayjs) => void, selectedDate: Dayjs }) => {
+  const [currentMonth, setCurrentMonth] = useState(dayjs());
+
+  const daysInMonth = currentMonth.daysInMonth();
+  const firstDayOfMonth = currentMonth.startOf('month').day();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blanks = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+
+  const getActivitiesForDate = (day: number) => {
+    const date = currentMonth.date(day);
+    return activities.filter(a => a.date.isSame(date, 'day'));
+  };
+
+  return (
+    <div className="bg-[var(--bg-surface)]/30 border border-[var(--border-glass)] rounded-2xl p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-white">{currentMonth.format('MMMM YYYY')}</h3>
+        <div className="flex gap-2">
+          <button onClick={() => setCurrentMonth(currentMonth.subtract(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button onClick={() => setCurrentMonth(currentMonth.add(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-2 mb-2 text-center">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider py-2">{day}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-2">
+        {blanks.map(i => <div key={`blank-${i}`} className="h-24 rounded-xl bg-transparent" />)}
+        {days.map(day => {
+          const date = currentMonth.date(day);
+          const dayActivities = getActivitiesForDate(day);
+          const isSelected = selectedDate.isSame(date, 'day');
+          const isToday = date.isSame(dayjs(), 'day');
+
+          return (
+            <div
+              key={day}
+              onClick={() => onDateSelect(date)}
+              className={`h-24 rounded-xl border p-2 cursor-pointer transition-all hover:border-[var(--primary)]/50 flex flex-col gap-1 overflow-hidden ${isSelected ? 'bg-[var(--primary)]/10 border-[var(--primary)]' :
+                isToday ? 'bg-[var(--bg-surface)] border-[var(--primary)]/30' : 'bg-[var(--bg-surface)]/50 border-[var(--border-glass)]'
+                }`}
+            >
+              <span className={`text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--primary)] text-black' : 'text-[var(--text-muted)]'}`}>
+                {day}
+              </span>
+              <div className="flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+                {dayActivities.map(activity => (
+                  <div key={activity.id} className={`text-[10px] px-1.5 py-0.5 rounded truncate ${activity.type === 'interview' ? 'bg-[var(--danger)]/20 text-[var(--danger)]' :
+                    activity.type === 'reminder' ? 'bg-[var(--warning)]/20 text-[var(--warning)]' :
+                      'bg-[var(--primary)]/20 text-[var(--primary)]'
+                    }`}>
+                    {activity.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// --- Main Component ---
+
 const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [filterType, setFilterType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  
-  // Form state for creating activities
+
+  // Form state
   const [activityForm, setActivityForm] = useState({
     type: 'reminder',
     title: '',
     description: '',
-    date: null as Dayjs | null,
-    time: null as Dayjs | null,
-    priority: 'medium',
-    location: ''
+    date: dayjs().format('YYYY-MM-DD'),
+    time: '09:00',
+    priority: 'medium'
   });
 
-  // Fetch all activities (reminders, events, follow-ups)
+  const handleCreateActivity = async () => {
+    try {
+      if (!activityForm.title.trim()) {
+        toast.error('Title is required');
+        return;
+      }
+
+      let endpoint = '';
+      let payload: any = {
+        title: activityForm.title,
+        description: activityForm.description,
+        priority: activityForm.priority,
+        tags: []
+      };
+
+      if (activityForm.type === 'reminder') {
+        endpoint = '/api/reminders';
+        payload = {
+          ...payload,
+          dueDate: new Date(activityForm.date).toISOString(),
+          dueTime: activityForm.time,
+          type: 'custom',
+          status: 'pending'
+        };
+      } else {
+        endpoint = '/api/calendar/events';
+        const startDate = dayjs(`${activityForm.date}T${activityForm.time}`);
+        payload = {
+          ...payload,
+          startDate: startDate.toISOString(),
+          endDate: startDate.add(1, 'hour').toISOString(),
+          type: activityForm.type,
+          status: 'scheduled',
+          isAllDay: false
+        };
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        toast.success('Activity created successfully');
+        setShowCreateModal(false);
+        fetchActivities();
+        setActivityForm({
+          type: 'reminder',
+          title: '',
+          description: '',
+          date: dayjs().format('YYYY-MM-DD'),
+          time: '09:00',
+          priority: 'medium'
+        });
+      } else {
+        toast.error('Failed to create activity');
+      }
+    } catch (error) {
+      toast.error('Failed to create activity');
+    }
+  };
+
+  // Fetch activities
   const fetchActivities = useCallback(async () => {
     try {
       setLoading(true);
-      
       // Fetch reminders
       const remindersResponse = await fetch('/api/reminders');
       const remindersData = await remindersResponse.json();
-      
+
       // Fetch events
       const eventsResponse = await fetch('/api/calendar/events');
       const eventsData = await eventsResponse.json();
-      
+
       // Transform and combine data
       const reminderActivities: ActivityItem[] = (remindersData.reminders || []).map((r: any) => ({
         id: r._id,
@@ -158,107 +364,6 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
     fetchActivities();
   }, [fetchActivities]);
 
-  // Filter activities
-  const getFilteredActivities = () => {
-    let filtered = activities;
-
-    // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered.filter(activity => activity.type === filterType);
-    }
-
-    // Filter by status
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(activity => activity.status === filterStatus);
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(activity =>
-        activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        activity.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        activity.jobId?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        activity.jobId?.company.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    return filtered.sort((a, b) => a.date.valueOf() - b.date.valueOf());
-  };
-
-  const filteredActivities = getFilteredActivities();
-  
-  // Pagination helpers
-  const getPaginatedActivities = () => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredActivities.slice(startIndex, endIndex);
-  };
-
-  // Group activities by date for calendar
-  const activitiesByDate = filteredActivities.reduce<Record<string, ActivityItem[]>>((acc, activity) => {
-    const dateStr = activity.date.format('YYYY-MM-DD');
-    if (!acc[dateStr]) acc[dateStr] = [];
-    acc[dateStr].push(activity);
-    return acc;
-  }, {});
-
-  // Calendar cell renderer
-  const dateCellRender = (value: Dayjs) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const dayActivities = activitiesByDate[dateStr] || [];
-
-    if (dayActivities.length === 0) return null;
-
-    return (
-      <div className="space-y-1 p-1">
-        {dayActivities.slice(0, 2).map((activity) => (
-          <div
-            key={activity.id}
-            className={`text-xs px-2 py-1 rounded-md truncate cursor-pointer transition-all hover:scale-105 border ${
-              activity.type === 'reminder' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' :
-              activity.type === 'interview' ? 'bg-red-500/20 text-red-300 border-red-500/30' :
-              activity.type === 'event' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' :
-              activity.type === 'follow_up' ? 'bg-green-500/20 text-green-300 border-green-500/30' :
-              'bg-gray-500/20 text-gray-300 border-gray-500/30'
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleActivityClick(activity);
-            }}
-            title={`${activity.title} - ${activity.time || 'All day'}`}
-          >
-            <div className="flex items-center gap-1">
-              {getActivityIcon(activity.type)}
-              <span className="truncate">{activity.title}</span>
-            </div>
-          </div>
-        ))}
-        {dayActivities.length > 2 && (
-          <div className="text-xs text-gray-400 text-center py-1 bg-gray-700/30 rounded-md">
-            +{dayActivities.length - 2} more
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingActivity, setEditingActivity] = useState<ActivityItem | null>(null);
-
-  const handleActivityClick = (activity: ActivityItem) => {
-    setEditingActivity(activity);
-    setActivityForm({
-      type: activity.type,
-      title: activity.title,
-      description: activity.description || '',
-      date: activity.date,
-      time: activity.time ? dayjs(activity.time, 'HH:mm') : null,
-      priority: activity.priority,
-      location: activity.location || ''
-    });
-    setShowEditModal(true);
-  };
-
   const handleDeleteActivity = async (activity: ActivityItem) => {
     try {
       const endpoint = activity.type === 'reminder' ? '/api/reminders' : '/api/calendar/events';
@@ -270,11 +375,9 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
         setActivities(prev => prev.filter(a => a.id !== activity.id));
         toast.success('Activity deleted successfully');
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to delete activity');
+        toast.error('Failed to delete activity');
       }
     } catch (error) {
-      console.error('Error deleting activity:', error);
       toast.error('Failed to delete activity');
     }
   };
@@ -289,1116 +392,234 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
       });
 
       if (response.ok) {
-        setActivities(prev => prev.map(a => 
-          a.id === activity.id 
+        setActivities(prev => prev.map(a =>
+          a.id === activity.id
             ? { ...a, status: 'completed' as const }
             : a
         ));
         toast.success('Activity marked as completed');
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to update activity');
+        toast.error('Failed to update activity');
       }
     } catch (error) {
-      console.error('Error updating activity:', error);
       toast.error('Failed to update activity');
     }
   };
 
-  const [isCreating, setIsCreating] = useState(false);
-  
-  const handleUpdateActivity = async () => {
-    if (!editingActivity) return;
-    
-    try {
-      // Enhanced validation
-      if (!activityForm.title?.trim()) {
-        toast.error('Please enter a title');
-        return;
-      }
-      
-      if (!activityForm.date) {
-        toast.error('Please select a date');
-        return;
-      }
-      
-      if (activityForm.title.trim().length < 3) {
-        toast.error('Title must be at least 3 characters long');
-        return;
-      }
-      
-      setIsCreating(true);
-
-      // Determine the API endpoint based on activity type
-      let endpoint = '';
-      let payload: any = {
-        title: activityForm.title,
-        description: activityForm.description,
-        priority: activityForm.priority,
-        tags: []
-      };
-
-      if (activityForm.type === 'reminder') {
-        endpoint = '/api/reminders';
-        payload = {
-          ...payload,
-          dueDate: activityForm.date.toISOString(),
-          dueTime: activityForm.time ? activityForm.time.format('HH:mm') : '09:00',
-          type: 'custom',
-          status: editingActivity.status
-        };
-      } else {
-        endpoint = '/api/calendar/events';
-        const startDate = activityForm.date.clone();
-        if (activityForm.time) {
-          startDate.hour(activityForm.time.hour()).minute(activityForm.time.minute());
-        }
-        
-        payload = {
-          ...payload,
-          startDate: startDate.toISOString(),
-          endDate: startDate.add(1, 'hour').toISOString(),
-          type: activityForm.type,
-          status: editingActivity.status,
-          isAllDay: !activityForm.time,
-          location: activityForm.location ? { address: activityForm.location } : undefined
-        };
-      }
-
-      const response = await fetch(`${endpoint}?id=${editingActivity.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        toast.success('Activity updated successfully!');
-        setShowEditModal(false);
-        setEditingActivity(null);
-        setActivityForm({
-          type: 'reminder',
-          title: '',
-          description: '',
-          date: null,
-          time: null,
-          priority: 'medium',
-          location: ''
-        });
-        // Refresh activities
-        fetchActivities();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to update activity');
-      }
-    } catch (error) {
-      console.error('Error updating activity:', error);
-      toast.error('Failed to update activity');
-    } finally {
-      setIsCreating(false);
-    }
-  };
-  
-  const handleCreateActivity = async () => {
-    try {
-      // Enhanced validation
-      if (!activityForm.title?.trim()) {
-        toast.error('Please enter a title');
-        return;
-      }
-      
-      if (!activityForm.date) {
-        toast.error('Please select a date');
-        return;
-      }
-      
-      if (activityForm.title.trim().length < 3) {
-        toast.error('Title must be at least 3 characters long');
-        return;
-      }
-      
-      if (activityForm.title.trim().length > 100) {
-        toast.error('Title must be less than 100 characters');
-        return;
-      }
-      
-      setIsCreating(true);
-
-      // Determine the API endpoint based on activity type
-      let endpoint = '';
-      let payload: any = {
-        title: activityForm.title,
-        description: activityForm.description,
-        priority: activityForm.priority,
-        tags: []
-      };
-
-      if (activityForm.type === 'reminder') {
-        endpoint = '/api/reminders';
-        payload = {
-          ...payload,
-          dueDate: activityForm.date.toISOString(),
-          dueTime: activityForm.time ? activityForm.time.format('HH:mm') : '09:00',
-          type: 'custom',
-          status: 'pending'
-        };
-      } else {
-        endpoint = '/api/calendar/events';
-        const startDate = activityForm.date.clone();
-        if (activityForm.time) {
-          startDate.hour(activityForm.time.hour()).minute(activityForm.time.minute());
-        }
-        
-        payload = {
-          ...payload,
-          startDate: startDate.toISOString(),
-          endDate: startDate.add(1, 'hour').toISOString(),
-          type: activityForm.type,
-          status: 'scheduled',
-          isAllDay: !activityForm.time,
-          location: activityForm.location ? { address: activityForm.location } : undefined
-        };
-      }
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        toast.success(`${activityForm.type.charAt(0).toUpperCase() + activityForm.type.slice(1)} created successfully!`);
-        setShowCreateModal(false);
-        setActivityForm({
-          type: 'reminder',
-          title: '',
-          description: '',
-          date: null,
-          time: null,
-          priority: 'medium',
-          location: ''
-        });
-        // Refresh activities
-        fetchActivities();
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to create activity');
-      }
-    } catch (error) {
-      console.error('Error creating activity:', error);
-      toast.error('Failed to create activity');
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'reminder': return <Bell className="w-4 h-4" />;
-      case 'event': return <Calendar className="w-4 h-4" />;
-      case 'interview': return <Video className="w-4 h-4" />;
-      case 'follow_up': return <Phone className="w-4 h-4" />;
-      case 'deadline': return <AlertCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'urgent': return 'text-red-600 bg-red-50 border-red-200';
-      case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'medium': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'low': return 'text-gray-600 bg-gray-50 border-gray-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'text-green-600 bg-green-50 border-green-200';
-      case 'pending': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'snoozed': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'cancelled': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
+  // Filter logic
+  const filteredActivities = activities.filter(activity => {
+    if (filterType !== 'all' && activity.type !== filterType) return false;
+    if (searchQuery && !activity.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  }).sort((a, b) => a.date.valueOf() - b.date.valueOf());
 
   if (loading) {
     return (
-      <div className={`space-y-6 ${className}`}>
-        {/* Header skeleton */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="h-8 bg-gray-700 rounded loading-skeleton w-48"></div>
-            <div className="h-4 bg-gray-700 rounded loading-skeleton w-64"></div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="h-10 bg-gray-700 rounded loading-skeleton w-32"></div>
-            <div className="h-10 bg-gray-700 rounded loading-skeleton w-36"></div>
-          </div>
-        </div>
-        
-        {/* Filters skeleton */}
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-          <div className="space-y-4">
-            <div className="h-5 bg-gray-700 rounded loading-skeleton w-32"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="h-10 bg-gray-700 rounded loading-skeleton"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {/* Content skeleton */}
-        <ActivitySkeleton count={5} />
+      <div className="flex items-center justify-center h-64">
+        <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
       </div>
     );
   }
 
   return (
     <div className={`space-y-8 ${className}`}>
-      {/* Creative Header with Stats Overview */}
-      <div className="relative">
-        {/* Background Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-2xl"></div>
-        <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-3">
-                <div className="relative">
-                  <div className="w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
-                    <TrendingUp className="w-7 h-7 text-white" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-bg animate-pulse"></div>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-black text-white tracking-tight">Activity Hub</h1>
-                  <p className="text-slate-300 text-sm">Your command center for job search activities</p>
-                </div>
-              </div>
 
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Bell className="w-4 h-4 text-yellow-400" />
-                    <span className="text-xs text-slate-400">Pending</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white mt-1">
-                    {activities.filter(a => a.status === 'pending').length}
-                  </div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Video className="w-4 h-4 text-red-400" />
-                    <span className="text-xs text-slate-400">Interviews</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white mt-1">
-                    {activities.filter(a => a.type === 'interview').length}
-                  </div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span className="text-xs text-slate-400">Completed</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white mt-1">
-                    {activities.filter(a => a.status === 'completed').length}
-                  </div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs text-slate-400">This Week</span>
-                  </div>
-                  <div className="text-2xl font-bold text-white mt-1">
-                    {activities.filter(a => a.date.isAfter(dayjs().startOf('week')) && a.date.isBefore(dayjs().endOf('week'))).length}
-                  </div>
-                </div>
-              </div>
+      {/* Header & Controls */}
+      <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+              <TrendingUp className="w-6 h-6 text-[var(--primary)]" />
             </div>
+            Activity Hub
+          </h2>
+          <p className="text-[var(--text-muted)] mt-1 ml-14">Manage your schedule and tasks</p>
+        </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Select
-                value={viewMode}
-                onChange={setViewMode}
-                className="w-full sm:w-40"
-                dropdownClassName="bg-bg-dark border border-border"
-              >
-                <Option value="list">
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4" />
-                    List View
-                  </div>
-                </Option>
-                <Option value="calendar">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Calendar View
-                  </div>
-                </Option>
-              </Select>
+        <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2.5 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Activity</span>
+          </button>
 
-              <Button
-                type="primary"
-                icon={<Plus className="w-4 h-4" />}
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
-                size="large"
-              >
-                Add Activity
-              </Button>
-            </div>
+          <div className="relative flex-1 lg:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+            <input
+              type="text"
+              placeholder="Search activities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+            />
+          </div>
+
+          <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-glass)]">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-[var(--text-muted)] hover:text-white'}`}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'calendar' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-[var(--text-muted)] hover:text-white'}`}
+            >
+              Calendar
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Creative Filters Section */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5 rounded-2xl"></div>
-        <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg border border-primary/30">
-              <Filter className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Filters & Search</h3>
-              <p className="text-sm text-slate-400">Find and organize your activities</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <div className="relative">
-              <AntSearch
-                placeholder="Search activities..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full"
-                allowClear
-                prefix={<Target className="w-4 h-4 text-slate-400" />}
-              />
-            </div>
-
-            <Select
-              value={filterType}
-              onChange={(value) => {
-                setFilterType(value);
-                setCurrentPage(1);
-              }}
-              className="w-full"
-              placeholder="Filter by type"
-            >
-              <Option value="all">All Types</Option>
-              <Option value="reminder">Reminders</Option>
-              <Option value="event">Events</Option>
-              <Option value="interview">Interviews</Option>
-              <Option value="follow_up">Follow-ups</Option>
-              <Option value="deadline">Deadlines</Option>
-            </Select>
-
-            <Select
-              value={filterStatus}
-              onChange={(value) => {
-                setFilterStatus(value);
-                setCurrentPage(1);
-              }}
-              className="w-full"
-              placeholder="Filter by status"
-            >
-              <Option value="all">All Status</Option>
-              <Option value="pending">Pending</Option>
-              <Option value="completed">Completed</Option>
-              <Option value="snoozed">Snoozed</Option>
-              <Option value="cancelled">Cancelled</Option>
-            </Select>
-
-            <Select
-              value={filterStatus}
-              onChange={(value) => {
-                setFilterStatus(value);
-                setCurrentPage(1);
-              }}
-              className="w-full"
-              placeholder="Filter by status"
-              suffixIcon={<ChevronDown className="w-4 h-4 text-slate-400" />}
-            >
-              <Option value="all">All Status</Option>
-              <Option value="pending">Pending</Option>
-              <Option value="completed">Completed</Option>
-              <Option value="snoozed">Snoozed</Option>
-              <Option value="cancelled">Cancelled</Option>
-            </Select>
-
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                <span className="text-sm text-slate-400">Total Activities</span>
-              </div>
-              <div className="text-xl font-bold text-white">{filteredActivities.length}</div>
-            </div>
-          </div>
-
-          {/* Enhanced Quick Filter Pills */}
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => {
-                setFilterStatus(filterStatus === 'pending' ? 'all' : 'pending');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                filterStatus === 'pending'
-                  ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                  : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2">
+        {['all', 'reminder', 'interview', 'event', 'follow_up'].map((type) => (
+          <button
+            key={type}
+            onClick={() => setFilterType(type)}
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${filterType === type
+              ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-[0_0_10px_var(--primary-glow)]'
+              : 'bg-[var(--bg-surface)] border-[var(--border-glass)] text-[var(--text-muted)] hover:border-[var(--primary)]/50 hover:text-white'
               }`}
-            >
-              <Bell className="w-4 h-4" />
-              Pending ({activities.filter(a => a.status === 'pending').length})
-            </button>
-
-            <button
-              onClick={() => {
-                setFilterType(filterType === 'interview' ? 'all' : 'interview');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                filterType === 'interview'
-                  ? 'bg-red-500 text-white shadow-lg shadow-red-500/25'
-                  : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
-              }`}
-            >
-              <Video className="w-4 h-4" />
-              Interviews ({activities.filter(a => a.type === 'interview').length})
-            </button>
-
-            <button
-              onClick={() => {
-                setFilterType(filterType === 'reminder' ? 'all' : 'reminder');
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                filterType === 'reminder'
-                  ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-500/25'
-                  : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              Reminders ({activities.filter(a => a.type === 'reminder').length})
-            </button>
-
-            {(searchQuery || filterType !== 'all' || filterStatus !== 'all') && (
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setFilterType('all');
-                  setFilterStatus('all');
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2 rounded-full text-sm font-medium bg-slate-600/50 text-slate-300 hover:bg-slate-500/50 transition-all duration-300 flex items-center gap-2"
-              >
-                <X className="w-4 h-4" />
-                Clear All
-              </button>
-            )}
-          </div>
-        </div>
+          >
+            {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+          </button>
+        ))}
       </div>
 
-      {/* Content based on view mode */}
-      {viewMode === 'list' && (
-        <div className="space-y-4">
-          {/* Pagination Info */}
-          {filteredActivities.length > 0 && (
-            <div className="flex items-center justify-between bg-gray-800/30 rounded-lg p-3 border border-gray-700">
-              <div className="text-sm text-gray-400">
-                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredActivities.length)} of {filteredActivities.length} activities
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-400">Items per page:</span>
-                 <Select
-                   value={pageSize}
-                   onChange={(value) => {
-                     setPageSize(value);
-                     setCurrentPage(1);
-                   }}
-                   size="small"
-                   className="w-20"
-                 >
-                   <Option value={10}>10</Option>
-                   <Option value={20}>20</Option>
-                   <Option value={50}>50</Option>
-                   <Option value={100}>100</Option>
-                 </Select>
-              </div>
-            </div>
-          )}
-          
-           {filteredActivities.length === 0 ? (
-             <div className="relative">
-               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-2xl"></div>
-               <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-12 text-center">
-                 <div className="max-w-md mx-auto">
-                   <div className="relative mb-8">
-                     <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/30">
-                       <Target className="w-12 h-12 text-primary" />
-                     </div>
-                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-secondary rounded-full flex items-center justify-center animate-bounce">
-                       <Plus className="w-4 h-4 text-white" />
-                     </div>
-                   </div>
-
-                   <h3 className="text-2xl font-bold text-white mb-3">
-                     {searchQuery || filterType !== 'all' || filterStatus !== 'all'
-                       ? 'No activities match your filters'
-                       : 'Your activity hub is empty'
-                     }
-                   </h3>
-                   <p className="text-slate-300 mb-8 leading-relaxed">
-                     {searchQuery || filterType !== 'all' || filterStatus !== 'all'
-                       ? 'Try adjusting your search terms or clearing some filters to see more activities.'
-                       : 'Start building your job search momentum by creating your first activity. Track interviews, set reminders, and never miss an opportunity.'
-                     }
-                   </p>
-
-                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                     {(!searchQuery && filterType === 'all' && filterStatus === 'all') && (
-                       <Button
-                         type="primary"
-                         icon={<Plus className="w-5 h-5" />}
-                         onClick={() => setShowCreateModal(true)}
-                         className="bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 border-0 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
-                         size="large"
-                       >
-                         Create Your First Activity
-                       </Button>
-                     )}
-
-                     {(searchQuery || filterType !== 'all' || filterStatus !== 'all') && (
-                       <Button
-                         onClick={() => {
-                           setSearchQuery('');
-                           setFilterType('all');
-                           setFilterStatus('all');
-                           setCurrentPage(1);
-                         }}
-                         className="bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-white/40 transition-all duration-300"
-                         size="large"
-                       >
-                         Clear All Filters
-                       </Button>
-                     )}
-                   </div>
-
-                   {(!searchQuery && filterType === 'all' && filterStatus === 'all') && (
-                     <div className="mt-8 pt-8 border-t border-white/10">
-                       <p className="text-sm text-slate-400 mb-4">Quick start suggestions:</p>
-                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                         <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                           <Video className="w-5 h-5 text-red-400 mx-auto mb-2" />
-                           <div className="font-medium text-white">Schedule Interview</div>
-                           <div className="text-slate-400">Track upcoming interviews</div>
-                         </div>
-                         <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                           <Bell className="w-5 h-5 text-yellow-400 mx-auto mb-2" />
-                           <div className="font-medium text-white">Set Reminder</div>
-                           <div className="text-slate-400">Follow up on applications</div>
-                         </div>
-                         <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-                           <Calendar className="w-5 h-5 text-blue-400 mx-auto mb-2" />
-                           <div className="font-medium text-white">Plan Event</div>
-                           <div className="text-slate-400">Network and career events</div>
-                         </div>
-                       </div>
-                     </div>
-                   )}
-                 </div>
-               </div>
-             </div>
-           ) : (
-            <>
-              {getPaginatedActivities().map((activity) => (
-                <div
+      {/* Content */}
+      <AnimatePresence mode="wait">
+        {viewMode === 'list' ? (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            {filteredActivities.length > 0 ? (
+              filteredActivities.map(activity => (
+                <ActivityCard
                   key={activity.id}
-                  className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
-                >
-                  {/* Subtle gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-br rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                    activity.type === 'reminder' ? 'from-yellow-500/5 to-yellow-600/5' :
-                    activity.type === 'interview' ? 'from-red-500/5 to-red-600/5' :
-                    activity.type === 'event' ? 'from-blue-500/5 to-blue-600/5' :
-                    activity.type === 'follow_up' ? 'from-green-500/5 to-green-600/5' :
-                    'from-gray-500/5 to-gray-600/5'
-                  }`}></div>
-
-                  <div className="relative flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Enhanced Icon */}
-                      <div className={`relative p-3 rounded-2xl flex items-center justify-center shadow-lg ${
-                        activity.type === 'reminder' ? 'bg-yellow-500/20 text-yellow-400 shadow-yellow-500/25' :
-                        activity.type === 'interview' ? 'bg-red-500/20 text-red-400 shadow-red-500/25' :
-                        activity.type === 'event' ? 'bg-blue-500/20 text-blue-400 shadow-blue-500/25' :
-                        activity.type === 'follow_up' ? 'bg-green-500/20 text-green-400 shadow-green-500/25' :
-                        'bg-gray-500/20 text-gray-400 shadow-gray-500/25'
-                      }`}>
-                        {getActivityIcon(activity.type)}
-                        {activity.status === 'completed' && (
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                            <CheckCircle className="w-3 h-3 text-white" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-white text-lg mb-1 group-hover:text-primary transition-colors duration-300">
-                              {activity.title}
-                            </h4>
-                            {activity.description && (
-                              <p className="text-sm text-slate-300 mb-3 line-clamp-2">
-                                {activity.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex gap-2 ml-4">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              activity.priority === 'urgent' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
-                              activity.priority === 'high' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
-                              activity.priority === 'medium' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
-                              'bg-gray-500/20 text-gray-300 border border-gray-500/30'
-                            }`}>
-                              {activity.priority}
-                            </span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              activity.status === 'completed' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                              activity.status === 'pending' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
-                              activity.status === 'snoozed' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
-                              'bg-red-500/20 text-red-300 border border-red-500/30'
-                            }`}>
-                              {activity.status}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Enhanced metadata */}
-                        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                          <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full">
-                            <Clock className="w-3.5 h-3.5" />
-                            <span className="font-medium">
-                              {activity.date.format('MMM DD, YYYY')}
-                              {activity.time && ` at ${activity.time}`}
-                              {activity.endTime && ` - ${activity.endTime}`}
-                            </span>
-                          </div>
-
-                          {activity.jobId && (
-                            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full">
-                              <FileText className="w-3.5 h-3.5" />
-                              <span className="font-medium truncate max-w-32">{activity.jobId.title} at {activity.jobId.company}</span>
-                            </div>
-                          )}
-
-                          {activity.location && (
-                            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full">
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span className="font-medium truncate max-w-24">{activity.location}</span>
-                            </div>
-                          )}
-
-                          {activity.attendees && activity.attendees.length > 0 && (
-                            <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full">
-                              <Users className="w-3.5 h-3.5" />
-                              <span className="font-medium">{activity.attendees.length} attendees</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-1 ml-4">
-                      {activity.status === 'pending' && (
-                        <button
-                          className="w-9 h-9 rounded-xl bg-green-500/20 hover:bg-green-500/30 text-green-400 hover:text-green-300 transition-all duration-200 flex items-center justify-center group"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompleteActivity(activity);
-                          }}
-                          title="Mark as completed"
-                        >
-                          <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                        </button>
-                      )}
-                      <button
-                        className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-200 flex items-center justify-center group"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleActivityClick(activity);
-                        }}
-                        title="Edit activity"
-                      >
-                        <Edit className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                      </button>
-                      <button
-                        className="w-9 h-9 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 transition-all duration-200 flex items-center justify-center group"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteActivity(activity);
-                        }}
-                        title="Delete activity"
-                      >
-                        <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                      </button>
-                    </div>
-                  </div>
+                  activity={activity}
+                  onClick={() => { }}
+                  onDelete={handleDeleteActivity}
+                  onComplete={handleCompleteActivity}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 border border-dashed border-[var(--border-glass)] rounded-2xl">
+                <div className="w-16 h-16 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Filter className="w-8 h-8 text-[var(--text-muted)]" />
                 </div>
-              ))}
-              
-              {/* Pagination Controls */}
-              {filteredActivities.length > pageSize && (
-                <div className="flex justify-center mt-6">
-                  <Pagination
-                    current={currentPage}
-                    total={filteredActivities.length}
-                    pageSize={pageSize}
-                    onChange={(page, size) => {
-                      setCurrentPage(page);
-                      if (size) setPageSize(size);
-                    }}
-                    onShowSizeChange={(current, size) => {
-                      setCurrentPage(1);
-                      setPageSize(size);
-                    }}
-                    showSizeChanger
-                    showQuickJumper
-                    showTotal={(total, range) => 
-                      `${range[0]}-${range[1]} of ${total} activities`
-                    }
-                    className="custom-dark-pagination"
-                    pageSizeOptions={['10', '20', '50', '100']}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {viewMode === 'calendar' && (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-2xl"></div>
-          <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg border border-primary/30">
-                <Calendar className="w-5 h-5 text-primary" />
+                <p className="text-[var(--text-muted)]">No activities found matching your filters.</p>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">Calendar View</h3>
-                <p className="text-sm text-slate-400">Visual timeline of your activities</p>
-              </div>
-            </div>
-            <AntCalendar
-              className="custom-dark-calendar bg-transparent"
-              dateCellRender={dateCellRender}
-              onSelect={(date) => {
-                setSelectedDate(date);
-                const dateStr = date.format('YYYY-MM-DD');
-                const dayActivities = activitiesByDate[dateStr] || [];
-                if (dayActivities.length > 0) {
-                  toast(`${dayActivities.length} activities on ${date.format('MMM DD, YYYY')}`, {
-                    icon: '📅',
-                    style: { background: 'var(--bg-dark)', color: 'var(--text)' }
-                  });
-                } else {
-                  toast(`No activities on ${date.format('MMM DD, YYYY')}`, {
-                    icon: '📅',
-                    style: { background: 'var(--bg-dark)', color: 'var(--text)' }
-                  });
-                }
-              }}
-              value={selectedDate}
-              headerRender={({ value, onChange }) => (
-                <div className="flex items-center justify-between py-4 px-2">
-                  <button
-                    onClick={() => onChange(value.clone().subtract(1, 'month'))}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-200"
-                  >
-                    <ChevronDown className="w-4 h-4 rotate-90" />
-                  </button>
-                  <h2 className="text-lg font-semibold text-white">
-                    {value.format('MMMM YYYY')}
-                  </h2>
-                  <button
-                    onClick={() => onChange(value.clone().add(1, 'month'))}
-                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-200"
-                  >
-                    <ChevronDown className="w-4 h-4 -rotate-90" />
-                  </button>
-                </div>
-              )}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Edit Activity Modal */}
-      <Modal
-        title={editingActivity ? "Edit Activity" : "Create New Activity"}
-        open={showEditModal}
-        onCancel={() => {
-          setShowEditModal(false);
-          setEditingActivity(null);
-          setActivityForm({
-            type: 'reminder',
-            title: '',
-            description: '',
-            date: null,
-            time: null,
-            priority: 'medium',
-            location: ''
-          });
-        }}
-        footer={[
-          <Button key="cancel" onClick={() => {
-            setShowEditModal(false);
-            setEditingActivity(null);
-          }}>
-            Cancel
-          </Button>,
-          <Button
-            key="save"
-            type="primary"
-            loading={isCreating}
-            onClick={editingActivity ? handleUpdateActivity : handleCreateActivity}
-            className="bg-primary hover:bg-primary/80"
+            )}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="calendar"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
           >
-            {editingActivity ? 'Update Activity' : 'Create Activity'}
-          </Button>
-        ]}
-        className="custom-dark-modal"
-        width={600}
+            <CustomCalendar
+              activities={activities}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Add New Activity"
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Activity Type *
-            </label>
-            <Select
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Type</label>
+            <select
               value={activityForm.type}
-              onChange={(value) => setActivityForm(prev => ({ ...prev, type: value }))}
-              className="w-full"
-              placeholder="Select activity type"
+              onChange={(e) => setActivityForm({ ...activityForm, type: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
             >
-              <Option value="reminder">Reminder</Option>
-              <Option value="event">Event</Option>
-              <Option value="interview">Interview</Option>
-              <Option value="follow_up">Follow-up</Option>
-              <Option value="deadline">Deadline</Option>
-            </Select>
+              <option value="reminder">Reminder</option>
+              <option value="interview">Interview</option>
+              <option value="event">Event</option>
+              <option value="follow_up">Follow-up</option>
+            </select>
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Title *
-            </label>
-            <Input
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title</label>
+            <input
+              type="text"
               value={activityForm.title}
-              onChange={(e) => setActivityForm(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter activity title"
-              className="w-full"
+              onChange={(e) => setActivityForm({ ...activityForm, title: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              placeholder="e.g., Follow up with Google"
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
-            </label>
-            <Input.TextArea
-              value={activityForm.description}
-              onChange={(e) => setActivityForm(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter activity description"
-              rows={3}
-              className="w-full"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Date *
-              </label>
-              <DatePicker
-                value={activityForm.date}
-                onChange={(date) => setActivityForm(prev => ({ ...prev, date }))}
-                className="w-full"
-                placeholder="Select date"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Time
-              </label>
-              <TimePicker
-                value={activityForm.time}
-                onChange={(time) => setActivityForm(prev => ({ ...prev, time }))}
-                className="w-full"
-                placeholder="Select time"
-                format="HH:mm"
-                use12Hours={false}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Priority
-              </label>
-              <Select
-                value={activityForm.priority}
-                onChange={(value) => setActivityForm(prev => ({ ...prev, priority: value }))}
-                className="w-full"
-                placeholder="Select priority"
-              >
-                <Option value="low">Low</Option>
-                <Option value="medium">Medium</Option>
-                <Option value="high">High</Option>
-                <Option value="urgent">Urgent</Option>
-              </Select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Location
-              </label>
-              <Input
-                value={activityForm.location}
-                onChange={(e) => setActivityForm(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Enter location (optional)"
-                className="w-full"
-              />
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal
-        title="Create New Activity"
-        open={showCreateModal}
-        onCancel={() => setShowCreateModal(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setShowCreateModal(false)}>
-            Cancel
-          </Button>,
-          <Button
-            key="create"
-            type="primary"
-            loading={isCreating}
-            onClick={handleCreateActivity}
-            className="bg-primary hover:bg-primary/80"
-          >
-            Create Activity
-          </Button>
-        ]}
-        className="custom-modal"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Activity Type
-            </label>
-            <Select
-              value={activityForm.type}
-              onChange={(value) => setActivityForm(prev => ({ ...prev, type: value }))}
-              className="w-full"
-            >
-              <Option value="reminder">Reminder</Option>
-              <Option value="event">Event</Option>
-              <Option value="interview">Interview</Option>
-              <Option value="follow_up">Follow-up</Option>
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Title *
-            </label>
-            <Input
-              value={activityForm.title}
-              onChange={(e) => setActivityForm(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter activity title"
-              maxLength={100}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
-            </label>
-            <Input.TextArea
-              value={activityForm.description}
-              onChange={(e) => setActivityForm(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter activity description"
-              rows={3}
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Date *
-              </label>
-              <DatePicker
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
+              <input
+                type="date"
                 value={activityForm.date}
-                onChange={(date) => setActivityForm(prev => ({ ...prev, date }))}
-                className="w-full"
-                format="YYYY-MM-DD"
+                onChange={(e) => setActivityForm({ ...activityForm, date: e.target.value })}
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Time
-              </label>
-              <TimePicker
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Time</label>
+              <input
+                type="time"
                 value={activityForm.time}
-                onChange={(time) => setActivityForm(prev => ({ ...prev, time }))}
-                className="w-full"
-                format="HH:mm"
+                onChange={(e) => setActivityForm({ ...activityForm, time: e.target.value })}
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
               />
             </div>
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Priority
-            </label>
-          <Select
-            value={viewMode}
-            onChange={setViewMode}
-            className="w-32"
-          >
-            <Option value="list">List</Option>
-            <Option value="calendar">Calendar</Option>
-          </Select>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Description</label>
+            <textarea
+              value={activityForm.description}
+              onChange={(e) => setActivityForm({ ...activityForm, description: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none h-24 resize-none"
+              placeholder="Add details..."
+            />
           </div>
-
-          {(activityForm.type === 'event' || activityForm.type === 'interview') && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Location
-              </label>
-              <Input
-                value={activityForm.location}
-                onChange={(e) => setActivityForm(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Enter location or meeting link"
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
+            <select
+              value={activityForm.priority}
+              onChange={(e) => setActivityForm({ ...activityForm, priority: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={() => setShowCreateModal(false)}
+              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateActivity}
+              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors"
+            >
+              Create Activity
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

@@ -107,8 +107,8 @@ const OnboardingPage: React.FC = () => {
       } else {
         error(data.error || 'Failed to save profile');
       }
-    } catch (error) {
-      console.error('Onboarding error:', error);
+    } catch (err) {
+      console.error('Onboarding error:', err);
       error('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -140,8 +140,8 @@ const OnboardingPage: React.FC = () => {
         console.error('Failed to send OTP:', errorData);
         error(errorData.error || 'Failed to send OTP');
       }
-    } catch (error) {
-      console.error('Network error while sending OTP:', error);
+    } catch (err) {
+      console.error('Network error while sending OTP:', err);
       error('Network error while sending OTP');
     }
   };
@@ -166,8 +166,8 @@ const OnboardingPage: React.FC = () => {
       } else {
         error('Invalid OTP');
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       error('Network error while verifying OTP');
     }
   };

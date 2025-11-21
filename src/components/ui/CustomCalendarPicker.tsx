@@ -58,7 +58,7 @@ const CustomCalendarPicker: React.FC<CustomCalendarPickerProps> = ({
           onClick={() => handleDateClick(day)}
           role="button"
           tabIndex={0}
-          aria-selected={isSelected}
+          aria-selected={isSelected || undefined}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               handleDateClick(day);

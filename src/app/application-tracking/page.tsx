@@ -2,23 +2,21 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Modal, Select, Tag, Table, Popconfirm, Input, DatePicker, Button, TimePicker } from 'antd';
 import {
-  Briefcase, Plus, Search, RefreshCw, Edit, Sparkles, Bell
+  Briefcase, Plus, Search, RefreshCw, Edit, Sparkles, Bell,
+  MapPin, Globe, Calendar, Trash2, ExternalLink, Filter, ChevronLeft, ChevronRight,
+  CheckCircle, XCircle, Clock, AlertCircle
 } from 'lucide-react';
-import { RiDeleteBin6Line } from 'react-icons/ri';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 import CoverLetterModal from '@/components/modals/CoverLetterModal';
-// Removed deprecated CreateReminderModal - using modern inline reminder creation
 import { notificationService } from '@/services/NotificationService';
 import { telegramService } from '@/services/TelegramService';
+import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '@/components/ui/Modal';
 
-const { Search: AntSearch } = Input;
-const { RangePicker } = DatePicker;
-
-
+// --- Types ---
 interface Job {
   _id: string;
   jobId: string;
@@ -34,6 +32,7 @@ interface Job {
   notes?: string;
   createdAt: string;
   appliedDate: string;
+  resumeUsed?: string | { _id: string };
 }
 
 interface PopulatedJob {
@@ -64,38 +63,9 @@ interface ApiApplication {
   resumeUsed?: string;
 }
 
-interface Education {
-  id: string;
-  institution: string;
-  degree: string;
-  field: string;
-  gpa?: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-interface WorkExperience {
-  id: string;
-  company: string;
-  position: string;
-  location: string;
-  startDate?: string;
-  endDate?: string;
-  description?: string;
-}
-
-interface ApplicationForReminder {
-  _id: string;
-  jobId?: {
-    title?: string;
-    company?: string;
-    location?: string;
-  };
-}
-
 interface UserProfile {
   name: string;
-  experience: WorkExperience[];
+  experience: any[];
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -104,85 +74,68 @@ interface UserProfile {
   skills?: string[] | string;
   experienceYears?: number | string;
   targetRole?: string;
-  education?: Education[];
-  workExperience?: WorkExperience[];
+  education?: any[];
+  workExperience?: any[];
 }
 
 const ApplicationTrackingPage = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [addingJob, setAddingJob] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
-  const [eventModalVisible, setEventModalVisible] = useState(false);
+
+  // Modals
   const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
   const [coverLetterModalVisible, setCoverLetterModalVisible] = useState(false);
   const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
 
-  // Modern reminder creation state
+  // Reminder Modal State
   const [reminderModalVisible, setReminderModalVisible] = useState(false);
   const [selectedJobForReminder, setSelectedJobForReminder] = useState<Job | undefined>(undefined);
   const [reminderForm, setReminderForm] = useState({
     title: '',
     description: '',
-    dueDate: null as dayjs.Dayjs | null,
-    dueTime: dayjs().hour(9).minute(0),
+    dueDate: dayjs().add(1, 'week').format('YYYY-MM-DD'),
+    dueTime: '09:00',
     priority: 'medium',
     type: 'follow_up'
   });
-  const [creatingReminder, setCreatingReminder] = useState(false);
 
-  // New state for user profile
+  // User Profile
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: '',
-    experience: [],
-    firstName: '',
-    lastName: '',
-    email: '',
-    location: '',
-    bio: '',
-    skills: [],
-    experienceYears: '',
-    targetRole: '',
-    education: [],
-    workExperience: []
+    name: '', experience: [], firstName: '', lastName: '', email: '', location: '', bio: '', skills: [], experienceYears: '', targetRole: '', education: [], workExperience: []
   });
 
-  // Pagination and filter states
+  // Pagination & Filters
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
-  const [platformFilter, setPlatformFilter] = useState('');
-  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [platformFilter, setPlatformFilter] = useState('all');
 
-  // Fetch user profile on mount
+  // Fetch User Profile
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const response = await fetch('/api/user/profile');
-        if (!response.ok) {
-          throw new Error('Failed to fetch user profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserProfile({
+            ...data,
+            name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
+            experience: data.workExperience || [],
+          });
         }
-        const data = await response.json();
-        setUserProfile({
-          ...data,
-          name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-          experience: data.workExperience || [],
-        });
       } catch (error) {
         console.error('Error fetching user profile:', error);
-        toast.error('Failed to load user profile');
       }
     };
     fetchUserProfile();
   }, []);
 
-  // ... rest of the component code unchanged ...
-
-  // Function to fetch jobs with filters and pagination
+  // Fetch Jobs
   const fetchJobs = useCallback(async (page: number, limit: number) => {
     try {
       setLoading(true);
@@ -190,21 +143,15 @@ const ApplicationTrackingPage = () => {
       params.append('page', page.toString());
       params.append('limit', limit.toString());
       if (searchText) params.append('search', searchText);
-      if (statusFilter) params.append('status', statusFilter);
-      if (priorityFilter) params.append('priority', priorityFilter);
-      if (platformFilter) params.append('platform', platformFilter);
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        params.append('dateFrom', dateRange[0].toISOString());
-        params.append('dateTo', dateRange[1].toISOString());
-      }
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (priorityFilter !== 'all') params.append('priority', priorityFilter);
+      if (platformFilter !== 'all') params.append('platform', platformFilter);
 
       const response = await fetch(`/api/applications?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch applications');
-      }
+      if (!response.ok) throw new Error('Failed to fetch applications');
+
       const data = await response.json();
 
-      // Transform API response to match the Job interface
       const transformedJobs: Job[] = data.applications.map((app: ApiApplication) => {
         const jobData = typeof app.jobId === 'object' ? app.jobId : {};
         return {
@@ -234,78 +181,43 @@ const ApplicationTrackingPage = () => {
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
-      setJobs([]);
-      setFilteredJobs([]);
     } finally {
       setLoading(false);
     }
-  }, [searchText, statusFilter, priorityFilter, platformFilter, dateRange]);
+  }, [searchText, statusFilter, priorityFilter, platformFilter]);
 
   useEffect(() => {
     fetchJobs(currentPage, pageSize);
-
-    // Mock API call to get reminders (keeping as is since task only mentioned jobs)
-    // const mockReminders: Reminder[] = [
-    //   { _id: 'r1', title: 'Follow-up with recruiter at Data Solutions Co.', dueDate: dayjs().add(1, 'day').toISOString(), type: 'follow-up', priority: 'high' },
-    //   { _id: 'r2', title: 'Prepare for interview with Tech Innovators', dueDate: dayjs().add(3, 'day').toISOString(), type: 'interview', priority: 'high' },
-    // ];
-
-    // setReminders(mockReminders);
   }, [fetchJobs, currentPage, pageSize]);
 
-  // Filter jobs based on search and filter criteria
-  useEffect(() => {
-    // Remove client-side filtering since backend handles it now
-    setFilteredJobs(jobs);
-  }, [jobs]);
-
-
-
-
-
-  // Removed unused handleStatusUpdate to fix eslint warning
-
-  const handleDelete = useCallback(async (jobId: string) => {
+  const handleDelete = async (jobId: string) => {
+    if (!confirm('Are you sure you want to delete this application?')) return;
     try {
-      const response = await fetch(`/api/applications/${jobId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete application');
+      const response = await fetch(`/api/applications/${jobId}`, { method: 'DELETE' });
+      if (response.ok) {
+        setJobs(prev => prev.filter(job => job._id !== jobId));
+        setFilteredJobs(prev => prev.filter(job => job._id !== jobId));
+        toast.success('Application deleted');
+      } else {
+        toast.error('Failed to delete application');
       }
-
-      // Update local state
-      const updatedJobs = jobs.filter(job => job._id !== jobId);
-      setJobs(updatedJobs);
-      setFilteredJobs(updatedJobs);
-      toast.success('Application deleted successfully');
     } catch (error) {
-      console.error('Error deleting application:', error);
       toast.error('Failed to delete application');
     }
-  }, [jobs]);
+  };
 
-  // Modern reminder creation function
   const handleCreateReminder = async () => {
     try {
-      if (!reminderForm.title?.trim()) {
+      if (!reminderForm.title.trim()) {
         toast.error('Please enter a reminder title');
         return;
       }
-      
-      if (!reminderForm.dueDate) {
-        toast.error('Please select a due date');
-        return;
-      }
-      
-      setCreatingReminder(true);
 
       const payload = {
         title: reminderForm.title,
         description: reminderForm.description,
-        dueDate: reminderForm.dueDate.toISOString(),
-        dueTime: reminderForm.dueTime.format('HH:mm'),
+        dueDate: new Date(reminderForm.dueDate).toISOString(),
+        dueTime: reminderForm.dueTime,
         type: reminderForm.type,
         priority: reminderForm.priority,
         status: 'pending',
@@ -322,625 +234,364 @@ const ApplicationTrackingPage = () => {
       if (response.ok) {
         toast.success('Reminder created successfully!');
         setReminderModalVisible(false);
-        setReminderForm({
-          title: '',
-          description: '',
-          dueDate: null,
-          dueTime: dayjs().hour(9).minute(0),
-          priority: 'medium',
-          type: 'follow_up'
+
+        // Notifications
+        await notificationService.createNotification({
+          title: 'Reminder Setup',
+          message: `Reminder set for ${selectedJobForReminder?.title}`,
+          type: 'info'
         });
-        setSelectedJobForReminder(undefined);
+
+        if (telegramService.isConnectedToTelegram()) {
+          await telegramService.sendNotification('Reminder', `Reminder set for ${selectedJobForReminder?.title}`, 'reminder');
+        }
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || 'Failed to create reminder');
+        toast.error('Failed to create reminder');
       }
     } catch (error) {
-      console.error('Error creating reminder:', error);
       toast.error('Failed to create reminder');
-    } finally {
-      setCreatingReminder(false);
     }
-  };
-
-
-
-
-  const clearFilters = () => {
-    setSearchText('');
-    setStatusFilter('');
-    setPriorityFilter('');
-    setPlatformFilter('');
-    setDateRange(null);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'applied': return 'orange';
-      case 'interviewing': return 'purple';
-      case 'offered': return 'green';
-      case 'rejected': return 'red';
-      case 'submitted': return 'cyan';
-      case 'expired': return 'gray';
-      default: return 'blue';
+      case 'applied': return 'bg-[var(--primary)]/20 text-[var(--primary)] border-[var(--primary)]/30';
+      case 'interviewing': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'offered': return 'bg-[var(--success)]/20 text-[var(--success)] border-[var(--success)]/30';
+      case 'rejected': return 'bg-[var(--danger)]/20 text-[var(--danger)] border-[var(--danger)]/30';
+      case 'submitted': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'expired': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      default: return 'bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-glass)]';
     }
   };
 
-  const getPriorityTagColor = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'red';
-      case 'medium': return 'orange';
-      case 'low': return 'blue';
-      default: return 'default';
+      case 'high': return 'text-[var(--danger)]';
+      case 'medium': return 'text-[var(--warning)]';
+      case 'low': return 'text-[var(--success)]';
+      default: return 'text-[var(--text-muted)]';
     }
   };
-
-  // Remove unused jobColumns variable to fix eslint warning
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {/* Header */}
-          <div className="flex justify-between items-center mt-5">
-            <div>
-              <div className="text-4xl font-bold text-white mb-2">Application Tracking</div>
-              <p className="text-text-muted text-lg">Track and manage your job applications</p>
-            </div>
-            <button
-              onClick={() => {
-                setSelectedJob(undefined);
-                setCreateJobModalVisible(true);
-              }}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="w-5 h-5" />
-              Add Job
-            </button>
+      <div className="p-6 lg:p-8 min-h-screen space-y-8">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+                <Briefcase className="w-8 h-8 text-[var(--primary)]" />
+              </div>
+              Application Tracking
+            </h1>
+            <p className="text-[var(--text-muted)] mt-2 ml-16">Track and manage your job applications effectively</p>
           </div>
 
+          <button
+            onClick={() => {
+              setSelectedJob(undefined);
+              setCreateJobModalVisible(true);
+            }}
+            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add Application</span>
+          </button>
+        </div>
 
-          {/* Jobs List - Main Content */}
-          <div>
-            <h2 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
-              <Briefcase className="w-6 h-6 text-primary" />
-              Job Applications
-            </h2>
+        {/* Filters */}
+        <div className="bg-[var(--bg-surface)]/30 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-glass)]">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters & Search</span>
+            </div>
 
-            {/* Filters and Search */}
-            <div className="mb-6 p-6 filter-panel rounded-xl">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-gradient-to-r from-primary to-primary/80 rounded-lg">
-                  <Search className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-white">Search & Filters</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white mb-3">Search</label>
-                <AntSearch
-                  placeholder="Search jobs, companies, locations..."
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                <input
+                  type="text"
+                  placeholder="Search jobs, companies..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full"
-                  allowClear
-                  size="large"
-                  enterButton={<Search className="w-5 h-5 text-white" />}
+                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
                 />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white mb-3">Status</label>
-                  <Select
-                    placeholder="All Statuses"
-                    value={statusFilter || undefined}
-                    onChange={setStatusFilter}
-                    className="w-full"
-                    allowClear
-                    size="large"
-                  >
-                    <Select.Option value="saved">Saved</Select.Option>
-                    <Select.Option value="applied">Applied</Select.Option>
-                    <Select.Option value="interviewing">Interviewing</Select.Option>
-                    <Select.Option value="offered">Offered</Select.Option>
-                    <Select.Option value="rejected">Rejected</Select.Option>
-                    <Select.Option value="submitted">Submitted</Select.Option>
-                    <Select.Option value="expired">Expired</Select.Option>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white mb-3">Priority</label>
-                  <Select
-                    placeholder="All Priorities"
-                    value={priorityFilter || undefined}
-                    onChange={setPriorityFilter}
-                    className="w-full"
-                    allowClear
-                    size="large"
-                  >
-                    <Select.Option value="high">High</Select.Option>
-                    <Select.Option value="medium">Medium</Select.Option>
-                    <Select.Option value="low">Low</Select.Option>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-white mb-3">Platform</label>
-                  <Select
-                    placeholder="All Platforms"
-                    value={platformFilter || undefined}
-                    onChange={setPlatformFilter}
-                    className="w-full"
-                    allowClear
-                    size="large"
-                  >
-                    <Select.Option value="linkedin">LinkedIn</Select.Option>
-                    <Select.Option value="indeed">Indeed</Select.Option>
-                    <Select.Option value="glassdoor">Glassdoor</Select.Option>
-                    <Select.Option value="company-website">Company Website</Select.Option>
-                    <Select.Option value="referral">Referral</Select.Option>
-                    <Select.Option value="other">Other</Select.Option>
-                  </Select>
-                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-                <div className="flex-1 space-y-2">
-                  <label className="block text-sm font-semibold text-white mb-3">Date Range</label>
-              <RangePicker
-                value={dateRange}
-                onChange={setDateRange}
-                className="w-full max-w-sm"
-                format="MMM DD, YYYY"
-                size="large"
-                popupClassName="custom-dark-datepicker"
-                suffixIcon={<Search className="w-5 h-5 text-white" />}
-              />
-                </div>
-                
-                <div className="flex gap-3">
-                  <Button
-                    onClick={clearFilters}
-                    icon={<RefreshCw className="w-4 h-4" />}
-                    className="flex items-center gap-2 h-10 px-6 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 border-0 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
-                    size="large"
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-white font-medium">
-                    Showing {filteredJobs.length} of {jobs.length} applications
-                  </span>
-                  {(searchText || statusFilter || priorityFilter || platformFilter || dateRange) && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                      <span className="text-primary font-medium">Filters applied</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-          <div className="overflow-x-auto">
-            <Table
-              loading={loading || addingJob}
-              dataSource={filteredJobs}
-              rowKey="_id"
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              total: totalCount,
-              position: ['bottomCenter'],
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} applications`,
-              pageSizeOptions: ['5', '10', '20', '50'],
-              size: 'default',
-              onChange: (page, pageSize) => {
-                setCurrentPage(page);
-                setPageSize(pageSize);
-              }
-            }}
-              scroll={{ x: 'max-content' }}
-              className="custom-dark-table"
-              columns={[
-                {
-                  title: 'Job Title',
-                  dataIndex: 'title',
-                  key: 'title',
-                  sorter: (a: Job, b: Job) => a.title.localeCompare(b.title),
-                  render: (text: string, record: Job) => (
-                    <span className="font-semibold text-text-light cursor-pointer hover:underline" onClick={() => { setSelectedJob(record); setCreateJobModalVisible(true); }}>
-                      {text}
-                    </span>
-                  ),
-                  responsive: ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'],
-                  width: 150,
-                },
-                {
-                  title: 'Company',
-                  dataIndex: 'company',
-                  key: 'company',
-                  sorter: (a: Job, b: Job) => a.company.localeCompare(b.company),
-                  responsive: ['sm', 'md', 'lg', 'xl', 'xxl'],
-                  width: 120,
-                },
-                {
-                  title: 'Status',
-                  dataIndex: 'status',
-                  key: 'status',
-                  render: (status: string) => (
-                    <Tag color={getStatusColor(status)} className="uppercase text-xs tracking-wider">
-                      {status}
-                    </Tag>
-                  ),
-                  responsive: ['sm', 'md', 'lg', 'xl', 'xxl'],
-                  width: 100,
-                },
-                {
-                  title: 'Location',
-                  dataIndex: 'location',
-                  key: 'location',
-                  sorter: (a: Job, b: Job) => a.location.localeCompare(b.location),
-                  responsive: ['md', 'lg', 'xl', 'xxl'],
-                  width: 120,
-                },
-                {
-                  title: 'Platform',
-                  dataIndex: 'platform',
-                  key: 'platform',
-                  render: (platform: string) => (
-                    <Tag color="blue" className="uppercase text-xs tracking-wider">
-                      {platform}
-                    </Tag>
-                  ),
-                  responsive: ['lg', 'xl', 'xxl'],
-                  width: 100,
-                },
-                {
-                  title: 'Priority',
-                  dataIndex: 'priority',
-                  key: 'priority',
-                  render: (priority: string) => (
-                    <Tag color={getPriorityTagColor(priority)} className="uppercase text-xs tracking-wider">
-                      {priority}
-                    </Tag>
-                  ),
-                  responsive: ['lg', 'xl', 'xxl'],
-                  width: 100,
-                },
-                {
-                  title: 'Date Posted',
-                  dataIndex: 'datePosted',
-                  key: 'datePosted',
-                  render: (date: string) => dayjs(date).format('MMM DD, YYYY'),
-                  sorter: (a: Job, b: Job) => dayjs(a.datePosted).unix() - dayjs(b.datePosted).unix(),
-                  responsive: ['xl', 'xxl'],
-                  width: 120,
-                },
-                {
-                  title: 'URL',
-                  dataIndex: 'url',
-                  key: 'url',
-                  render: (url: string) => url ? (
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                      Link
-                    </a>
-                  ) : (
-                    <span className="text-gray-500">N/A</span>
-                  ),
-                  responsive: ['lg', 'xl', 'xxl'],
-                  width: 150,
-                },
-                {
-                  title: 'Actions',
-                  key: 'actions',
-                  render: (_: unknown, record: Job) => (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedJobForCoverLetter(record);
-                          setCoverLetterModalVisible(true);
-                        }}
-                        className="flex items-center justify-center w-9 h-9 bg-purple-500/20 hover:bg-purple-500/30 text-purple-500 hover:text-purple-400 rounded-lg transition-all duration-200 hover:scale-105"
-                        title="Generate Cover Letter"
-                        aria-label="Generate cover letter"
-                      >
-                        <Sparkles className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedJob(record);
-                          setCreateJobModalVisible(true);
-                        }}
-                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105"
-                        title="Edit"
-                      >
-                        <Edit className="w-5 h-5" />
-                        <span className="sr-only">Edit</span>
-                      </button>
-                <button
-                  onClick={async () => {
-                    setSelectedJobForReminder(record);
-                    setReminderForm({
-                      title: `Follow up on ${record.title} at ${record.company}`,
-                      description: '',
-                      dueDate: dayjs().add(1, 'week'),
-                      dueTime: dayjs().hour(9).minute(0),
-                      priority: 'medium',
-                      type: 'follow_up'
-                    });
-                    setReminderModalVisible(true);
-                    
-                    // Send notification about reminder creation
-                    await notificationService.createNotification({
-                      title: 'Reminder Setup',
-                      message: `Setting up follow-up reminder for ${record.title} at ${record.company}`,
-                      type: 'info'
-                    });
-                    
-                    // Send Telegram notification if connected
-                    if (telegramService.isConnectedToTelegram()) {
-                      await telegramService.sendNotification(
-                        'Follow-up Reminder',
-                        `Creating reminder for ${record.title} at ${record.company}`,
-                        'reminder'
-                      );
-                    }
-                  }}
-                  className="flex items-center justify-center w-9 h-9 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-500 hover:text-yellow-400 rounded-lg transition-all duration-200 hover:scale-105"
-                  title="Set Follow-Up Reminder"
-                  aria-label="Set follow-up reminder"
-                >
-                  {/* Bell icon from lucide-react */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </button>
-                <Popconfirm
-                  title="Are you sure you want to delete this application?"
-                  onConfirm={() => {
-                    handleDelete(record._id);
-                  }}
-                  okText="Yes"
-                  cancelText="No"
-                >
-                  <button
-                    className="flex items-center gap-2 px-4 py-3 bg-danger text-white border border-danger rounded-lg transition-all duration-200 hover:scale-105"
-                    title="Delete"
-                  >
-                    <RiDeleteBin6Line className="w-5 h-5" />
-                    <span className="sr-only">Delete</span>
-                  </button>
-                </Popconfirm>
-              </div>
-            ),
-                  responsive: ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'],
-                  width: 150,
-                },
-              ]}
-            />
-          </div>
-          </div>
-
-
-
-          {/* Reminder & Event Modals */}
-          {/* Reminder Modal */}
-          <Modal
-            open={false} // Control visibility as needed
-            onCancel={() => {}}
-            footer={null}
-            width={600}
-            className="custom-dark-modal"
-          >
-            {/* Import and render reminders page or component here */}
-            {/* For example, you can import RemindersPage and render it */}
-            {/* <RemindersPage /> */}
-          </Modal>
-
-          {/* Event Modal */}
-          <Modal
-            open={eventModalVisible}
-            onCancel={() => setEventModalVisible(false)}
-            footer={null}
-            width={800}
-            className="custom-dark-modal"
-            bodyStyle={{ backgroundColor: '#000000' }}
-          >
-            {/* Import and render events page or component here */}
-            {/* For example, you can import EventsPage and render it */}
-            {/* <EventsPage /> */}
-          </Modal>
-
-          {/* Create Job Modal */}
-          <CreateJobModal
-            visible={createJobModalVisible}
-            onClose={() => setCreateJobModalVisible(false)}
-              onJobCreated={(newJob) => {
-                if (!newJob) return;
-                setAddingJob(true);
-                // Transform newJob to match Job interface
-                const jobData = typeof newJob.jobId === 'object' ? newJob.jobId : {};
-                const transformedJob: Job = {
-                  _id: newJob._id || '',
-                  jobId: newJob._id || '',
-                  title: (jobData as PopulatedJob)?.title || newJob.title || 'Unknown Title',
-                  company: (jobData as PopulatedJob)?.company || newJob.company || 'Unknown Company',
-                  location: (jobData as PopulatedJob)?.location || newJob.location || 'Unknown Location',
-                  status: newJob.status || 'submitted',
-                  datePosted: (jobData as PopulatedJob)?.datePosted || newJob.datePosted || newJob.createdAt || new Date().toISOString(),
-                  description: (jobData as PopulatedJob)?.description || newJob.description || '',
-                  priority: newJob.priority || 'medium',
-                  platform: newJob.platform || 'other',
-                  url: newJob.jobUrl || (jobData as PopulatedJob)?.url || '',
-                  notes: newJob.notes || '',
-                  createdAt: newJob.createdAt || new Date().toISOString(),
-                  appliedDate: newJob.appliedDate || new Date().toISOString()
-                };
-
-                if (selectedJob) {
-                  // Update existing job
-                  setJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
-                  setFilteredJobs(prev => prev.map(job => job._id === transformedJob._id ? transformedJob : job));
-                  toast.success('Job application updated successfully');
-                } else {
-                  // Add new job
-                  setJobs(prev => [transformedJob, ...prev]);
-                  setFilteredJobs(prev => [transformedJob, ...prev]);
-                  toast.success('Job application added successfully');
-                }
-                setAddingJob(false);
-              }}
-            job={selectedJob}
-          />
-
-          {/* Cover Letter Modal */}
-          <CoverLetterModal
-            visible={coverLetterModalVisible}
-            onClose={() => setCoverLetterModalVisible(false)}
-            job={selectedJobForCoverLetter}
-            userProfile={userProfile}
-          />
-
-          {/* Modern Reminder Creation Modal */}
-          <Modal
-            title={
-              <div className="flex items-center gap-2 text-white">
-                <Bell className="w-5 h-5 text-primary" />
-                Create Reminder
-              </div>
-            }
-            open={reminderModalVisible}
-            onCancel={() => {
-              setReminderModalVisible(false);
-              setReminderForm({
-                title: '',
-                description: '',
-                dueDate: null,
-                dueTime: dayjs().hour(9).minute(0),
-                priority: 'medium',
-                type: 'follow_up'
-              });
-              setSelectedJobForReminder(undefined);
-            }}
-            width={600}
-            className="custom-dark-modal"
-            footer={[
-              <Button key="cancel" onClick={() => setReminderModalVisible(false)}>
-                Cancel
-              </Button>,
-              <Button 
-                key="create" 
-                type="primary" 
-                loading={creatingReminder} 
-                onClick={handleCreateReminder}
-                className="bg-primary hover:bg-primary/80"
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
               >
-                Create Reminder
-              </Button>,
-            ]}
-          >
-            <div className="space-y-4 text-white">
-              {selectedJobForReminder && (
-                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                  <div className="text-sm text-primary font-medium">
-                    Reminder for: {selectedJobForReminder.title} at {selectedJobForReminder.company}
+                <option value="all">All Statuses</option>
+                <option value="saved">Saved</option>
+                <option value="applied">Applied</option>
+                <option value="interviewing">Interviewing</option>
+                <option value="offered">Offered</option>
+                <option value="rejected">Rejected</option>
+              </select>
+
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+              >
+                <option value="all">All Priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+
+              <button
+                onClick={() => { setSearchText(''); setStatusFilter('all'); setPriorityFilter('all'); setPlatformFilter('all'); }}
+                className="px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Reset Filters</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Job List */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            <AnimatePresence mode="popLayout">
+              {filteredJobs.length > 0 ? (
+                filteredJobs.map((job) => (
+                  <motion.div
+                    key={job._id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-5 transition-all hover:shadow-lg hover:shadow-[var(--primary)]/5 group"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--secondary)]/20 flex items-center justify-center border border-[var(--primary)]/30 text-[var(--primary)] font-bold text-xl">
+                          {job.company.charAt(0)}
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-white group-hover:text-[var(--primary)] transition-colors cursor-pointer" onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}>
+                            {job.title}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-[var(--text-muted)]">
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="w-3 h-3" />
+                              {job.company}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {job.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              Posted: {dayjs(job.datePosted).format('MMM D')}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusColor(job.status)}`}>
+                          {job.status}
+                        </span>
+                        <span className={`text-xs font-bold uppercase tracking-wider ${getPriorityColor(job.priority)}`}>
+                          {job.priority} Priority
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 lg:ml-auto">
+                        {job.url && (
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                            title="View Job Post"
+                          >
+                            <ExternalLink className="w-5 h-5" />
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedJobForCoverLetter(job);
+                            setCoverLetterModalVisible(true);
+                          }}
+                          className="p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg transition-colors"
+                          title="Generate Cover Letter"
+                        >
+                          <Sparkles className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedJobForReminder(job);
+                            setReminderForm({
+                              title: `Follow up: ${job.title} at ${job.company}`,
+                              description: '',
+                              dueDate: dayjs().add(1, 'week').format('YYYY-MM-DD'),
+                              dueTime: '09:00',
+                              priority: 'medium',
+                              type: 'follow_up'
+                            });
+                            setReminderModalVisible(true);
+                          }}
+                          className="p-2 text-[var(--warning)] hover:text-[var(--warning)]/80 hover:bg-[var(--warning)]/10 rounded-lg transition-colors"
+                          title="Set Reminder"
+                        >
+                          <Bell className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}
+                          className="p-2 text-[var(--primary)] hover:text-[var(--primary)]/80 hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(job._id)}
+                          className="p-2 text-[var(--danger)] hover:text-[var(--danger)]/80 hover:bg-[var(--danger)]/10 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-16 border border-dashed border-[var(--border-glass)] rounded-2xl bg-[var(--bg-surface)]/20">
+                  <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Briefcase className="w-10 h-10 text-[var(--text-muted)]" />
                   </div>
+                  <h3 className="text-xl font-bold text-white mb-2">No applications found</h3>
+                  <p className="text-[var(--text-muted)] mb-6">
+                    {searchText || statusFilter !== 'all'
+                      ? 'Try adjusting your filters to see more results.'
+                      : 'Start tracking your job search by adding your first application.'}
+                  </p>
+                  <button
+                    onClick={() => { setSelectedJob(undefined); setCreateJobModalVisible(true); }}
+                    className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
+                  >
+                    Add Application
+                  </button>
                 </div>
               )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  value={reminderForm.title}
-                  onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
-                  placeholder="Enter reminder title"
-                  size="large"
-                />
-              </div>
+            </AnimatePresence>
+          </div>
+        )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-                <Input.TextArea
-                  value={reminderForm.description}
-                  onChange={(e) => setReminderForm({ ...reminderForm, description: e.target.value })}
-                  placeholder="Enter reminder description (optional)"
-                  rows={3}
-                  size="large"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Due Date <span className="text-red-500">*</span>
-                  </label>
-                  <DatePicker
-                    value={reminderForm.dueDate}
-                    onChange={(date) => setReminderForm({ ...reminderForm, dueDate: date })}
-                    size="large"
-                    className="w-full"
-                    format="MMM DD, YYYY"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Due Time</label>
-                  <TimePicker
-                    value={reminderForm.dueTime}
-                    onChange={(time) => setReminderForm({ ...reminderForm, dueTime: time || dayjs().hour(9).minute(0) })}
-                    size="large"
-                    className="w-full"
-                    format="HH:mm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
-                  <Select
-                    value={reminderForm.type}
-                    onChange={(value) => setReminderForm({ ...reminderForm, type: value })}
-                    size="large"
-                    className="w-full"
-                  >
-                    <Select.Option value="follow_up">Follow Up</Select.Option>
-                    <Select.Option value="interview_prep">Interview Preparation</Select.Option>
-                    <Select.Option value="application_deadline">Application Deadline</Select.Option>
-                    <Select.Option value="interview_scheduled">Interview Scheduled</Select.Option>
-                    <Select.Option value="offer_response">Offer Response</Select.Option>
-                    <Select.Option value="networking">Networking</Select.Option>
-                    <Select.Option value="custom">Custom</Select.Option>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Priority</label>
-                  <Select
-                    value={reminderForm.priority}
-                    onChange={(value) => setReminderForm({ ...reminderForm, priority: value })}
-                    size="large"
-                    className="w-full"
-                  >
-                    <Select.Option value="low">Low</Select.Option>
-                    <Select.Option value="medium">Medium</Select.Option>
-                    <Select.Option value="high">High</Select.Option>
-                    <Select.Option value="urgent">Urgent</Select.Option>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </Modal>
-        </div>
+        {/* Pagination */}
+        {totalCount > pageSize && (
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="text-[var(--text-muted)]">
+              Page {currentPage} of {Math.ceil(totalCount / pageSize)}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / pageSize), p + 1))}
+              disabled={currentPage === Math.ceil(totalCount / pageSize)}
+              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Modals */}
+      <CreateJobModal
+        visible={createJobModalVisible}
+        onClose={() => setCreateJobModalVisible(false)}
+        onJobCreated={() => { fetchJobs(currentPage, pageSize); setCreateJobModalVisible(false); }}
+        job={selectedJob}
+      />
+
+      <CoverLetterModal
+        visible={coverLetterModalVisible}
+        onClose={() => setCoverLetterModalVisible(false)}
+        job={selectedJobForCoverLetter}
+        userProfile={userProfile}
+      />
+
+      <Modal
+        isOpen={reminderModalVisible}
+        onClose={() => setReminderModalVisible(false)}
+        title="Set Follow-up Reminder"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title</label>
+            <input
+              type="text"
+              value={reminderForm.title}
+              onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
+              <input
+                type="date"
+                value={reminderForm.dueDate}
+                onChange={(e) => setReminderForm({ ...reminderForm, dueDate: e.target.value })}
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Time</label>
+              <input
+                type="time"
+                value={reminderForm.dueTime}
+                onChange={(e) => setReminderForm({ ...reminderForm, dueTime: e.target.value })}
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
+            <select
+              value={reminderForm.priority}
+              onChange={(e) => setReminderForm({ ...reminderForm, priority: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            <button
+              onClick={() => setReminderModalVisible(false)}
+              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateReminder}
+              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors"
+            >
+              Set Reminder
+            </button>
+          </div>
+        </div>
+      </Modal>
     </AppLayout>
   );
 };

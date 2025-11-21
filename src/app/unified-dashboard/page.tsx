@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, Badge, Button, Card, Progress } from 'antd';
 import {
   TrendingUp,
   Calendar,
@@ -11,23 +10,86 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  Phone,
-  Mail,
   Settings,
   Zap,
   BarChart3,
-  X
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import ActivityHub from '@/components/ActivityHub';
 import FollowUpTracker from '@/components/FollowUpTracker';
 import NotificationsPanel from '@/components/NotificationsPanel';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ActivitySkeleton from '@/components/ui/ActivitySkeleton';
 import { notificationService } from '@/services/NotificationService';
 import { useToast } from '@/contexts/ToastContext';
+import { motion } from 'framer-motion';
 
-const { TabPane } = Tabs;
+// --- Custom Components ---
+
+const TabButton = ({ active, onClick, icon, label, count, colorClass }: any) => (
+  <button
+    onClick={onClick}
+    className={`relative flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${active
+        ? 'text-white bg-[var(--primary)]/10 border border-[var(--primary)]/50 shadow-[0_0_15px_var(--primary-glow)]'
+        : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-surface)] border border-transparent'
+      }`}
+  >
+    {icon}
+    <span>{label}</span>
+    {count > 0 && (
+      <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${colorClass || 'bg-[var(--primary)] text-black'}`}>
+        {count}
+      </span>
+    )}
+    {active && (
+      <motion.div
+        layoutId="activeTab"
+        className="absolute inset-0 rounded-xl bg-[var(--primary)]/5"
+        initial={false}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      />
+    )}
+  </button>
+);
+
+const StatCard = ({ title, value, icon, color, trend, isPrimary = false }: any) => (
+  <div className={`relative overflow-hidden rounded-2xl p-6 backdrop-blur-xl border transition-all duration-300 group hover:-translate-y-1 ${isPrimary
+      ? 'bg-[var(--primary)]/10 border-[var(--primary)]/30 shadow-[0_0_20px_var(--primary-glow)]'
+      : 'bg-[var(--bg-glass)] border-[var(--border-glass)] hover:border-[var(--primary)]/30 hover:shadow-lg hover:shadow-[var(--primary)]/5'
+    }`}>
+    <div className="flex justify-between items-start mb-4">
+      <div className={`p-3 rounded-xl ${color} text-white`}>
+        {icon}
+      </div>
+      {trend && (
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${trend.isPositive
+            ? 'bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/30'
+            : 'bg-[var(--danger)]/20 text-[var(--danger)] border border-[var(--danger)]/30'
+          }`}>
+          {trend.isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+          {trend.value}%
+        </div>
+      )}
+    </div>
+    <div>
+      <p className="text-[var(--text-muted)] text-sm font-medium uppercase tracking-wider mb-1">{title}</p>
+      <h3 className="text-3xl font-bold text-white group-hover:text-[var(--primary)] transition-colors">{value}</h3>
+    </div>
+    {/* Decorative gradient */}
+    <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-br from-[var(--primary)]/20 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+  </div>
+);
+
+const ProgressBar = ({ percent, color }: { percent: number, color: string }) => (
+  <div className="h-2 w-full bg-[var(--bg-surface)] rounded-full overflow-hidden">
+    <div
+      className="h-full rounded-full transition-all duration-1000 ease-out"
+      style={{ width: `${percent}%`, backgroundColor: color }}
+    ></div>
+  </div>
+);
+
 
 interface DashboardStats {
   totalActivities: number;
@@ -58,123 +120,48 @@ const UnifiedDashboard = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
-    // Subscribe to notifications
     const unsubscribe = notificationService.subscribe((notifications) => {
       setNotifications(notifications);
     });
-
-    // Fetch initial data
     fetchDashboardData();
-
     return unsubscribe;
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching dashboard data...');
-
-      // Fetch dashboard statistics from API
-      try {
-        console.log('Calling API: /api/dashboard/simple-stats');
-        const response = await fetch('/api/dashboard/simple-stats');
-        console.log('API response status:', response.status);
-
-        if (response.ok) {
-          const statsData = await response.json();
-          console.log('API data received:', statsData);
-
-          // Ensure the data has the expected structure
-          const processedStats: DashboardStats = {
-            totalActivities: statsData.totalActivities || 0,
-            pendingReminders: statsData.pendingReminders || 0,
-            upcomingInterviews: statsData.upcomingInterviews || 0,
-            overdueFollowUps: statsData.overdueFollowUps || 0,
-            activeContacts: statsData.activeContacts || 0,
-            completionRate: statsData.completionRate || 0,
-            weeklyProgress: {
-              completed: statsData.weeklyProgress?.completed || 0,
-              total: statsData.weeklyProgress?.total || 0
-            }
-          };
-
-          setStats(processedStats);
-          success('Dashboard data loaded successfully');
-        } else {
-          const errorData = await response.text();
-          console.error('API error:', response.status, errorData);
-          throw new Error(`API failed with status ${response.status}: ${errorData}`);
-        }
-      } catch (apiError) {
-        console.error('Failed to fetch from API:', apiError);
-        error('Failed to load dashboard data - please refresh the page');
-        // Keep the initial empty stats instead of showing dummy data
+      const response = await fetch('/api/dashboard/simple-stats');
+      if (response.ok) {
+        const statsData = await response.json();
+        setStats({
+          totalActivities: statsData.totalActivities || 0,
+          pendingReminders: statsData.pendingReminders || 0,
+          upcomingInterviews: statsData.upcomingInterviews || 0,
+          overdueFollowUps: statsData.overdueFollowUps || 0,
+          activeContacts: statsData.activeContacts || 0,
+          completionRate: statsData.completionRate || 0,
+          weeklyProgress: {
+            completed: statsData.weeklyProgress?.completed || 0,
+            total: statsData.weeklyProgress?.total || 0
+          }
+        });
+        success('Dashboard data loaded successfully');
+      } else {
+        throw new Error('Failed to fetch stats');
       }
-
-      // Notifications will be created by the notification service based on real data
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+    } catch (err) {
+      console.error(err);
       error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  const getTabIcon = (tab: string) => {
-    switch (tab) {
-      case 'overview': return <BarChart3 className="w-4 h-4" />;
-      case 'activities': return <Calendar className="w-4 h-4" />;
-      case 'followups': return <Users className="w-4 h-4" />;
-      case 'notifications': return <Bell className="w-4 h-4" />;
-      default: return <Target className="w-4 h-4" />;
-    }
-  };
-
-  const StatCard = ({ title, value, icon, color, trend, isPrimary = false }: {
-     title: string;
-     value: number | string;
-     icon: React.ReactNode;
-     color: string;
-     trend?: { value: number; isPositive: boolean };
-     isPrimary?: boolean;
-   }) => (
-     <Card className={`bg-bg-card border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 group ${isPrimary ? 'ring-2 ring-primary/20' : ''}`}>
-       <div className="flex items-center justify-between p-2">
-         <div className="flex-1">
-           <p className="text-text-muted text-sm font-medium mb-2 uppercase tracking-wide">{title}</p>
-           <div className="flex items-baseline gap-3">
-             <span className="text-3xl md:text-4xl font-bold text-white group-hover:text-primary transition-colors">{value}</span>
-             {trend && (
-               <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                 trend.isPositive
-                   ? 'bg-success/20 text-success border border-success/30'
-                   : 'bg-danger/20 text-danger border border-danger/30'
-               }`}>
-                 <TrendingUp className={`w-3 h-3 ${trend.isPositive ? '' : 'rotate-180'}`} />
-                 {trend.value}%
-               </div>
-             )}
-           </div>
-         </div>
-         <div className={`p-4 rounded-xl ${color} group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-           {icon}
-         </div>
-       </div>
-     </Card>
-   );
-
   if (loading) {
     return (
       <AppLayout showFooter={false}>
-        <div className="p-8 bg-bg min-h-screen">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-bg-light rounded w-64 mb-2"></div>
-              <div className="h-5 bg-bg-light rounded w-96 mb-8"></div>
-            </div>
-            <ActivitySkeleton count={6} />
-          </div>
+        <div className="p-8 min-h-screen flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
         </div>
       </AppLayout>
     );
@@ -182,297 +169,222 @@ const UnifiedDashboard = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
-           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
-             <div className="flex-1">
-               <div className="flex items-center gap-4 mb-4">
-                 <div className="p-4 bg-gradient-to-r from-primary/20 to-primary/10 rounded-2xl border border-primary/30 shadow-lg shadow-primary/10">
-                   <TrendingUp className="w-10 h-10 text-primary" />
-                 </div>
-                 <div>
-                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight">
-                     Job Search Command Center
-                   </h1>
-                   <div className="h-1 w-24 bg-gradient-to-r from-primary to-secondary rounded-full mt-2"></div>
-                 </div>
-               </div>
-               <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl">
-                 Your unified hub for managing job applications, interviews, and networking activities
-               </p>
-             </div>
+      <div className="p-6 lg:p-10 min-h-screen space-y-10">
 
-             <div className="flex flex-col sm:flex-row items-start lg:items-end gap-3 lg:ml-8">
-               <Button
-                 icon={<Settings className="w-4 h-4" />}
-                 className="bg-bg-light hover:bg-bg-card text-white border-border hover:border-primary/50 transition-all duration-200 font-medium"
-                 onClick={() => window.location.href = '/settings'}
-               >
-                 Settings
-               </Button>
-               <Button
-                 type="primary"
-                 icon={<Zap className="w-4 h-4" />}
-                 className="bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
-                 onClick={() => window.location.href = '/application-tracking'}
-               >
-                 Track Applications
-               </Button>
-             </div>
-           </div>
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight">
+              Dashboard <span className="text-[var(--primary)]">.</span>
+            </h1>
+            <p className="text-[var(--text-muted)] text-lg max-w-2xl">
+              Your mission control center. Track applications, manage interviews, and stay on top of your career goals.
+            </p>
+          </div>
 
-           {/* Main Tabs */}
-           <div className="border-t border-border/30 pt-8">
-             <Tabs
-               activeKey={activeTab}
-               onChange={setActiveTab}
-               className="custom-dark-tabs"
-               size="large"
-               tabBarStyle={{
-                 borderBottom: '2px solid var(--border)',
-                 marginBottom: '2rem'
-               }}
-             >
-               <TabPane
-                 tab={
-                   <span className="flex items-center gap-3 px-4 py-3 text-base font-semibold">
-                     {getTabIcon('overview')}
-                     Overview
-                   </span>
-                 }
-                 key="overview"
-               >
-               <div className="space-y-10">
-                 {/* Stats Grid */}
-                 <div>
-                   <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                     <div className="w-1 h-8 bg-gradient-to-b from-primary to-secondary rounded-full"></div>
-                     Key Metrics
-                   </h2>
-                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                     <StatCard
-                       title="Total Activities"
-                       value={stats.totalActivities}
-                       icon={<Calendar className="w-7 h-7 text-blue-400" />}
-                       color="bg-blue-500/20 border border-blue-500/30"
-                       trend={{ value: 12, isPositive: true }}
-                       isPrimary={true}
-                     />
-                     <StatCard
-                       title="Pending Reminders"
-                       value={stats.pendingReminders}
-                       icon={<Bell className="w-7 h-7 text-yellow-400" />}
-                       color="bg-yellow-500/20 border border-yellow-500/30"
-                     />
-                     <StatCard
-                       title="Upcoming Interviews"
-                       value={stats.upcomingInterviews}
-                       icon={<Target className="w-7 h-7 text-green-400" />}
-                       color="bg-green-500/20 border border-green-500/30"
-                       trend={{ value: 25, isPositive: true }}
-                     />
-                     <StatCard
-                       title="Active Contacts"
-                       value={stats.activeContacts}
-                       icon={<Users className="w-7 h-7 text-purple-400" />}
-                       color="bg-purple-500/20 border border-purple-500/30"
-                     />
-                   </div>
-                 </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => window.location.href = '/settings'}
+              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] transition-all flex items-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
+            </button>
+            <button
+              onClick={() => window.location.href = '/application-tracking'}
+              className="px-6 py-2 rounded-xl bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold shadow-lg shadow-[var(--primary)]/25 hover:shadow-[0_0_20px_var(--primary-glow)] hover:scale-105 transition-all flex items-center gap-2"
+            >
+              <Zap className="w-4 h-4" />
+              <span>Track Application</span>
+            </button>
+          </div>
+        </div>
 
-                 {/* Progress Cards */}
-                 <div>
-                   <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                     <div className="w-1 h-8 bg-gradient-to-b from-secondary to-info rounded-full"></div>
-                     Performance Overview
-                   </h2>
-                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                     <Card className="bg-bg-card border-border hover:border-success/50 transition-all duration-300 hover:shadow-lg hover:shadow-success/10">
-                       <div className="p-6">
-                         <div className="flex items-center justify-between mb-6">
-                           <div className="flex items-center gap-3">
-                             <div className="p-2 bg-success/20 rounded-lg border border-success/30">
-                               <CheckCircle className="w-5 h-5 text-success" />
-                             </div>
-                             <h3 className="text-xl font-semibold text-white">Weekly Progress</h3>
-                           </div>
-                           <Badge count={stats.weeklyProgress?.completed || 0} className="bg-success text-white font-semibold" />
-                         </div>
-                         <div className="space-y-4">
-                           <div className="flex justify-between items-center">
-                             <span className="text-text-muted font-medium">Completed Tasks</span>
-                             <span className="text-white font-bold text-lg">
-                               {stats.weeklyProgress?.completed || 0} / {stats.weeklyProgress?.total || 0}
-                             </span>
-                           </div>
-                           <div className="space-y-2">
-                             <Progress
-                               percent={Math.round(((stats.weeklyProgress?.completed || 0) / (stats.weeklyProgress?.total || 1)) * 100)}
-                               strokeColor="#10b981"
-                               trailColor="#374151"
-                               strokeWidth={8}
-                               showInfo={false}
-                             />
-                             <div className="flex justify-between text-sm">
-                               <span className="text-text-muted">Progress</span>
-                               <span className="text-success font-medium">
-                                 {Math.round(((stats.weeklyProgress?.completed || 0) / (stats.weeklyProgress?.total || 1)) * 100)}%
-                               </span>
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                     </Card>
+        {/* Tabs Navigation */}
+        <div className="flex flex-wrap gap-2 border-b border-[var(--border-glass)] pb-4">
+          <TabButton
+            active={activeTab === 'overview'}
+            onClick={() => setActiveTab('overview')}
+            icon={<BarChart3 className="w-4 h-4" />}
+            label="Overview"
+          />
+          <TabButton
+            active={activeTab === 'activities'}
+            onClick={() => setActiveTab('activities')}
+            icon={<Calendar className="w-4 h-4" />}
+            label="Activity Hub"
+            count={stats.totalActivities}
+          />
+          <TabButton
+            active={activeTab === 'followups'}
+            onClick={() => setActiveTab('followups')}
+            icon={<Users className="w-4 h-4" />}
+            label="Follow-ups"
+            count={stats.overdueFollowUps}
+            colorClass="bg-[var(--warning)] text-black"
+          />
+          <TabButton
+            active={activeTab === 'notifications'}
+            onClick={() => setActiveTab('notifications')}
+            icon={<Bell className="w-4 h-4" />}
+            label="Notifications"
+            count={notificationService.getUnreadCount()}
+            colorClass="bg-[var(--danger)] text-white"
+          />
+        </div>
 
-                     <Card className="bg-bg-card border-border hover:border-info/50 transition-all duration-300 hover:shadow-lg hover:shadow-info/10">
-                       <div className="p-6">
-                         <div className="flex items-center justify-between mb-6">
-                           <div className="flex items-center gap-3">
-                             <div className="p-2 bg-info/20 rounded-lg border border-info/30">
-                               <BarChart3 className="w-5 h-5 text-info" />
-                             </div>
-                             <h3 className="text-xl font-semibold text-white">Completion Rate</h3>
-                           </div>
-                           <Badge count={`${stats.completionRate}%`} className="bg-info text-white font-semibold" />
-                         </div>
-                         <div className="space-y-4">
-                           <div className="flex justify-between items-center">
-                             <span className="text-text-muted font-medium">Overall Performance</span>
-                             <span className="text-white font-bold text-lg">{stats.completionRate}%</span>
-                           </div>
-                           <div className="space-y-2">
-                             <Progress
-                               percent={stats.completionRate}
-                               strokeColor="#3b82f6"
-                               trailColor="#374151"
-                               strokeWidth={8}
-                               showInfo={false}
-                             />
-                             <div className="flex justify-between text-sm">
-                               <span className="text-text-muted">Target</span>
-                               <span className="text-info font-medium">85% Goal</span>
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                     </Card>
-                   </div>
-                 </div>
+        {/* Tab Content */}
+        <div className="min-h-[500px]">
+          {activeTab === 'overview' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-10">
 
+              {/* Key Metrics Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                  title="Total Activities"
+                  value={stats.totalActivities}
+                  icon={<Calendar className="w-6 h-6" />}
+                  color="bg-blue-500"
+                  trend={{ value: 12, isPositive: true }}
+                  isPrimary={true}
+                />
+                <StatCard
+                  title="Pending Reminders"
+                  value={stats.pendingReminders}
+                  icon={<Bell className="w-6 h-6" />}
+                  color="bg-[var(--warning)]"
+                />
+                <StatCard
+                  title="Upcoming Interviews"
+                  value={stats.upcomingInterviews}
+                  icon={<Target className="w-6 h-6" />}
+                  color="bg-[var(--success)]"
+                  trend={{ value: 25, isPositive: true }}
+                />
+                <StatCard
+                  title="Active Contacts"
+                  value={stats.activeContacts}
+                  icon={<Users className="w-6 h-6" />}
+                  color="bg-[var(--secondary)]"
+                />
+              </div>
 
-
-                 {/* Recent Activity */}
-                 <div>
-                   <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                     <div className="w-1 h-8 bg-gradient-to-b from-warning to-danger rounded-full"></div>
-                     Recent Activity
-                   </h2>
-                   <Card className="bg-bg-card border-border hover:border-warning/50 transition-all duration-300">
-                     <div className="p-6">
-                       <div className="flex items-center gap-3 mb-6">
-                         <div className="p-2 bg-warning/20 rounded-lg border border-warning/30">
-                           <Clock className="w-5 h-5 text-warning" />
-                         </div>
-                         <h3 className="text-xl font-semibold text-white">Activity Feed</h3>
-                         <Badge count={notifications.length} className="bg-warning text-bg-dark font-semibold ml-auto" />
-                       </div>
-                       <div className="space-y-4">
-                         {notifications.length === 0 ? (
-                           <div className="text-center py-12">
-                             <div className="p-4 bg-bg-light/50 rounded-full w-fit mx-auto mb-4">
-                               <Clock className="w-8 h-8 text-text-muted" />
-                             </div>
-                             <p className="text-text-muted font-medium">No recent activity</p>
-                             <p className="text-sm text-text-secondary mt-1">Your activity feed will appear here</p>
-                           </div>
-                         ) : (
-                           notifications.slice(0, 5).map((activity, index) => (
-                             <div key={index} className="flex items-start gap-4 p-4 bg-bg-light/30 hover:bg-bg-light/50 rounded-xl border border-border/50 transition-all duration-200 group">
-                               <div className={`p-2 rounded-lg flex-shrink-0 ${
-                                 activity.type === 'reminder' ? 'bg-success/20 border border-success/30' :
-                                 activity.type === 'interview' ? 'bg-info/20 border border-info/30' :
-                                 activity.type === 'follow_up' ? 'bg-secondary/20 border border-secondary/30' :
-                                 'bg-danger/20 border border-danger/30'
-                               }`}>
-                                 {activity.type === 'reminder' ? <CheckCircle className="w-4 h-4 text-success" /> :
-                                  activity.type === 'interview' ? <Calendar className="w-4 h-4 text-info" /> :
-                                  activity.type === 'follow_up' ? <Users className="w-4 h-4 text-secondary" /> :
-                                  <AlertTriangle className="w-4 h-4 text-danger" />}
-                               </div>
-                               <div className="flex-1 min-w-0">
-                                 <p className="text-white font-medium group-hover:text-primary transition-colors">{activity.title}</p>
-                                 <p className="text-sm text-text-muted mt-1">
-                                   {new Date(activity.timestamp).toLocaleDateString('en-US', {
-                                     month: 'short',
-                                     day: 'numeric',
-                                     hour: '2-digit',
-                                     minute: '2-digit'
-                                   })}
-                                 </p>
-                               </div>
-                             </div>
-                           ))
-                         )}
-                       </div>
-                     </div>
-                   </Card>
+              {/* Performance Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Weekly Progress */}
+                <div className="bg-[var(--bg-glass)] backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-8 hover:border-[var(--success)]/30 transition-colors">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-[var(--success)]/20 rounded-xl text-[var(--success)]">
+                        <CheckCircle className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Weekly Progress</h3>
+                        <p className="text-[var(--text-muted)] text-sm">Tasks completed this week</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-white">{stats.weeklyProgress.completed}/{stats.weeklyProgress.total}</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-[var(--text-muted)]">Completion</span>
+                      <span className="text-[var(--success)]">{Math.round(((stats.weeklyProgress.completed || 0) / (stats.weeklyProgress.total || 1)) * 100)}%</span>
+                    </div>
+                    <ProgressBar
+                      percent={Math.round(((stats.weeklyProgress.completed || 0) / (stats.weeklyProgress.total || 1)) * 100)}
+                      color="var(--success)"
+                    />
                   </div>
                 </div>
-              </TabPane>
 
-               <TabPane
-                 tab={
-                   <span className="flex items-center gap-3 px-4 py-3 text-base font-semibold">
-                     {getTabIcon('activities')}
-                     Activity Hub
-                     {stats.totalActivities > 0 && (
-                       <Badge count={stats.totalActivities} className="bg-primary text-white font-semibold ml-2" />
-                     )}
-                   </span>
-                 }
-                 key="activities"
-               >
-                 <div className="mt-6">
-                   <ActivityHub />
-                 </div>
-               </TabPane>
+                {/* Completion Rate */}
+                <div className="bg-[var(--bg-glass)] backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-8 hover:border-blue-500/30 transition-colors">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-500/20 rounded-xl text-blue-500">
+                        <BarChart3 className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Completion Rate</h3>
+                        <p className="text-[var(--text-muted)] text-sm">Overall application success</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-white">{stats.completionRate}%</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-medium">
+                      <span className="text-[var(--text-muted)]">Target: 85%</span>
+                      <span className="text-blue-500">{stats.completionRate}%</span>
+                    </div>
+                    <ProgressBar
+                      percent={stats.completionRate}
+                      color="#3b82f6"
+                    />
+                  </div>
+                </div>
+              </div>
 
-               <TabPane
-                 tab={
-                   <span className="flex items-center gap-3 px-4 py-3 text-base font-semibold">
-                     {getTabIcon('followups')}
-                     Follow-up Tracker
-                     {stats.overdueFollowUps > 0 && (
-                       <Badge count={stats.overdueFollowUps} className="bg-warning text-bg-dark font-semibold ml-2" />
-                     )}
-                   </span>
-                 }
-                 key="followups"
-               >
-                 <div className="mt-6">
-                   <FollowUpTracker />
-                 </div>
-               </TabPane>
+              {/* Recent Activity Feed */}
+              <div className="bg-[var(--bg-glass)] backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-8">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 bg-[var(--warning)]/20 rounded-xl text-[var(--warning)]">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Recent Activity</h3>
+                </div>
 
-               <TabPane
-                 tab={
-                   <span className="flex items-center gap-3 px-4 py-3 text-base font-semibold">
-                     {getTabIcon('notifications')}
-                     Notifications
-                     {notificationService.getUnreadCount() > 0 && (
-                       <Badge count={notificationService.getUnreadCount()} className="bg-danger text-white font-semibold ml-2" />
-                     )}
-                   </span>
-                 }
-                 key="notifications"
-               >
-                 <div className="mt-6">
-                   <NotificationsPanel notifications={notifications} />
-                 </div>
-               </TabPane>
-             </Tabs>
-           </div>
+                <div className="space-y-4">
+                  {notifications.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-[var(--border-glass)] rounded-xl">
+                      <p className="text-[var(--text-muted)]">No recent activity to show.</p>
+                    </div>
+                  ) : (
+                    notifications.slice(0, 5).map((activity, index) => (
+                      <div key={index} className="flex items-center gap-4 p-4 bg-[var(--bg-surface)]/50 rounded-xl border border-[var(--border-glass)] hover:border-[var(--primary)]/30 transition-all group">
+                        <div className={`p-2 rounded-lg ${activity.type === 'reminder' ? 'bg-[var(--success)]/20 text-[var(--success)]' :
+                            activity.type === 'interview' ? 'bg-blue-500/20 text-blue-500' :
+                              activity.type === 'follow_up' ? 'bg-[var(--secondary)]/20 text-[var(--secondary)]' :
+                                'bg-[var(--danger)]/20 text-[var(--danger)]'
+                          }`}>
+                          {activity.type === 'reminder' ? <CheckCircle className="w-4 h-4" /> :
+                            activity.type === 'interview' ? <Calendar className="w-4 h-4" /> :
+                              activity.type === 'follow_up' ? <Users className="w-4 h-4" /> :
+                                <AlertTriangle className="w-4 h-4" />}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium group-hover:text-[var(--primary)] transition-colors">{activity.title}</p>
+                          <p className="text-xs text-[var(--text-muted)]">
+                            {new Date(activity.timestamp).toLocaleDateString('en-US', {
+                              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+            </motion.div>
+          )}
+
+          {activeTab === 'activities' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <ActivityHub />
+            </motion.div>
+          )}
+
+          {activeTab === 'followups' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <FollowUpTracker />
+            </motion.div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+              <NotificationsPanel notifications={notifications} />
+            </motion.div>
+          )}
         </div>
       </div>
     </AppLayout>

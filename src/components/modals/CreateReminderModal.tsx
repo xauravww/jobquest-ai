@@ -1,48 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Tag, AlertCircle, Repeat } from 'lucide-react';
-import { FormInput, FormTextarea, FormSelect, FormDateInput } from '../ui/FormInput';
-import { Modal, Button } from 'antd';
+import { Tag, AlertCircle, Repeat, Clock, FileText, Plus, Trash2, Bell } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
 import toast from 'react-hot-toast';
 
-import { ToastPosition } from 'react-hot-toast';
-
-// Adjust toast position for better visibility
-const toastOptions = {
-  position: 'topCenter' as ToastPosition,
-  duration: 4000,
-  style: {
-    zIndex: 9999,
-  },
-};
-
 interface Reminder {
-  _id: string;
-  title: string;
-  description?: string;
-  dueDate: string;
-  dueTime: string;
-  type: string;
-  priority: string;
-  applicationId?: { _id: string };
-  tags?: string[];
-  color?: string;
-  isRecurring?: boolean;
-  recurrencePattern?: string;
-  recurrenceInterval?: number;
-  recurrenceEndDate?: string;
-  notifications?: { type: string; timing: string }[];
+    _id: string;
+    title: string;
+    description?: string;
+    dueDate: string;
+    dueTime: string;
+    type: string;
+    priority: string;
+    applicationId?: { _id: string };
+    tags?: string[];
+    color?: string;
+    isRecurring?: boolean;
+    recurrencePattern?: string;
+    recurrenceInterval?: number;
+    recurrenceEndDate?: string;
+    notifications?: { type: string; timing: string }[];
 }
 
 interface Application {
-  _id: string;
-  jobTitle?: string;
-  jobId?: {
-    title?: string;
-    company?: string;
-    location?: string;
-  };
+    _id: string;
+    jobTitle?: string;
+    jobId?: {
+        title?: string;
+        company?: string;
+        location?: string;
+    };
 }
 
 interface FormData {
@@ -105,7 +93,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
         if (isOpen) {
             fetchApplications();
             if (editingReminder) {
-                console.log('Editing Reminder applicationId:', editingReminder.applicationId);
                 setFormData({
                     title: editingReminder.title || '',
                     description: editingReminder.description || '',
@@ -140,7 +127,6 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     notifications: [{ type: 'in_app', timing: 'on_time' }]
                 });
             } else {
-                // Reset form for new reminder
                 setFormData({
                     title: '',
                     description: '',
@@ -159,54 +145,36 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                 });
             }
         }
-    }, [isOpen, editingReminder, defaultApplication]);
+    }, [isOpen, editingReminder, defaultApplication, defaultDate]);
 
-const fetchApplications = async () => {
+    const fetchApplications = async () => {
         try {
-            const response = await fetch('/api/applications', { credentials: 'include' });
-            let applicationsFromApi: Application[] = [];
+            const response = await fetch('/api/applications');
             if (response.ok) {
                 const data = await response.json();
-                applicationsFromApi = Array.isArray(data) ? data : data.applications || [];
+                const apps = Array.isArray(data) ? data : data.applications || [];
+                setApplications(apps);
             }
-            setApplications(applicationsFromApi);
         } catch (error) {
             console.error('Error fetching applications:', error);
         }
     };
 
     const handleSubmit = async () => {
-        console.log('Create button clicked');
-
-        // Validation
         if (!formData.title.trim()) {
-            toast.error('Please enter a title for the reminder.');
+            toast.error('Please enter a title');
             return;
         }
         if (!formData.dueDate) {
-            toast.error('Please select a due date.');
-            return;
-        }
-        if (!formData.type) {
-            toast.error('Please select a reminder type.');
-            return;
-        }
-        const date = new Date(formData.dueDate);
-        if (isNaN(date.getTime())) {
-            toast.error('Please select a valid due date.');
-            return;
-        }
-        if (formData.applicationId && !applications.find((app: Application) => app._id === formData.applicationId)) {
-            toast.error('Selected application is invalid.');
+            toast.error('Please select a due date');
             return;
         }
 
         setLoading(true);
-
         try {
             const payload = {
                 ...formData,
-                tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
                 dueDate: new Date(formData.dueDate).toISOString(),
                 recurrenceEndDate: formData.recurrenceEndDate ? new Date(formData.recurrenceEndDate).toISOString() : null,
                 applicationId: formData.applicationId || null
@@ -214,283 +182,310 @@ const fetchApplications = async () => {
 
             const url = editingReminder ? `/api/reminders/${editingReminder._id}` : '/api/reminders';
             const method = editingReminder ? 'PUT' : 'POST';
+
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+
             if (response.ok) {
-                toast.success('Reminder created successfully!', toastOptions);
+                toast.success(editingReminder ? 'Reminder updated successfully' : 'Reminder created successfully');
                 onSuccess();
                 onClose();
             } else {
                 const error = await response.json();
-                console.error('Error saving reminder:', error);
-                toast.error(error.error || 'Failed to create reminder. Please try again.', toastOptions);
+                toast.error(error.error || 'Failed to save reminder');
             }
         } catch (error) {
             console.error('Error saving reminder:', error);
-            toast.error('Failed to create reminder. Please try again.');
+            toast.error('Failed to save reminder');
         } finally {
             setLoading(false);
         }
     };
 
-    const reminderTypes = [
-        { value: 'follow_up', label: 'Follow Up' },
-        { value: 'interview_prep', label: 'Interview Preparation' },
-        { value: 'application_deadline', label: 'Application Deadline' },
-        { value: 'interview_scheduled', label: 'Interview Scheduled' },
-        { value: 'offer_response', label: 'Offer Response' },
-        { value: 'networking', label: 'Networking' },
-        { value: 'skill_development', label: 'Skill Development' },
-        { value: 'job_search', label: 'Job Search' },
-        { value: 'custom', label: 'Custom' }
-    ];
-    const priorityOptions = [
-        { value: 'low', label: 'Low' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'high', label: 'High' },
-        { value: 'urgent', label: 'Urgent' }
-    ];
-    const recurrenceOptions = [
-        { value: 'daily', label: 'Daily' },
-        { value: 'weekly', label: 'Weekly' },
-        { value: 'monthly', label: 'Monthly' }
-    ];
-    const notificationTypes = [
-        { value: 'in_app', label: 'In-App' },
-        { value: 'email', label: 'Email' },
-        { value: 'push', label: 'Push' }
-    ];
-    const notificationTimings = [
-        { value: 'on_time', label: 'On Time' },
-        { value: '15_min_before', label: '15 minutes before' },
-        { value: '1_hour_before', label: '1 hour before' },
-        { value: '1_day_before', label: '1 day before' },
-        { value: '1_week_before', label: '1 week before' }
-    ];
-
     return (
         <Modal
-            title={
-                <div className="flex items-center gap-2 text-white">
-                    <AlertCircle className="w-5 h-5 text-primary" />
-                    {editingReminder ? 'Edit Reminder' : 'Create New Reminder'}
-                </div>
-            }
-            open={isOpen}
-            onCancel={onClose}
-            width={672}
-            className="custom-dark-modal"
-            maskStyle={{
-                backdropFilter: 'blur(3px)',
-                backgroundColor: 'rgba(10, 15, 28, 0.7)'
-            }}
-            footer={[
-                <Button key="back" onClick={onClose}>
-                    Cancel
-                </Button>,
-                <Button key="submit" type="primary" loading={loading} onClick={handleSubmit}>
-                    {editingReminder ? 'Update Reminder' : 'Create Reminder'}
-                </Button>,
-            ]}
+            isOpen={isOpen}
+            onClose={onClose}
+            title={editingReminder ? 'Edit Reminder' : 'Create New Reminder'}
+            width="max-w-2xl"
         >
-            <div className="max-h-[65vh] overflow-y-auto pr-4 -mr-4">
-                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Basic Information</h3>
-                        <FormInput
-                            label="Title"
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                {/* Basic Information */}
+                <section className="space-y-4">
+                    <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2">Basic Information</h3>
+
+                    <div>
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title <span className="text-[var(--danger)]">*</span></label>
+                        <input
+                            type="text"
                             value={formData.title}
-                            onChange={(value) => setFormData({ ...formData, title: value })}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             placeholder="Enter reminder title"
-                            required
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
                         />
-                        <FormTextarea
-                            label="Description"
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Description</label>
+                        <textarea
                             value={formData.description}
-                            onChange={(value) => setFormData({ ...formData, description: value })}
-                            placeholder="Enter reminder description (optional)"
-                            rows={3}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Enter description (optional)"
+                            rows={2}
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none"
                         />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormDateInput
-                                label="Due Date"
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Due Date <span className="text-[var(--danger)]">*</span></label>
+                            <input
+                                type="date"
                                 value={formData.dueDate}
-                                onChange={(value) => setFormData({ ...formData, dueDate: value })}
-                                required
+                                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
                             />
-                            <FormInput
-                                label="Due Time"
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Due Time <span className="text-[var(--danger)]">*</span></label>
+                            <input
                                 type="time"
                                 value={formData.dueTime}
-                                onChange={(value) => setFormData({ ...formData, dueTime: value })}
-                                required
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormSelect
-                                label="Type"
-                                value={formData.type}
-                                onChange={(value) => setFormData({ ...formData, type: value })}
-                                options={reminderTypes}
-                                required
-                            />
-                            <FormSelect
-                                label="Priority"
-                                value={formData.priority}
-                                onChange={(value) => setFormData({ ...formData, priority: value })}
-                                options={priorityOptions}
-                                required
+                                onChange={(e) => setFormData({ ...formData, dueTime: e.target.value })}
+                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
                             />
                         </div>
                     </div>
 
-                    {/* Associations */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                            <Tag className="w-5 h-5" />
-                            Associations
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                            <div className="space-y-2">
-                                <FormSelect
-                                    label="Related Application"
-                                    value={formData.applicationId}
-                                    onChange={(value) => setFormData({ ...formData, applicationId: value })}
-                                    options={[
-                                        { value: '', label: 'None' },
-                                        ...applications.map((application: Application) => ({
-                                            value: application._id,
-                                            label: `${application.jobId?.title || 'Untitled'} at ${application.jobId?.company || 'Unknown Company'}`
-                                        }))
-                                    ]}
-                                    showSearch
-                                    filterOption={(input, option) =>
-                                        (String(option?.label) ?? '').toLowerCase().includes(input.toLowerCase())
-                                    }
-                                />
-                                {formData.applicationId && (
-                                    <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <div className="w-2 h-2 bg-success rounded-full"></div>
-                                            <span className="text-success font-medium">Linked to Application</span>
-                                        </div>
-                                        {(() => {
-                                            const selectedApplication = applications.find((app: Application) => app._id === formData.applicationId);
-                                            return selectedApplication ? (
-                                                <div className="mt-2 text-xs text-text-muted">
-                                                    <div>Title: {selectedApplication.jobId?.title || 'No Job'}</div>
-                                                    <div>Company: {selectedApplication.jobId?.company || 'Unknown Company'}</div>
-                                                    <div>Location: {selectedApplication.jobId?.location || 'Not specified'}</div>
-                                                </div>
-                                            ) : null;
-                                        })()}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Type</label>
+                            <select
+                                value={formData.type}
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                            >
+                                <option value="follow_up">Follow Up</option>
+                                <option value="interview_prep">Interview Preparation</option>
+                                <option value="application_deadline">Application Deadline</option>
+                                <option value="interview_scheduled">Interview Scheduled</option>
+                                <option value="offer_response">Offer Response</option>
+                                <option value="networking">Networking</option>
+                                <option value="skill_development">Skill Development</option>
+                                <option value="job_search">Job Search</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
+                            <select
+                                value={formData.priority}
+                                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                            >
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Associations */}
+                <section className="space-y-4">
+                    <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+                        <Tag className="w-5 h-5" /> Associations
+                    </h3>
+
+                    <div>
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Related Application</label>
+                        <select
+                            value={formData.applicationId}
+                            onChange={(e) => setFormData({ ...formData, applicationId: e.target.value })}
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                        >
+                            <option value="">None</option>
+                            {applications.map((app) => (
+                                <option key={app._id} value={app._id}>
+                                    {app.jobId?.title || 'Untitled'} at {app.jobId?.company || 'Unknown Company'}
+                                </option>
+                            ))}
+                        </select>
+
+                        {formData.applicationId && (() => {
+                            const selectedApp = applications.find(app => app._id === formData.applicationId);
+                            return selectedApp ? (
+                                <div className="mt-3 p-3 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-xl">
+                                    <div className="flex items-center gap-2 text-sm mb-1">
+                                        <div className="w-2 h-2 bg-[var(--success)] rounded-full"></div>
+                                        <span className="text-[var(--success)] font-medium">Linked to Application</span>
                                     </div>
+                                    <div className="text-xs text-[var(--text-muted)]">
+                                        {selectedApp.jobId?.title} at {selectedApp.jobId?.company}
+                                    </div>
+                                </div>
+                            ) : null;
+                        })()}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Tags</label>
+                        <input
+                            type="text"
+                            value={formData.tags}
+                            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                            placeholder="Enter tags separated by commas"
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                        />
+                    </div>
+                </section>
+
+                {/* Recurrence */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="isRecurring"
+                            checked={formData.isRecurring}
+                            onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                            className="rounded border-[var(--border-glass)] bg-[var(--bg-deep)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                        />
+                        <label htmlFor="isRecurring" className="text-white font-medium flex items-center gap-2 cursor-pointer">
+                            <Repeat className="w-4 h-4" />
+                            Recurring Reminder
+                        </label>
+                    </div>
+
+                    {formData.isRecurring && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6 border-l-2 border-[var(--border-glass)]">
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Pattern</label>
+                                <select
+                                    value={formData.recurrencePattern}
+                                    onChange={(e) => setFormData({ ...formData, recurrencePattern: e.target.value })}
+                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                                >
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Interval</label>
+                                <input
+                                    type="number"
+                                    value={formData.recurrenceInterval}
+                                    onChange={(e) => setFormData({ ...formData, recurrenceInterval: parseInt(e.target.value) || 1 })}
+                                    min="1"
+                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">End Date</label>
+                                <input
+                                    type="date"
+                                    value={formData.recurrenceEndDate}
+                                    onChange={(e) => setFormData({ ...formData, recurrenceEndDate: e.target.value })}
+                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </section>
+
+                {/* Notifications */}
+                <section className="space-y-4">
+                    <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+                        <Bell className="w-5 h-5" /> Notifications
+                    </h3>
+
+                    <div className="space-y-3">
+                        {formData.notifications.map((notification, index) => (
+                            <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-[var(--bg-deep)] rounded-xl border border-[var(--border-glass)] relative group">
+                                <div>
+                                    <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Type</label>
+                                    <select
+                                        value={notification.type}
+                                        onChange={(e) => {
+                                            const newNotifications = [...formData.notifications];
+                                            newNotifications[index] = { ...notification, type: e.target.value };
+                                            setFormData({ ...formData, notifications: newNotifications });
+                                        }}
+                                        className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none appearance-none"
+                                    >
+                                        <option value="in_app">In-App</option>
+                                        <option value="email">Email</option>
+                                        <option value="push">Push</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Timing</label>
+                                    <select
+                                        value={notification.timing}
+                                        onChange={(e) => {
+                                            const newNotifications = [...formData.notifications];
+                                            newNotifications[index] = { ...notification, timing: e.target.value };
+                                            setFormData({ ...formData, notifications: newNotifications });
+                                        }}
+                                        className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none appearance-none"
+                                    >
+                                        <option value="on_time">On Time</option>
+                                        <option value="15_min_before">15 minutes before</option>
+                                        <option value="1_hour_before">1 hour before</option>
+                                        <option value="1_day_before">1 day before</option>
+                                        <option value="1_week_before">1 week before</option>
+                                    </select>
+                                </div>
+                                {formData.notifications.length > 1 && (
+                                    <button
+                                        onClick={() => {
+                                            const newNotifications = [...formData.notifications];
+                                            newNotifications.splice(index, 1);
+                                            setFormData({ ...formData, notifications: newNotifications });
+                                        }}
+                                        className="absolute -top-2 -right-2 bg-[var(--danger)] text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <Trash2 className="w-3 h-3" />
+                                    </button>
                                 )}
                             </div>
-                        </div>
-                        <FormInput
-                            label="Tags"
-                            value={formData.tags}
-                            onChange={(value) => setFormData({ ...formData, tags: value })}
-                            placeholder="Enter tags separated by commas"
-                        />
-                        <div>
-                            <label className="block text-sm font-medium text-text-muted mb-2">
-                                Color
-                            </label>
-                            <input
-                                type="color"
-                                value={formData.color}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, color: e.target.value })}
-                                className="w-16 h-10 rounded border border-border bg-bg-light"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Recurrence */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="isRecurring"
-                                checked={formData.isRecurring}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, isRecurring: e.target.checked })}
-                                className="w-4 h-4 text-primary"
-                            />
-                            <label htmlFor="isRecurring" className="text-sm font-medium text-white flex items-center gap-2">
-                                <Repeat className="w-4 h-4" />
-                                Make this a recurring reminder
-                            </label>
-                        </div>
-                        {formData.isRecurring && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
-                                <FormSelect
-                                    label="Pattern"
-                                    value={formData.recurrencePattern}
-                                    onChange={(value) => setFormData({ ...formData, recurrencePattern: value })}
-                                    options={recurrenceOptions}
-                                />
-                                <FormInput
-                                    label="Interval"
-                                    type="number"
-                                    value={formData.recurrenceInterval.toString()}
-                                    onChange={(value) => setFormData({ ...formData, recurrenceInterval: parseInt(value) || 1 })}
-                                    min="1"
-                                />
-                                <FormDateInput
-                                    label="End Date"
-                                    value={formData.recurrenceEndDate}
-                                    onChange={(value) => setFormData({ ...formData, recurrenceEndDate: value })}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Notifications */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Notifications</h3>
-                        {formData.notifications.map((notification, index) => (
-                            <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-bg-light rounded-lg">
-                                <FormSelect
-                                    label="Type"
-                                    value={notification.type}
-                                    onChange={(value) => {
-                                        const newNotifications = [...formData.notifications];
-                                        newNotifications[index] = { ...notification, type: value };
-                                        setFormData({ ...formData, notifications: newNotifications });
-                                    }}
-                                    options={notificationTypes}
-                                />
-                                <FormSelect
-                                    label="Timing"
-                                    value={notification.timing}
-                                    onChange={(value) => {
-                                        const newNotifications = [...formData.notifications];
-                                        newNotifications[index] = { ...notification, timing: value };
-                                        setFormData({ ...formData, notifications: newNotifications });
-                                    }}
-                                    options={notificationTimings}
-                                />
-                            </div>
                         ))}
+
                         <button
-                            type="button"
                             onClick={() => {
                                 setFormData({
                                     ...formData,
                                     notifications: [...formData.notifications, { type: 'in_app', timing: 'on_time' }]
                                 });
                             }}
-                            className="text-white hover:text-primary/80 text-sm font-medium"
+                            className="w-full py-2 border border-dashed border-[var(--border-glass)] rounded-xl text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all flex items-center justify-center gap-2"
                         >
-                            + Add Notification
+                            <Plus className="w-4 h-4" />
+                            <span>Add Notification</span>
                         </button>
                     </div>
-                </form>
+                </section>
+
+                <div className="flex justify-end gap-3 pt-6 border-t border-[var(--border-glass)]">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="px-6 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
+                        {editingReminder ? 'Update Reminder' : 'Create Reminder'}
+                    </button>
+                </div>
             </div>
         </Modal>
     );

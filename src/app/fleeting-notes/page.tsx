@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Button } from '@/components/ui/Button';
+import Button from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/FormInput';
-import { 
-  StickyNote, 
-  Plus, 
-  Trash2, 
-  MessageSquare, 
+import {
+  StickyNote,
+  Plus,
+  Trash2,
+  MessageSquare,
   Search,
   Edit3,
   Save,
@@ -44,7 +44,7 @@ export default function FleetingNotesPage() {
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [editTags, setEditTags] = useState('');
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(filteredNotes.length / NOTES_PER_PAGE);
@@ -100,7 +100,7 @@ export default function FleetingNotesPage() {
     setLoading(true);
     try {
       const tags = newTags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      
+
       const response = await fetch('/api/notes/fleeting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,7 +134,7 @@ export default function FleetingNotesPage() {
 
     try {
       const tags = editTags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      
+
       const response = await fetch('/api/notes/fleeting', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -147,7 +147,7 @@ export default function FleetingNotesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setNotes(prev => prev.map(note => 
+        setNotes(prev => prev.map(note =>
           note.id === noteId ? data.note : note
         ));
         setEditingNote(null);
@@ -196,7 +196,7 @@ export default function FleetingNotesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setNotes(prev => prev.map(note => 
+        setNotes(prev => prev.map(note =>
           note.id === noteId ? data.note : note
         ));
         toast.success(archived ? 'Note unarchived' : 'Note archived');
@@ -277,7 +277,7 @@ export default function FleetingNotesPage() {
               <FormInput
                 placeholder="Tags (comma-separated)"
                 value={newTags}
-                onChange={setNewTags}
+                onChange={(e) => setNewTags(e.target.value)}
                 icon={<Tag className="w-4 h-4" />}
               />
               <div className="flex justify-between items-center">
@@ -315,10 +315,10 @@ export default function FleetingNotesPage() {
               <FormInput
                 placeholder="Search notes and tags..."
                 value={searchQuery}
-                onChange={setSearchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 icon={<Search className="w-4 h-4" />}
               />
-              
+
               <select
                 value={filterSource}
                 onChange={(e) => setFilterSource(e.target.value as any)}
@@ -332,17 +332,17 @@ export default function FleetingNotesPage() {
               <div className="flex gap-2">
                 <Button
                   onClick={() => setShowArchived(!showArchived)}
-                  variant={showArchived ? "default" : "outline"}
+                  variant={showArchived ? "primary" : "secondary"}
                   className="flex-1"
                 >
                   <Archive className="w-4 h-4 mr-2" />
                   {showArchived ? 'Show Active' : 'Show Archived'}
                 </Button>
-                
+
                 {(searchQuery || filterSource !== 'all' || showArchived) && (
                   <Button
                     onClick={clearFilters}
-                    variant="outline"
+                    variant="secondary"
                     className="text-red-400 border-red-400 hover:bg-red-400/10"
                   >
                     <X className="w-4 h-4" />
@@ -407,7 +407,7 @@ export default function FleetingNotesPage() {
                 <h3 className="text-white text-lg font-semibold">
                   {showArchived ? 'Archived Notes' : 'Active Notes'} ({filteredNotes.length})
                 </h3>
-                
+
                 {/* Pagination info */}
                 {totalPages > 1 && (
                   <div className="text-text-muted text-sm">
@@ -425,7 +425,7 @@ export default function FleetingNotesPage() {
                     {showArchived ? 'No archived notes' : 'No notes found'}
                   </p>
                   <p className="text-sm">
-                    {searchQuery || filterSource !== 'all' 
+                    {searchQuery || filterSource !== 'all'
                       ? 'Try adjusting your search or filters'
                       : 'Add your first quick thought above'
                     }
@@ -450,7 +450,7 @@ export default function FleetingNotesPage() {
                           <FormInput
                             placeholder="Tags (comma-separated)"
                             value={editTags}
-                            onChange={setEditTags}
+                            onChange={(e) => setEditTags(e.target.value)}
                             icon={<Tag className="w-4 h-4" />}
                           />
                           <div className="flex gap-2">
@@ -465,7 +465,7 @@ export default function FleetingNotesPage() {
                             <Button
                               onClick={cancelEditing}
                               size="sm"
-                              variant="outline"
+                    variant="secondary"
                             >
                               <X className="w-4 h-4 mr-1" />
                               Cancel
@@ -479,7 +479,7 @@ export default function FleetingNotesPage() {
                             <p className="text-white leading-relaxed whitespace-pre-wrap break-words mb-3">
                               {note.content}
                             </p>
-                            
+
                             {/* Tags */}
                             {note.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mb-3">
@@ -493,7 +493,7 @@ export default function FleetingNotesPage() {
                                 ))}
                               </div>
                             )}
-                            
+
                             {/* Metadata */}
                             <div className="flex items-center gap-3 text-xs text-text-muted">
                               <span>{formatTimestamp(note.timestamp)}</span>
@@ -509,7 +509,7 @@ export default function FleetingNotesPage() {
                               )}
                             </div>
                           </div>
-                          
+
                           {/* Actions */}
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
@@ -550,13 +550,13 @@ export default function FleetingNotesPage() {
                   <Button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
-                  
+
                   <div className="flex gap-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       const pageNum = i + 1;
@@ -564,7 +564,7 @@ export default function FleetingNotesPage() {
                         <Button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          variant={currentPage === pageNum ? "default" : "outline"}
+                          variant={currentPage === pageNum ? "primary" : "secondary"}
                           size="sm"
                           className="w-10"
                         >
@@ -577,7 +577,7 @@ export default function FleetingNotesPage() {
                         <span className="px-2 py-1 text-text-muted">...</span>
                         <Button
                           onClick={() => setCurrentPage(totalPages)}
-                          variant={currentPage === totalPages ? "default" : "outline"}
+                          variant={currentPage === totalPages ? "primary" : "secondary"}
                           size="sm"
                           className="w-10"
                         >
@@ -586,11 +586,11 @@ export default function FleetingNotesPage() {
                       </>
                     )}
                   </div>
-                  
+
                   <Button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                   >
                     Next

@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.2.2",
     "framer-motion": "^12.23.12",
+    "gsap": "^3.13.0",
     "http-proxy-agent": "^7.0.2",
     "https-proxy-agent": "^7.0.6",
     "lucide-react": "^0.542.0",
@@ -35,6 +36,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-grid-layout": "^1.5.2",
+    "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
     "recharts": "^3.1.2",
     "swiper": "^11.2.10",

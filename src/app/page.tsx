@@ -1,787 +1,764 @@
-"use client";
+'use client';
 
-import React, { memo, useEffect, useState, Suspense, useRef } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import Footer from "@/components/Footer";
-import { ArrowRight, Quote, Star, Check } from "lucide-react";
+import React, { useEffect, useRef } from 'react';
+import {
+  Sparkles,
+  ArrowRight,
+  Zap,
+  PlayCircle,
+  Briefcase,
+  FileText,
+  Send,
+  LayoutDashboard,
+  Bell,
+  TrendingUp,
+  Eye,
+  MessageSquare,
+  CheckCircle2,
+  Clock,
+  Bot,
+  ChevronDown,
+  Infinity
+} from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import Footer from '@/components/landing/Footer';
 
-// Skip link for accessibility
-const SkipLink = memo(() => (
-  <a
-    href="#main-content"
-    className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-emerald-500 text-white px-4 py-2 rounded-md transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white"
-  >
-    Skip to main content
-  </a>
-));
-
-SkipLink.displayName = 'SkipLink';
-
-// SectionLoader for dynamic loading
-const SectionLoader = memo(({ children, threshold = 0.1 }: { children: React.ReactNode; threshold?: number; }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold }
-    );
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return (
-    <div ref={ref} className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-      {children}
-    </div>
-  );
-});
-
-SectionLoader.displayName = 'SectionLoader';
-
-// Header Component
-const Header = memo(() => (
-  <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0f1c]/80 backdrop-blur-sm border-b border-slate-800/50" role="banner">
-    <div className="container mx-auto px-6 py-4">
-      <div className="flex items-center justify-between">
-        <a href="#" className="text-xl font-bold tracking-tight text-white" aria-label="Jobquest AI homepage">
-          JOBQUEST
-        </a>
-        <nav className="hidden md:flex items-center space-x-6" role="navigation" aria-label="Main navigation">
-          <a 
-            href="#features" 
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c] rounded-md px-2 py-1"
-          >
-            Features
-          </a>
-          <a 
-            href="#testimonials" 
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c] rounded-md px-2 py-1"
-          >
-            Testimonials
-          </a>
-          <a 
-            href="#pricing" 
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c] rounded-md px-2 py-1"
-          >
-            Pricing
-          </a>
-        </nav>
-        <div className="flex items-center space-x-4">
-          <a 
-            href="#signin" 
-            className="hidden sm:inline-block text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c] rounded-md px-2 py-1"
-          >
-            Sign In
-          </a>
-          <a 
-            href="#get-started" 
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c] rounded-md"
-          >
-            Get Started
-          </a>
-        </div>
-      </div>
-    </div>
-    <div className="h-px bg-slate-800"></div>
-  </header>
-));
-
-Header.displayName = 'Header';
-
-
-// Hero Section
-const HeroSection = memo(() => (
-  <section className="relative pt-24 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-28 lg:pt-48 lg:pb-32 overflow-hidden" aria-labelledby="hero-heading">
-    <div className="absolute inset-x-0 top-0 h-[400px] sm:h-[500px] z-0 bg-gradient-to-b from-emerald-500/5 to-transparent"></div>
-    <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
-      <h1
-        id="hero-heading"
-        className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight text-white leading-tight max-w-5xl mx-auto"
-      >
-        Stop Searching, Start Interviewing
-      </h1>
-
-      {/* Process Flow - Responsive Design */}
-      <div className="mt-8 sm:mt-10 lg:mt-12">
-        {/* Mobile: Vertical Stack */}
-        <div className="flex flex-col items-center gap-4 sm:hidden">
-          <div className="flex items-center gap-3 text-gray-300">
-            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
-            </div>
-            <span className="text-sm font-medium">AI Search</span>
-          </div>
-
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 rotate-90">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-
-          <div className="flex items-center gap-3 text-emerald-400">
-            <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
-                <path d="M12 2v4"/>
-                <path d="m16.24 7.76 2.83 2.83"/>
-                <path d="M22 12h-4"/>
-                <path d="m16.24 16.24 2.83 2.83"/>
-                <path d="M12 22v-4"/>
-                <path d="m4.93 19.07 2.83-2.83"/>
-                <path d="M2 12h4"/>
-                <path d="m4.93 4.93 2.83 2.83"/>
-              </svg>
-            </div>
-            <span className="text-base font-semibold">Smart Filters</span>
-          </div>
-
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 rotate-90">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-
-          <div className="flex items-center gap-3 text-gray-300">
-            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-                <line x1="16" x2="16" y1="2" y2="6"/>
-                <line x1="8" x2="8" y1="2" y2="6"/>
-                <line x1="3" x2="21" y1="10" y2="10"/>
-              </svg>
-            </div>
-            <span className="text-sm font-medium">Auto Apply</span>
-          </div>
-
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 rotate-90">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-
-          <div className="flex items-center gap-3 text-gray-300">
-            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 6.1H3"/>
-                <path d="M21 12.1H3"/>
-                <path d="M15.1 18H3"/>
-              </svg>
-            </div>
-            <span className="text-sm font-medium">Ace Interviews</span>
-          </div>
-        </div>
-
-        {/* Tablet and Desktop: Horizontal Flow */}
-        <div className="hidden sm:flex items-center justify-center gap-2 md:gap-3 lg:gap-4 xl:gap-5 flex-wrap">
-          <div className="flex items-center gap-2 md:gap-3 text-gray-300">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
-              </svg>
-            </div>
-            <span className="text-xs md:text-sm font-medium whitespace-nowrap">AI Search</span>
-          </div>
-
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 flex-shrink-0">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-
-          <div className="flex items-center gap-2 md:gap-3 text-emerald-400">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-500/20 rounded-full flex items-center justify-center border-2 border-emerald-500/30 shadow-lg shadow-emerald-500/10 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
-                <path d="M12 2v4"/>
-                <path d="m16.24 7.76 2.83 2.83"/>
-                <path d="M22 12h-4"/>
-                <path d="m16.24 16.24 2.83 2.83"/>
-                <path d="M12 22v-4"/>
-                <path d="m4.93 19.07 2.83-2.83"/>
-                <path d="M2 12h4"/>
-                <path d="m4.93 4.93 2.83 2.83"/>
-              </svg>
-            </div>
-            <span className="text-sm md:text-base font-semibold whitespace-nowrap">Smart Filters</span>
-          </div>
-
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 flex-shrink-0">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-
-          <div className="flex items-center gap-2 md:gap-3 text-gray-300">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-                <line x1="16" x2="16" y1="2" y2="6"/>
-                <line x1="8" x2="8" y1="2" y2="6"/>
-                <line x1="3" x2="21" y1="10" y2="10"/>
-              </svg>
-            </div>
-            <span className="text-xs md:text-sm font-medium whitespace-nowrap">Auto Apply</span>
-          </div>
-
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 flex-shrink-0">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-
-          <div className="flex items-center gap-2 md:gap-3 text-gray-300">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-slate-800 rounded-full flex items-center justify-center border border-slate-600 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 6.1H3"/>
-                <path d="M21 12.1H3"/>
-                <path d="M15.1 18H3"/>
-              </svg>
-            </div>
-            <span className="text-xs md:text-sm font-medium whitespace-nowrap">Ace Interviews</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-6">
-        <a
-          href="#get-started"
-          className="inline-flex items-center justify-center w-full sm:w-auto px-10 py-4 text-lg font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-all hover:scale-105 shadow-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
-        >
-          Get Started for Free
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 ml-2" aria-hidden="true">
-            <path d="M5 12h14"/>
-            <path d="m12 5 7 7-7 7"/>
-          </svg>
-        </a>
-        <a
-          href="#features"
-          className="inline-flex items-center justify-center w-full sm:w-auto px-10 py-4 text-lg font-semibold text-gray-300 border border-slate-600 rounded-lg hover:bg-slate-700 hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-[#0a0f1c]"
-        >
-          See Features
-        </a>
-      </div>
-      <div className="mt-16 md:mt-20 max-w-6xl mx-auto">
-        <div className="rounded-xl border border-slate-700 shadow-2xl p-3">
-          <Suspense fallback={<div className="w-full h-80 bg-slate-700 rounded-lg animate-pulse"></div>}>
-            <div className="relative w-full h-80 rounded-lg">
-              <Image
-                src="/make-data-drive-analytics.png"
-                alt="Jobquest AI Dashboard"
-                fill
-                className="rounded-lg object-cover"
-                priority
-                sizes="100vw"
-                onLoad={() => console.log('Hero image loaded successfully')}
-                onError={(e) => console.error('Hero image failed to load', e)}
-              />
-            </div>
-          </Suspense>
-        </div>
-      </div>
-    </div>
-  </section>
-));
-
-HeroSection.displayName = 'HeroSection';
-
-const CompaniesMarquee = memo(() => {
-  const companyLogos = [
-    { src: "/amazon.svg", alt: "Amazon" },
-    { src: "/apple.svg", alt: "Apple" },
-    { src: "/google.svg", alt: "Google" },
-    { src: "/meta.svg", alt: "Meta" },
-    { src: "/microsoft.svg", alt: "Microsoft" },
-    { src: "/netflix.svg", alt: "Netflix" },
-  ];
-
-  const [imagesLoaded, setImagesLoaded] = useState(0);
-  const duplicates = 8;
-  const totalImages = companyLogos.length * duplicates;
-  const marqueeRef = useRef<HTMLDivElement>(null);
-
-  const handleImageLoad = (alt: string) => {
-    console.log('Company logo loaded:', alt);
-    setImagesLoaded(prev => prev + 1);
-  };
-
-  const handleImageError = (alt: string, e: any) => {
-    console.error('Company logo failed:', alt, e);
-  };
+export default function LandingPage() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (imagesLoaded === totalImages && marqueeRef.current) {
-      const containerWidth = marqueeRef.current.offsetWidth;
-      const contentWidth = marqueeRef.current.scrollWidth;
-      const animationDuration = 20; // seconds
-      const speed = contentWidth / (animationDuration * 1000); // pixels per ms
-      const startTime = performance.now();
-      console.log('All images loaded, container width:', containerWidth);
-      console.log('Total content width:', contentWidth);
-      console.log('Ratio:', contentWidth / containerWidth);
-      console.log('Animation speed (px/ms):', speed);
-      console.log('Marquee animation started at:', new Date().toISOString());
+    // Dynamically load GSAP
+    const loadGSAP = async () => {
+      const { gsap } = await import('gsap');
+      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
 
-      // Periodic logging for position tracking (every 1 second for 10 seconds)
-      let logInterval: NodeJS.Timeout;
-      const logPosition = () => {
-        if (marqueeRef.current) {
-          const currentTransform = getComputedStyle(marqueeRef.current).transform;
-          const translateX = currentTransform ? parseFloat(currentTransform.split(',')[4]) || 0 : 0;
-          const elapsed = (performance.now() - startTime) / 1000;
-          console.log(`Marquee position after ${elapsed.toFixed(2)}s: translateX(${translateX.toFixed(2)}px), expected: ~${(elapsed * speed * -1000).toFixed(2)}px`);
-        }
-        logInterval = setTimeout(logPosition, 1000);
-      };
-      logPosition();
+      gsap.registerPlugin(ScrollTrigger);
 
-      // Clear interval after a few cycles to avoid spam
-      setTimeout(() => clearTimeout(logInterval), 20000);
-    }
-  }, [imagesLoaded, totalImages]);
+      // Hero animation sequence
+      gsap.from('.gsap-hero-elem', {
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: 'power3.out'
+      });
 
-  const duplicatedLogos = Array(duplicates).fill(companyLogos).flat();
+      // Reveal animations on scroll
+      gsap.utils.toArray('.glass-panel').forEach((panel: any) => {
+        gsap.from(panel, {
+          scrollTrigger: {
+            trigger: panel,
+            start: 'top 85%',
+          },
+          y: 30,
+          opacity: 0,
+          duration: 0.8,
+          ease: 'power2.out'
+        });
+      });
+    };
 
-  // Add animation iteration listener for loop continuity
-  useEffect(() => {
-    if (imagesLoaded === totalImages && marqueeRef.current) {
-      const marqueeElement = marqueeRef.current;
-      const handleIteration = (e: AnimationEvent) => {
-        console.log('Animation iteration completed:', e.elapsedTime);
-        const currentTransform = getComputedStyle(marqueeElement).transform;
-        const translateX = currentTransform ? parseFloat(currentTransform.split(',')[4]) || 0 : 0;
-        console.log('Transform at iteration end:', translateX);
-        // Check for jerk: if not close to expected reset position
-        const expectedEnd = - (marqueeElement.scrollWidth / duplicates);
-        const jerkThreshold = 5; // px
-        if (Math.abs(translateX - expectedEnd) > jerkThreshold) {
-          console.warn('Potential jerk detected: translateX deviation', Math.abs(translateX - expectedEnd));
-        } else {
-          console.log('Smooth loop confirmed');
-        }
+    loadGSAP();
+
+    // Dashboard 3D tilt effect
+    const dashboard = dashboardRef.current;
+    const section = dashboard?.parentElement;
+
+    if (dashboard && section) {
+      const handleMouseMove = (e: MouseEvent) => {
+        const rect = section.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -5;
+        const rotateY = ((x - centerX) / centerX) * 5;
+
+        dashboard.style.transform = `perspective(2000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
       };
 
-      marqueeElement.addEventListener('animationiteration', handleIteration);
-      return () => marqueeElement.removeEventListener('animationiteration', handleIteration);
+      const handleMouseLeave = () => {
+        dashboard.style.transform = `perspective(2000px) rotateX(6deg) rotateY(0deg)`;
+      };
+
+      section.addEventListener('mousemove', handleMouseMove);
+      section.addEventListener('mouseleave', handleMouseLeave);
+
+      return () => {
+        section.removeEventListener('mousemove', handleMouseMove);
+        section.removeEventListener('mouseleave', handleMouseLeave);
+      };
     }
-  }, [imagesLoaded, totalImages, duplicates]);
+  }, []);
 
   return (
-    <section className="py-8 bg-[#0a0f1c] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 relative">
-        {/* Fade edges */}
-        <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#0a0f1c] to-transparent pointer-events-none"></div>
-        <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0f1c] to-transparent pointer-events-none"></div>
-
-        <div ref={marqueeRef} className={`flex whitespace-nowrap ${imagesLoaded === totalImages ? 'animate-marquee' : ''}`}>
-          {duplicatedLogos.map((logo, index) => (
-            <div key={`${logo.src}-${index}`} className="flex-shrink-0 mx-2 sm:mx-4">
-              <Image
-                src={logo.src}
-                alt={logo.alt}
-                width={32}
-                height={32}
-                className="sm:w-12 sm:h-12 filter grayscale hover:grayscale-0 transition-all duration-300"
-                onLoad={() => handleImageLoad(logo.alt)}
-                onError={(e) => handleImageError(logo.alt, e)}
-              />
-            </div>
-          ))}
-        </div>
-
-        <style jsx>{`
-          @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-100% / ${duplicates})); }
-          }
-          .animate-marquee {
-            animation: marquee 20s linear infinite;
-          }
-        `}</style>
-      </div>
-    </section>
-  );
-});
-
-CompaniesMarquee.displayName = 'CompaniesMarquee';
-
-
-// Feature Card Component
-const FeatureCard = memo(({
-  icon: Icon,
-  title,
-  description,
-  imageSrc,
-  imageAlt,
-  reverse = false
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  imageSrc: string;
-  imageAlt: string;
-  reverse?: boolean;
-}) => (
-  <div className={`grid gap-8 md:grid-cols-2 lg:gap-12 items-center ${reverse ? 'flex-col-reverse md:flex-row-reverse' : 'flex-col md:flex-row'}`}>
-    <div className={`space-y-2 text-center ${reverse ? 'md:order-2' : 'md:order-1'}`}>
-        <div className="inline-flex items-center gap-3 py-3 px-5 bg-emerald-500/20 border border-emerald-500/30 rounded-full mb-2 shadow-lg shadow-emerald-500/10">
-          <Icon className="w-6 h-6 text-emerald-300" />
-          <h3 className="text-2xl md:text-3xl font-bold text-emerald-400 mb-0">{title}</h3>
-        </div>
-       <p className="text-gray-300 leading-relaxed mt-3 text-base md:text-lg">{description}</p>
-    </div>
-    <div className={`bg-slate-800/50 p-3 rounded-lg border border-slate-700 shadow-xl hover:shadow-2xl transition-shadow duration-300 ${reverse ? 'md:order-1' : 'md:order-2'}`}>
-      <Suspense fallback={<div className="w-full h-48 bg-slate-700 rounded-md animate-pulse"></div>}>
+    <div className="antialiased selection:bg-indigo-500 selection:text-white">
+      {/* Background Layers */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-grid-pattern opacity-40"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] animate-blob mix-blend-screen"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[100px] animate-blob animation-delay-2000 mix-blend-screen"></div>
         <Image
-          src={imageSrc}
-          alt={imageAlt}
-          width={800}
-          height={400}
-          className="rounded-md w-full h-48 object-cover md:h-64"
-          sizes="(max-width: 768px) 100vw, 50vw"
-          onLoad={() => console.log('Feature image loaded successfully:', imageSrc)}
-          onError={(e) => console.error('Feature image failed to load:', imageSrc, e)}
-        />
-      </Suspense>
-    </div>
-  </div>
-));
-
-FeatureCard.displayName = 'FeatureCard';
-
-// Features Section
-const FeaturesSection = memo(() => (
-  <section id="features" className="py-20 sm:py-32 bg-[#111827]" aria-labelledby="features-heading">
-    <div className="container mx-auto px-6">
-      <div className="text-center max-w-3xl mx-auto mb-20">
-        <h2
-          id="features-heading"
-          className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
-        >
-          Your All-in-One Career Command Center
-        </h2>
-        <p className="mt-4 text-lg text-gray-400">Everything you need to accelerate your job search, powered by AI.</p>
-      </div>
-
-       <div className="space-y-20 lg:space-y-24">
-        <FeatureCard
-          icon={() => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-emerald-400">
-              <path d="M12 2a10 10 0 1 0 10 10c0-4.42-2.87-8.15-6.84-9.58"/>
-              <path d="M12 2v4"/>
-              <path d="m16.24 7.76 2.83 2.83"/>
-              <path d="M22 12h-4"/>
-              <path d="m16.24 16.24 2.83 2.83"/>
-              <path d="M12 22v-4"/>
-              <path d="m4.93 19.07 2.83-2.83"/>
-              <path d="M2 12h4"/>
-              <path d="m4.93 4.93 2.83 2.83"/>
-            </svg>
-          )}
-          title="AI Job Matchmaker"
-          description="Our AI doesn't just match keywords; it understands context. It scans thousands of listings to eliminate spam and find genuine hiring posts, scored for relevance to your unique profile."
-          imageSrc="/ai-filtered-job-results.png"
-          imageAlt="Analytics Dashboard"
-        />
-        <FeatureCard
-          icon={() => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-emerald-400">
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-              <line x1="16" x2="16" y1="2" y2="6"/>
-              <line x1="8" x2="8" y1="2" y2="6"/>
-              <line x1="3" x2="21" y1="10" y2="10"/>
-            </svg>
-          )}
-          title="Application Pipeline Maestro"
-          description="From 'Saved' to 'Offer Received,' manage every application's lifecycle in one place. Add notes, link reminders, and see your entire pipeline at a glance, just like a professional project manager."
-          imageSrc="/unified-application-tracking.png"
-          imageAlt="Kanban board"
-          reverse
-        />
-        <FeatureCard
-          icon={() => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-emerald-400">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
-            </svg>
-          )}
-           title="Resume Optimization Maestro"
-          description="Manage multiple resume versions and see how they stack up. Our platform can analyze your resume's effectiveness with an ATS score, helping you tailor it for each application."
-          imageSrc="/resume-and-ats-optimization.png"
-          imageAlt="Document editor"
+          src="/ai-network.png"
+          alt="AI Network Background"
+          fill
+          className="object-cover opacity-5 mix-blend-overlay"
+          priority
         />
       </div>
-    </div>
-  </section>
-));
 
-FeaturesSection.displayName = 'FeaturesSection';
+      {/* Navigation */}
+      <nav className="fixed w-full z-50 top-0 border-b border-white/5 bg-[var(--bg-deep)]/80 backdrop-blur-xl transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="w-10 h-10 rounded-xl overflow-hidden">
+              <Image src="/logo.png" alt="Applytron Logo" width={40} height={40} className="object-contain" />
+            </div>
+            <span className="font-display font-bold text-xl tracking-tight">Applytron</span>
+          </div>
 
-// Testimonial Card
-const TestimonialCard = memo(({ quote, name, role }: { quote: string; name: string; role: string; }) => {
-  const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
-  return (
-    <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border border-slate-700 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-      <div className="absolute top-4 left-4 opacity-10">
-        <Quote className="w-12 h-12 text-emerald-400" />
-      </div>
-      <blockquote className="text-gray-200 relative z-10">
-        <p className="text-lg italic leading-relaxed">"{quote}"</p>
-      </blockquote>
-      <div className="flex items-center gap-1 mt-4 relative z-10">
-        {[...Array(5)].map((_, i) => (
-          <Star key={i} className="w-4 h-4 fill-emerald-400 text-emerald-400" />
-        ))}
-      </div>
-      <figcaption className="mt-6 flex items-center gap-4 relative z-10">
-        <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-          {initials}
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Features</a>
+            <a href="#dashboard-preview" className="text-sm text-gray-400 hover:text-white transition-colors">Demo</a>
+            <a href="#testimonials" className="text-sm text-gray-400 hover:text-white transition-colors">Stories</a>
+            <a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Pricing</a>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link href="/auth/signin" className="text-sm text-gray-400 hover:text-white hidden sm:block">
+              Sign In
+            </Link>
+            <Link href="/auth/signup">
+              <button className="relative inline-flex h-10 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+                <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]"></span>
+                <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-1 text-sm font-medium text-white backdrop-blur-3xl hover:bg-slate-900 transition-colors">
+                  Get Started
+                </span>
+              </button>
+            </Link>
+          </div>
         </div>
-        <div>
-          <div className="font-semibold text-white">{name}</div>
-          <div className="text-gray-400 text-sm">{role}</div>
-        </div>
-      </figcaption>
-    </div>
-  );
-});
+      </nav>
 
-TestimonialCard.displayName = 'TestimonialCard';
+      <main className="relative z-10 pt-32">
+        {/* Hero Section */}
+        <section ref={heroRef} className="relative min-h-[90vh] flex flex-col items-center justify-center px-4 text-center max-w-5xl mx-auto mb-20">
+          {/* Announcement Pill */}
+          <div className="gsap-hero-elem mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 backdrop-blur-sm text-indigo-300 text-sm hover:bg-indigo-500/20 transition-colors cursor-pointer">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            <span>AI-Powered Job Search • Automated Applications</span>
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </div>
 
-// Testimonials Section
-const TestimonialsSection = memo(() => (
-  <section id="testimonials" className="py-20 sm:py-32 bg-[#0a0f1c]" aria-labelledby="testimonials-heading">
-    <div className="container mx-auto px-6">
-      <div className="text-center max-w-3xl mx-auto mb-20">
-        <h2
-          id="testimonials-heading"
-          className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
-        >
-          Success Stories from Our Users
-        </h2>
-        <p className="mt-6 text-lg text-gray-400">See how Jobquest AI has transformed job searches for professionals like you.</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-        <TestimonialCard
-          quote="The AI filtering saved me hours scrolling through irrelevant jobs. I found my current role in less than a week!"
-          name="Alex Johnson"
-          role="Software Engineer"
-        />
-        <TestimonialCard
-          quote="Finally, all my applications, reminders, and interview notes in one place. Jobquest AI brought order to my chaotic job search."
-          name="Maria Garcia"
-          role="Product Manager"
-        />
-        <TestimonialCard
-          quote="Jobquest AI's resume optimization helped me beat the ATS and land interviews at top tech companies. Game changer!"
-          name="David Chen"
-          role="Data Scientist"
-        />
-      </div>
-    </div>
-  </section>
-));
+          {/* Headline */}
+          <h1 className="gsap-hero-elem font-display text-6xl md:text-8xl font-bold leading-[1.1] tracking-tight mb-8">
+            Career Growth,<br />
+            <span className="text-gradient-primary">On Autopilot.</span>
+          </h1>
 
-TestimonialsSection.displayName = 'TestimonialsSection';
-
-// Pricing Card Component
-const PricingCard = memo(({
-  title,
-  price,
-  originalPrice,
-  period,
-  description,
-  features,
-  popular = false,
-  ctaText,
-  ctaHref
-}: {
-  title: string;
-  price: string;
-  originalPrice?: string;
-  period: string;
-  description: string;
-  features: string[];
-  popular?: boolean;
-  ctaText: string;
-  ctaHref: string;
-}) => (
-  <div className={`relative bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-2xl border ${popular ? 'border-emerald-500 shadow-lg shadow-emerald-500/20' : 'border-slate-700'} transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
-    {popular && (
-      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-        Most Popular
-      </div>
-    )}
-    <div className="text-center">
-      <h3 className="text-2xl font-bold text-white mb-2">{title}</h3>
-      <div className="flex items-baseline justify-center gap-1 mb-4">
-        {originalPrice && (
-          <span className="text-gray-500 line-through text-2xl mr-2">{originalPrice}</span>
-        )}
-        <span className="text-4xl font-bold text-emerald-400">{price}</span>
-        <span className="text-gray-400">{period}</span>
-      </div>
-      <p className="text-gray-300 mb-6">{description}</p>
-    </div>
-    <ul className="space-y-3 mb-8">
-      {features.map((feature, index) => (
-        <li key={index} className="flex items-center gap-3">
-          <Check className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-          <span className="text-gray-300">{feature}</span>
-        </li>
-      ))}
-    </ul>
-    <a
-      href={ctaHref}
-      className={`block w-full text-center py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${popular ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg' : 'bg-slate-700 hover:bg-slate-600 text-white'}`}
-    >
-      {ctaText}
-    </a>
-  </div>
-));
-
-PricingCard.displayName = 'PricingCard';
-
-// Pricing Section
-const PricingSection = memo(() => (
-  <section id="pricing" className="py-20 sm:py-32 bg-[#111827]" aria-labelledby="pricing-heading">
-    <div className="container mx-auto px-6">
-      <div className="text-center max-w-3xl mx-auto mb-20">
-        <h2
-          id="pricing-heading"
-          className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white"
-        >
-          Choose Your Plan
-        </h2>
-        <p className="mt-6 text-lg text-gray-400">🎉 <strong className="text-emerald-400">Beta Access - Everything Free!</strong> Start free and upgrade as you grow. All plans include our core AI-powered features.</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
-        <PricingCard
-          title="Free"
-          price="$0"
-          period="/month"
-          description="Perfect for getting started with job search automation. Beta access included!"
-          features={[
-            "AI job filtering",
-            "Basic application tracking",
-            "5 resume versions",
-            "Email notifications",
-            "Community support"
-          ]}
-          ctaText="Get Started Free"
-          ctaHref="#get-started"
-        />
-        <PricingCard
-          title="Pro"
-          price="$0"
-          originalPrice="$19"
-          period="/month"
-          description="For serious job seekers ready to accelerate their career. Free during beta!"
-          features={[
-            "Everything in Free",
-            "Advanced AI matching",
-            "Unlimited applications",
-            "Resume optimization",
-            "Interview prep tools",
-            "Priority support"
-          ]}
-          popular={true}
-          ctaText="Start Pro Trial"
-          ctaHref="#get-started"
-        />
-        <PricingCard
-          title="Enterprise"
-          price="$0"
-          originalPrice="$49"
-          period="/month"
-          description="For teams and organizations managing multiple hires. Free beta access!"
-          features={[
-            "Everything in Pro",
-            "Team collaboration",
-            "Advanced analytics",
-            "Custom integrations",
-            "Dedicated account manager",
-            "Phone support"
-          ]}
-          ctaText="Contact Sales"
-          ctaHref="#contact"
-        />
-      </div>
-    </div>
-  </section>
-));
-
-PricingSection.displayName = 'PricingSection';
-
-// Final CTA Section
-const FinalCTA = memo(() => (
-  <section className="py-20 sm:py-32 bg-[#111827]" aria-labelledby="cta-heading">
-    <div className="container mx-auto px-6 text-center">
-      <div className="relative max-w-4xl mx-auto py-16 px-8 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 rounded-2xl overflow-hidden border border-slate-800">
-        <div className="absolute -top-1/2 -left-1/2 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl opacity-50"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl opacity-50"></div>
-        <div className="relative">
-          <h2 
-            id="cta-heading"
-            className="text-3xl md:text-5xl font-bold tracking-tight text-white"
-          >
-            Take Control of Your Career Journey
-          </h2>
-          <p className="mt-6 max-w-xl mx-auto text-lg text-gray-400">
-            Sign up for free and let your AI co-pilot do the heavy lifting. Your dream job is closer than you think.
+          {/* Subheadline */}
+          <p className="gsap-hero-elem text-lg md:text-xl text-gray-400 max-w-2xl mb-10 leading-relaxed">
+            The AI agent that tailors your resume for every application, tracks opportunities, and manages follow-ups while you focus on interviews.
           </p>
-          <a 
-            href="#get-started"
-            className="mt-10 inline-flex items-center justify-center px-10 py-4 text-lg font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-transform hover:scale-105 shadow-2xl shadow-emerald-500/20 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-transparent"
-          >
-            Start Winning Your Job Search
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-));
 
-FinalCTA.displayName = 'FinalCTA';
+          {/* CTA Buttons */}
+          <div className="gsap-hero-elem flex flex-col sm:flex-row gap-4 items-center">
+            <Link href="/auth/signup">
+              <button className="px-8 py-4 bg-white text-black rounded-full font-bold hover:bg-gray-100 transition-all transform hover:scale-105 shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center gap-2 [text-shadow:_0_0_1px_rgb(0_0_0_/_40%)]">
+                Start Free Trial
+                <Zap className="w-4 h-4 fill-black stroke-black" />
+              </button>
+            </Link>
+            <button className="px-8 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 transition-all flex items-center gap-2 text-white font-medium">
+              <PlayCircle className="w-5 h-5" />
+              Watch Demo
+            </button>
+          </div>
 
-// Main Page Component
-export default function HomePage() {
-  const router = useRouter();
+          {/* Social Proof Strip */}
+          <div className="gsap-hero-elem mt-20 pt-10 border-t border-white/5 w-full">
+            <p className="text-sm text-gray-500 mb-6">TRUSTED BY JOB SEEKERS AT</p>
+            <div className="flex justify-center items-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500 flex-wrap">
+              <span className="font-display font-bold text-xl">Google</span>
+              <span className="font-display font-bold text-xl">Meta</span>
+              <span className="font-display font-bold text-xl">Amazon</span>
+              <span className="font-display font-bold text-xl">Microsoft</span>
+              <span className="font-display font-bold text-xl">Apple</span>
+            </div>
+          </div>
+        </section>
 
-  return (
-    <>
-      <SkipLink />
-      <main id="main-content" className="flex-grow bg-[#0a0f1c] text-[#e5e7eb]" role="main">
-        <SectionLoader>
-          <HeroSection />
-        </SectionLoader>
-        <SectionLoader>
-          <CompaniesMarquee />
-        </SectionLoader>
-        <SectionLoader>
-          <FeaturesSection />
-        </SectionLoader>
-        <SectionLoader>
-          <TestimonialsSection />
-        </SectionLoader>
-        <SectionLoader>
-          <PricingSection />
-        </SectionLoader>
-        <SectionLoader>
-          <FinalCTA />
-        </SectionLoader>
+        {/* Dashboard Preview Section */}
+        <section id="dashboard-preview" className="relative py-20 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">Mission Control for Your Career</h2>
+              <p className="text-gray-400">A real-time view of your automated job hunt.</p>
+            </div>
+
+            {/* Dashboard Container with 3D Tilt */}
+            <div
+              ref={dashboardRef}
+              className="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl transition-transform duration-500 hover:shadow-[0_0_50px_rgba(79,70,229,0.15)]"
+              style={{ transform: 'perspective(2000px) rotateX(6deg)' }}
+            >
+              {/* Window Controls */}
+              <div className="h-12 bg-[#0a0a0a]/50 border-b border-white/5 flex items-center px-4 gap-2">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500/50"></div>
+                </div>
+                <div className="flex-1 text-center text-xs font-mono text-gray-600">app.applytron.ai/dashboard</div>
+                <div className="w-20"></div>
+              </div>
+
+              {/* Dashboard Body */}
+              <div className="flex h-[700px] bg-[#050505]">
+                {/* Sidebar */}
+                <div className="w-64 border-r border-white/5 bg-[#0a0a0a]/30 p-4 hidden md:flex flex-col">
+                  <div className="space-y-1">
+                    <a href="#" className="dashboard-sidebar-link active">
+                      <LayoutDashboard className="w-4 h-4 mr-3" /> Overview
+                    </a>
+                    <a href="#" className="dashboard-sidebar-link">
+                      <Briefcase className="w-4 h-4 mr-3" /> Applications
+                      <span className="ml-auto bg-indigo-500 text-white text-[10px] px-1.5 py-0.5 rounded">24</span>
+                    </a>
+                    <a href="#" className="dashboard-sidebar-link">
+                      <FileText className="w-4 h-4 mr-3" /> Resumes
+                    </a>
+                    <a href="#" className="dashboard-sidebar-link">
+                      <Send className="w-4 h-4 mr-3" /> Follow-ups
+                    </a>
+                  </div>
+
+                  <div className="mt-auto p-4 bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded-xl border border-white/5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="font-bold text-sm">Pro Plan</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-3">87/200 Applications</p>
+                    <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500 w-[43%]"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Content Area */}
+                <div className="flex-1 p-8 overflow-y-auto relative">
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-8">
+                    <div>
+                      <h3 className="text-2xl font-bold">Welcome back, Alex 👋</h3>
+                      <p className="text-sm text-gray-400">Applytron found 8 new opportunities for you.</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Bell className="w-5 h-5 text-gray-400" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-gray-700 to-gray-600 border border-white/20"></div>
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="glass-panel p-5 rounded-xl relative overflow-hidden group">
+                      <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <Send className="w-16 h-16 text-white" />
+                      </div>
+                      <p className="text-gray-400 text-sm mb-1">Applications Sent</p>
+                      <p className="text-3xl font-mono font-bold">87</p>
+                      <div className="flex items-center mt-2 text-xs text-green-400">
+                        <TrendingUp className="w-3 h-3 mr-1" /> +18% this week
+                      </div>
+                    </div>
+
+                    <div className="glass-panel p-5 rounded-xl relative overflow-hidden group">
+                      <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <Eye className="w-16 h-16 text-white" />
+                      </div>
+                      <p className="text-gray-400 text-sm mb-1">Profile Views</p>
+                      <p className="text-3xl font-mono font-bold">342</p>
+                      <div className="flex items-center mt-2 text-xs text-green-400">
+                        <TrendingUp className="w-3 h-3 mr-1" /> High visibility
+                      </div>
+                    </div>
+
+                    <div className="glass-panel p-5 rounded-xl relative overflow-hidden group">
+                      <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <MessageSquare className="w-16 h-16 text-white" />
+                      </div>
+                      <p className="text-gray-400 text-sm mb-1">Interviews</p>
+                      <p className="text-3xl font-mono font-bold">5</p>
+                      <div className="flex items-center mt-2 text-xs text-indigo-400">
+                        <span className="w-2 h-2 bg-indigo-400 rounded-full mr-2 animate-pulse"></span> 2 Scheduled
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Split View */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Applications Table */}
+                    <div className="lg:col-span-2 glass-panel rounded-xl p-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <h4 className="font-semibold">Recent Applications</h4>
+                        <button className="text-xs bg-white/5 hover:bg-white/10 px-3 py-1 rounded border border-white/5">View All</button>
+                      </div>
+                      <div className="space-y-4">
+                        {[
+                          { company: 'G', name: 'Senior Product Designer', location: 'Google • Remote', time: '2h ago', status: 'Interview' },
+                          { company: 'M', name: 'UX Engineer', location: 'Meta • Menlo Park', time: '5h ago', status: 'Applied' },
+                          { company: 'A', name: 'Design Lead', location: 'Amazon • Seattle', time: '1d ago', status: 'Applied' }
+                        ].map((app, i) => (
+                          <div key={i} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg transition-colors group cursor-pointer">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-xl font-bold">{app.company}</div>
+                              <div>
+                                <div className="font-medium text-sm">{app.name}</div>
+                                <div className="text-xs text-gray-400">{app.location}</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                              <div className="text-xs text-gray-500 font-mono">{app.time}</div>
+                              <span className={`status-badge ${app.status === 'Interview' ? 'status-interview' : 'status-applied'}`}>
+                                {app.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI Activity Feed */}
+                    <div className="glass-panel rounded-xl p-6 bg-gradient-to-b from-indigo-900/10 to-transparent">
+                      <h4 className="font-semibold mb-6 flex items-center gap-2">
+                        <Bot className="w-4 h-4 text-indigo-400" /> AI Agent Activity
+                      </h4>
+                      <div className="relative pl-4 border-l border-white/10 space-y-8">
+                        <div className="relative">
+                          <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-green-500 rounded-full ring-4 ring-[#0a0a0a]"></div>
+                          <p className="text-xs text-gray-400 mb-1 font-mono">Just now</p>
+                          <p className="text-sm">Found 3 new matches for "Product Designer".</p>
+                        </div>
+                        <div className="relative">
+                          <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-indigo-500 rounded-full ring-4 ring-[#0a0a0a]"></div>
+                          <p className="text-xs text-gray-400 mb-1 font-mono">15m ago</p>
+                          <p className="text-sm">Customized resume for Google application.</p>
+                        </div>
+                        <div className="relative">
+                          <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 bg-gray-500 rounded-full ring-4 ring-[#0a0a0a]"></div>
+                          <p className="text-xs text-gray-400 mb-1 font-mono">1h ago</p>
+                          <p className="text-sm">Analyzing job market trends...</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 p-3 bg-black/30 rounded border border-white/5 text-xs font-mono text-indigo-300">
+                        <span className="animate-pulse">_</span> Processing LinkedIn data...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features" className="py-32 max-w-6xl mx-auto px-4">
+          <div className="mb-20 text-center">
+            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">AI-Powered Career Acceleration</h2>
+            <p className="text-xl text-gray-400">Three steps to complete automation.</p>
+          </div>
+
+          <div className="space-y-32">
+            {/* Feature 1 */}
+            <div className="flex flex-col md:flex-row items-center gap-16">
+              <div className="flex-1 space-y-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 flex items-center justify-center text-indigo-400 mb-4">
+                  <span className="font-mono font-bold text-lg">01</span>
+                </div>
+                <h3 className="text-3xl font-bold">Smart Resume Tailoring</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Upload your base resume. Our AI analyzes each job description and automatically customizes your resume to match keywords, skills, and requirements—increasing your ATS pass rate dramatically.
+                </p>
+                <ul className="space-y-3 mt-4">
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-400" /> Context-aware rewriting
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-400" /> Keyword optimization
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-400" /> ATS-friendly formatting
+                  </li>
+                </ul>
+              </div>
+              <div className="flex-1 relative group">
+                <div className="absolute inset-0 bg-indigo-600/20 blur-3xl rounded-full opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden">
+                  <div className="relative w-full h-80 rounded-lg overflow-hidden">
+                    <Image
+                      src="/ai-resume.png"
+                      alt="AI Resume Scanner"
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                  </div>
+                  <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-indigo-500/10 to-transparent animate-scan"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="flex flex-col md:flex-row-reverse items-center gap-16">
+              <div className="flex-1 space-y-6">
+                <div className="w-12 h-12 rounded-2xl bg-purple-600/20 flex items-center justify-center text-purple-400 mb-4">
+                  <span className="font-mono font-bold text-lg">02</span>
+                </div>
+                <h3 className="text-3xl font-bold">Automated Follow-ups</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Never miss a follow-up again. Applytron tracks all your applications and automatically sends personalized follow-up emails at the optimal time to keep you top of mind.
+                </p>
+                <ul className="space-y-3 mt-4">
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-purple-400" /> Smart timing algorithms
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-purple-400" /> Personalized templates
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-purple-400" /> Multi-channel outreach
+                  </li>
+                </ul>
+              </div>
+              <div className="flex-1 relative group">
+                <div className="absolute inset-0 bg-purple-600/20 blur-3xl rounded-full opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden border-purple-500/20">
+                  <div className="relative w-full h-80 rounded-lg overflow-hidden">
+                    <Image
+                      src="/dashboard-preview.png"
+                      alt="Dashboard Preview"
+                      fill
+                      className="object-cover rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="flex flex-col md:flex-row items-center gap-16">
+              <div className="flex-1 space-y-6">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-600/20 flex items-center justify-center text-cyan-400 mb-4">
+                  <span className="font-mono font-bold text-lg">03</span>
+                </div>
+                <h3 className="text-3xl font-bold">Real-Time Analytics</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Track your job search performance with detailed analytics. See which applications get responses, optimize your approach, and land more interviews faster.
+                </p>
+                <ul className="space-y-3 mt-4">
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400" /> Response rate tracking
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400" /> Interview conversion metrics
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-gray-300">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400" /> Performance insights
+                  </li>
+                </ul>
+              </div>
+              <div className="flex-1">
+                <div className="glass-panel rounded-2xl p-8 relative overflow-hidden border-cyan-500/20">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 p-6 rounded-lg text-center">
+                      <TrendingUp className="w-10 h-10 mx-auto mb-3 text-cyan-400" />
+                      <div className="text-3xl font-bold">87%</div>
+                      <div className="text-xs text-gray-500 mt-1">Response Rate</div>
+                    </div>
+                    <div className="bg-white/5 p-6 rounded-lg text-center border border-cyan-500/30 bg-cyan-500/5">
+                      <MessageSquare className="w-10 h-10 mx-auto mb-3 text-cyan-400" />
+                      <div className="text-3xl font-bold">3.2x</div>
+                      <div className="text-xs text-gray-500 mt-1">More Interviews</div>
+                    </div>
+                    <div className="bg-white/5 p-6 rounded-lg text-center col-span-2">
+                      <Eye className="w-10 h-10 mx-auto mb-3 text-cyan-400" />
+                      <div className="text-3xl font-bold">10k+</div>
+                      <div className="text-xs text-gray-500 mt-1">Profile Views</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-32 bg-gradient-to-b from-transparent via-indigo-900/10 to-transparent">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">How It Works</h2>
+              <p className="text-xl text-gray-400">Get started in minutes, land your dream job in weeks</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="glass-panel p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  1
+                </div>
+                <FileText className="w-16 h-16 mx-auto mb-6 text-indigo-400 mt-4" />
+                <h3 className="text-xl font-bold mb-4">Upload Your Resume</h3>
+                <p className="text-gray-400">Simply upload your base resume. Our AI will analyze your experience, skills, and achievements.</p>
+              </div>
+
+              <div className="glass-panel p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  2
+                </div>
+                <Bot className="w-16 h-16 mx-auto mb-6 text-purple-400 mt-4" />
+                <h3 className="text-xl font-bold mb-4">AI Does the Work</h3>
+                <p className="text-gray-400">Our AI finds matching jobs, customizes your resume for each, and submits applications automatically.</p>
+              </div>
+
+              <div className="glass-panel p-8 rounded-2xl text-center relative group hover:scale-105 transition-transform">
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-gradient-to-br from-pink-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  3
+                </div>
+                <MessageSquare className="w-16 h-16 mx-auto mb-6 text-pink-400 mt-4" />
+                <h3 className="text-xl font-bold mb-4">Get Interviews</h3>
+                <p className="text-gray-400">Receive interview requests, track your progress, and land your dream job faster than ever.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Stats Section */}
+        <section className="py-20 max-w-7xl mx-auto px-4">
+          <div className="glass-panel rounded-3xl p-12 md:p-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+              <div className="text-center">
+                <div className="text-4xl md:text-5xl font-bold text-gradient-primary mb-2">50K+</div>
+                <div className="text-gray-400 text-sm">Active Users</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl md:text-5xl font-bold text-gradient-primary mb-2">2M+</div>
+                <div className="text-gray-400 text-sm">Applications Sent</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl md:text-5xl font-bold text-gradient-primary mb-2">87%</div>
+                <div className="text-gray-400 text-sm">Success Rate</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl md:text-5xl font-bold text-gradient-primary mb-2">14 Days</div>
+                <div className="text-gray-400 text-sm">Avg. Time to Offer</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Integration Partners */}
+        <section className="py-20 max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">Seamless Integrations</h2>
+            <p className="text-gray-400">Connect with your favorite job platforms</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {['LinkedIn', 'Indeed', 'Glassdoor', 'ZipRecruiter', 'Monster', 'CareerBuilder', 'AngelList', 'Wellfound'].map((platform, i) => (
+              <div key={i} className="glass-panel p-6 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer group">
+                <span className="font-bold text-gray-400 group-hover:text-white transition-colors">{platform}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section id="testimonials" className="py-20 border-y border-white/5 bg-white/[0.01] overflow-hidden">
+          <div className="text-center mb-12">
+            <h3 className="text-2xl font-bold text-white">Loved by Job Seekers Worldwide</h3>
+          </div>
+
+          <div className="relative w-full overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[var(--bg-deep)] to-transparent z-10"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[var(--bg-deep)] to-transparent z-10"></div>
+
+            <div className="flex gap-6 animate-scroll w-max">
+              {[
+                { quote: "Applytron helped me land 3 interviews in my first week. The resume tailoring is incredible!", author: "Sarah Chen", role: "Product Designer" },
+                { quote: "I went from 0 responses to multiple offers. This tool is a game-changer for job seekers.", author: "Michael Torres", role: "Software Engineer" },
+                { quote: "The automated follow-ups kept me organized and professional. Highly recommend!", author: "Emily Rodriguez", role: "Marketing Manager" },
+                { quote: "Best investment in my career. The AI actually understands what recruiters want to see.", author: "David Kim", role: "Data Analyst" },
+              ].map((testimonial, i) => (
+                <div key={i} className="glass-panel w-80 p-6 rounded-xl flex-shrink-0">
+                  <p className="text-sm text-gray-300 mb-4">"{testimonial.quote}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gray-700 rounded-full"></div>
+                    <div>
+                      <div className="text-xs font-bold">{testimonial.author}</div>
+                      <div className="text-[10px] text-gray-500">{testimonial.role}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-32 max-w-3xl mx-auto px-4">
+          <h2 className="text-4xl font-display font-bold mb-12 text-center">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {[
+              {
+                q: "How does the AI resume tailoring work?",
+                a: "Our AI analyzes the job description and your base resume, then intelligently rewrites and reorganizes your experience to highlight the most relevant skills and keywords for that specific role."
+              },
+              {
+                q: "Is my data secure?",
+                a: "Absolutely. We use enterprise-grade encryption and never share your personal information with third parties. Your resumes and application data are stored securely and are only accessible by you."
+              },
+              {
+                q: "Can I review applications before they're sent?",
+                a: "Yes! You have full control. You can set the system to require your approval before any application is submitted, or let it run on autopilot."
+              }
+            ].map((faq, i) => (
+              <details key={i} className="group glass-panel rounded-lg open:bg-white/5 transition-all">
+                <summary className="flex cursor-pointer items-center justify-between p-6 font-medium text-white">
+                  {faq.q}
+                  <span className="transition group-open:rotate-180">
+                    <ChevronDown className="w-5 h-5" />
+                  </span>
+                </summary>
+                <div className="px-6 pb-6 text-gray-400 text-sm leading-relaxed">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
+
+
       </main>
+
+      {/* Footer CTA */}
+      <section className="relative py-32 text-center">
+        <div className="relative z-10 max-w-2xl mx-auto px-4">
+          <h2 className="text-5xl md:text-7xl font-display font-bold mb-8 tracking-tight">
+            Ready to get <br />
+            <span className="text-gradient-primary">hired?</span>
+          </h2>
+          <p className="text-xl text-gray-400 mb-10">Join thousands who automated their job search.</p>
+          <Link href="/auth/signup">
+            <button className="px-10 py-5 bg-white text-black text-lg font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_60px_rgba(255,255,255,0.4)] [text-shadow:_0_0_1px_rgb(0_0_0_/_40%)]">
+              Start Automating Now
+            </button>
+          </Link>
+        </div>
+      </section>
+
       <Footer />
-    </>
+
+      <style jsx global>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+
+        @keyframes scan {
+          0% { top: 0%; }
+          100% { top: 100%; }
+        }
+
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+
+        .animate-scan {
+          animation: scan 3s ease-in-out infinite;
+        }
+
+        .animate-scroll {
+          animation: scroll 40s linear infinite;
+        }
+
+        .bg-grid-pattern {
+          background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+          background-size: 50px 50px;
+          mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+        }
+
+        .text-gradient-primary {
+          background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #6366f1 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .glass-panel {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-sidebar-link {
+          display: flex;
+          align-items: center;
+          padding: 0.75rem 1rem;
+          color: #94a3b8;
+          border-radius: 0.5rem;
+          transition: all 0.2s;
+          font-size: 0.9rem;
+        }
+
+        .dashboard-sidebar-link:hover,
+        .dashboard-sidebar-link.active {
+          background: rgba(99, 102, 241, 0.1);
+          color: white;
+        }
+
+        .dashboard-sidebar-link.active {
+          border-left: 3px solid #6366f1;
+        }
+
+        .status-badge {
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 500;
+        }
+
+        .status-applied {
+          background: rgba(59, 130, 246, 0.2);
+          color: #93c5fd;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-interview {
+          background: rgba(168, 85, 247, 0.2);
+          color: #e9d5ff;
+          border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+      `}</style>
+    </div>
   );
 }

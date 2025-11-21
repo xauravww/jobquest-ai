@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Calendar, Building, ExternalLink, Filter, RotateCcw, Save, Eye, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, MapPin, Calendar, Building, ExternalLink, Filter, Save, X, CheckCircle, Globe, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Job {
   id: string;
@@ -27,101 +28,116 @@ interface SearchFilters {
   source: 'all' | 'findwork' | 'jooble' | 'usajobs';
 }
 
-const JobCard = ({ job, onTrack, onSkip }: { 
-  job: Job; 
+const JobCard = ({ job, onTrack, onSkip }: {
+  job: Job;
   onTrack: (job: Job) => void;
   onSkip: (job: Job) => void;
 }) => {
-  const getCardBorderClass = () => {
-    if (job.userAction === 'track') return 'border-green-500/50 bg-green-500/5';
-    if (job.userAction === 'skip') return 'border-red-500/50 bg-red-500/5';
-    return 'border-border hover:border-primary/50';
+  const getCardStyle = () => {
+    if (job.userAction === 'track') return 'border-[var(--success)]/50 bg-[var(--success)]/5';
+    if (job.userAction === 'skip') return 'border-[var(--danger)]/50 bg-[var(--danger)]/5 opacity-50';
+    return 'border-[var(--border-glass)] bg-[var(--bg-surface)]/50 hover:border-[var(--primary)]/50 hover:shadow-lg hover:shadow-[var(--primary)]/5';
   };
 
   return (
-    <div className={`bg-bg-card rounded-xl shadow-lg p-6 border transition-all duration-300 hover:shadow-xl ${getCardBorderClass()}`}>
-      <div className="flex justify-between items-start mb-4">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={`rounded-xl p-6 border transition-all duration-300 ${getCardStyle()}`}
+    >
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-white mb-2">{job.title}</h3>
-          <div className="space-y-2">
-            <div className="flex items-center text-text-muted text-sm">
-              <Building size={14} className="mr-2 text-primary" />
-              <span>{job.company}</span>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--secondary)]/20 flex items-center justify-center border border-[var(--primary)]/30 text-[var(--primary)] font-bold text-xl flex-shrink-0">
+              {job.company.charAt(0)}
             </div>
-            <div className="flex items-center text-text-muted text-sm">
-              <MapPin size={14} className="mr-2 text-blue-400" />
-              <span>{job.location}</span>
-            </div>
-            {job.publishedDate && (
-              <div className="flex items-center text-text-muted text-sm">
-                <Calendar size={14} className="mr-2 text-yellow-400" />
-                <span>{new Date(job.publishedDate).toLocaleDateString()}</span>
+            <div>
+              <h3 className="text-xl font-bold text-white mb-1">{job.title}</h3>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
+                <span className="flex items-center gap-1">
+                  <Building className="w-3 h-3 text-[var(--primary)]" />
+                  {job.company}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-blue-400" />
+                  {job.location}
+                </span>
+                {job.publishedDate && (
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-[var(--warning)]" />
+                    {new Date(job.publishedDate).toLocaleDateString()}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 mt-3">
+
+          <div className="flex flex-wrap items-center gap-2 mt-4">
             {job.salary && (
-              <div className="p-2 bg-green-500/20 rounded-lg text-green-300 text-sm">
-                💰 {job.salary}
+              <div className="px-3 py-1 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-full text-[var(--success)] text-xs font-medium flex items-center gap-1">
+                <DollarSign className="w-3 h-3" />
+                {job.salary}
               </div>
             )}
-            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-              job.source === 'findwork' 
-                ? 'bg-blue-500/20 text-blue-300' 
+            <div className={`px-3 py-1 rounded-full text-xs font-medium border ${job.source === 'findwork'
+                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                 : job.source === 'jooble'
-                ? 'bg-purple-500/20 text-purple-300'
-                : 'bg-green-500/20 text-green-300'
-            }`}>
-              {job.source === 'findwork' ? 'FindWork' : 
-               job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
+                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                  : 'bg-green-500/10 text-green-400 border-green-500/20'
+              }`}>
+              {job.source === 'findwork' ? 'FindWork' :
+                job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
             </div>
           </div>
-          {job.userAction && (
-            <div className={`mt-3 p-3 rounded-lg text-sm font-semibold ${
-              job.userAction === 'track' 
-                ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                : 'bg-red-500/20 text-red-300 border border-red-500/30'
-            }`}>
-              {job.userAction === 'track' ? '✓ Marked to Track' : '✗ Marked to Skip'}
-            </div>
-          )}
         </div>
-        
-        <div className="flex flex-col items-end gap-3 ml-4">
-          {!job.userAction && (
-            <div className="flex flex-col gap-2">
+
+        <div className="flex flex-row md:flex-col items-center md:items-end gap-2 w-full md:w-auto ml-auto">
+          {!job.userAction ? (
+            <>
               <button
                 onClick={() => onTrack(job)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition-all duration-200"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black font-bold rounded-xl transition-all shadow-lg shadow-[var(--success)]/20"
               >
-                <Save size={16} />
-                Track
+                <Save className="w-4 h-4" />
+                <span>Track</span>
               </button>
               <button
                 onClick={() => onSkip(job)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-all duration-200"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-glass)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] rounded-xl transition-all"
               >
-                ✗ Skip
+                <X className="w-4 h-4" />
+                <span>Skip</span>
               </button>
+            </>
+          ) : (
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${job.userAction === 'track'
+                ? 'text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20'
+                : 'text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20'
+              }`}>
+              {job.userAction === 'track' ? <CheckCircle className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              {job.userAction === 'track' ? 'Tracked' : 'Skipped'}
             </div>
           )}
           <a
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 bg-primary/20 hover:bg-primary/30 text-primary hover:text-white border border-primary/30 rounded-lg transition-all duration-200"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-xl transition-all"
           >
-            <ExternalLink size={16} />
-            View
+            <ExternalLink className="w-4 h-4" />
+            <span>View</span>
           </a>
         </div>
       </div>
+
       {job.description && (
-        <div className="mt-4 p-4 bg-bg-light/50 rounded-lg">
-          <p className="text-text-muted text-sm line-clamp-3">{job.description}</p>
+        <div className="mt-4 p-4 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)]">
+          <p className="text-[var(--text-muted)] text-sm line-clamp-3 leading-relaxed">{job.description}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -136,20 +152,19 @@ const JobSearchPage = () => {
     source: 'all'
   });
 
-
   const filterTrackedJobs = async (jobs: Job[]) => {
     try {
       const jobIds = jobs.map(job => job.id).join(',');
       const response = await fetch(`/api/jobs/track?jobIds=${jobIds}`);
       if (!response.ok) return jobs;
-      
+
       const { trackedJobs } = await response.json();
-      
+
       // Filter out skipped jobs and mark tracked ones
       return jobs.filter(job => {
         const tracked = trackedJobs[job.id];
         if (tracked?.isSkipped) return false; // Hide skipped jobs
-        
+
         if (tracked?.isBookmarked) {
           job.userAction = 'track';
         }
@@ -178,7 +193,7 @@ const JobSearchPage = () => {
       if (!response.ok) throw new Error('Search failed');
 
       const data = await response.json();
-      
+
       const processedJobs: Job[] = (data.results || []).map((job: any) => ({
         id: job.id.toString(),
         title: job.title || job.role,
@@ -252,97 +267,115 @@ const JobSearchPage = () => {
     }
   };
 
-
-
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Job Search</h1>
-              <p className="text-text-muted text-lg">Search jobs from multiple sources</p>
+      <div className="p-6 lg:p-8 min-h-screen space-y-8">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+                <Globe className="w-8 h-8 text-[var(--primary)]" />
+              </div>
+              Job Search
+            </h1>
+            <p className="text-[var(--text-muted)] mt-2 ml-16">Search jobs from multiple sources in one place</p>
+          </div>
+        </div>
+
+        {/* Search Form */}
+        <div className="bg-[var(--bg-surface)]/30 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-glass)]">
+          <form onSubmit={handleSearch} className="space-y-4">
+            <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Search Criteria</span>
             </div>
 
-          </div>
-
-          {/* Search Form */}
-          <div className="bg-bg-card rounded-xl p-6 border border-border">
-            <form onSubmit={handleSearch} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Search Keywords</label>
-                  <input
-                    type="text"
-                    value={filters.search}
-                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                    placeholder="e.g. React Developer, Python, MERN"
-                    className="w-full px-4 py-3 bg-bg-light border border-border rounded-lg text-white placeholder-text-muted focus:border-primary focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Location</label>
-                  <input
-                    type="text"
-                    value={filters.location}
-                    onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="e.g. London, New York, Remote"
-                    className="w-full px-4 py-3 bg-bg-light border border-border rounded-lg text-white placeholder-text-muted focus:border-primary focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">Job Source</label>
-                  <select
-                    value={filters.source}
-                    onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
-                    className="w-full px-4 py-3 bg-bg-light border border-border rounded-lg text-white focus:border-primary focus:outline-none"
-                  >
-                    <option value="all">All Sources</option>
-                    <option value="findwork">FindWork</option>
-                    <option value="jooble">Jooble</option>
-                    <option value="usajobs">USAJOBS</option>
-                  </select>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                  placeholder="Keywords (e.g. React Developer)"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                />
               </div>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <label className="flex items-center gap-2 text-white">
-                  <input
-                    type="checkbox"
-                    checked={filters.remote}
-                    onChange={(e) => setFilters(prev => ({ ...prev, remote: e.target.checked }))}
-                    className="rounded border-border bg-bg-light text-primary focus:ring-primary"
-                  />
-                  Remote Only
-                </label>
-                <button
-                  type="submit"
-                  disabled={loading || !filters.search.trim()}
-                  className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                <input
+                  type="text"
+                  value={filters.location}
+                  onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                  placeholder="Location (e.g. Remote)"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                />
+              </div>
+
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                <select
+                  value={filters.source}
+                  onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
                 >
-                  <Search size={20} />
-                  {loading ? 'Searching...' : 'Search Jobs'}
-                </button>
+                  <option value="all">All Sources</option>
+                  <option value="findwork">FindWork</option>
+                  <option value="jooble">Jooble</option>
+                  <option value="usajobs">USAJOBS</option>
+                </select>
               </div>
-            </form>
-          </div>
+            </div>
 
-          {/* Results */}
-          {loading && <SearchSkeleton />}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              <label className="flex items-center gap-3 text-white cursor-pointer group">
+                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${filters.remote ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[var(--text-muted)] group-hover:border-[var(--primary)]'}`}>
+                  {filters.remote && <CheckCircle className="w-3.5 h-3.5 text-black" />}
+                </div>
+                <input
+                  type="checkbox"
+                  checked={filters.remote}
+                  onChange={(e) => setFilters(prev => ({ ...prev, remote: e.target.checked }))}
+                  className="hidden"
+                />
+                <span className="group-hover:text-[var(--primary)] transition-colors">Remote Only</span>
+              </label>
 
-          {jobs.length > 0 && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-semibold text-white">
+              <button
+                type="submit"
+                disabled={loading || !filters.search.trim()}
+                className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Search className="w-5 h-5" />
+                <span>{loading ? 'Searching...' : 'Search Jobs'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Results */}
+        {loading ? (
+          <SearchSkeleton />
+        ) : (
+          <div className="space-y-6">
+            {jobs.length > 0 && (
+              <div className="flex justify-between items-center px-2">
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <span className="w-2 h-8 bg-[var(--primary)] rounded-full"></span>
                   Found {jobs.length} jobs
                 </h2>
-                <div className="text-sm text-text-muted">
-                  {filters.source === 'all' ? 'FindWork + Jooble + USAJOBS APIs' : 
-                   filters.source === 'findwork' ? 'FindWork API' : 
-                   filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
+                <div className="text-sm text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1 rounded-full border border-[var(--border-glass)]">
+                  {filters.source === 'all' ? 'Multiple Sources' :
+                    filters.source === 'findwork' ? 'FindWork API' :
+                      filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
                 </div>
               </div>
-              <div className="grid gap-6">
+            )}
+
+            <div className="grid gap-4">
+              <AnimatePresence mode="popLayout">
                 {jobs.map(job => (
                   <JobCard
                     key={job.id}
@@ -351,20 +384,20 @@ const JobSearchPage = () => {
                     onSkip={handleSkipJob}
                   />
                 ))}
-              </div>
+              </AnimatePresence>
             </div>
-          )}
+          </div>
+        )}
 
-          {!loading && jobs.length === 0 && filters.search && (
-            <div className="text-center py-20">
-              <div className="w-16 h-16 bg-gray-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search size={32} className="text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No jobs found</h3>
-              <p className="text-text-muted">Try adjusting your search criteria</p>
+        {!loading && jobs.length === 0 && filters.search && (
+          <div className="text-center py-20 border border-dashed border-[var(--border-glass)] rounded-2xl bg-[var(--bg-surface)]/20">
+            <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search className="w-10 h-10 text-[var(--text-muted)]" />
             </div>
-          )}
-        </div>
+            <h3 className="text-xl font-bold text-white mb-2">No jobs found</h3>
+            <p className="text-[var(--text-muted)]">Try adjusting your search criteria or trying a different source.</p>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

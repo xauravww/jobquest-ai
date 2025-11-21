@@ -25,7 +25,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const application = await mongodbService.getApplicationById(id, user._id);
+    const application = await mongodbService.getApplicationById(id, user._id.toString());
     
     if (!application) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
@@ -104,7 +104,7 @@ export async function PATCH(
       }
     }
 
-    const updatedApplication = await mongodbService.updateApplication(id, user._id, body);
+    const updatedApplication = await mongodbService.updateApplication(id, user._id.toString(), body);
 
     if (!updatedApplication) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });
@@ -145,7 +145,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = await mongodbService.deleteApplication(id, user._id);
+    const deleted = await mongodbService.deleteApplication(id, user._id.toString());
 
     if (!deleted) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 });

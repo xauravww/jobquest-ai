@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '@/components/AppLayout';
-import { Card, Button, Select } from 'antd';
-import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog, Trash2 } from 'lucide-react';
 import { FormInput, FormDateInput } from '@/components/ui/FormInput';
 import AIProviderConfig from '@/components/AIProviderConfig';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface WorkExperience {
   id: string;
@@ -199,6 +200,7 @@ const UserProfilePage = () => {
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+      toast.error('Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -217,10 +219,13 @@ const UserProfilePage = () => {
 
       if (response.ok) {
         setIsEditing(false);
-        // Show success message
+        toast.success('Profile updated successfully');
+      } else {
+        toast.error('Failed to update profile');
       }
     } catch (error) {
       console.error('Error saving profile:', error);
+      toast.error('Error saving profile');
     } finally {
       setSaving(false);
     }
@@ -236,47 +241,16 @@ const UserProfilePage = () => {
     }));
   };
 
-  const handleAISave = async (aiConfig: {
-    provider: string;
-    apiKey?: string;
-    apiUrl?: string;
-    model: string;
-    enabled: boolean;
-  }) => {
-    try {
-      const response = await fetch('/api/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ aiConfig }),
-      });
-
-      if (response.ok) {
-        setProfile(prev => ({
-          ...prev,
-          aiConfig
-        }));
-      } else {
-        throw new Error('Failed to save AI config');
-      }
-    } catch (error) {
-      console.error('Error saving AI config:', error);
-      throw error;
-    }
-  };
-
   if (loading) {
     return (
       <AppLayout showFooter={false}>
-        <div className="flex items-center justify-center min-h-screen bg-bg">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="relative">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-border border-t-primary mx-auto mb-4"></div>
-              <div className="animate-ping absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-4 w-4 bg-primary rounded-full opacity-75"></div>
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              <div className="absolute inset-0 border-4 border-[var(--primary)]/30 border-t-[var(--primary)] rounded-full animate-spin"></div>
             </div>
-            <h3 className="text-lg font-semibold text-text mb-2">Loading Profile</h3>
-            <p className="text-text-muted">Please wait while we fetch your information...</p>
+            <h3 className="text-lg font-semibold text-white mb-2">Loading Profile</h3>
+            <p className="text-[var(--text-muted)]">Please wait while we fetch your information...</p>
           </div>
         </div>
       </AppLayout>
@@ -285,51 +259,55 @@ const UserProfilePage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
-        <div className="max-w-4xl mx-auto">
+      <div className="p-6 lg:p-8 min-h-screen space-y-8">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8 mt-8">
+          <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center mb-8">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">User Profile</h1>
-              <p className="text-text-muted text-lg">Manage your personal and professional information</p>
+              <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+                  <User className="w-8 h-8 text-[var(--primary)]" />
+                </div>
+                User Profile
+              </h1>
+              <p className="text-[var(--text-muted)] mt-2 ml-16">Manage your personal and professional information</p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full lg:w-auto">
               <button
                 onClick={() => setShowAIConfig(!showAIConfig)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
-                  showAIConfig
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-bg-card hover:bg-bg-light text-text border-border'
-                }`}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all border ${showAIConfig
+                    ? 'bg-[var(--primary)] text-black border-[var(--primary)] font-bold'
+                    : 'bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-glass)] hover:text-white hover:bg-[var(--bg-glass)]'
+                  }`}
               >
-                <Cog className="w-4 h-4" />
+                <Cog className="w-5 h-5" />
                 AI Config
               </button>
               {isEditing ? (
                 <>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="flex items-center gap-2 px-4 py-2 bg-bg-card hover:bg-bg-light text-text border border-border rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-glass)] text-[var(--text-muted)] hover:text-white border border-[var(--border-glass)] rounded-xl transition-colors"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                     Cancel
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-5 h-5" />
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </>
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all"
                 >
-                  <Edit3 className="w-4 h-4" />
+                  <Edit3 className="w-5 h-5" />
                   Edit Profile
                 </button>
               )}
@@ -346,242 +324,252 @@ const UserProfilePage = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Personal Information */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center gap-3 text-white">
-                  <User className="w-5 h-5 text-primary" />
-                  Personal Information
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[var(--bg-surface)]/50 backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-6 hover:border-[var(--primary)]/30 transition-colors"
             >
+              <div className="flex items-center gap-3 mb-6 border-b border-[var(--border-glass)] pb-4">
+                <User className="w-5 h-5 text-[var(--primary)]" />
+                <h2 className="text-xl font-bold text-white">Personal Information</h2>
+              </div>
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Full Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Full Name</label>
                   {isEditing ? (
                     <FormInput
                       value={profile.personalInfo.fullName}
-                      onChange={(value) => handleInputChange('personalInfo', 'fullName', value)}
-                      icon={<User className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'fullName', e.target.value)}
+                      icon={<User className="w-4 h-4" />}
                       placeholder="Enter your full name"
                     />
                   ) : (
-                    <p className="text-text">{profile.personalInfo?.fullName || 'Not provided'}</p>
+                    <p className="text-white font-medium">{profile.personalInfo?.fullName || 'Not provided'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Email</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Email</label>
                   {isEditing ? (
                     <FormInput
                       type="email"
                       value={profile.personalInfo.email}
-                      onChange={(value) => handleInputChange('personalInfo', 'email', value)}
-                      icon={<Mail className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'email', e.target.value)}
+                      icon={<Mail className="w-4 h-4" />}
                       placeholder="Enter your email"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-text-muted" />
-                      <p className="text-text">{profile.personalInfo.email || session?.user?.email || 'Not provided'}</p>
+                      <Mail className="w-4 h-4 text-[var(--primary)]" />
+                      <p className="text-white">{profile.personalInfo.email || session?.user?.email || 'Not provided'}</p>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Phone</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Phone</label>
                   {isEditing ? (
                     <FormInput
                       type="tel"
                       value={profile.personalInfo.phone}
-                      onChange={(value) => handleInputChange('personalInfo', 'phone', value)}
-                      icon={<Phone className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'phone', e.target.value)}
+                      icon={<Phone className="w-4 h-4" />}
                       placeholder="Enter your phone number"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-text-muted" />
-                      <p className="text-text">{profile.personalInfo.phone || 'Not provided'}</p>
+                      <Phone className="w-4 h-4 text-[var(--primary)]" />
+                      <p className="text-white">{profile.personalInfo.phone || 'Not provided'}</p>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Location</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Location</label>
                   {isEditing ? (
                     <FormInput
                       value={profile.personalInfo.location}
-                      onChange={(value) => handleInputChange('personalInfo', 'location', value)}
-                      icon={<MapPin className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'location', e.target.value)}
+                      icon={<MapPin className="w-4 h-4" />}
                       placeholder="Enter your location"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-text-muted" />
-                      <p className="text-text">{profile.personalInfo.location || 'Not provided'}</p>
+                      <MapPin className="w-4 h-4 text-[var(--primary)]" />
+                      <p className="text-white">{profile.personalInfo.location || 'Not provided'}</p>
                     </div>
                   )}
                 </div>
               </div>
-            </Card>
+            </motion.div>
 
             {/* Professional Information */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center gap-3 text-white">
-                  <User className="w-5 h-5 text-primary" />
-                  Professional Information
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-[var(--bg-surface)]/50 backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-6 hover:border-[var(--primary)]/30 transition-colors"
             >
+              <div className="flex items-center gap-3 mb-6 border-b border-[var(--border-glass)] pb-4">
+                <Briefcase className="w-5 h-5 text-[var(--primary)]" />
+                <h2 className="text-xl font-bold text-white">Professional Information</h2>
+              </div>
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Current Role</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Current Role</label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={profile.professionalInfo.currentRole}
                       onChange={(e) => handleInputChange('professionalInfo', 'currentRole', e.target.value)}
-                      className="w-full px-3 py-2 bg-bg-light border border-border rounded-lg text-text focus:border-primary focus:outline-none"
+                      className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-all"
+                      placeholder="e.g. Senior Frontend Developer"
                     />
                   ) : (
-                    <p className="text-text">{profile.professionalInfo.currentRole || 'Not provided'}</p>
+                    <p className="text-white font-medium">{profile.professionalInfo.currentRole || 'Not provided'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Experience</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Experience</label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={profile.professionalInfo.experience}
                       onChange={(e) => handleInputChange('professionalInfo', 'experience', e.target.value)}
-                      className="w-full px-3 py-2 bg-bg-light border border-border rounded-lg text-text focus:border-primary focus:outline-none"
+                      className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-all"
                       placeholder="e.g., 3 years"
                     />
                   ) : (
-                    <p className="text-text">{profile.professionalInfo.experience || 'Not provided'}</p>
+                    <p className="text-white">{profile.professionalInfo.experience || 'Not provided'}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Bio</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Bio</label>
                   {isEditing ? (
                     <textarea
                       value={profile.professionalInfo.bio}
                       onChange={(e) => handleInputChange('professionalInfo', 'bio', e.target.value)}
                       rows={4}
-                      className="w-full px-3 py-2 bg-bg-light border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
+                      className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none transition-all"
                       placeholder="Tell us about yourself..."
                     />
                   ) : (
-                    <p className="text-text">{profile.professionalInfo.bio || 'Not provided'}</p>
+                    <p className="text-white leading-relaxed">{profile.professionalInfo.bio || 'Not provided'}</p>
                   )}
                 </div>
               </div>
-            </Card>
+            </motion.div>
 
             {/* Social Links */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center gap-3 text-white">
-                  <Globe className="w-5 h-5 text-primary" />
-                  Social Links
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-[var(--bg-surface)]/50 backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-6 hover:border-[var(--primary)]/30 transition-colors"
             >
+              <div className="flex items-center gap-3 mb-6 border-b border-[var(--border-glass)] pb-4">
+                <Globe className="w-5 h-5 text-[var(--primary)]" />
+                <h2 className="text-xl font-bold text-white">Social Links</h2>
+              </div>
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Website</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Website</label>
                   {isEditing ? (
                     <FormInput
                       type="url"
                       value={profile.personalInfo.website}
-                      onChange={(value) => handleInputChange('personalInfo', 'website', value)}
-                      icon={<Globe className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'website', e.target.value)}
+                      icon={<Globe className="w-4 h-4" />}
                       placeholder="https://yourwebsite.com"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-text-muted" />
-                      <p className="text-text">{profile.personalInfo.website || 'Not provided'}</p>
+                      <Globe className="w-4 h-4 text-[var(--primary)]" />
+                      {profile.personalInfo.website ? (
+                        <a href={profile.personalInfo.website} target="_blank" rel="noopener noreferrer" className="text-[var(--secondary)] hover:underline">
+                          {profile.personalInfo.website}
+                        </a>
+                      ) : (
+                        <p className="text-[var(--text-muted)]">Not provided</p>
+                      )}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">LinkedIn</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">LinkedIn</label>
                   {isEditing ? (
                     <FormInput
                       type="url"
                       value={profile.personalInfo.linkedin}
-                      onChange={(value) => handleInputChange('personalInfo', 'linkedin', value)}
-                      icon={<Linkedin className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'linkedin', e.target.value)}
+                      icon={<Linkedin className="w-4 h-4" />}
                       placeholder="https://linkedin.com/in/username"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Linkedin className="w-4 h-4 text-text-muted" />
-                      <p className="text-text">{profile.personalInfo.linkedin || 'Not provided'}</p>
+                      <Linkedin className="w-4 h-4 text-[var(--primary)]" />
+                      {profile.personalInfo.linkedin ? (
+                        <a href={profile.personalInfo.linkedin} target="_blank" rel="noopener noreferrer" className="text-[var(--secondary)] hover:underline">
+                          {profile.personalInfo.linkedin}
+                        </a>
+                      ) : (
+                        <p className="text-[var(--text-muted)]">Not provided</p>
+                      )}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">GitHub</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">GitHub</label>
                   {isEditing ? (
                     <FormInput
                       type="url"
                       value={profile.personalInfo.github}
-                      onChange={(value) => handleInputChange('personalInfo', 'github', value)}
-                      icon={<Github className="w-4 h-4 text-text-muted" />}
+                      onChange={(e) => handleInputChange('personalInfo', 'github', e.target.value)}
+                      icon={<Github className="w-4 h-4" />}
                       placeholder="https://github.com/username"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Github className="w-4 h-4 text-text-muted" />
-                      <p className="text-text">{profile.personalInfo.github || 'Not provided'}</p>
+                      <Github className="w-4 h-4 text-[var(--primary)]" />
+                      {profile.personalInfo.github ? (
+                        <a href={profile.personalInfo.github} target="_blank" rel="noopener noreferrer" className="text-[var(--secondary)] hover:underline">
+                          {profile.personalInfo.github}
+                        </a>
+                      ) : (
+                        <p className="text-[var(--text-muted)]">Not provided</p>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
-            </Card>
+            </motion.div>
 
             {/* Job Preferences */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center gap-3 text-white">
-                  <User className="w-5 h-5 text-primary" />
-                  Job Preferences
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-[var(--bg-surface)]/50 backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-6 hover:border-[var(--primary)]/30 transition-colors"
             >
+              <div className="flex items-center gap-3 mb-6 border-b border-[var(--border-glass)] pb-4">
+                <Target className="w-5 h-5 text-[var(--primary)]" />
+                <h2 className="text-xl font-bold text-white">Job Preferences</h2>
+              </div>
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Preferred Job Types</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Preferred Job Types</label>
                   {isEditing ? (
                     <div className="flex flex-wrap gap-2">
                       {['full-time', 'part-time', 'contract', 'internship'].map(type => (
-                        <label key={type} className="flex items-center gap-2">
+                        <label key={type} className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={profile.preferences.jobTypes.includes(type)}
@@ -591,9 +579,9 @@ const UserProfilePage = () => {
                                 : profile.preferences.jobTypes.filter(t => t !== type);
                               handleInputChange('preferences', 'jobTypes', newTypes);
                             }}
-                            className="rounded border-border text-primary focus:ring-primary"
+                            className="rounded border-[var(--border-glass)] bg-[var(--bg-deep)] text-[var(--primary)] focus:ring-[var(--primary)]"
                           />
-                          <span className="text-text text-sm capitalize">{type.replace('-', ' ')}</span>
+                          <span className="text-white text-sm capitalize">{type.replace('-', ' ')}</span>
                         </label>
                       ))}
                     </div>
@@ -601,95 +589,115 @@ const UserProfilePage = () => {
                     <div className="flex flex-wrap gap-2">
                       {profile.preferences.jobTypes.length > 0 ? (
                         profile.preferences.jobTypes.map(type => (
-                          <span key={type} className="px-2 py-1 bg-primary/20 text-primary rounded-full text-xs capitalize">
+                          <span key={type} className="px-3 py-1 bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] rounded-full text-xs font-bold capitalize">
                             {type.replace('-', ' ')}
                           </span>
                         ))
                       ) : (
-                        <p className="text-text-muted">Not specified</p>
+                        <p className="text-[var(--text-muted)]">Not specified</p>
                       )}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-muted mb-2">Remote Work</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Remote Work</label>
                   {isEditing ? (
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={profile.preferences.remoteWork}
                         onChange={(e) => handleInputChange('preferences', 'remoteWork', e.target.checked)}
-                        className="rounded border-border text-primary focus:ring-primary"
+                        className="rounded border-[var(--border-glass)] bg-[var(--bg-deep)] text-[var(--primary)] focus:ring-[var(--primary)]"
                       />
-                      <span className="text-text">Open to remote work</span>
+                      <span className="text-white">Open to remote work</span>
                     </label>
                   ) : (
-                    <p className="text-text">{profile.preferences.remoteWork ? 'Yes' : 'No'}</p>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${profile.preferences.remoteWork
+                        ? 'bg-[var(--success)]/10 border-[var(--success)]/20 text-[var(--success)]'
+                        : 'bg-[var(--bg-deep)] border-[var(--border-glass)] text-[var(--text-muted)]'
+                      }`}>
+                      {profile.preferences.remoteWork ? 'Yes, Open to Remote' : 'No Remote Work'}
+                    </div>
                   )}
                 </div>
               </div>
-            </Card>
+            </motion.div>
           </div>
 
           {/* Enhanced Profile Sections */}
           <div className="mt-8 space-y-8">
             {/* Work Experience Section */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-white">
-                    <Briefcase className="w-5 h-5 text-primary" />
-                    Work Experience
-                  </div>
-                  {isEditing && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<Plus className="w-4 h-4" />}
-                      onClick={() => {
-                        const newExperience: WorkExperience = {
-                          id: Date.now().toString(),
-                          company: '',
-                          position: '',
-                          startDate: '',
-                          endDate: '',
-                          current: false,
-                          description: '',
-                          location: ''
-                        };
-                        setProfile(prev => ({
-                          ...prev,
-                          professionalInfo: {
-                            ...prev.professionalInfo,
-                            workExperience: [...(prev.professionalInfo.workExperience || []), newExperience]
-                          }
-                        }));
-                      }}
-                    >
-                      Add Experience
-                    </Button>
-                  )}
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-[var(--bg-surface)]/50 backdrop-blur-xl border border-[var(--border-glass)] rounded-2xl p-6 hover:border-[var(--primary)]/30 transition-colors"
             >
-              <div className="space-y-4">
+              <div className="flex items-center justify-between mb-6 border-b border-[var(--border-glass)] pb-4">
+                <div className="flex items-center gap-3">
+                  <Briefcase className="w-5 h-5 text-[var(--primary)]" />
+                  <h2 className="text-xl font-bold text-white">Work Experience</h2>
+                </div>
+                {isEditing && (
+                  <button
+                    onClick={() => {
+                      const newExperience: WorkExperience = {
+                        id: Date.now().toString(),
+                        company: '',
+                        position: '',
+                        startDate: '',
+                        endDate: '',
+                        current: false,
+                        description: '',
+                        location: ''
+                      };
+                      setProfile(prev => ({
+                        ...prev,
+                        professionalInfo: {
+                          ...prev.professionalInfo,
+                          workExperience: [...(prev.professionalInfo.workExperience || []), newExperience]
+                        }
+                      }));
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg text-sm font-bold transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Experience
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                {(profile.professionalInfo.workExperience || []).length === 0 && !isEditing && (
+                  <p className="text-[var(--text-muted)] text-center py-4">No work experience added yet.</p>
+                )}
+
                 {(profile.professionalInfo.workExperience || []).map((exp, index) => (
-                  <div key={exp.id} className="p-4 bg-bg-light rounded-lg border border-border">
+                  <div key={exp.id} className="p-6 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)] relative group">
                     {isEditing ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex justify-end absolute top-4 right-4">
+                          <button
+                            onClick={() => {
+                              const newExp = (profile.professionalInfo.workExperience || []).filter((_, i) => i !== index);
+                              setProfile(prev => ({
+                                ...prev,
+                                professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
+                              }));
+                            }}
+                            className="p-2 text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-10">
                           <FormInput
                             label="Company"
                             value={exp.company}
-                            onChange={(value) => {
+                            onChange={(e) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].company = value;
+                              newExp[index].company = e.target.value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -701,9 +709,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Position"
                             value={exp.position}
-                            onChange={(value) => {
+                            onChange={(e) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].position = value;
+                              newExp[index].position = e.target.value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -717,9 +725,9 @@ const UserProfilePage = () => {
                           <FormInput
                             label="Location"
                             value={exp.location}
-                            onChange={(value) => {
+                            onChange={(e) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].location = value;
+                              newExp[index].location = e.target.value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -731,9 +739,9 @@ const UserProfilePage = () => {
                           <FormDateInput
                             label="Start Date"
                             value={exp.startDate}
-                            onChange={(value) => {
+                            onChange={(e) => {
                               const newExp = [...(profile.professionalInfo.workExperience || [])];
-                              newExp[index].startDate = value;
+                              newExp[index].startDate = e.target.value;
                               setProfile(prev => ({
                                 ...prev,
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -744,9 +752,9 @@ const UserProfilePage = () => {
                             <FormDateInput
                               label="End Date"
                               value={exp.endDate}
-                              onChange={(value) => {
+                              onChange={(e) => {
                                 const newExp = [...(profile.professionalInfo.workExperience || [])];
-                                newExp[index].endDate = value;
+                                newExp[index].endDate = e.target.value;
                                 setProfile(prev => ({
                                   ...prev,
                                   professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
@@ -770,12 +778,12 @@ const UserProfilePage = () => {
                                 professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
                               }));
                             }}
-                            className="rounded border-border text-primary focus:ring-primary"
+                            className="rounded border-[var(--border-glass)] bg-[var(--bg-deep)] text-[var(--primary)] focus:ring-[var(--primary)]"
                           />
-                          <span className="text-text text-sm">Currently working here</span>
+                          <span className="text-white text-sm">Currently working here</span>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
+                          <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Description</label>
                           <textarea
                             value={exp.description}
                             onChange={(e) => {
@@ -787,765 +795,58 @@ const UserProfilePage = () => {
                               }));
                             }}
                             rows={3}
-                            className="w-full px-3 py-2 bg-bg-card border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
+                            className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none transition-all"
                             placeholder="Describe your role and achievements..."
                           />
                         </div>
-                        <div className="flex justify-end">
-                          <Button
-                            danger
-                            size="small"
-                            icon={<X className="w-4 h-4" />}
-                            onClick={() => {
-                              const newExp = (profile.professionalInfo.workExperience || []).filter((_, i) => i !== index);
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, workExperience: newExp }
-                              }));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
                       </div>
                     ) : (
                       <div>
                         <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold text-text">{exp.position}</h3>
-                          <span className="text-sm text-text-muted">
-                            {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                          </span>
-                        </div>
-                        <p className="text-primary font-medium mb-1">{exp.company}</p>
-                        <p className="text-text-muted text-sm mb-2">{exp.location}</p>
-                        <p className="text-text text-sm">{exp.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {(!profile.professionalInfo.workExperience || profile.professionalInfo.workExperience.length === 0) && (
-                  <div className="text-center py-8 text-text-muted">
-                    <Briefcase className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No work experience added yet.</p>
-                    {isEditing && <p className="text-sm">Click &quot;Add Experience&quot; to get started.</p>}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Education Section */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-white">
-                    <GraduationCap className="w-5 h-5 text-primary" />
-                    Education
-                  </div>
-                  {isEditing && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<Plus className="w-4 h-4" />}
-                      onClick={() => {
-                        const newEducation: Education = {
-                          id: Date.now().toString(),
-                          institution: '',
-                          degree: '',
-                          field: '',
-                          startDate: '',
-                          endDate: '',
-                          current: false,
-                          gpa: ''
-                        };
-                        setProfile(prev => ({
-                          ...prev,
-                          professionalInfo: {
-                            ...prev.professionalInfo,
-                            education: [...(prev.professionalInfo.education || []), newEducation]
-                          }
-                        }));
-                      }}
-                    >
-                      Add Education
-                    </Button>
-                  )}
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
-            >
-              <div className="space-y-4">
-                {(profile.professionalInfo.education || []).map((edu, index) => (
-                  <div key={edu.id} className="p-4 bg-bg-light rounded-lg border border-border">
-                    {isEditing ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormInput
-                            label="Institution"
-                            value={edu.institution}
-                            onChange={(value) => {
-                              const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].institution = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                              }));
-                            }}
-                            icon={<GraduationCap className="w-4 h-4" />}
-                            placeholder="University/School name"
-                          />
-                          <FormInput
-                            label="Degree"
-                            value={edu.degree}
-                            onChange={(value) => {
-                              const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].degree = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                              }));
-                            }}
-                            icon={<Award className="w-4 h-4" />}
-                            placeholder="Bachelor's, Master's, etc."
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <FormInput
-                            label="Field of Study"
-                            value={edu.field}
-                            onChange={(value) => {
-                              const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].field = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                              }));
-                            }}
-                            icon={<Code className="w-4 h-4" />}
-                            placeholder="Computer Science, etc."
-                          />
-                          <FormDateInput
-                            label="Start Date"
-                            value={edu.startDate}
-                            onChange={(value) => {
-                              const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].startDate = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                              }));
-                            }}
-                          />
-                          {!edu.current && (
-                            <FormDateInput
-                              label="End Date"
-                              value={edu.endDate}
-                              onChange={(value) => {
-                                const newEdu = [...profile.professionalInfo.education];
-                                newEdu[index].endDate = value;
-                                setProfile(prev => ({
-                                  ...prev,
-                                  professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                                }));
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormInput
-                            label="GPA (Optional)"
-                            value={edu.gpa || ''}
-                            onChange={(value) => {
-                              const newEdu = [...profile.professionalInfo.education];
-                              newEdu[index].gpa = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                              }));
-                            }}
-                            placeholder="3.8/4.0"
-                          />
-                          <div className="flex items-center gap-2 pt-6">
-                            <input
-                              type="checkbox"
-                              checked={edu.current}
-                              onChange={(e) => {
-                                const newEdu = [...profile.professionalInfo.education];
-                                newEdu[index].current = e.target.checked;
-                                if (e.target.checked) {
-                                  newEdu[index].endDate = '';
-                                }
-                                setProfile(prev => ({
-                                  ...prev,
-                                  professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                                }));
-                              }}
-                              className="rounded border-border text-primary focus:ring-primary"
-                            />
-                            <span className="text-text text-sm">Currently studying</span>
+                          <div>
+                            <h3 className="text-lg font-bold text-white">{exp.position}</h3>
+                            <p className="text-[var(--primary)] font-medium">{exp.company}</p>
                           </div>
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            danger
-                            size="small"
-                            icon={<X className="w-4 h-4" />}
-                            onClick={() => {
-                              const newEdu = (profile.professionalInfo.education || []).filter((_, i) => i !== index);
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, education: newEdu }
-                              }));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold text-text">{edu.degree} in {edu.field}</h3>
-                          <span className="text-sm text-text-muted">
-                            {edu.startDate} - {edu.current ? 'Present' : edu.endDate}
-                          </span>
-                        </div>
-                        <p className="text-primary font-medium mb-1">{edu.institution}</p>
-                        {edu.gpa && <p className="text-text-muted text-sm">GPA: {edu.gpa}</p>}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {(!profile.professionalInfo.education || profile.professionalInfo.education.length === 0) && (
-                  <div className="text-center py-8 text-text-muted">
-                    <GraduationCap className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No education added yet.</p>
-                    {isEditing && <p className="text-sm">Click &apos;Add Education&apos; to get started.</p>}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Projects Section */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-white">
-                    <Code className="w-5 h-5 text-primary" />
-                    Projects
-                  </div>
-                  {isEditing && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<Plus className="w-4 h-4" />}
-                      onClick={() => {
-                        const newProject: Project = {
-                          id: Date.now().toString(),
-                          name: '',
-                          description: '',
-                          technologies: [],
-                          url: '',
-                          github: '',
-                          startDate: '',
-                          endDate: ''
-                        };
-                        setProfile(prev => ({
-                          ...prev,
-                          professionalInfo: {
-                            ...prev.professionalInfo,
-                            projects: [...(prev.professionalInfo.projects || []), newProject]
-                          }
-                        }));
-                      }}
-                    >
-                      Add Project
-                    </Button>
-                  )}
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
-            >
-              <div className="space-y-4">
-                {(profile.professionalInfo.projects || []).map((project, index) => (
-                  <div key={project.id} className="p-4 bg-bg-light rounded-lg border border-border">
-                    {isEditing ? (
-                      <div className="space-y-4">
-                          <FormInput
-                            label="Project Name"
-                            value={project.name}
-                            onChange={(value) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].name = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                            icon={<Code className="w-4 h-4" />}
-                            placeholder="Project name"
-                          />
-                        <div>
-                          <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
-                          <textarea
-                            value={project.description}
-                            onChange={(e) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].description = e.target.value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                            rows={3}
-                            className="w-full px-3 py-2 bg-bg-card border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
-                            placeholder="Describe your project..."
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormInput
-                            label="Project URL (Optional)"
-                            value={project.url || ''}
-                            onChange={(value) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].url = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                            icon={<Globe className="w-4 h-4" />}
-                            placeholder="https://project-demo.com"
-                          />
-                          <FormInput
-                            label="GitHub URL (Optional)"
-                            value={project.github || ''}
-                            onChange={(value) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].github = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                            icon={<Github className="w-4 h-4" />}
-                            placeholder="https://github.com/user/repo"
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormDateInput
-                            label="Start Date (Optional)"
-                            value={project.startDate || ''}
-                            onChange={(value) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].startDate = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                          />
-                          <FormDateInput
-                            label="End Date (Optional)"
-                            value={project.endDate || ''}
-                            onChange={(value) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].endDate = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-text-muted mb-2">Technologies (comma-separated)</label>
-                          <Select
-                            mode="tags"
-                            style={{ width: '100%' }}
-                            placeholder="Add technologies"
-                            value={project.technologies}
-                            onChange={(value) => {
-                              const newProjects = [...profile.professionalInfo.projects];
-                              newProjects[index].technologies = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                            tokenSeparators={[',', ' ']}
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            danger
-                            size="small"
-                            icon={<X className="w-4 h-4" />}
-                            onClick={() => {
-                              const newProjects = (profile.professionalInfo.projects || []).filter((_, i) => i !== index);
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, projects: newProjects }
-                              }));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold text-text">{project.name}</h3>
-                          <div className="flex gap-2">
-                            {project.url && (
-                              <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
-                                <Globe className="w-4 h-4" />
-                              </a>
-                            )}
-                            {project.github && (
-                              <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
-                                <Github className="w-4 h-4" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-text text-sm mb-3">{project.description}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {project.technologies.map((tech, techIndex) => (
-                            <span key={techIndex} className="px-2 py-1 bg-primary/20 text-primary rounded-full text-xs">
-                              {tech}
+                          <div className="text-right">
+                            <span className="text-sm text-[var(--text-muted)] block">
+                              {exp.startDate ? new Date(exp.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''} - {exp.current ? 'Present' : (exp.endDate ? new Date(exp.endDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '')}
                             </span>
-                          ))}
-                        </div>
-                        {(project.startDate || project.endDate) && (
-                          <p className="text-text-muted text-xs mt-2">
-                            {project.startDate} {project.endDate && `- ${project.endDate}`}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {(!profile.professionalInfo.projects || profile.professionalInfo.projects.length === 0) && (
-                  <div className="text-center py-8 text-text-muted">
-                    <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No projects added yet.</p>
-                    {isEditing && <p className="text-sm">Click &apos;Add Project&apos; to get started.</p>}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Achievements Section */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-white">
-                    <Award className="w-5 h-5 text-primary" />
-                    Achievements
-                  </div>
-                  {isEditing && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<Plus className="w-4 h-4" />}
-                      onClick={() => {
-                        const newAchievement: Achievement = {
-                          id: Date.now().toString(),
-                          title: '',
-                          description: '',
-                          date: '',
-                          organization: ''
-                        };
-                        setProfile(prev => ({
-                          ...prev,
-                          professionalInfo: {
-                            ...prev.professionalInfo,
-                            achievements: [...(prev.professionalInfo.achievements || []), newAchievement]
-                          }
-                        }));
-                      }}
-                    >
-                      Add Achievement
-                    </Button>
-                  )}
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
-            >
-              <div className="space-y-4">
-                {(profile.professionalInfo.achievements || []).map((achievement, index) => (
-                  <div key={achievement.id} className="p-4 bg-bg-light rounded-lg border border-border">
-                    {isEditing ? (
-                      <div className="space-y-4">
-                        <FormInput
-                          label="Achievement Title"
-                          value={achievement.title}
-                          onChange={(value) => {
-                            const newAchievements = [...profile.professionalInfo.achievements];
-                            newAchievements[index].title = value;
-                            setProfile(prev => ({
-                              ...prev,
-                              professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
-                            }));
-                          }}
-                          icon={<Award className="w-4 h-4" />}
-                          placeholder="Achievement title"
-                        />
-                        <div>
-                          <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
-                  <textarea
-                    value={achievement.description}
-                    onChange={(e) => {
-                      const newAchievements = [...profile.professionalInfo.achievements];
-                      newAchievements[index].description = e.target.value;
-                      setProfile(prev => ({
-                        ...prev,
-                        professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
-                      }));
-                    }}
-                    rows={3}
-                    className="w-full px-3 py-2 bg-bg-card border border-border rounded-lg text-text focus:border-primary focus:outline-none resize-none"
-                    placeholder="Describe your achievement..."
-                  />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormInput
-                            label="Organization (Optional)"
-                            value={achievement.organization || ''}
-                            onChange={(value) => {
-                              const newAchievements = [...profile.professionalInfo.achievements];
-                              newAchievements[index].organization = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
-                              }));
-                            }}
-                            icon={<Briefcase className="w-4 h-4" />}
-                            placeholder="Organization name"
-                          />
-                          <FormDateInput
-                            label="Date (Optional)"
-                            value={achievement.date || ''}
-                            onChange={(value) => {
-                              const newAchievements = [...profile.professionalInfo.achievements];
-                              newAchievements[index].date = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
-                              }));
-                            }}
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            danger
-                            size="small"
-                            icon={<X className="w-4 h-4" />}
-                            onClick={() => {
-                              const newAchievements = (profile.professionalInfo.achievements || []).filter((_, i) => i !== index);
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, achievements: newAchievements }
-                              }));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold text-text">{achievement.title}</h3>
-                          {achievement.date && (
-                            <span className="text-sm text-text-muted">{achievement.date}</span>
-                          )}
-                        </div>
-                        {achievement.organization && (
-                          <p className="text-primary font-medium mb-1">{achievement.organization}</p>
-                        )}
-                        <p className="text-text text-sm">{achievement.description}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {(!profile.professionalInfo.achievements || profile.professionalInfo.achievements.length === 0) && (
-                  <div className="text-center py-8 text-text-muted">
-                    <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No achievements added yet.</p>
-                    {isEditing && <p className="text-sm">Click &quot;Add Achievement&quot; to get started.</p>}
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Certifications Section */}
-            <Card
-              className="bg-bg-card border border-border hover:border-primary/50 transition-all duration-300"
-              title={
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-white">
-                    <Award className="w-5 h-5 text-primary" />
-                    Certifications
-                  </div>
-                  {isEditing && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      icon={<Plus className="w-4 h-4" />}
-                      onClick={() => {
-                        const newCertification: Certification = {
-                          id: Date.now().toString(),
-                          name: '',
-                          issuer: '',
-                          date: '',
-                          url: ''
-                        };
-                        setProfile(prev => ({
-                          ...prev,
-                          professionalInfo: {
-                            ...prev.professionalInfo,
-                            certifications: [...(prev.professionalInfo.certifications || []), newCertification]
-                          }
-                        }));
-                      }}
-                    >
-                      Add Certification
-                    </Button>
-                  )}
-                </div>
-              }
-              styles={{
-                header: { backgroundColor: 'transparent', borderBottom: '1px solid var(--border)' },
-                body: { backgroundColor: 'transparent' }
-              }}
-            >
-              <div className="space-y-4">
-                {(profile.professionalInfo.certifications || []).map((cert, index) => (
-                  <div key={cert.id} className="p-4 bg-bg-light rounded-lg border border-border">
-                    {isEditing ? (
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormInput
-                            label="Certification Name"
-                            value={cert.name}
-                            onChange={(value) => {
-                              const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].name = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
-                              }));
-                            }}
-                            icon={<Award className="w-4 h-4" />}
-                            placeholder="Certification name"
-                          />
-                          <FormInput
-                            label="Issuer"
-                            value={cert.issuer}
-                            onChange={(value) => {
-                              const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].issuer = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
-                              }));
-                            }}
-                            icon={<Briefcase className="w-4 h-4" />}
-                            placeholder="Issuing organization"
-                          />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormDateInput
-                            label="Date Obtained"
-                            value={cert.date}
-                            onChange={(value) => {
-                              const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].date = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
-                              }));
-                            }}
-                          />
-                          <FormInput
-                            label="Certificate URL (Optional)"
-                            value={cert.url || ''}
-                            onChange={(value) => {
-                              const newCerts = [...profile.professionalInfo.certifications];
-                              newCerts[index].url = value;
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
-                              }));
-                            }}
-                            icon={<Globe className="w-4 h-4" />}
-                            placeholder="https://certificate-url.com"
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            danger
-                            size="small"
-                            icon={<X className="w-4 h-4" />}
-                            onClick={() => {
-                              const newCerts = (profile.professionalInfo.certifications || []).filter((_, i) => i !== index);
-                              setProfile(prev => ({
-                                ...prev,
-                                professionalInfo: { ...prev.professionalInfo, certifications: newCerts }
-                              }));
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-semibold text-text">{cert.name}</h3>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-text-muted">{cert.date}</span>
-                            {cert.url && (
-                              <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
-                                <Globe className="w-4 h-4" />
-                              </a>
-                            )}
+                            <span className="text-xs text-[var(--text-dim)] block mt-1">{exp.location}</span>
                           </div>
                         </div>
-                        <p className="text-primary font-medium">{cert.issuer}</p>
+                        <p className="text-[var(--text-muted)] text-sm leading-relaxed mt-3 whitespace-pre-wrap">{exp.description}</p>
                       </div>
                     )}
                   </div>
                 ))}
-                {(profile.professionalInfo.certifications || []).length === 0 && (
-                  <div className="text-center py-8 text-text-muted">
-                    <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No certifications added yet.</p>
-                    {isEditing && <p className="text-sm">Click &quot;Add Certification&quot; to get started.</p>}
-                  </div>
-                )}
               </div>
-            </Card>
+            </motion.div>
           </div>
         </div>
       </div>
     </AppLayout>
   );
 };
+
+function Target(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  )
+}
 
 export default UserProfilePage;

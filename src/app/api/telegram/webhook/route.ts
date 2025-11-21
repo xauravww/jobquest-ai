@@ -232,7 +232,7 @@ async function answerCallbackQuery(callbackQueryId: string, text?: string, botTo
 }
 
 // Handle Telegram commands
-export async function handleCommand(text: string, chatId: string, user: any, req: NextRequest): Promise<string | null> {
+async function handleCommand(text: string, chatId: string, user: any, req: NextRequest): Promise<string | null> {
   try {
     const parts = text.trim().split(' ');
     const command = parts[0].toLowerCase();
@@ -508,7 +508,7 @@ Type /help to see all available commands.
 }
 
 // Handle text messages for fleeting notes, reminders, etc.
-export async function handleTextMessage(text: string, chatId: string, user: any, req: NextRequest): Promise<string | null> {
+async function handleTextMessage(text: string, chatId: string, user: any, req: NextRequest): Promise<string | null> {
   try {
     // Handle fleeting notes
     if (text.startsWith('fleeting:')) {

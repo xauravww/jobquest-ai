@@ -25,8 +25,8 @@ const AppLayout = ({ children, requireAuth = false, showSidebar = true, showFoot
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-deep)]">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[var(--primary)] shadow-[0_0_15px_var(--primary)]"></div>
       </div>
     );
   }
@@ -36,10 +36,10 @@ const AppLayout = ({ children, requireAuth = false, showSidebar = true, showFoot
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-[var(--bg-deep)]">
       <div className="flex flex-1">
         {showSidebar && session && (
-          <div className="hidden lg:flex lg:w-80 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40" style={{ top: '64px', height: 'calc(100vh - 64px)' }}>
+          <div className="hidden lg:flex lg:w-80 lg:flex-col lg:fixed lg:inset-y-0 lg:z-40" style={{ top: '0', height: '100vh' }}>
             <Sidebar className="flex-1" />
           </div>
         )}
@@ -48,7 +48,7 @@ const AppLayout = ({ children, requireAuth = false, showSidebar = true, showFoot
           {children}
         </div>
       </div>
-      
+
       {showFooter === true && (
         <div className={`${showSidebar && session ? 'lg:pl-80' : ''}`}>
           <Footer />

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { Button } from '@/components/ui/Button';
+import Button from '@/components/ui/Button';
 import {
   Search,
   Bell,
@@ -59,12 +59,12 @@ const Header = () => {
           {/* Right side */}
           <div className="flex items-center space-x-4">
             {/* Search */}
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            <Button variant="ghost" className="hidden md:flex">
               <Search className="w-5 h-5" />
             </Button>
 
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" className="relative">
               <Bell className="w-5 h-5" />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </Button>

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Input, Pagination, Select } from 'antd';
 import AppLayout from '@/components/AppLayout';
 import {
   Bell,
@@ -12,13 +11,14 @@ import {
   Target,
   Zap,
   Clock,
-  FileText
+  FileText,
+  Trash2,
+  Plus
 } from 'lucide-react';
-import { RiDeleteBin6Line } from 'react-icons/ri';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import RemindersSkeleton from '@/components/ui/RemindersSkeleton';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
-const { Search: AntSearch } = Input;
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 interface Reminder {
   _id: string;
@@ -51,27 +51,23 @@ const RemindersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [itemsPerPage] = useState(10);
-
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Debounce effect to update the search query after user stops typing
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchQuery);
-      setCurrentPage(1); // Reset to page 1 whenever the search query changes
-    }, 500); // 500ms delay
-
-    return () => {
-      clearTimeout(handler);
-    };
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Effect to fetch data when the page or the debounced query changes
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -82,16 +78,15 @@ const RemindersPage = () => {
       if (debouncedQuery) {
         params.append('search', debouncedQuery);
       }
-
       try {
         const response = await fetch(`/api/reminders?${params.toString()}`);
         if (response.ok) {
           const data = await response.json();
           setReminders(data.reminders || []);
-          setTotal(data.pagination.total || 0);
+          setTotal(data.pagination?.total || 0);
         } else {
-           setReminders([]);
-           setTotal(0);
+          setReminders([]);
+          setTotal(0);
         }
       } catch (error) {
         console.error('Error fetching reminders:', error);
@@ -101,34 +96,30 @@ const RemindersPage = () => {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [debouncedQuery, currentPage, itemsPerPage]);
+  }, [currentPage, debouncedQuery, itemsPerPage, refreshCounter]);
 
-  const [actionLoading, setActionLoading] = React.useState<string | null>(null);
-  const [actionError, setActionError] = React.useState<string | null>(null);
-  const [actionSuccess, setActionSuccess] = React.useState<string | null>(null);
+  const refetchData = () => {
+    setRefreshCounter(prev => prev + 1);
+  };
 
   const handleCompleteReminder = async (reminderId: string) => {
     setActionLoading(reminderId);
-    setActionError(null);
-    setActionSuccess(null);
     try {
       const response = await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed' })
       });
-      if (!response.ok) {
-        throw new Error('Failed to update status');
+      if (response.ok) {
+        toast.success('Reminder marked as completed');
+        refetchData();
+      } else {
+        toast.error('Failed to update status');
       }
-      setActionSuccess('Reminder marked as completed');
-      // Refetch data after action
-      const event = new Event('refetchReminders');
-      window.dispatchEvent(event);
     } catch (error) {
-      setActionError('Error completing reminder');
       console.error('Error completing reminder:', error);
+      toast.error('Error completing reminder');
     } finally {
       setActionLoading(null);
     }
@@ -136,23 +127,21 @@ const RemindersPage = () => {
 
   const handleStatusUpdate = async (reminderId: string, newStatus: string) => {
     setActionLoading(reminderId);
-    setActionError(null);
-    setActionSuccess(null);
     try {
       const response = await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
-      if (!response.ok) {
-        throw new Error('Failed to update status');
+      if (response.ok) {
+        toast.success('Reminder status updated');
+        refetchData();
+      } else {
+        toast.error('Failed to update status');
       }
-      setActionSuccess('Reminder status updated');
-      const event = new Event('refetchReminders');
-      window.dispatchEvent(event);
     } catch (error) {
-      setActionError('Error updating status');
       console.error('Error updating status:', error);
+      toast.error('Error updating status');
     } finally {
       setActionLoading(null);
     }
@@ -160,8 +149,6 @@ const RemindersPage = () => {
 
   const handleSnoozeReminder = async (reminderId: string, snoozeUntil: Date) => {
     setActionLoading(reminderId);
-    setActionError(null);
-    setActionSuccess(null);
     try {
       const response = await fetch(`/api/reminders/${reminderId}`, {
         method: 'PUT',
@@ -171,33 +158,39 @@ const RemindersPage = () => {
           snoozedUntil: snoozeUntil.toISOString()
         })
       });
-      if (!response.ok) {
-        throw new Error('Failed to snooze reminder');
+      if (response.ok) {
+        toast.success('Reminder snoozed for 24 hours');
+        refetchData();
+      } else {
+        toast.error('Failed to snooze reminder');
       }
-      setActionSuccess('Reminder snoozed for 24 hours');
-      // Refetch data after action
-      const event = new Event('refetchReminders');
-      window.dispatchEvent(event);
     } catch (error) {
-      setActionError('Error snoozing reminder');
       console.error('Error snoozing reminder:', error);
+      toast.error('Error snoozing reminder');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDeleteReminder = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this reminder?')) return;
+    setActionLoading(id);
     try {
-      await fetch(`/api/reminders/${id}`, { method: 'DELETE' });
-      // Refetch data after action
-      const event = new Event('refetchReminders');
-      window.dispatchEvent(event);
+      const response = await fetch(`/api/reminders/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        toast.success('Reminder deleted');
+        refetchData();
+      } else {
+        toast.error('Failed to delete reminder');
+      }
     } catch (error) {
       console.error('Error deleting reminder:', error);
+      toast.error('Error deleting reminder');
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  // Client-side filtering for date ranges is still useful
   const getFilteredReminders = () => {
     let filtered = reminders;
     const now = new Date();
@@ -223,7 +216,7 @@ const RemindersPage = () => {
         });
         break;
     }
-    return filtered.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    return filtered;
   };
 
   const filteredReminders = getFilteredReminders();
@@ -244,331 +237,256 @@ const RemindersPage = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent': return 'text-white bg-red-600 border-red-600';
-      case 'high': return 'text-white bg-orange-600 border-orange-600';
-      case 'medium': return 'text-white bg-yellow-600 border-yellow-600';
-      case 'low': return 'text-white bg-blue-600 border-blue-600';
-      default: return 'text-white bg-gray-600 border-gray-600';
+      case 'urgent': return 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20';
+      case 'high': return 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]/20';
+      case 'medium': return 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20';
+      case 'low': return 'text-[var(--success)] bg-[var(--success)]/10 border-[var(--success)]/20';
+      default: return 'text-[var(--text-muted)] bg-[var(--bg-surface)] border-[var(--border-glass)]';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-white bg-green-600';
-      case 'pending': return 'text-white bg-blue-600';
-      case 'snoozed': return 'text-white bg-yellow-600';
-      case 'cancelled': return 'text-white bg-red-600';
-      default: return 'text-white bg-gray-600';
+      case 'completed': return 'text-[var(--success)] bg-[var(--success)]/10 border-[var(--success)]/20';
+      case 'pending': return 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20';
+      case 'snoozed': return 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]/20';
+      case 'cancelled': return 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20';
+      default: return 'text-[var(--text-muted)] bg-[var(--bg-surface)] border-[var(--border-glass)]';
     }
   };
 
-  // Add an effect to listen for the refetch event
-  useEffect(() => {
-    const refetchData = () => {
-      const fetchData = async () => {
-        setLoading(true);
-        const params = new URLSearchParams({
-          page: String(currentPage),
-          limit: String(itemsPerPage),
-        });
-        if (debouncedQuery) {
-          params.append('search', debouncedQuery);
-        }
-        try {
-          const response = await fetch(`/api/reminders?${params.toString()}`);
-          if (response.ok) {
-            const data = await response.json();
-            setReminders(data.reminders || []);
-            setTotal(data.pagination.total || 0);
-          }
-        } catch (error) {
-          console.error('Error refetching reminders:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
-    };
-
-    window.addEventListener('refetchReminders', refetchData);
-    return () => {
-      window.removeEventListener('refetchReminders', refetchData);
-    };
-  }, [currentPage, debouncedQuery, itemsPerPage]);
-
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
+      <div className="p-6 lg:p-8 min-h-screen space-y-8">
         {/* Header */}
-        <div className="text-center mb-8 mt-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/30">
-              <Bell className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+        <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+              <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+                <Bell className="w-8 h-8 text-[var(--primary)]" />
+              </div>
               My Reminders
             </h1>
+            <p className="text-[var(--text-muted)] mt-2 ml-16">Manage your job search reminders and important deadlines</p>
           </div>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">
-            Manage your job search reminders and important deadlines
-          </p>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="flex justify-center gap-4 mb-8">
           <button
-            onClick={() => {
-              setEditingReminder(undefined);
-              setShowCreateModal(true);
-            }}
-            className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+            onClick={() => { setEditingReminder(undefined); setShowCreateModal(true); }}
+            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
           >
-            <Bell className="w-5 h-5" />
-            Add Reminder
+            <Plus className="w-5 h-5" />
+            <span>Add Reminder</span>
           </button>
         </div>
 
-        {/* Notifications */}
-        {(actionSuccess || actionError) && (
-          <div className="max-w-4xl mx-auto mb-4">
-            <div className={`p-4 rounded-lg ${actionSuccess ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
-              {actionSuccess || actionError}
-            </div>
-          </div>
-        )}
-
         {/* Search and Filters */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="filter-panel rounded-xl p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="flex-1 w-full">
-                <AntSearch
-                  placeholder="Search your reminders..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  size="large"
-                  allowClear
-                  enterButton={<Search className="w-5 h-5" />}
-                  className="max-w-full rounded-lg"
-                  style={{ maxWidth: '100%' }}
-                />
-              </div>
-              <div className="flex gap-2">
-                {[
-                  { key: 'all', label: 'All', icon: Target },
-                  { key: 'today', label: 'Today', icon: Zap },
-                  { key: 'upcoming', label: 'Upcoming', icon: Clock },
-                  { key: 'overdue', label: 'Overdue', icon: Bell }
-                ].map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
-                      activeFilter === key
-                        ? 'bg-primary text-white shadow-lg'
-                        : 'bg-bg-light hover:bg-bg-card text-text-secondary hover:text-white'
+        <div className="bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-glass)] space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="flex-1 w-full relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                placeholder="Search your reminders..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">
+              {[
+                { key: 'all', label: 'All', icon: Target },
+                { key: 'today', label: 'Today', icon: Zap },
+                { key: 'upcoming', label: 'Upcoming', icon: Clock },
+                { key: 'overdue', label: 'Overdue', icon: Bell }
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all whitespace-nowrap ${activeFilter === key
+                      ? 'bg-[var(--primary)] text-black shadow-lg shadow-[var(--primary)]/20'
+                      : 'bg-[var(--bg-deep)] text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-glass)] border border-[var(--border-glass)]'
                     }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </button>
-                ))}
-              </div>
+                >
+                  <Icon className="w-4 h-4" /> {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Results Summary */}
-        <div className="max-w-4xl mx-auto mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">
-              {activeFilter === 'all' && `All Reminders (${filteredReminders.length})`}
-              {activeFilter === 'today' && `Today (${filteredReminders.length})`}
-              {activeFilter === 'upcoming' && `Upcoming (${filteredReminders.length})`}
-              {activeFilter === 'overdue' && `Overdue (${filteredReminders.length})`}
-            </h2>
-            {debouncedQuery && (
-              <span className="text-text-muted text-sm">
-                Searching for &ldquo;{debouncedQuery}&rdquo;
-              </span>
-            )}
-          </div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <span className="w-2 h-8 bg-[var(--secondary)] rounded-full"></span>
+            All Reminders ({filteredReminders.length})
+          </h2>
+          {debouncedQuery && <span className="text-[var(--text-muted)] text-sm">Searching for &quot;{debouncedQuery}&quot;</span>}
         </div>
 
         {/* Reminders List */}
-        <div className="max-w-4xl mx-auto">
-          {loading ? (
-            <RemindersSkeleton count={5} />
-           ) : filteredReminders.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-primary/30">
-                {activeFilter === 'overdue' ? (
-                  <Bell className="w-12 h-12 text-primary" />
-                ) : (
-                  <Target className="w-12 h-12 text-primary" />
-                )}
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-4">
-                {debouncedQuery ? 'No matches found' :
-                  activeFilter === 'today' ? 'Nothing scheduled for today' :
-                    activeFilter === 'upcoming' ? 'No upcoming items' :
-                      activeFilter === 'overdue' ? 'No overdue items' :
-                        'No reminders yet'}
-              </h3>
-              <p className="text-text-muted text-lg max-w-md mx-auto leading-relaxed mb-6">
-                {debouncedQuery ? 'Try adjusting your search terms' :
-                  'Start by adding your first reminder to stay organized'}
-              </p>
-              {!debouncedQuery && (
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={() => {
-                      setEditingReminder(undefined);
-                      setShowCreateModal(true);
-                    }}
-                    className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/80 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105"
-                  >
-                    <Bell className="w-4 h-4" />
-                    Add Reminder
-                  </button>
-                </div>
-              )}
+        {loading ? (
+          <RemindersSkeleton count={5} />
+        ) : filteredReminders.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-[var(--border-glass)] rounded-2xl bg-[var(--bg-surface)]/20">
+            <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-6 border border-[var(--border-glass)]">
+              <Bell className="w-10 h-10 text-[var(--text-muted)]" />
             </div>
-          ) : (
-            <div className="space-y-4">
+            <h3 className="text-2xl font-bold text-white mb-2">
+              {debouncedQuery ? 'No matches found' : 'No reminders yet'}
+            </h3>
+            <p className="text-[var(--text-muted)] max-w-md mx-auto mb-6">
+              {debouncedQuery ? 'Try adjusting your search terms' : 'Start by adding your first reminder to stay organized'}
+            </p>
+            {!debouncedQuery && (
+              <button
+                onClick={() => { setEditingReminder(undefined); setShowCreateModal(true); }}
+                className="px-6 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
+              >
+                Add Your First Reminder
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <AnimatePresence mode="popLayout">
               {filteredReminders.map((reminder) => (
-                <div
+                <motion.div
                   key={reminder._id}
-                  className={`bg-gradient-to-r from-bg-card to-bg-card/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
-                    reminder.status === 'completed' ? 'border-green-500/30 bg-green-500/5' :
-                    activeFilter === 'overdue' && new Date(reminder.dueDate) < new Date() ? 'border-red-500/50 bg-red-500/10' :
-                    'border-border hover:border-primary/50'
-                  }`}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className={`rounded-xl p-6 border transition-all duration-300 hover:shadow-lg hover:shadow-[var(--primary)]/5 group ${reminder.status === 'completed'
+                      ? 'bg-[var(--success)]/5 border-[var(--success)]/20'
+                      : activeFilter === 'overdue' && new Date(reminder.dueDate) < new Date()
+                        ? 'bg-[var(--danger)]/5 border-[var(--danger)]/20'
+                        : 'bg-[var(--bg-surface)]/50 border-[var(--border-glass)] hover:border-[var(--primary)]/50'
+                    }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 mt-1">
-                      <Bell className="w-5 h-5 text-primary" />
+                  <div className="flex flex-col md:flex-row items-start gap-4">
+                    <div className="flex-shrink-0 mt-1 p-3 bg-[var(--bg-deep)] rounded-xl border border-[var(--border-glass)]">
+                      <Bell className="w-6 h-6 text-[var(--primary)]" />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className={`text-lg font-semibold ${reminder.status === 'completed' ? 'line-through text-text-muted' : 'text-white'}`}>
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h3 className={`text-xl font-bold ${reminder.status === 'completed' ? 'line-through text-[var(--text-muted)]' : 'text-white'}`}>
                           {reminder.title}
                         </h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(reminder.priority)}`}>
-                          {reminder.priority}
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full border ${getPriorityColor(reminder.priority)}`}>
+                          {reminder.priority.charAt(0).toUpperCase() + reminder.priority.slice(1)}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(reminder.status)}`}>
-                          {reminder.status}
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full border ${getStatusColor(reminder.status)}`}>
+                          {reminder.status.charAt(0).toUpperCase() + reminder.status.slice(1)}
                         </span>
                       </div>
 
                       {reminder.description && (
-                        <p className="text-text-muted mb-3 leading-relaxed">{reminder.description}</p>
+                        <p className="text-[var(--text-muted)] mb-3 line-clamp-2">{reminder.description}</p>
                       )}
 
-                      <div className="flex items-center gap-6 text-sm text-text-muted">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-6 text-sm text-[var(--text-muted)]">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-primary" />
-                          <span className="font-medium">{getTimeDisplay(reminder)}</span>
+                          <Clock className="w-4 h-4 text-[var(--secondary)]" />
+                          <span className="font-medium text-white">{getTimeDisplay(reminder)}</span>
                         </div>
-                        {reminder.jobId && (
-                          <div className="flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-blue-500" />
-                            <span>{reminder.jobId.title} at {reminder.jobId.company}</span>
+
+                        {reminder.jobId && typeof reminder.jobId === 'object' && (
+                          <div className="flex items-center gap-2 md:col-span-2">
+                            <FileText className="w-4 h-4 text-[var(--warning)]" />
+                            <span>{reminder.jobId.title} at <span className="text-white font-medium">{reminder.jobId.company}</span></span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
+
+                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-4 md:mt-0">
+                      <select
                         value={reminder.status}
-                        onChange={(value) => handleStatusUpdate(reminder._id, value)}
+                        onChange={(e) => handleStatusUpdate(reminder._id, e.target.value)}
                         disabled={actionLoading === reminder._id}
-                        className="w-32"
-                        size="small"
+                        className="bg-[var(--bg-deep)] border border-[var(--border-glass)] text-white text-sm rounded-lg px-2 py-2 focus:border-[var(--primary)] focus:outline-none"
                       >
-                        <Select.Option value="pending">Pending</Select.Option>
-                        <Select.Option value="completed">Completed</Select.Option>
-                        <Select.Option value="snoozed">Snoozed</Select.Option>
-                        <Select.Option value="cancelled">Cancelled</Select.Option>
-                      </Select>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="snoozed">Snoozed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+
                       {reminder.status === 'pending' && (
                         <>
                           <button
                             onClick={() => handleCompleteReminder(reminder._id)}
                             disabled={actionLoading === reminder._id}
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 border border-blue-600/30 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                            className="p-2 bg-[var(--success)]/10 hover:bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/20 rounded-lg transition-colors"
                             title="Mark as Complete"
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => handleSnoozeReminder(reminder._id, new Date(Date.now() + 24 * 60 * 60 * 1000))}
                             disabled={actionLoading === reminder._id}
-                            className="flex items-center gap-2 px-3 py-2 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 hover:text-yellow-300 border border-yellow-600/30 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                            className="p-2 bg-[var(--warning)]/10 hover:bg-[var(--warning)]/20 text-[var(--warning)] border border-[var(--warning)]/20 rounded-lg transition-colors"
                             title="Snooze for 24 hours"
                           >
-                            <PauseCircle className="w-4 h-4" />
+                            <PauseCircle className="w-5 h-5" />
                           </button>
                         </>
                       )}
+
                       <button
-                        onClick={() => {
-                          setEditingReminder(reminder);
-                          setShowCreateModal(true);
-                        }}
+                        onClick={() => { setEditingReminder(reminder); setShowCreateModal(true); }}
                         disabled={actionLoading === reminder._id}
-                        className="flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                        className="p-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit className="w-5 h-5" />
-                        <span className="sr-only">Edit</span>
                       </button>
                       <button
                         onClick={() => handleDeleteReminder(reminder._id)}
                         disabled={actionLoading === reminder._id}
-                        className="flex items-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white border border-red-700 rounded-lg transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                        className="p-2 bg-[var(--danger)]/10 hover:bg-[var(--danger)]/20 text-[var(--danger)] border border-[var(--danger)]/20 rounded-lg transition-colors"
                         title="Delete"
                       >
-                        <RiDeleteBin6Line className="w-5 h-5" />
-                        <span className="sr-only">Delete</span>
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {total > itemsPerPage && (
+          <div className="flex justify-center mt-8">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 text-[var(--text-muted)]">
+                Page {currentPage} of {Math.ceil(total / itemsPerPage)}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(total / itemsPerPage), p + 1))}
+                disabled={currentPage === Math.ceil(total / itemsPerPage)}
+                className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
+              >
+                Next
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Pagination Controls */}
-        <div className="flex justify-center mt-8">
-          <Pagination
-            current={currentPage}
-            total={total}
-            pageSize={itemsPerPage}
-            onChange={(page) => setCurrentPage(page)}
-            showSizeChanger={false}
-            showQuickJumper
-            className="rounded-lg p-4"
-          />
-        </div>
-
-        {/* Modals */}
         {showCreateModal && (
           <CreateReminderModal
             isOpen={showCreateModal}
-            onClose={() => {
-              setShowCreateModal(false);
-              setEditingReminder(undefined);
-            }}
-            onSuccess={() => {
-              // Instead of direct fetch, dispatch event
-              const event = new Event('refetchReminders');
-              window.dispatchEvent(event);
-              setEditingReminder(undefined);
-            }}
+            onClose={() => { setShowCreateModal(false); setEditingReminder(undefined); }}
+            onSuccess={() => { refetchData(); setEditingReminder(undefined); }}
             editingReminder={editingReminder}
           />
         )}
