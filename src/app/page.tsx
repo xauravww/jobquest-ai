@@ -96,9 +96,9 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="antialiased selection:bg-indigo-500 selection:text-white overflow-x-hidden">
       {/* Background Layers */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-x-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-40"></div>
         <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[120px] animate-blob mix-blend-screen"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[100px] animate-blob animation-delay-2000 mix-blend-screen"></div>
