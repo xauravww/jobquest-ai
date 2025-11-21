@@ -34,14 +34,19 @@
 }
 
 .custom-dark-tabs .ant-tabs-tab-active {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3) !important;
 }
 
 .custom-dark-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
     color: #ffffff !important;
     font-weight: 600 !important;
+}
+
+.custom-dark-tabs .ant-tabs-tab-active:hover {
+    background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4) !important;
 }
 
 .custom-dark-tabs .ant-tabs-ink-bar {
@@ -1214,17 +1219,13 @@ div[data-hot-toast] {
     color: #ffffff !important;
 }
 
-/* Search input styling */
-.ant-input-search .ant-input-group .ant-input {
-    background: rgba(55, 65, 81, 0.8) !important;
-    border-color: rgba(75, 85, 99, 0.5) !important;
-    color: #ffffff !important;
-}
+
 
 .ant-input-search .ant-input-search-button {
     background: rgba(16, 185, 129, 0.2) !important;
     border-color: rgba(16, 185, 129, 0.3) !important;
     color: #10b981 !important;
+    border-radius: 0 !important;
 }
 
 .ant-input-search .ant-input-search-button:hover {

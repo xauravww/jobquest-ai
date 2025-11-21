@@ -5,120 +5,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Consolidated Calendar and Picker Styles */
-.ant-picker-calendar,
-.ant-calendar,
-.ant-picker-panel,
-.ant-calendar-body,
-.ant-picker-header,
-.ant-picker-footer,
-.ant-calendar-header {
-  background-color: var(--bg-card);
-  border-color: var(--border);
-  color: var(--text);
-  border-radius: var(--radius);
-}
 
-.ant-calendar * {
-  background-color: var(--bg-card);
-  color: var(--text);
-}
 
-.ant-calendar-header-year-select {
-  display: none;
-}
 
-.ant-calendar-date,
-.ant-picker-cell {
-  border: 1px solid var(--border);
-  color: var(--text);
-  background-color: transparent;
-}
-
-.ant-calendar-date:hover,
-.ant-picker-cell-in-view:hover {
-  background-color: rgba(16, 185, 129, 0.15);
-  cursor: pointer;
-}
-
-.ant-calendar-selected-date .ant-calendar-date,
-.ant-picker-cell-selected {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border-color: var(--primary);
-}
-
-.ant-calendar-today .ant-calendar-date,
-.ant-picker-cell-today .ant-picker-cell-inner {
-  border-color: var(--primary);
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.ant-picker-header-super-prev-btn,
-.ant-picker-header-prev-btn,
-.ant-picker-header-next-btn,
-.ant-picker-header-super-next-btn {
-  color: var(--text);
-}
-
-.ant-picker-header-super-prev-btn:hover,
-.ant-picker-header-prev-btn:hover,
-.ant-picker-header-next-btn:hover,
-.ant-picker-header-super-next-btn:hover {
-  color: var(--primary);
-}
-
-.ant-picker-footer-btns .ant-btn-primary {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.ant-picker-footer-btns .ant-btn-primary:hover {
-  opacity: 0.8;
-}
-
-/* Additional styling for calendar date cells */
-.calendar-date-cell {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 4rem;
-  overflow: hidden;
-}
-
-.calendar-date-cell li {
-  margin-bottom: 0.15rem;
-}
-
-.calendar-date-cell li:last-child {
-  margin-bottom: 0;
-}
-
-.calendar-date-cell .ant-badge-status-text {
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  color: var(--text);
-  background-color: var(--primary);
-  padding: 2px 6px;
-  border-radius: 12px;
-  margin-left: 8px;
-  display: inline-block;
-  min-width: 20px;
-  text-align: center;
-  box-shadow: 0 0 6px var(--primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.calendar-date-cell .ant-badge-status-text:hover {
-  text-decoration: none;
-  color: var(--primary-foreground);
-  background-color: var(--primary-foreground);
-  box-shadow: 0 0 10px var(--primary-foreground);
-}
 
 :root {
   /* Modern dark theme matching reference design */
@@ -142,7 +31,7 @@
   /* subtle border */
   --border-muted: #6b7280;
   /* muted border */
-  --primary: #10b981;
+  --primary: #059669;
   /* emerald primary */
   --secondary: #6366f1;
   /* indigo secondary */
@@ -728,7 +617,7 @@ h4 {
   --card-foreground: #f9fafb;
   --popover: #1f2937;
   --popover-foreground: #f9fafb;
-  --primary: #10b981;
+  --primary: #059669;
   --primary-foreground: #ffffff;
   --secondary: #6366f1;
   --secondary-foreground: #f9fafb;
@@ -901,6 +790,7 @@ body {
   background-color: var(--primary) !important;
   border-color: var(--primary) !important;
   color: white !important;
+  border-radius: 0 !important;
 }
 
 .ant-input-search .ant-input-search-button:hover {
@@ -954,29 +844,7 @@ body {
   color: white !important;
 }
 
-/* DatePicker Dark Theme */
-.ant-picker {
-  background-color: var(--bg-card) !important;
-  border-color: var(--border) !important;
-  color: var(--text) !important;
-}
 
-.ant-picker:hover {
-  border-color: var(--primary) !important;
-}
-
-.ant-picker.ant-picker-focused {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
-}
-
-.ant-picker-input>input {
-  color: var(--text) !important;
-}
-
-.ant-picker-input>input::placeholder {
-  color: var(--text-muted) !important;
-}
 
 /* TextArea Dark Theme */
 .ant-input {
@@ -1280,15 +1148,16 @@ body {
   box-shadow: none !important;
 }
 
+
+
+/* Override inherited color for form elements */
+input, button, select, optgroup, textarea {
+  color: var(--text) !important;
+}
+
 /* Enhanced Dark Theme for All Ant Design Components */
 
-/* Select Tags Styling for Better Visibility */
-.ant-select-selection-item {
-  background-color: var(--primary) !important;
-  color: white !important;
-  border: 1px solid var(--primary) !important;
-  border-radius: 4px !important;
-}
+
 
 .ant-select-selection-item .ant-select-selection-item-remove {
   color: white !important;
@@ -1436,6 +1305,18 @@ body {
   background-color: var(--primary) !important;
   border-color: var(--primary) !important;
   opacity: 0.8;
+}
+
+/* Picker footer buttons - Use Ant Design default dark theme */
+.ant-picker-footer-btns .ant-btn-primary {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  color: #ffffff !important;
+}
+
+.ant-picker-footer-btns .ant-btn-primary:hover {
+  background-color: #40a9ff !important;
+  border-color: #40a9ff !important;
 }
 
 /* Modal Dark Theme */
@@ -1588,27 +1469,7 @@ button.bg-danger:hover {
   color:white !important;
 }
 
-.ant-picker{
-box-shadow: none;
-}
 
-.ant-picker .ant-picker-suffix .anticon {
-  color: white;
-}
-
-.ant-picker-dropdown 
-  .ant-picker-header 
-  button {
-  box-shadow: none !important;
-}
-
-
-/* Remove green glow on calendar header buttons */
-.ant-picker-dropdown .ant-picker-header button:focus,
-.ant-picker-dropdown .ant-picker-header button:active {
-  box-shadow: none !important;
-  outline: none !important;
-}
 
 /* Custom Glass Modal Overlay */
 .glass-modal-mask {
@@ -1750,14 +1611,7 @@ html {
   will-change: scroll-position;
 }
 
-/* Reduce paint on hover states */
-.ant-picker-cell-in-view:hover,
-.ant-btn:hover,
-.button-primary:hover,
-.button-secondary:hover {
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateZ(0);
-}
+
 
 /* Optimize gradient animations */
 .button-primary::before {

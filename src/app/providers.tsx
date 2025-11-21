@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { ConfigProvider, theme } from "antd";
 import { ToastProvider } from "@/contexts/ToastContext";
 import ToastContainer from "@/components/ui/ToastContainer";
 import { useToast } from "@/contexts/ToastContext";
@@ -12,11 +13,13 @@ function ToastContainerWrapper() {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
-      <ToastProvider>
-        {children}
-        <ToastContainerWrapper />
-      </ToastProvider>
-    </SessionProvider>
+    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+      <SessionProvider>
+        <ToastProvider>
+          {children}
+          <ToastContainerWrapper />
+        </ToastProvider>
+      </SessionProvider>
+    </ConfigProvider>
   );
 }
