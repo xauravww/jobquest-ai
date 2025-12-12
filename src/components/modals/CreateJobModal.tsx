@@ -289,7 +289,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={title}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="e.g. Senior Frontend Developer"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.title ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.title ? 'border border-[var(--danger)]' : ''}`}
               />
             </div>
             {errors.title && <p className="text-[var(--danger)] text-xs mt-1">{errors.title}</p>}
@@ -306,7 +306,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={company}
                 onChange={(e) => handleFieldChange('company', e.target.value)}
                 placeholder="e.g. Tech Corp"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.company ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.company ? 'border border-[var(--danger)]' : ''}`}
               />
             </div>
             {errors.company && <p className="text-[var(--danger)] text-xs mt-1">{errors.company}</p>}
@@ -323,7 +323,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={location}
                 onChange={(e) => handleFieldChange('location', e.target.value)}
                 placeholder="e.g. Remote, New York"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.location ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.location ? 'border border-[var(--danger)]' : ''}`}
               />
             </div>
             {errors.location && <p className="text-[var(--danger)] text-xs mt-1">{errors.location}</p>}
@@ -338,7 +338,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={jobUrl}
                 onChange={(e) => handleFieldChange('jobUrl', e.target.value)}
                 placeholder="https://..."
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.jobUrl ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.jobUrl ? 'border border-[var(--danger)]' : ''}`}
               />
             </div>
             {errors.jobUrl && <p className="text-[var(--danger)] text-xs mt-1">{errors.jobUrl}</p>}
@@ -351,7 +351,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
+              className="w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
             >
               <option value="saved">Saved</option>
               <option value="applied">Applied</option>
@@ -368,7 +368,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
+              className="w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
             >
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -381,7 +381,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
+              className="w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
             >
               <option value="linkedin">LinkedIn</option>
               <option value="indeed">Indeed</option>
@@ -402,7 +402,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 type="date"
                 value={datePosted}
                 onChange={(e) => setDatePosted(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none"
               />
             </div>
           </div>
@@ -414,7 +414,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
               <select
                 value={selectedResumeId}
                 onChange={(e) => setSelectedResumeId(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
               >
                 <option value="">Select a resume...</option>
                 {resumes.map((resume) => (
@@ -434,7 +434,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             onChange={(e) => handleFieldChange('description', e.target.value)}
             placeholder="Job description..."
             rows={3}
-            className={`w-full px-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.description ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+            className={`w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.description ? 'border border-[var(--danger)]' : ''}`}
           />
           {errors.description && <p className="text-[var(--danger)] text-xs mt-1">{errors.description}</p>}
           <p className="text-[var(--text-dim)] text-xs text-right">{description.length}/5000</p>
@@ -447,19 +447,19 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             placeholder="Additional notes..."
             rows={2}
-            className={`w-full px-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.notes ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+            className={`w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.notes ? 'border border-[var(--danger)]' : ''}`}
           />
           {errors.notes && <p className="text-[var(--danger)] text-xs mt-1">{errors.notes}</p>}
           <p className="text-[var(--text-dim)] text-xs text-right">{notes.length}/2000</p>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
+        <div className="flex justify-end gap-3 pt-4">
           <button
             onClick={() => {
               resetForm();
               onClose();
             }}
-            className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+            className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
           >
             Cancel
           </button>

@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import Footer from '@/components/landing/Footer';
 import Navbar from '@/components/landing/Navbar';
+import Stats from '@/components/landing/Stats';
+import Testimonials from '@/components/landing/Testimonials';
 
 export default function LandingPage() {
   return (
@@ -98,9 +100,15 @@ export default function LandingPage() {
       </section>
 
       {/* Dashboard Preview Section */}
-      <section id="dashboard-preview" className="py-20 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-y border-slate-700 relative overflow-hidden">
+      <section id="dashboard-preview" className="py-20 px-4 bg-gradient-to-br from-black via-slate-950 to-black relative overflow-hidden">
+        {/* Premium Atmospheric Background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-teal-500/10 to-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-br from-emerald-500/8 to-green-500/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        </div>
         {/* Animated Grid Background */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '20px 20px'}}></div>
         </div>
 
@@ -293,50 +301,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-[var(--bg-surface)] border-y border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { label: 'Active Users', value: '50K+' },
-              { label: 'Applications Sent', value: '2M+' },
-              { label: 'Success Rate', value: '87%' },
-              { label: 'Avg. Time to Offer', value: '14 Days' }
-            ].map((stat, i) => (
-              <div key={i}>
-                <div className="text-4xl md:text-5xl font-bold text-[var(--text-main)] mb-2">{stat.value}</div>
-                <div className="text-[var(--text-muted)]">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Stats />
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-24 px-4 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">Loved by Job Seekers Worldwide</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            { quote: "Applytron helped me land 3 interviews in my first week. The resume tailoring is incredible!", author: "Sarah Chen", role: "Product Designer" },
-            { quote: "I went from 0 responses to multiple offers. This tool is a game-changer for job seekers.", author: "Michael Torres", role: "Software Engineer" },
-            { quote: "The automated follow-ups kept me organized and professional. Highly recommend!", author: "Emily Rodriguez", role: "Marketing Manager" },
-            { quote: "Best investment in my career. The AI actually understands what recruiters want to see.", author: "David Kim", role: "Data Analyst" },
-          ].map((testimonial, i) => (
-            <div key={i} className="p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/30 transition-colors">
-              <p className="text-[var(--text-muted)] text-sm mb-4 leading-relaxed">"{testimonial.quote}"</p>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[var(--bg-light)]"></div>
-                <div>
-                  <div className="text-sm font-bold">{testimonial.author}</div>
-                  <div className="text-xs text-[var(--text-muted)]">{testimonial.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Testimonials />
 
       {/* FAQ Section */}
       <section className="py-24 px-4 max-w-3xl mx-auto">

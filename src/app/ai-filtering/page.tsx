@@ -5,7 +5,7 @@ import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, MapPi
 import toast, { Toaster } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import { FormInput, FormInputNumber, FormDateInput } from '@/components/ui/FormInput';
-import JobCardSkeleton from '@/components/ui/JobCardSkeleton';
+
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
 
 // Define types for Job and Props
@@ -87,9 +87,9 @@ const JobCard = ({ job, onTrack, onSkip }: {
   onSkip: (job: Job) => void;
 }) => {
   const getCardBorderClass = () => {
-    if (job.userAction === 'track') return 'border-[var(--success)]/30 bg-[var(--success)]/5 shadow-sm';
-    if (job.userAction === 'skip') return 'border-[var(--danger)]/30 bg-[var(--danger)]/5 opacity-60';
-    return 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/50 hover:shadow-md';
+    if (job.userAction === 'track') return 'border-[var(--success)]/30 bg-[var(--success)]/5 shadow-[0_0_15px_rgba(52,211,153,0.1)]';
+    if (job.userAction === 'skip') return 'border-[var(--danger)]/20 bg-[var(--bg-surface)] opacity-60 grayscale-[0.5]';
+    return 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.1)]';
   };
 
   const getAIAnalysisColor = () => {
@@ -99,123 +99,133 @@ const JobCard = ({ job, onTrack, onSkip }: {
   };
 
   return (
-    <div className={`rounded-xl p-6 border transition-all duration-300 ${getCardBorderClass()}`}>
-      <div className="flex justify-between items-start mb-4">
+    <div className={`group relative rounded-xl p-6 border transition-all duration-300 ${getCardBorderClass()}`}>
+      {/* Hover Glow Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
+
+      <div className="relative flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-[var(--text-main)] mb-2 leading-tight">{job.title}</h3>
-          <div className="space-y-2">
-            <div className="flex items-center text-[var(--text-muted)] text-sm">
-              <div className="p-1 bg-[var(--primary)]/10 rounded mr-3">
-                <Building size={14} className="text-[var(--primary)]" />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-bold text-[var(--text-main)] mb-2 leading-tight group-hover:text-[var(--primary)] transition-colors">
+                {job.title}
+              </h3>
+              <div className="flex flex-wrap items-center gap-3 text-[var(--text-muted)] text-sm mb-4">
+                <div className="flex items-center gap-1.5">
+                  <Building size={14} className="text-[var(--primary)]" />
+                  <span className="font-medium text-[var(--text-main)]">{job.company || 'N/A'}</span>
+                </div>
+                {job.location && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-[var(--border-muted)]" />
+                    <div className="flex items-center gap-1.5">
+                      <MapPin size={14} className="text-[var(--secondary)]" />
+                      <span>{job.location}</span>
+                    </div>
+                  </>
+                )}
+                {job.publishedDate && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-[var(--border-muted)]" />
+                    <div className="flex items-center gap-1.5">
+                      <Calendar size={14} className="text-[var(--warning)]" />
+                      <span>{new Date(job.publishedDate).toLocaleDateString()}</span>
+                    </div>
+                  </>
+                )}
               </div>
-              <span className="font-medium">{job.company || 'N/A'}</span>
             </div>
-            {job.location && (
-              <div className="flex items-center text-[var(--text-muted)] text-sm">
-                <div className="p-1 bg-[var(--secondary)]/10 rounded mr-3">
-                  <MapPin size={14} className="text-[var(--secondary)]" />
-                </div>
-                <span>{job.location}</span>
-              </div>
-            )}
-            {job.publishedDate && (
-              <div className="flex items-center text-[var(--text-muted)] text-sm">
-                <div className="p-1 bg-[var(--warning)]/10 rounded mr-3">
-                  <Calendar size={14} className="text-[var(--warning)]" />
-                </div>
-                <span>{new Date(job.publishedDate).toLocaleDateString()}</span>
-              </div>
-            )}
           </div>
+
           {job.aiAnalysis && (
-            <div className={`mt-3 p-3 rounded-lg text-sm ${getAIAnalysisColor()}`}>
+            <div className={`mt-2 p-3 rounded-lg text-sm ${getAIAnalysisColor()}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${job.aiAnalysis.isHiringPost ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`}></div>
-                  <span className="font-semibold">
-                    AI: {job.aiAnalysis.isHiringPost ? '✓ Hiring Post' : '✗ Not Hiring'}
+                  <div className={`w-2 h-2 rounded-full ${job.aiAnalysis.isHiringPost ? 'bg-[var(--success)] shadow-[0_0_8px_var(--success)]' : 'bg-[var(--danger)]'}`}></div>
+                  <span className="font-semibold tracking-wide">
+                    {job.aiAnalysis.isHiringPost ? 'HIRING SIGNAL DETECTED' : 'NO HIRING SIGNAL'}
                   </span>
-                  <span className="px-2 py-1 bg-[var(--bg-surface)] rounded text-xs font-bold border border-[var(--border)]">
+                  <span className="px-2 py-0.5 bg-[var(--bg-deep)]/50 rounded text-xs font-mono border border-[var(--border)]/50">
                     {job.aiAnalysis.confidence}%
                   </span>
                 </div>
-                <span className="text-xs opacity-75 bg-[var(--bg-surface)] px-2 py-1 rounded border border-[var(--border)]">
+                <span className="text-xs font-medium px-2 py-1 rounded bg-[var(--bg-deep)]/50 border border-[var(--border)]/50">
                   {job.aiAnalysis.category}
                 </span>
               </div>
               {job.aiAnalysis.reasons && job.aiAnalysis.reasons.length > 0 && (
-                <div className="text-xs opacity-80 leading-relaxed">
-                  <strong>Reasons:</strong> {job.aiAnalysis.reasons.slice(0, 2).join(', ')}
+                <div className="text-xs opacity-90 leading-relaxed pl-4 border-l-2 border-current/30">
+                  {job.aiAnalysis.reasons.slice(0, 2).join(', ')}
                 </div>
               )}
             </div>
           )}
+
           {job.userAction && (
-            <div className={`mt-3 p-3 rounded-lg text-sm font-semibold border ${job.userAction === 'track'
+            <div className={`mt-3 p-2.5 rounded-lg text-sm font-medium border inline-flex items-center gap-2 ${job.userAction === 'track'
               ? 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20'
               : 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20'
               }`}>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${job.userAction === 'track' ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`}></div>
-                {job.userAction === 'track' ? '✓ Marked to Track' : '✗ Marked to Skip'}
-              </div>
+              {job.userAction === 'track' ? <Save size={14} /> : <Filter size={14} />}
+              {job.userAction === 'track' ? 'Marked to Track' : 'Marked to Skip'}
             </div>
           )}
         </div>
 
-        <div className="flex flex-col items-end gap-3 ml-4">
+        <div className="flex flex-col items-end gap-2 ml-4">
           {!job.userAction && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full sm:w-auto">
               <button
                 onClick={() => onTrack(job)}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black text-sm font-bold rounded-lg transition-all duration-200 shadow-sm"
-                title="Mark to Track (will be saved when you click Save Changes)"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black text-sm font-bold rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(52,211,153,0.3)] hover:shadow-[0_0_20px_rgba(52,211,153,0.5)] hover:-translate-y-0.5"
               >
                 <Save size={16} />
                 Track
               </button>
               <button
                 onClick={() => onSkip(job)}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] text-sm font-medium rounded-lg transition-all duration-200"
-                title="Mark to Skip (won't appear in future searches)"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-light)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] text-sm font-medium rounded-lg transition-all duration-200 hover:bg-[var(--danger)]/5"
               >
-                ✗ Skip
+                <span className="text-lg leading-none">×</span> Skip
               </button>
             </div>
           )}
           {job.userAction === 'track' && (
             <button
               onClick={() => onSkip(job)}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] text-sm font-medium rounded-lg transition-all duration-200"
+              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] text-xs font-medium rounded-lg transition-all duration-200"
             >
-              ✗ Skip Instead
+              Undo & Skip
             </button>
           )}
           {job.userAction === 'skip' && (
             <button
               onClick={() => onTrack(job)}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black text-sm font-bold rounded-lg transition-all duration-200 shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--success)]/10 border border-[var(--success)]/30 hover:bg-[var(--success)]/20 text-[var(--success)] text-xs font-bold rounded-lg transition-all duration-200"
             >
-              <Save size={16} />
-              Track Instead
+              Undo & Track
             </button>
           )}
           <a
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 px-3 py-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-all duration-200"
-            title="Open Job URL"
+            className="flex items-center justify-center gap-2 px-4 py-2 w-full bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-all duration-200 group/link"
           >
-            <ExternalLink size={16} />
-            <span className="text-sm font-medium">View</span>
+            <span className="text-sm font-medium">Visit</span>
+            <ExternalLink size={14} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
           </a>
         </div>
       </div>
+
       {job.content && (
-        <div className="mt-4 p-4 bg-[var(--bg-deep)] rounded-lg border border-[var(--border)]">
-          <h4 className="text-sm font-semibold text-[var(--text-main)] mb-2">Job Description</h4>
-          <div className="text-[var(--text-muted)] text-sm leading-relaxed line-clamp-3">
+        <div className="mt-4 p-4 bg-[var(--bg-deep)] rounded-lg border border-[var(--border)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[var(--border)]" />
+          <h4 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" />
+            Job Description Snippet
+          </h4>
+          <div className="text-[var(--text-dim)] text-sm leading-relaxed line-clamp-3 font-light">
             {job.content.substring(0, 300)}...
           </div>
         </div>
@@ -226,10 +236,10 @@ const JobCard = ({ job, onTrack, onSkip }: {
 
 // Enhanced Loading Components
 const ChunkLoadingSpinner = () => (
-  <div className="flex items-center justify-center py-6">
-    <div className="flex items-center gap-3 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg">
+  <div className="flex items-center justify-center py-8">
+    <div className="flex items-center gap-3 px-5 py-2.5 bg-[var(--bg-surface)] border border-[var(--primary)]/20 rounded-full shadow-[0_0_15px_rgba(45,211,191,0.1)]">
       <div className="w-5 h-5 border-2 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin"></div>
-      <span className="text-[var(--text-main)] text-sm font-medium">AI Filtering in progress...</span>
+      <span className="text-[var(--text-main)] text-sm font-medium tracking-wide">AI Analysis in progress...</span>
     </div>
   </div>
 );
@@ -299,31 +309,29 @@ const ChunkHeader = ({
   onTrackAll: () => void;
   onSkipAll: () => void;
 }) => (
-  <div className={`flex items-center justify-between p-6 mb-6 rounded-xl backdrop-blur-sm border transition-all duration-300 ${isFiltered ? 'bg-gradient-to-r from-green-500/10 to-green-600/5 border-green-500/30 shadow-green-500/20' :
-    isLoading ? 'bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 shadow-primary/20' :
-      error ? 'bg-gradient-to-r from-red-500/10 to-red-600/5 border-red-500/30 shadow-red-500/20' :
-        'bg-gradient-to-r from-bg-light to-bg-card border-border shadow-lg'
+  <div className={`flex items-center justify-between p-6 mb-6 rounded-xl backdrop-blur-md border transition-all duration-300 ${isFiltered ? 'bg-[var(--success)]/5 border-[var(--success)]/20 shadow-[0_0_20px_rgba(52,211,153,0.05)]' :
+    isLoading ? 'bg-[var(--primary)]/5 border-[var(--primary)]/20 shadow-[0_0_20px_rgba(45,212,191,0.05)]' :
+      error ? 'bg-[var(--danger)]/5 border-[var(--danger)]/20' :
+        'bg-[var(--bg-card)]/80 border-[var(--border)] shadow-sm'
     }`}>
     <div className="flex items-center">
-      <div className="flex items-center gap-3">
-        <div className="px-3 py-1 bg-primary/20 rounded-lg border border-primary/30">
-          <span className="text-primary font-bold text-sm">Chunk {chunkId}</span>
+      <div className="flex items-center gap-4">
+        <div className="px-3 py-1.5 bg-[var(--bg-deep)] rounded-lg border border-[var(--border)] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse" />
+          <span className="text-[var(--text-main)] font-mono text-sm">Chunk {chunkId}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-primary rounded-full"></div>
-          <span className="text-white font-medium">
-            {isFiltered ? `${filteredJobs} visible jobs` : `${totalJobs} jobs`}
+          <span className={`text-lg font-bold ${isFiltered ? 'text-[var(--success)]' : 'text-[var(--text-main)]'}`}>
+            {isFiltered ? filteredJobs : totalJobs}
           </span>
-          {isFiltered && (
-            <span className="text-text-muted text-sm">
-              ({totalJobs} total)
-            </span>
-          )}
+          <span className="text-[var(--text-muted)] text-sm font-medium">
+            {isFiltered ? `visible jobs (of ${totalJobs} total)` : 'jobs found'}
+          </span>
         </div>
       </div>
       {error && (
-        <div className="ml-4 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-lg">
-          <span className="text-red-400 text-sm font-medium">⚠ {error}</span>
+        <div className="ml-4 px-3 py-1.5 bg-[var(--danger)]/10 border border-[var(--danger)]/20 rounded-lg flex items-center gap-2">
+          <span className="text-[var(--danger)] text-sm font-medium">⚠ {error}</span>
         </div>
       )}
     </div>
@@ -332,9 +340,9 @@ const ChunkHeader = ({
         <button
           onClick={onFilter}
           disabled={isLoading}
-          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg disabled:bg-gray-500 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="group flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black font-bold py-2.5 px-5 rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(45,211,191,0.3)] hover:shadow-[0_0_20px_rgba(45,211,191,0.5)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
-          <Sparkles size={18} />
+          <Sparkles size={16} className="group-hover:animate-spin-slow" />
           AI Filter
         </button>
       )}
@@ -342,25 +350,25 @@ const ChunkHeader = ({
         <div className="flex gap-2">
           <button
             onClick={onReset}
-            className="flex items-center gap-2 bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105"
+            className="flex items-center gap-2 bg-[var(--bg-light)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-main)] font-medium py-2 px-4 rounded-lg transition-all duration-200"
           >
-            <RotateCcw size={16} />
+            <RotateCcw size={14} />
             Reset
           </button>
           <button
             onClick={onTrackAll}
             disabled={filteredJobs === 0}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:from-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
+            className="flex items-center gap-2 bg-[var(--success)] hover:bg-[var(--success)]/90 disabled:bg-[var(--bg-light)] disabled:text-[var(--text-muted)] text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 shadow-sm disabled:shadow-none"
           >
-            <Save size={16} />
-            Track All ({filteredJobs})
+            <Save size={14} />
+            Track All
           </button>
           <button
             onClick={onSkipAll}
             disabled={filteredJobs === 0}
-            className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 disabled:from-gray-500 disabled:to-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
+            className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] font-medium py-2 px-4 rounded-lg transition-all duration-200"
           >
-            ✗ Skip All ({filteredJobs})
+            Skip All
           </button>
         </div>
       )}
@@ -371,28 +379,29 @@ const ChunkHeader = ({
 
 // Initial prompt for the user to start a search
 const InitialPrompt = () => (
-  <div className="text-center py-20">
-    <div className="relative mb-8">
-      <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center mx-auto border border-primary/30">
-        <Search size={48} className="text-primary" />
+  <div className="text-center py-24">
+    <div className="relative mb-8 group">
+      <div className="w-24 h-24 bg-[var(--bg-surface)] rounded-2xl flex items-center justify-center mx-auto border border-[var(--border)] shadow-[0_0_30px_rgba(45,212,191,0.1)] group-hover:shadow-[0_0_50px_rgba(45,212,191,0.2)] transition-all duration-500">
+        <Search size={48} className="text-[var(--primary)] group-hover:scale-110 transition-transform duration-500" />
       </div>
-      <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full animate-ping"></div>
+      <div className="absolute -top-2 -right-2 w-4 h-4 bg-[var(--primary)] rounded-full animate-ping opacity-75"></div>
+      <div className="absolute -top-2 -right-2 w-4 h-4 bg-[var(--primary)] rounded-full"></div>
     </div>
-    <h3 className="text-2xl font-bold text-white mb-4">Find Your Next Opportunity</h3>
-    <p className="text-text-muted text-lg max-w-md mx-auto leading-relaxed">
-      Use the search bar above to discover jobs with AI-powered filtering and date-based search capabilities.
+    <h3 className="text-3xl font-bold text-[var(--text-main)] mb-4 tracking-tight">Find Your Next Opportunity</h3>
+    <p className="text-[var(--text-muted)] text-lg max-w-lg mx-auto leading-relaxed mb-10">
+      Use the search bar above to discover jobs with <span className="text-[var(--primary)] font-medium">AI-powered filtering</span> and smart analysis.
     </p>
-    <div className="mt-8 flex items-center justify-center gap-4 text-sm text-text-muted">
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-primary rounded-full"></div>
+    <div className="flex items-center justify-center gap-8 text-sm text-[var(--text-dim)]">
+      <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
+        <div className="w-2 h-2 bg-[var(--primary)] rounded-full shadow-[0_0_8px_var(--primary)]"></div>
         <span>AI Analysis</span>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+      <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
+        <div className="w-2 h-2 bg-[var(--success)] rounded-full shadow-[0_0_8px_var(--success)]"></div>
         <span>Smart Filtering</span>
       </div>
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+      <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
+        <div className="w-2 h-2 bg-[var(--secondary)] rounded-full shadow-[0_0_8px_var(--secondary)]"></div>
         <span>Date Range Search</span>
       </div>
     </div>
@@ -905,13 +914,14 @@ const JobSearchPage = () => {
     setShowFilters: (value: boolean) => void;
     setHasDate: (value: boolean | undefined) => void;
   }) => (
-    <div className="bg-[var(--bg-surface)] rounded-xl p-6 mb-8 border border-[var(--border)]">
+    <div className="bg-[var(--bg-surface)]/80 backdrop-blur-md rounded-2xl p-6 mb-8 border border-[var(--border)] shadow-lg relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--primary)] via-[var(--secondary)] to-[var(--primary)] opacity-50" />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-[var(--primary)]/10 rounded-lg">
+          <div className="p-2 bg-[var(--primary)]/10 rounded-lg border border-[var(--primary)]/20">
             <Filter className="w-5 h-5 text-[var(--primary)]" />
           </div>
-          <h3 className="text-xl font-semibold text-[var(--text-main)]">Advanced Filters</h3>
+          <h3 className="text-xl font-bold text-[var(--text-main)]">Advanced Filters</h3>
         </div>
         <button
           onClick={() => setShowFilters(false)}
@@ -920,7 +930,7 @@ const JobSearchPage = () => {
           ×
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Date Filters - Your Core Feature */}
         <FormDateInput
           label="Posted After"
@@ -955,16 +965,6 @@ const JobSearchPage = () => {
         <FormInputNumber
           label="Max Pages"
           value={filters.maxPages ? parseInt(filters.maxPages) : 3}
-          onChange={(e) => handleFilterChange('maxPages', e.target.value)}
-          min={1}
-          max={20}
-          step={1}
-        />
-
-        {/* Max Pages Filter */}
-        <FormInputNumber
-          label="Max Pages"
-          value={filters.maxPages ? parseInt(filters.maxPages) : 3}
           onChange={(value) => handleFilterChange('maxPages', value?.toString() || '3')}
           min={1}
           max={20}
@@ -978,45 +978,37 @@ const JobSearchPage = () => {
 
         {/* Hiring Posts Filter */}
         <div className="md:col-span-2 lg:col-span-3">
-          <div className="flex items-center gap-3 p-4 bg-[var(--bg-light)]/50 rounded-lg border border-[var(--border)]/50">
-            <input
-              type="checkbox"
-              id="onlyHiringPosts"
-              checked={filters.onlyHiringPosts}
-              onChange={(e) => handleFilterChange('onlyHiringPosts', e.target.checked)}
-              className="w-5 h-5 text-[var(--primary)] bg-[var(--bg-surface)] border-[var(--border)] rounded focus:ring-[var(--primary)] focus:ring-2"
-            />
-            <label htmlFor="onlyHiringPosts" className="text-sm text-[var(--text-main)] font-medium cursor-pointer">
-              <span className="flex items-center gap-2">
-                <span>Only Hiring Posts</span>
-                <span className="px-2 py-1 bg-[var(--primary)]/10 text-[var(--primary)] text-xs rounded font-bold">AI POWERED</span>
-              </span>
-              <div className="text-xs text-[var(--text-muted)] mt-1">
+          <div className="group flex items-center gap-4 p-4 bg-[var(--bg-light)]/30 hover:bg-[var(--bg-light)]/50 rounded-xl border border-[var(--border)] transition-colors cursor-pointer" onClick={() => handleFilterChange('onlyHiringPosts', !filters.onlyHiringPosts)}>
+            <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${filters.onlyHiringPosts ? 'bg-[var(--primary)] border-[var(--primary)]' : 'bg-[var(--bg-surface)] border-[var(--text-muted)]'}`}>
+              {filters.onlyHiringPosts && <Sparkles size={14} className="text-black" />}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-bold text-[var(--text-main)]">Only Hiring Posts</span>
+                <span className="px-2 py-0.5 bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] uppercase tracking-wider rounded font-bold border border-[var(--primary)]/20">AI Powered</span>
+              </div>
+              <div className="text-xs text-[var(--text-muted)]">
                 AI detects: job titles, &quot;hiring&quot;, &quot;apply&quot;, salary mentions, and other hiring indicators
               </div>
-            </label>
+            </div>
           </div>
         </div>
 
         {/* Date Filter */}
         <div className="md:col-span-2 lg:col-span-3">
-          <div className="flex items-center gap-3 p-4 bg-[var(--bg-light)]/50 rounded-lg border border-[var(--border)]/50">
-            <input
-              type="checkbox"
-              id="hasDate"
-              checked={hasDate === true}
-              onChange={(e) => setHasDate(e.target.checked ? true : undefined)}
-              className="w-5 h-5 text-[var(--primary)] bg-[var(--bg-surface)] border-[var(--border)] rounded focus:ring-[var(--primary)] focus:ring-2"
-            />
-            <label htmlFor="hasDate" className="text-sm text-[var(--text-main)] font-medium cursor-pointer">
-              <span className="flex items-center gap-2">
-                <span>Show jobs with dates only</span>
-                <span className="px-2 py-1 bg-[var(--secondary)]/10 text-[var(--secondary)] text-xs rounded font-bold">FILTER</span>
-              </span>
-              <div className="text-xs text-[var(--text-muted)] mt-1">
+          <div className="group flex items-center gap-4 p-4 bg-[var(--bg-light)]/30 hover:bg-[var(--bg-light)]/50 rounded-xl border border-[var(--border)] transition-colors cursor-pointer" onClick={() => setHasDate(hasDate === true ? undefined : true)}>
+            <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${hasDate === true ? 'bg-[var(--secondary)] border-[var(--secondary)]' : 'bg-[var(--bg-surface)] border-[var(--text-muted)]'}`}>
+              {hasDate === true && <Calendar size={14} className="text-white" />}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-sm font-bold text-[var(--text-main)]">Show jobs with dates only</span>
+                <span className="px-2 py-0.5 bg-[var(--secondary)]/10 text-[var(--secondary)] text-[10px] uppercase tracking-wider rounded font-bold border border-[var(--secondary)]/20">Filter</span>
+              </div>
+              <div className="text-xs text-[var(--text-muted)]">
                 When checked, only shows jobs that have valid publication dates. Unchecked shows all jobs.
               </div>
-            </label>
+            </div>
           </div>
         </div>
       </div>
@@ -1125,40 +1117,49 @@ const JobSearchPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <Toaster />
-      <div className="p-6">
+      <Toaster
+        toastOptions={{
+          style: {
+            background: 'var(--bg-surface)',
+            color: 'var(--text-main)',
+            border: '1px solid var(--border)',
+          },
+        }}
+      />
+      <div className="p-6 min-h-screen">
         <div className="mb-12 text-center">
-          <div className="inline-flex items-center gap-4 mb-6 px-6 py-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl">
-            <div className="p-2 bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-lg">
-              <Bot className="w-6 h-6 text-white" />
+          <div className="inline-flex items-center gap-4 mb-6 px-8 py-4 bg-[var(--bg-surface)]/50 backdrop-blur-sm border border-[var(--border)] rounded-full shadow-lg">
+            <div className="p-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dim)] rounded-xl shadow-[0_0_15px_rgba(45,211,191,0.3)]">
+              <Bot className="w-6 h-6 text-black" />
             </div>
-            <div className="text-2xl font-bold text-[var(--text-main)]">
+            <div className="text-2xl font-bold text-[var(--text-main)] tracking-tight">
               AI-Powered Job Search
             </div>
           </div>
           <p className="text-[var(--text-muted)] text-lg max-w-2xl mx-auto leading-relaxed">
-            Discover opportunities with intelligent filtering, AI analysis, and advanced search capabilities.
-            Find jobs that match your criteria with precision and speed.
+            Discover opportunities with <span className="text-[var(--primary)] font-medium">intelligent filtering</span>, AI analysis, and advanced search capabilities.
           </p>
         </div>
         <div className="max-w-6xl mx-auto">
           {/* Search Bar and Controls */}
           <div className="mb-10 space-y-6">
-            <form id="searchForm" onSubmit={handleSearch} className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-              <div className="flex gap-4">
-                <div className="flex-grow">
+            <form id="searchForm" onSubmit={handleSearch} className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl p-2 shadow-lg hover:shadow-[0_0_30px_rgba(0,0,0,0.3)] transition-shadow duration-300">
+              <div className="flex gap-2">
+                <div className="flex-grow relative group">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <Search className="w-5 h-5 text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors" />
+                  </div>
                   <FormInput
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="e.g., React Developer, MERN Stack, Full Stack Engineer"
-                    icon={<Search className="w-5 h-5" />}
-                    className="text-lg py-4"
+                    className="text-lg py-4 pl-12 bg-transparent border-none focus:ring-0 w-full h-full"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black font-bold py-4 px-8 rounded-xl transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] flex items-center justify-center"
+                  className="bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black font-bold py-4 px-8 rounded-xl transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -1179,53 +1180,16 @@ const JobSearchPage = () => {
             <div className="flex gap-3 flex-wrap items-center justify-center">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 font-medium py-3 px-6 rounded-xl transition-all duration-200 ${showFilters
-                  ? 'bg-[var(--primary)] text-black shadow-sm'
-                  : 'bg-[var(--bg-surface)] hover:bg-[var(--bg-light)] text-[var(--text-main)] border border-[var(--border)]'
+                className={`flex items-center gap-2 font-medium py-2.5 px-6 rounded-xl transition-all duration-200 border ${showFilters
+                  ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/30'
+                  : 'bg-[var(--bg-surface)] hover:bg-[var(--bg-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] border-[var(--border)]'
                   }`}
               >
-                <Filter size={18} />
+                <Filter size={16} />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
               </button>
             </div>
           </div>
-
-          {/* AI Config Panel */}
-          {/* Removed AIProviderConfig from AI Filtering page as per user request */}
-          {/* {showAIConfig && (
-            <AIProviderConfig
-              aiProvider={aiProvider}
-              setAiProvider={setAiProvider}
-              apiKey={apiKey}
-              setApiKey={setApiKey}
-              apiUrl={apiUrl}
-              setApiUrl={setApiUrl}
-              model={model}
-              setModel={setModel}
-              setShowConfig={setShowAIConfig}
-            />
-          )}
-          */}
-
-          {/* Removed AI Config toggle button as per user request */}
-          {/*
-          <button
-            onClick={() => setShowAIConfig(!showAIConfig)}
-            className={`flex items-center gap-2 font-medium py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105 ${
-              showAIConfig
-                ? 'bg-primary text-white shadow-lg'
-                : 'bg-bg-card hover:bg-bg-light text-text border border-border'
-            }`}
-          >
-            <Cog size={18} />
-            <div className="flex flex-col items-start">
-              <span>{showAIConfig ? 'Hide AI Config' : 'AI Config'}</span>
-              <span className="text-xs opacity-75 capitalize">
-                {aiProvider.replace('-', ' ')} {apiKey || apiUrl ? '✓' : '⚠'}
-              </span>
-            </div>
-          </button>
-          */}
 
           {/* Filter Panel */}
           {showFilters && (

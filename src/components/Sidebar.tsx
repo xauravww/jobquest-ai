@@ -14,16 +14,16 @@ import {
   FileText,
   Zap,
   Settings,
-  Brain,
-  Briefcase,
-  BarChart3,
-  Target,
-  TrendingUp,
-  Atom,
-  StickyNote,
   Search,
+  Briefcase,
   LogOut,
-  Sparkles
+  ChevronLeft,
+  ChevronRight,
+  Menu,
+  Brain,
+  TrendingUp,
+  Users,
+  Target
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -95,12 +95,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
   const getRoleInfo = (role: string) => {
     switch (role) {
       case 'premium-seeker':
-        return { label: 'Premium', icon: <TrendingUp size={14} />, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20' };
+        return { label: 'Premium', icon: <TrendingUp size={14} />, color: 'text-amber-400', bg: 'bg-amber-400/10', border: '' };
       case 'pro-seeker':
-        return { label: 'Pro', icon: <Target size={14} />, color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/20' };
+        return { label: 'Pro', icon: <Target size={14} />, color: 'text-purple-400', bg: 'bg-purple-400/10', border: '' };
       case 'job-seeker':
       default:
-        return { label: 'Basic', icon: <User size={14} />, color: 'text-[var(--text-muted)]', bg: 'bg-[var(--bg-light)]', border: 'border-[var(--border)]' };
+        return { label: 'Basic', icon: <User size={14} />, color: 'text-[var(--text-muted)]', bg: 'bg-[var(--bg-light)]', border: '' };
     }
   };
 
@@ -110,7 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
     <aside
       ref={sidebarRef}
       id="sidebar"
-      className={`flex-shrink-0 flex flex-col gap-4 p-4 flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin bg-[var(--bg-surface)] border-r border-[var(--border)] transition-all duration-300 ${className || ''}`}
+      className={`flex-shrink-0 flex flex-col gap-4 p-4 flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin bg-[var(--bg-surface)] transition-all duration-300 ${className || ''}`}
       style={{
         width: isCollapsed ? '70px' : '260px',
       }}
@@ -125,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 w-full">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${roleInfo.bg} ${roleInfo.border} border w-full justify-center`}>
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${roleInfo.bg} w-full justify-center`}>
               <span className={roleInfo.color}>{roleInfo.icon}</span>
               <span className={`text-xs font-bold ${roleInfo.color}`}>{roleInfo.label} Plan</span>
             </div>
@@ -153,43 +153,44 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
 
       <nav className="flex flex-col gap-1 flex-1">
         <NavLink href="/dashboard" icon={<Home size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          Dashboard
+          Mission Control
+        </NavLink>
+
+        {!isCollapsed && <div className="mt-4 mb-2 px-3 text-xs font-semibold text-[var(--text-dim)] uppercase tracking-wider">Automation</div>}
+        {isCollapsed && <div className="my-2 h-px bg-transparent mx-2" />}
+
+        <NavLink href="/ai-filtering" icon={<Brain size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+          Search Agent
         </NavLink>
         <NavLink href="/unified-dashboard" icon={<TrendingUp size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          Command Center
+          Analytics
         </NavLink>
 
         {!isCollapsed && <div className="mt-4 mb-2 px-3 text-xs font-semibold text-[var(--text-dim)] uppercase tracking-wider">Job Search</div>}
-        {isCollapsed && <div className="my-2 h-px bg-[var(--border)] mx-2" />}
+        {isCollapsed && <div className="my-2 h-px bg-transparent mx-2" />}
 
-        <NavLink href="/ai-filtering" icon={<Brain size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          AI Filtering
-        </NavLink>
         <NavLink href="/job-search" icon={<Search size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          Job Search
+          Manual Search
         </NavLink>
 
         {!isCollapsed && <div className="mt-4 mb-2 px-3 text-xs font-semibold text-[var(--text-dim)] uppercase tracking-wider">Management</div>}
-        {isCollapsed && <div className="my-2 h-px bg-[var(--border)] mx-2" />}
+        {isCollapsed && <div className="my-2 h-px bg-transparent mx-2" />}
 
-        <NavLink href="/application-tracking" icon={<Briefcase size={18} />} pathname={pathname} isCollapsed={isCollapsed}>
+        <NavLink href="/follow-ups" icon={<Users size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+          Follow-ups
+        </NavLink>
+        <NavLink href="/application-tracking" icon={<Briefcase size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Applications
         </NavLink>
         <NavLink href="/resume-management" icon={<FileText size={18} />} pathname={pathname} isCollapsed={isCollapsed}>
           Resumes
         </NavLink>
-        <NavLink href="/latex-resume-builder" icon={<Atom size={18} />} pathname={pathname} isCollapsed={isCollapsed} disabled>
-          LaTeX Builder
-        </NavLink>
 
         {!isCollapsed && <div className="mt-4 mb-2 px-3 text-xs font-semibold text-[var(--text-dim)] uppercase tracking-wider">Tools</div>}
-        {isCollapsed && <div className="my-2 h-px bg-[var(--border)] mx-2" />}
+        {isCollapsed && <div className="my-2 h-px bg-transparent mx-2" />}
 
         <NavLink href="/user-profile" icon={<User size={18} />} pathname={pathname} isCollapsed={isCollapsed}>
           Profile
-        </NavLink>
-        <NavLink href="/fleeting-notes" icon={<StickyNote size={18} />} pathname={pathname} isCollapsed={isCollapsed}>
-          Fleeting Notes
         </NavLink>
         <NavLink href="/settings" icon={<Settings size={18} />} pathname={pathname} isCollapsed={isCollapsed}>
           Settings
@@ -198,7 +199,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
 
       {/* Logout */}
       {session && (
-        <div className="mt-auto pt-2 border-t border-[var(--border)]">
+        <div className="mt-auto pt-2">
           <button
             onClick={() => signOut({ redirect: false })}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-light)] hover:text-[var(--text-main)] transition-all duration-200 group ${isCollapsed ? 'justify-center' : ''}`}

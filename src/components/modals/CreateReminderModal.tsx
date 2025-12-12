@@ -215,7 +215,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
             <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
                 {/* Basic Information */}
                 <section className="space-y-4">
-                    <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2">Basic Information</h3>
+                    <h3 className="text-lg font-medium text-white pb-2">Basic Information</h3>
 
                     <div>
                         <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title <span className="text-[var(--danger)]">*</span></label>
@@ -297,7 +297,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
                 {/* Associations */}
                 <section className="space-y-4">
-                    <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
                         <Tag className="w-5 h-5" /> Associations
                     </h3>
 
@@ -319,7 +319,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                         {formData.applicationId && (() => {
                             const selectedApp = applications.find(app => app._id === formData.applicationId);
                             return selectedApp ? (
-                                <div className="mt-3 p-3 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-xl">
+                                <div className="mt-3 p-3 bg-[var(--success)]/10 rounded-xl">
                                     <div className="flex items-center gap-2 text-sm mb-1">
                                         <div className="w-2 h-2 bg-[var(--success)] rounded-full"></div>
                                         <span className="text-[var(--success)] font-medium">Linked to Application</span>
@@ -399,13 +399,13 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
                 {/* Notifications */}
                 <section className="space-y-4">
-                    <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
                         <Bell className="w-5 h-5" /> Notifications
                     </h3>
 
                     <div className="space-y-3">
                         {formData.notifications.map((notification, index) => (
-                            <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-[var(--bg-deep)] rounded-xl border border-[var(--border-glass)] relative group">
+                            <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-[var(--bg-deep)] rounded-xl relative group">
                                 <div>
                                     <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Type</label>
                                     <select
@@ -470,7 +470,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     </div>
                 </section>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-[var(--border-glass)]">
+                <div className="flex justify-end gap-3 pt-6">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"

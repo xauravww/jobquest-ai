@@ -7,7 +7,7 @@ import Image from "next/image";
 
 const Footer = () => {
     return (
-        <footer className="bg-[#020010] border-t border-white/10 pt-20 pb-10">
+        <footer className="bg-black border-t border-white/10 pt-20 pb-10">
             <div className="container mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     <div className="col-span-1 md:col-span-1">
@@ -31,29 +31,29 @@ const Footer = () => {
                     <div>
                         <h4 className="text-white font-bold mb-6">Product</h4>
                         <ul className="space-y-4">
-                            <li><Link href="#features" className="text-gray-400 hover:text-indigo-400 transition-colors">Features</Link></li>
-                            <li><Link href="#pricing" className="text-gray-400 hover:text-indigo-400 transition-colors">Pricing</Link></li>
-                            <li><Link href="#testimonials" className="text-gray-400 hover:text-indigo-400 transition-colors">Testimonials</Link></li>
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Integration</Link></li>
+                            <li><Link href="#features" className="text-gray-400 hover:text-teal-400 transition-colors">Features</Link></li>
+                            <li><Link href="#pricing" className="text-gray-400 hover:text-teal-400 transition-colors">Pricing</Link></li>
+                            <li><Link href="#testimonials" className="text-gray-400 hover:text-teal-400 transition-colors">Testimonials</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Integration</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-white font-bold mb-6">Resources</h4>
                         <ul className="space-y-4">
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Blog</Link></li>
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Community</Link></li>
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Help Center</Link></li>
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">API Docs</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Blog</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Community</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Help Center</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">API Docs</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-white font-bold mb-6">Legal</h4>
                         <ul className="space-y-4">
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
-                            <li><Link href="#" className="text-gray-400 hover:text-indigo-400 transition-colors">Cookie Policy</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Privacy Policy</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Terms of Service</Link></li>
+                            <li><Link href="#" className="text-gray-400 hover:text-teal-400 transition-colors">Cookie Policy</Link></li>
                         </ul>
                     </div>
                 </div>

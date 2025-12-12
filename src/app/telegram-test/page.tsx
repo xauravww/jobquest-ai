@@ -95,7 +95,7 @@ export default function TelegramTestPage() {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+        <div className="bg-gray-800 rounded-xl p-6">
           <h1 className="text-3xl font-bold text-white mb-2">
             🧪 Telegram Commands Local Test
           </h1>
@@ -104,7 +104,7 @@ export default function TelegramTestPage() {
           </p>
 
           {/* Webhook Explanation */}
-          <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-4 mb-6">
+          <div className="bg-yellow-900/30 rounded-lg p-4 mb-6">
             <h3 className="text-yellow-300 font-semibold mb-2">
               🚨 Why Webhooks Don't Work on Localhost
             </h3>
@@ -186,7 +186,7 @@ export default function TelegramTestPage() {
             )}
 
             {/* Instructions */}
-            <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-4">
+            <div className="bg-blue-900/30 rounded-lg p-4">
               <h4 className="text-blue-300 font-semibold mb-2">📋 For Production Deployment:</h4>
               <div className="text-blue-200/80 text-sm space-y-1">
                 <p>1. Deploy your app to Vercel/Netlify</p>

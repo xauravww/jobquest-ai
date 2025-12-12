@@ -200,7 +200,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
         {/* Left Column: Inputs */}
         <div className="space-y-4">
           {job && (
-            <div className="bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl p-4">
+            <div className="bg-[var(--bg-surface)] rounded-xl p-4">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-[var(--primary)]/20 rounded-lg border border-[var(--primary)]/30">
                   <Briefcase className="w-6 h-6 text-[var(--primary)]" />
@@ -213,7 +213,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
             </div>
           )}
 
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl p-4">
+          <div className="bg-[var(--bg-surface)] rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
               <span className="text-white font-medium">Job Description</span>
               <button
@@ -234,7 +234,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
             />
           </div>
 
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl p-4">
+          <div className="bg-[var(--bg-surface)] rounded-xl p-4">
             <span className="block text-white font-medium mb-3">Cover Letter Style</span>
             <select
               value={coverLetterType}
@@ -247,7 +247,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
             </select>
           </div>
 
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl overflow-hidden">
+          <div className="bg-[var(--bg-surface)] rounded-xl overflow-hidden">
             <button
               onClick={() => setShowProfileDetails(!showProfileDetails)}
               className="w-full flex items-center justify-between p-4 text-white font-medium hover:bg-[var(--bg-glass)] transition-colors"
@@ -281,7 +281,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
 
         {/* Right Column: Output & Actions */}
         <div className="flex flex-col space-y-4 h-full">
-          <div className="bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl p-6 flex-grow flex flex-col h-full min-h-[500px]">
+          <div className="bg-[var(--bg-surface)] rounded-xl p-6 flex-grow flex flex-col h-full min-h-[500px]">
             <div className="flex-grow flex flex-col items-center justify-center space-y-4 text-center h-full">
 
               {!coverLetter && !generating && (
@@ -327,7 +327,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
                     </div>
                   ) : (
                     <div className="space-y-4 flex flex-col h-full">
-                      <div className="bg-[var(--bg-deep)] p-6 rounded-xl border border-[var(--border-glass)] overflow-y-auto flex-grow text-left shadow-inner">
+                      <div className="bg-[var(--bg-deep)] p-6 rounded-xl overflow-y-auto flex-grow text-left shadow-inner">
                         <pre className="text-[var(--text-main)] whitespace-pre-wrap font-sans text-sm leading-relaxed">{coverLetter}</pre>
                       </div>
                       <div className="flex justify-end gap-3 pt-2">

@@ -262,7 +262,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
         {/* Basic Info */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2">Basic Information</h3>
+          <h3 className="text-lg font-medium text-white pb-2">Basic Information</h3>
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title <span className="text-[var(--danger)]">*</span></label>
@@ -333,7 +333,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Date & Time */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
             <Clock className="w-5 h-5" /> Date & Time
           </h3>
 
@@ -392,7 +392,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Location */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
             <MapPin className="w-5 h-5" /> Location
           </h3>
 
@@ -454,13 +454,13 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Attendees */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
             <Users className="w-5 h-5" /> Attendees
           </h3>
 
           <div className="space-y-3">
             {attendees.map((attendee, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-[var(--bg-deep)] p-3 rounded-xl border border-[var(--border-glass)]">
+              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-[var(--bg-deep)] p-3 rounded-xl">
                 <div className="md:col-span-3">
                   <input
                     type="text"
@@ -523,7 +523,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Associations */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
             <FileText className="w-5 h-5" /> Associations
           </h3>
 
@@ -545,7 +545,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             {applicationId && (() => {
               const selectedApp = applications.find(app => app._id === applicationId);
               return selectedApp ? (
-                <div className="mt-3 p-3 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-xl">
+                <div className="mt-3 p-3 bg-[var(--success)]/10 rounded-xl">
                   <div className="flex items-center gap-2 text-sm mb-1">
                     <div className="w-2 h-2 bg-[var(--success)] rounded-full"></div>
                     <span className="text-[var(--success)] font-medium">Linked to Application</span>
@@ -563,7 +563,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Agenda */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white border-b border-[var(--border-glass)] pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
             <FileText className="w-5 h-5" /> Agenda
           </h3>
 
@@ -597,7 +597,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </div>
         </section>
 
-        <div className="flex justify-end gap-3 pt-6 border-t border-[var(--border-glass)]">
+        <div className="flex justify-end gap-3 pt-6">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
