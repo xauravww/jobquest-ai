@@ -34,9 +34,9 @@ const JobCard = ({ job, onTrack, onSkip }: {
   onSkip: (job: Job) => void;
 }) => {
   const getCardStyle = () => {
-    if (job.userAction === 'track') return 'border-[var(--success)]/50 bg-[var(--success)]/5';
-    if (job.userAction === 'skip') return 'border-[var(--danger)]/50 bg-[var(--danger)]/5 opacity-50';
-    return 'border-[var(--border-glass)] bg-[var(--bg-surface)]/50 hover:border-[var(--primary)]/50 hover:shadow-lg hover:shadow-[var(--primary)]/5';
+    if (job.userAction === 'track') return 'border-[var(--success)]/30 bg-[var(--success)]/5';
+    if (job.userAction === 'skip') return 'border-[var(--danger)]/30 bg-[var(--danger)]/5 opacity-50';
+    return 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/50 hover:shadow-md';
   };
 
   return (
@@ -50,18 +50,18 @@ const JobCard = ({ job, onTrack, onSkip }: {
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
         <div className="flex-1">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--secondary)]/20 flex items-center justify-center border border-[var(--primary)]/30 text-[var(--primary)] font-bold text-xl flex-shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[var(--bg-deep)] flex items-center justify-center border border-[var(--border)] text-[var(--primary)] font-bold text-xl flex-shrink-0">
               {job.company.charAt(0)}
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">{job.title}</h3>
+              <h3 className="text-xl font-bold text-[var(--text-main)] mb-1">{job.title}</h3>
               <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
                 <span className="flex items-center gap-1">
                   <Building className="w-3 h-3 text-[var(--primary)]" />
                   {job.company}
                 </span>
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-blue-400" />
+                  <MapPin className="w-3 h-3 text-[var(--secondary)]" />
                   {job.location}
                 </span>
                 {job.publishedDate && (
@@ -82,10 +82,10 @@ const JobCard = ({ job, onTrack, onSkip }: {
               </div>
             )}
             <div className={`px-3 py-1 rounded-full text-xs font-medium border ${job.source === 'findwork'
-                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                : job.source === 'jooble'
-                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                  : 'bg-green-500/10 text-green-400 border-green-500/20'
+              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+              : job.source === 'jooble'
+                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                : 'bg-green-500/10 text-green-400 border-green-500/20'
               }`}>
               {job.source === 'findwork' ? 'FindWork' :
                 job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
@@ -98,14 +98,14 @@ const JobCard = ({ job, onTrack, onSkip }: {
             <>
               <button
                 onClick={() => onTrack(job)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black font-bold rounded-xl transition-all shadow-lg shadow-[var(--success)]/20"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black font-bold rounded-xl transition-all shadow-sm"
               >
                 <Save className="w-4 h-4" />
                 <span>Track</span>
               </button>
               <button
                 onClick={() => onSkip(job)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-glass)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] rounded-xl transition-all"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] rounded-xl transition-all"
               >
                 <X className="w-4 h-4" />
                 <span>Skip</span>
@@ -113,8 +113,8 @@ const JobCard = ({ job, onTrack, onSkip }: {
             </>
           ) : (
             <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${job.userAction === 'track'
-                ? 'text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20'
-                : 'text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20'
+              ? 'text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20'
+              : 'text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20'
               }`}>
               {job.userAction === 'track' ? <CheckCircle className="w-4 h-4" /> : <X className="w-4 h-4" />}
               {job.userAction === 'track' ? 'Tracked' : 'Skipped'}
@@ -133,7 +133,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
       </div>
 
       {job.description && (
-        <div className="mt-4 p-4 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)]">
+        <div className="mt-4 p-4 bg-[var(--bg-deep)] rounded-xl border border-[var(--border)]">
           <p className="text-[var(--text-muted)] text-sm line-clamp-3 leading-relaxed">{job.description}</p>
         </div>
       )}
@@ -269,12 +269,12 @@ const JobSearchPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-6 lg:p-8 min-h-screen space-y-8">
+      <div className="p-6 lg:p-8 min-h-screen space-y-8 max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+            <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+              <div className="p-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
                 <Globe className="w-8 h-8 text-[var(--primary)]" />
               </div>
               Job Search
@@ -284,7 +284,7 @@ const JobSearchPage = () => {
         </div>
 
         {/* Search Form */}
-        <div className="bg-[var(--bg-surface)]/30 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-glass)]">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6 border border-[var(--border)]">
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
               <Filter className="w-4 h-4" />
@@ -299,7 +299,7 @@ const JobSearchPage = () => {
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                   placeholder="Keywords (e.g. React Developer)"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
                 />
               </div>
 
@@ -310,7 +310,7 @@ const JobSearchPage = () => {
                   value={filters.location}
                   onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="Location (e.g. Remote)"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
                 />
               </div>
 
@@ -319,7 +319,7 @@ const JobSearchPage = () => {
                 <select
                   value={filters.source}
                   onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none appearance-none"
                 >
                   <option value="all">All Sources</option>
                   <option value="findwork">FindWork</option>
@@ -330,7 +330,7 @@ const JobSearchPage = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <label className="flex items-center gap-3 text-white cursor-pointer group">
+              <label className="flex items-center gap-3 text-[var(--text-main)] cursor-pointer group">
                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${filters.remote ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[var(--text-muted)] group-hover:border-[var(--primary)]'}`}>
                   {filters.remote && <CheckCircle className="w-3.5 h-3.5 text-black" />}
                 </div>
@@ -346,7 +346,7 @@ const JobSearchPage = () => {
               <button
                 type="submit"
                 disabled={loading || !filters.search.trim()}
-                className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-8 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Search className="w-5 h-5" />
                 <span>{loading ? 'Searching...' : 'Search Jobs'}</span>
@@ -362,11 +362,11 @@ const JobSearchPage = () => {
           <div className="space-y-6">
             {jobs.length > 0 && (
               <div className="flex justify-between items-center px-2">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-[var(--text-main)] flex items-center gap-2">
                   <span className="w-2 h-8 bg-[var(--primary)] rounded-full"></span>
                   Found {jobs.length} jobs
                 </h2>
-                <div className="text-sm text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1 rounded-full border border-[var(--border-glass)]">
+                <div className="text-sm text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1 rounded-full border border-[var(--border)]">
                   {filters.source === 'all' ? 'Multiple Sources' :
                     filters.source === 'findwork' ? 'FindWork API' :
                       filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
@@ -390,11 +390,11 @@ const JobSearchPage = () => {
         )}
 
         {!loading && jobs.length === 0 && filters.search && (
-          <div className="text-center py-20 border border-dashed border-[var(--border-glass)] rounded-2xl bg-[var(--bg-surface)]/20">
-            <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="text-center py-20 border border-dashed border-[var(--border)] rounded-2xl bg-[var(--bg-surface)]">
+            <div className="w-20 h-20 bg-[var(--bg-deep)] rounded-full flex items-center justify-center mx-auto mb-6 border border-[var(--border)]">
               <Search className="w-10 h-10 text-[var(--text-muted)]" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No jobs found</h3>
+            <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">No jobs found</h3>
             <p className="text-[var(--text-muted)]">Try adjusting your search criteria or trying a different source.</p>
           </div>
         )}

@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import Image from "next/image";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -41,11 +42,9 @@ const Navbar = () => {
                     >
                         {/* Logo */}
                         <Link href="/" className="flex items-center gap-2 group">
-                            <div className="relative w-8 h-8 flex items-center justify-center bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-lg transform group-hover:rotate-12 transition-transform">
-                                <Sparkles className="w-5 h-5 text-white" />
-                            </div>
+                            <Image src="/logo.png" alt="Applytron" width={32} height={32} className="transform group-hover:rotate-12 transition-transform" />
                             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                JobQuest
+                                Applytron
                             </span>
                         </Link>
 

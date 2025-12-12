@@ -19,142 +19,179 @@ import {
   ChevronDown
 } from 'lucide-react';
 import Footer from '@/components/landing/Footer';
+import Navbar from '@/components/landing/Navbar';
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-deep)] text-[var(--text-main)] selection:bg-[var(--primary-dim)] selection:text-white overflow-x-hidden">
+      <Navbar />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-24 px-4 sm:px-6 max-w-7xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-sm text-[var(--text-muted)] mb-8">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary)] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--primary)]"></span>
-          </span>
-          AI-Powered Job Search Automation
+      <section className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 overflow-hidden pt-24">
+        {/* Enhanced Background Atmosphere */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[var(--primary)]/3 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--secondary)]/4 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[var(--success)]/2 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
         </div>
 
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-6 text-[var(--text-main)]">
-          Career Growth, <br />
-          <span className="text-[var(--primary)]">On Autopilot.</span>
-        </h1>
+        {/* Floating Automation Icon */}
+        <div className="absolute top-32 right-16 opacity-20 animate-bounce" style={{animationDuration: '3s'}}>
+          <Bot className="w-16 h-16 text-[var(--primary)]" />
+        </div>
 
-        <p className="text-lg sm:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed">
-          The AI agent that tailors your resume for every application, tracks opportunities, and manages follow-ups while you focus on interviews.
-        </p>
+        <div className="relative z-10 max-w-6xl mx-auto text-center">
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link href="/auth/signup">
-            <button className="px-8 py-4 bg-[var(--primary)] text-black rounded-full font-semibold hover:bg-[var(--primary-dim)] transition-colors flex items-center gap-2">
-              Start Free Trial
-              <Zap className="w-4 h-4" />
+
+          {/* Impactful Headline */}
+          <h1 className="text-7xl sm:text-8xl md:text-9xl font-black tracking-tighter mb-10 leading-none pt-12 text-center">
+            <span className="block text-[var(--text-main)] mb-2">Dream Job,</span>
+            <span className="block relative">
+              <span className="bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">
+                Auto-Applied.
+              </span>
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] rounded-full opacity-60"></div>
+            </span>
+          </h1>
+
+          {/* Powerful Subtext */}
+          <div className="max-w-3xl mx-auto mb-20 text-center">
+            <p className="text-2xl sm:text-3xl text-[var(--text-muted)] leading-relaxed mb-4">
+              AI applies to jobs for you while you sleep, network, or interview. Your career runs on autopilot.
+            </p>
+            <p className="text-lg text-[var(--text-muted)]/70 leading-relaxed">
+              Custom resumes, automatic applications, smart follow-ups. Never miss an opportunity again.
+            </p>
+          </div>
+
+          {/* Dynamic CTAs */}
+          <div className="flex flex-col sm:flex-row gap-8 justify-center items-center mb-24">
+            <Link href="/auth/signup">
+              <button className="group relative px-12 py-6 bg-[var(--primary)] text-black rounded-full font-bold text-lg hover:bg-[var(--primary-dim)] transition-all duration-300 shadow-xl hover:shadow-[var(--primary)]/30 hover:scale-105 flex items-center gap-3 overflow-hidden">
+                <span className="relative z-10">Begin Automation</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12 group-hover:animate-pulse"></div>
+              </button>
+            </Link>
+            <button className="group px-8 py-4 rounded-full border-2 border-[var(--border)] bg-[var(--bg-surface)]/80 backdrop-blur-sm hover:bg-[var(--bg-surface)] transition-all duration-300 flex items-center gap-2 text-[var(--text-main)] font-semibold text-base hover:scale-105">
+              <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              Watch the Magic
             </button>
-          </Link>
-          <button className="px-8 py-4 rounded-full border border-[var(--border)] bg-[var(--bg-surface)] hover:bg-[var(--bg-light)] transition-colors flex items-center gap-2 text-[var(--text-main)] font-medium">
-            <PlayCircle className="w-5 h-5" />
-            Watch Demo
-          </button>
-        </div>
+          </div>
 
-        {/* Social Proof */}
-        <div className="mt-20 pt-10 border-t border-[var(--border)]">
-          <p className="text-sm text-[var(--text-muted)] mb-6 uppercase tracking-wider">Trusted by job seekers at</p>
-          <div className="flex justify-center items-center gap-8 sm:gap-12 flex-wrap opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-            <span className="text-xl font-bold">Google</span>
-            <span className="text-xl font-bold">Meta</span>
-            <span className="text-xl font-bold">Amazon</span>
-            <span className="text-xl font-bold">Microsoft</span>
-            <span className="text-xl font-bold">Apple</span>
+          {/* Integrated Social Proof */}
+          <div className="grid grid-cols-3 gap-12 max-w-2xl mx-auto opacity-60 hover:opacity-90 transition-opacity duration-700">
+            <div className="text-center group">
+              <div className="text-4xl font-black text-[var(--text-main)] group-hover:text-[var(--primary)] transition-colors">50K+</div>
+              <div className="text-xs text-[var(--text-muted)] uppercase tracking-widest mt-1">Careers Automated</div>
+            </div>
+            <div className="text-center group">
+              <div className="text-4xl font-black text-[var(--text-main)] group-hover:text-[var(--secondary)] transition-colors">2M+</div>
+              <div className="text-xs text-[var(--text-muted)] uppercase tracking-widest mt-1">Apps Sent</div>
+            </div>
+            <div className="text-center group">
+              <div className="text-4xl font-black text-[var(--text-main)] group-hover:text-[var(--success)] transition-colors">87%</div>
+              <div className="text-xs text-[var(--text-muted)] uppercase tracking-widest mt-1">Success Rate</div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Dashboard Preview Section */}
-      <section id="dashboard-preview" className="py-20 px-4 bg-[var(--bg-surface)] border-y border-[var(--border)]">
-        <div className="max-w-7xl mx-auto">
+      <section id="dashboard-preview" className="py-20 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-y border-slate-700 relative overflow-hidden">
+        {/* Animated Grid Background */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '20px 20px'}}></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Mission Control for Your Career</h2>
-            <p className="text-[var(--text-muted)]">A real-time view of your automated job hunt.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-white">Mission Control for Your Career</h2>
+            <p className="text-slate-300">A real-time view of your automated job hunt.</p>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-400 font-mono">LIVE</span>
+            </div>
           </div>
 
           {/* Dashboard Mockup */}
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-deep)] shadow-2xl overflow-hidden">
+          <div className="rounded-xl border border-slate-600 bg-slate-950 shadow-2xl overflow-hidden">
             {/* Window Controls */}
-            <div className="h-10 bg-[var(--bg-light)] border-b border-[var(--border)] flex items-center px-4 gap-2">
+            <div className="h-10 bg-slate-800 border-b border-slate-600 flex items-center px-4 gap-2">
               <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                <div className="w-3 h-3 rounded-full bg-red-500/30 border border-red-500/60"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500/30 border border-yellow-500/60"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500/30 border border-green-500/60 animate-pulse"></div>
               </div>
             </div>
 
             <div className="flex h-[600px]">
               {/* Sidebar Mockup */}
-              <div className="w-64 border-r border-[var(--border)] bg-[var(--bg-surface)] p-4 hidden md:flex flex-col gap-2">
-                <div className="flex items-center gap-3 px-3 py-2 bg-[var(--primary)]/10 text-[var(--primary)] rounded-md font-medium">
+              <div className="w-64 border-r border-slate-600 bg-slate-900 p-4 hidden md:flex flex-col gap-2">
+                <div className="flex items-center gap-3 px-3 py-2 bg-cyan-500/20 text-cyan-400 rounded-md font-medium border border-cyan-500/30">
                   <LayoutDashboard className="w-4 h-4" /> Overview
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-[var(--text-muted)] hover:bg-[var(--bg-light)] rounded-md transition-colors">
+                <div className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800 rounded-md transition-colors">
                   <Briefcase className="w-4 h-4" /> Applications
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-[var(--text-muted)] hover:bg-[var(--bg-light)] rounded-md transition-colors">
+                <div className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800 rounded-md transition-colors">
                   <FileText className="w-4 h-4" /> Resumes
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-[var(--text-muted)] hover:bg-[var(--bg-light)] rounded-md transition-colors">
+                <div className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:bg-slate-800 rounded-md transition-colors">
                   <Send className="w-4 h-4" /> Follow-ups
                 </div>
               </div>
 
               {/* Main Content Mockup */}
-              <div className="flex-1 p-8 bg-[var(--bg-deep)] overflow-y-auto">
+              <div className="flex-1 p-8 bg-slate-950 overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]">
-                    <p className="text-[var(--text-muted)] text-sm mb-1">Applications Sent</p>
-                    <p className="text-3xl font-bold">87</p>
-                    <div className="flex items-center mt-2 text-xs text-[var(--success)]">
+                  <div className="p-6 rounded-xl border border-slate-600 bg-slate-900 hover:bg-slate-800 transition-colors">
+                    <p className="text-slate-400 text-sm mb-1">Applications Sent</p>
+                    <p className="text-3xl font-bold text-white">87</p>
+                    <div className="flex items-center mt-2 text-xs text-green-400">
                       <TrendingUp className="w-3 h-3 mr-1" /> +18% this week
                     </div>
                   </div>
-                  <div className="p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]">
-                    <p className="text-[var(--text-muted)] text-sm mb-1">Profile Views</p>
-                    <p className="text-3xl font-bold">342</p>
-                    <div className="flex items-center mt-2 text-xs text-[var(--success)]">
+                  <div className="p-6 rounded-xl border border-slate-600 bg-slate-900 hover:bg-slate-800 transition-colors">
+                    <p className="text-slate-400 text-sm mb-1">Profile Views</p>
+                    <p className="text-3xl font-bold text-white">342</p>
+                    <div className="flex items-center mt-2 text-xs text-green-400">
                       <TrendingUp className="w-3 h-3 mr-1" /> High visibility
                     </div>
                   </div>
-                  <div className="p-6 rounded-xl border border-[var(--border)] bg-[var(--bg-surface)]">
-                    <p className="text-[var(--text-muted)] text-sm mb-1">Interviews</p>
-                    <p className="text-3xl font-bold">5</p>
-                    <div className="flex items-center mt-2 text-xs text-[var(--secondary)]">
-                      <span className="w-2 h-2 bg-[var(--secondary)] rounded-full mr-2"></span> 2 Scheduled
+                  <div className="p-6 rounded-xl border border-slate-600 bg-slate-900 hover:bg-slate-800 transition-colors">
+                    <p className="text-slate-400 text-sm mb-1">Interviews</p>
+                    <p className="text-3xl font-bold text-white">5</p>
+                    <div className="flex items-center mt-2 text-xs text-blue-400">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></span> 2 Scheduled
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] overflow-hidden">
-                  <div className="p-4 border-b border-[var(--border)] font-semibold">Recent Applications</div>
-                  <div className="divide-y divide-[var(--border)]">
+                <div className="rounded-xl border border-slate-600 bg-slate-900 overflow-hidden">
+                  <div className="p-4 border-b border-slate-600 font-semibold text-white">Recent Applications</div>
+                  <div className="divide-y divide-slate-700">
                     {[
                       { company: 'Google', role: 'Senior Product Designer', status: 'Interview', date: '2h ago' },
                       { company: 'Meta', role: 'UX Engineer', status: 'Applied', date: '5h ago' },
                       { company: 'Amazon', role: 'Design Lead', status: 'Applied', date: '1d ago' }
                     ].map((app, i) => (
-                      <div key={i} className="p-4 flex items-center justify-between hover:bg-[var(--bg-light)] transition-colors">
+                      <div key={i} className="p-4 flex items-center justify-between bg-slate-900/30 hover:bg-slate-800 transition-colors">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded bg-[var(--bg-light)] flex items-center justify-center font-bold text-[var(--text-muted)]">
+                          <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center font-bold text-slate-300">
                             {app.company[0]}
                           </div>
                           <div>
-                            <div className="font-medium">{app.role}</div>
-                            <div className="text-xs text-[var(--text-muted)]">{app.company}</div>
+                            <div className="font-medium text-white">{app.role}</div>
+                            <div className="text-xs text-slate-400">{app.company}</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="text-xs text-[var(--text-muted)] font-mono">{app.date}</span>
+                          <span className="text-xs text-slate-400 font-mono">{app.date}</span>
                           <span className={`text-xs px-2 py-1 rounded-full border ${app.status === 'Interview'
-                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                              : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                            }`}>
+                            ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                            : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                          }`}>
                             {app.status}
                           </span>
                         </div>

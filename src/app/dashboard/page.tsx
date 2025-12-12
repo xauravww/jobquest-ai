@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
 import AppLayout from '@/components/AppLayout';
 import Link from 'next/link';
 import {
@@ -17,7 +14,8 @@ import {
   Brain,
   Bell,
   Clock,
-  ExternalLink
+  ExternalLink,
+  ArrowUpRight
 } from 'lucide-react';
 import ErrorState from '@/components/ui/ErrorState';
 import DashboardSkeleton from '@/components/ui/DashboardSkeleton';
@@ -65,40 +63,6 @@ interface DashboardData {
   topSkills: TopSkill[];
 }
 
-const ResponsiveGridLayout = WidthProvider(Responsive);
-
-// --- Responsive Layout Definitions ---
-const layouts = {
-  lg: [
-    { i: 'stats-total', x: 0, y: 0, w: 3, h: 3 },
-    { i: 'stats-interviews', x: 3, y: 0, w: 3, h: 3 },
-    { i: 'profile', x: 6, y: 0, w: 3, h: 3 },
-    { i: 'reminders', x: 9, y: 0, w: 3, h: 3 },
-    { i: 'activity-chart', x: 0, y: 3, w: 8, h: 4 },
-    { i: 'status-pie', x: 8, y: 3, w: 4, h: 4 },
-    { i: 'skills', x: 0, y: 7, w: 12, h: 2 },
-  ],
-  md: [
-    { i: 'stats-total', x: 0, y: 0, w: 5, h: 3 },
-    { i: 'stats-interviews', x: 5, y: 0, w: 5, h: 3 },
-    { i: 'profile', x: 0, y: 3, w: 5, h: 3 },
-    { i: 'reminders', x: 5, y: 3, w: 5, h: 3 },
-    { i: 'activity-chart', x: 0, y: 6, w: 10, h: 4 },
-    { i: 'status-pie', x: 0, y: 10, w: 10, h: 4 },
-    { i: 'skills', x: 0, y: 14, w: 10, h: 2 },
-  ],
-  sm: [
-    { i: 'stats-total', x: 0, y: 0, w: 6, h: 3 },
-    { i: 'stats-interviews', x: 0, y: 3, w: 6, h: 3 },
-    { i: 'profile', x: 0, y: 6, w: 6, h: 3 },
-    { i: 'reminders', x: 0, y: 9, w: 6, h: 3 },
-    { i: 'activity-chart', x: 0, y: 12, w: 6, h: 4 },
-    { i: 'status-pie', x: 0, y: 16, w: 6, h: 4 },
-    { i: 'skills', x: 0, y: 20, w: 6, h: 2 },
-  ],
-};
-
-
 // --- Recharts Custom Components ---
 interface TooltipEntry {
   color: string;
@@ -109,10 +73,10 @@ interface TooltipEntry {
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipEntry[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[var(--bg-surface)]/90 backdrop-blur-md border border-[var(--border-glass)] p-3 rounded-lg shadow-xl text-sm">
-        <p className="font-bold text-white mb-2">{`Date: ${label}`}</p>
+      <div className="bg-[var(--bg-surface)] border border-[var(--border)] p-3 rounded-lg shadow-xl text-sm">
+        <p className="font-semibold text-[var(--text-main)] mb-2">{`Date: ${label}`}</p>
         {payload.map((entry, index) => (
-          <p key={`item-${index}`} style={{ color: entry.color }}>{`${entry.name}: ${entry.value}`}</p>
+          <p key={`item-${index}`} style={{ color: entry.color }} className="font-medium">{`${entry.name}: ${entry.value}`}</p>
         ))}
       </div>
     );
@@ -122,23 +86,22 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 // --- Widget Components ---
 
-
-
 const StatCard = ({ title, value, icon, link, children }: { title: string, value: string | number, icon: React.ReactNode, link: string, children: React.ReactNode }) => (
   <Link href={link} className="block h-full group">
-    <div className="bg-[var(--bg-glass)] backdrop-blur-xl hover:bg-[var(--bg-surface)] transition-all duration-300 rounded-xl shadow-lg border border-[var(--border-glass)] hover:border-[var(--primary)]/50 p-6 flex flex-col justify-between h-full overflow-hidden group-hover:shadow-[0_0_20px_var(--primary-glow)]">
+    <div className="bg-[var(--bg-surface)] hover:bg-slate-700 transition-all duration-200 rounded-xl border border-[var(--border)] p-6 flex flex-col justify-between h-full group-hover:border-[var(--primary)]/30">
       <div className="flex-1">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="p-3 bg-[var(--primary)]/10 rounded-lg group-hover:bg-[var(--primary)]/20 transition-colors shadow-[0_0_10px_var(--primary-glow)]">
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-2 bg-[var(--bg-light)] rounded-lg text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors">
             {icon}
           </div>
-          <h3 className="text-lg font-semibold text-[var(--text-muted)] truncate group-hover:text-white transition-colors">{title}</h3>
+          <ArrowUpRight className="w-4 h-4 text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
-        <div className="text-3xl md:text-5xl font-bold text-white mb-6 group-hover:text-[var(--primary)] transition-colors drop-shadow-[0_0_5px_rgba(0,242,255,0.5)]">
+        <div className="text-3xl font-bold text-[var(--text-main)] mb-1">
           {value}
         </div>
+        <h3 className="text-sm font-medium text-[var(--text-muted)]">{title}</h3>
       </div>
-      <div className="space-y-3 text-sm border-t border-[var(--border-glass)] pt-4">
+      <div className="mt-4 pt-4 border-t border-[var(--border)] space-y-2">
         {children}
       </div>
     </div>
@@ -157,8 +120,6 @@ const DashboardPage = () => {
     setLoading(true);
     setError(null);
 
-    console.log('Fetching dashboard data...');
-
     try {
       // Try the full stats API first with stronger cache busting
       let response = await fetch('/api/dashboard/stats?' + new URLSearchParams({
@@ -173,8 +134,6 @@ const DashboardPage = () => {
           'Expires': '0'
         }
       });
-
-      console.log('Stats API response status:', response.status);
 
       // If that fails, try the simple stats API
       if (!response.ok) {
@@ -200,11 +159,6 @@ const DashboardPage = () => {
       }
 
       const fetchedData: DashboardData = await response.json();
-      console.log('Dashboard data fetched:', {
-        totalApplications: fetchedData.jobStats?.totalApplications,
-        activeApplications: fetchedData.jobStats?.activeApplications
-      });
-
       setData(fetchedData);
     } catch (e) {
       console.error('Dashboard data fetch error:', e);
@@ -220,7 +174,6 @@ const DashboardPage = () => {
 
   // Add a refresh function for manual refresh
   const handleRefresh = useCallback(() => {
-    console.log('Manual refresh triggered');
     fetchData();
   }, [fetchData]);
 
@@ -235,7 +188,7 @@ const DashboardPage = () => {
   if (error) {
     return (
       <AppLayout showFooter={false}>
-        <div className="p-4 md:p-8 bg-bg min-h-screen">
+        <div className="p-4 md:p-8 bg-[var(--bg-deep)] min-h-screen">
           <ErrorState
             title="Dashboard Error"
             message={error}
@@ -250,140 +203,186 @@ const DashboardPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-4 md:p-8 bg-[var(--bg-deep)] min-h-screen">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 mb-12 mt-8" >
-          <div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight">
-              Welcome back, <span className="text-gradient-primary">{data?.userProfile?.firstName || 'User'}</span>!
-            </h1>
-            <p className="text-[var(--text-muted)] text-lg md:text-xl leading-relaxed">Here&apos;s your job search progress and insights.</p>
+      <div className="p-4 md:p-8 bg-[var(--bg-deep)] min-h-screen text-[var(--text-main)]">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+                Welcome back, <span className="text-[var(--primary)]">{data?.userProfile?.firstName || 'User'}</span>
+              </h1>
+              <p className="text-[var(--text-muted)] text-lg">Here's your job search progress and insights.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleRefresh}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-surface)] hover:bg-slate-700 text-[var(--text-main)] rounded-lg transition-colors font-medium border border-[var(--border)]"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Refresh Data
+              </button>
+               <Link href="/application-tracking" className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black rounded-lg transition-colors font-medium shadow-sm">
+                <Briefcase className="w-4 h-4" />
+                Manage Applications
+              </Link>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <button
-              onClick={handleRefresh}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--bg-surface)] hover:bg-[var(--bg-glass)] text-white rounded-lg transition-all duration-200 font-semibold border border-[var(--border-glass)] hover:border-[var(--primary)] hover:shadow-[0_0_15px_var(--primary-glow)] whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            >
-              <TrendingUp className="w-5 h-5" />
-              Refresh Data
-            </button>
-            <Link href="/application-tracking" className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-90 text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-[0_0_20px_var(--primary-glow)] transform hover:-translate-y-0.5 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
-              <Briefcase className="w-5 h-5" />
-              Manage Applications
-            </Link>
-          </div>
-        </div>
 
-        <div className="border-t border-[var(--border-glass)] mb-8"></div>
-
-        <ResponsiveGridLayout
-          className="layout"
-          layouts={layouts}
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 6 }}
-          rowHeight={100}
-          isDraggable={false}
-          isResizable={false}
-          margin={[24, 24]}
-        >
-          <div key="stats-total">
-            <StatCard title="Total Applications" value={data?.jobStats.totalApplications ?? 0} icon={<TrendingUp className="w-6 h-6 text-[var(--primary)]" />} link="/application-tracking">
-              <div className="flex justify-between">
-                <span className="text-[var(--text-muted)]">Active:</span>
+          {/* Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            {/* Stat: Total Applications */}
+            <StatCard title="Total Applications" value={data?.jobStats.totalApplications ?? 0} icon={<Briefcase className="w-5 h-5" />} link="/application-tracking">
+              <div className="flex justify-between text-sm">
+                <span className="text-[var(--text-muted)]">Active</span>
                 <span className="text-[var(--success)] font-medium">{data?.jobStats.activeApplications ?? 0}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--text-muted)]">Response Rate:</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-[var(--text-muted)]">Response Rate</span>
                 <span className="text-[var(--primary)] font-medium">{data?.jobStats.responseRate ?? 0}%</span>
               </div>
             </StatCard>
-          </div>
-          <div key="stats-interviews">
-            <StatCard title="Interviews" value={data?.jobStats.interviews ?? 0} icon={<Calendar className="w-6 h-6 text-[var(--success)]" />} link="/events">
-              <div className="flex justify-between">
-                <span className="text-[var(--text-muted)]">Offers:</span>
+
+            {/* Stat: Interviews */}
+            <StatCard title="Interviews" value={data?.jobStats.interviews ?? 0} icon={<Calendar className="w-5 h-5" />} link="/events">
+              <div className="flex justify-between text-sm">
+                <span className="text-[var(--text-muted)]">Offers</span>
                 <span className="text-[var(--success)] font-medium">{data?.jobStats.offers ?? 0}</span>
               </div>
-              <div className="w-full bg-white/10 rounded-full h-2.5 mt-1">
-                <div className="bg-[var(--success)] h-2.5 rounded-full" style={{ width: `${data?.jobStats.responseRate}%` }}></div>
+              <div className="w-full bg-[var(--bg-deep)] rounded-full h-1.5 mt-2">
+                <div className="bg-[var(--success)] h-1.5 rounded-full" style={{ width: `${Math.min(data?.jobStats.responseRate || 0, 100)}%` }}></div>
               </div>
             </StatCard>
-          </div>
-          <div key="profile">
-            <div className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6 h-full flex flex-col justify-center">
-              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Users className="w-6 h-6 text-[var(--primary)]" /> Profile Snapshot</h3>
-              <div className="space-y-4 text-sm">
-                <div className="flex items-center gap-3 p-2 rounded-md bg-white/5">
-                  <Target className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
-                  <span className="text-white font-medium truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
+
+            {/* Profile Snapshot */}
+            <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] p-6 flex flex-col justify-center h-full">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Users className="w-5 h-5 text-[var(--primary)]" /> Profile Snapshot</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--bg-light)]/50">
+                  <Target className="w-4 h-4 text-[var(--text-muted)]" />
+                  <span className="font-medium truncate">{data?.userProfile?.targetRole || 'Job Seeker'}</span>
                 </div>
-                <div className="flex items-center gap-3 p-2 rounded-md bg-white/5">
-                  <MapPin className="w-4 h-4 text-[var(--primary)] flex-shrink-0" />
-                  <span className="text-white font-medium truncate">{data?.userProfile?.location || 'Remote'}</span>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--bg-light)]/50">
+                  <MapPin className="w-4 h-4 text-[var(--text-muted)]" />
+                  <span className="font-medium truncate">{data?.userProfile?.location || 'Remote'}</span>
                 </div>
               </div>
             </div>
-          </div>
-          <div key="reminders">
-            <div className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6 h-full flex flex-col">
-              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Bell className="w-6 h-6 text-[var(--warning)]" /> Upcoming Reminders</h3>
-              <div className="space-y-2 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+
+            {/* Upcoming Reminders */}
+            <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] p-6 flex flex-col h-full">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Bell className="w-5 h-5 text-[var(--warning)]" /> Reminders</h3>
+              <div className="space-y-2 flex-grow overflow-y-auto custom-scrollbar max-h-[120px]">
                 {data?.upcomingReminders && data.upcomingReminders.length > 0 ? (
                   data.upcomingReminders.map(r => (
-                    <Link key={r._id} href="/reminders" className="flex items-center gap-3 p-2 bg-white/5 rounded-md hover:bg-white/10 transition-colors">
+                     <Link key={r._id} href="/reminders" className="flex items-center gap-3 p-2.5 bg-[var(--bg-light)]/30 hover:bg-slate-700 rounded-lg transition-colors group">
                       <Clock className="w-4 h-4 text-[var(--warning)] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-white truncate">{r.title}</p>
-                        <p className="text-xs text-[var(--text-muted)]">{new Date(r.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                        <p className="text-xs font-medium truncate group-hover:text-[var(--primary)] transition-colors">{r.title}</p>
+                        <p className="text-[10px] text-[var(--text-muted)]">{new Date(r.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                       </div>
-                      <ExternalLink className="w-3 h-3 text-[var(--text-muted)]" />
                     </Link>
                   ))
                 ) : (
-                  <div className="text-center text-xs text-[var(--text-muted)] pt-4">No upcoming reminders.</div>
+                  <div className="text-center text-sm text-[var(--text-muted)] py-4">No upcoming reminders.</div>
                 )}
               </div>
             </div>
           </div>
-          <div key="activity-chart" className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6">
-            <h3 className="text-xl font-semibold text-white mb-6">Application Activity (Last 30 Days)</h3>
-            {data?.applicationTrendData && data.applicationTrendData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="90%">
-                <BarChart data={data.applicationTrendData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                  <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border-glass)' }} tickLine={false} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border-glass)' }} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
-                  <Bar dataKey="applications" fill="var(--primary)" name="Applications" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="interviews" fill="var(--success)" name="Interviews" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-[var(--text-muted)]">No activity data for this period.</div>
-            )}
+
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+            {/* Activity Chart */}
+            <div className="lg:col-span-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] p-6">
+              <h3 className="text-lg font-semibold mb-6">Application Activity</h3>
+              <div className="h-[300px] w-full">
+                {data?.applicationTrendData && data.applicationTrendData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.applicationTrendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: 'var(--text-muted)' }}
+                        axisLine={false}
+                        tickLine={false}
+                        dy={10}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fontSize: 12, fill: 'var(--text-muted)' }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        content={<CustomTooltip />}
+                        cursor={{ fill: 'var(--bg-light)', opacity: 0.4 }}
+                      />
+                      <Bar
+                        dataKey="applications"
+                        fill="var(--primary)"
+                        name="Applications"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={50}
+                      />
+                      <Bar
+                        dataKey="interviews"
+                        fill="var(--success)"
+                        name="Interviews"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={50}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-[var(--text-muted)]">No activity data for this period.</div>
+                )}
+              </div>
+            </div>
+
+            {/* Status Pie Chart */}
+            <div className="lg:col-span-1 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] p-6">
+              <h3 className="text-lg font-semibold mb-2">Status</h3>
+              <div className="h-[300px] w-full">
+                {data?.applicationStatus && data.applicationStatus.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={data.applicationStatus}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                        nameKey="name"
+                        stroke="none"
+                      >
+                        {data.applicationStatus.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend
+                        verticalAlign="bottom"
+                        height={36}
+                        iconType="circle"
+                        iconSize={8}
+                        wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-[var(--text-muted)]">No application data yet.</div>
+                )}
+              </div>
+            </div>
           </div>
-          <div key="status-pie" className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6">
-            <h3 className="text-xl font-semibold text-white mb-6">Application Status</h3>
-            {data?.applicationStatus && data.applicationStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height="90%">
-                <PieChart>
-                  <Pie data={data.applicationStatus} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" nameKey="name">
-                    {data.applicationStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="rgba(0,0,0,0)" />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '12px', color: 'var(--text-muted)' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-[var(--text-muted)]">No application data yet.</div>
-            )}
-          </div>
-          <div key="skills" className="bg-[var(--bg-glass)] backdrop-blur-xl rounded-xl shadow-lg border border-[var(--border-glass)] p-6">
-            <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-3"><Brain className="w-6 h-6 text-[var(--secondary)]" /> Top Skills</h3>
-            <div className="flex flex-wrap gap-3">
+
+          {/* Top Skills */}
+          <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Brain className="w-5 h-5 text-[var(--secondary)]" /> Top Skills</h3>
+            <div className="flex flex-wrap gap-2">
               {data?.topSkills && data.topSkills.length > 0 ? (
                 data.topSkills.map(skill => (
-                  <Link key={skill.id} href={`/job-search?q=${encodeURIComponent(skill.skill)}`} className="px-4 py-2 rounded-full text-sm font-medium bg-[var(--secondary)]/10 border border-[var(--secondary)]/30 text-[var(--secondary)] hover:bg-[var(--secondary)]/20 transition-colors shadow-[0_0_10px_rgba(188,19,254,0.1)]">
+                   <Link key={skill.id} href={`/job-search?q=${encodeURIComponent(skill.skill)}`} className="px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-light)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-slate-700 transition-colors border border-[var(--border)] hover:border-[var(--primary)]/30">
                     {skill.skill}
                   </Link>
                 ))
@@ -392,7 +391,7 @@ const DashboardPage = () => {
               )}
             </div>
           </div>
-        </ResponsiveGridLayout>
+        </div>
       </div>
     </AppLayout>
   );

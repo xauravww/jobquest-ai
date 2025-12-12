@@ -67,11 +67,11 @@ const Navbar: React.FC = () => {
                   href={item.href}
                   onClick={closeDrawer}
                   className={`flex items-center gap-3 p-3 rounded-md transition-colors ${isActive
-                      ? 'bg-[var(--bg-light)] text-[var(--primary)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-light)]'
+                      ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
                     }`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive ? 'bg-[var(--primary-dim)]/10' : 'bg-[var(--bg-card)]'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive ? 'bg-[var(--primary-light)]' : 'bg-[var(--bg-secondary)]'}`}>
                     {item.icon}
                   </div>
                   <span className="font-medium">{item.label}</span>
@@ -92,7 +92,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                className={`text-sm font-medium transition-colors ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
               >
                 {item.label}
@@ -141,12 +141,12 @@ const Navbar: React.FC = () => {
         ) : (
           <>
             <Link href="/auth/signin" onClick={closeDrawer}>
-              <button className="px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">
+              <button className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 Sign In
               </button>
             </Link>
             <Link href="/auth/signup" onClick={closeDrawer}>
-              <button className="px-4 py-2 text-sm font-medium bg-[var(--primary)] text-black rounded-md hover:bg-[var(--primary-dim)] transition-colors">
+              <button className="px-4 py-2 text-sm font-medium bg-[var(--primary)] text-[var(--text-inverse)] rounded-md hover:bg-[var(--primary-hover)] transition-colors">
                 Get Started
               </button>
             </Link>
@@ -158,7 +158,7 @@ const Navbar: React.FC = () => {
 
   if (status === 'loading') {
     return (
-      <nav className="fixed w-full z-50 bg-[var(--bg-deep)] border-b border-[var(--border)] h-16 flex items-center justify-center">
+      <nav className="fixed w-full z-50 bg-[var(--bg-primary)] border-b border-[var(--border)] h-16 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
       </nav>
     );
@@ -168,8 +168,8 @@ const Navbar: React.FC = () => {
     <>
       <nav
         className={`fixed w-full z-50 transition-all duration-300 border-b ${isScrolled
-            ? 'bg-[var(--bg-deep)]/90 backdrop-blur-md border-[var(--border)]'
-            : 'bg-[var(--bg-deep)] border-transparent'
+            ? 'bg-[var(--bg-primary)]/95 backdrop-blur-md border-[var(--border)] shadow-sm'
+            : 'bg-[var(--bg-primary)] border-transparent'
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -177,10 +177,10 @@ const Navbar: React.FC = () => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center text-black font-bold text-lg">
+                <div className="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center text-[var(--text-inverse)] font-bold text-lg">
                   J
                 </div>
-                <span className="text-xl font-bold text-[var(--text-main)] tracking-tight">
+                <span className="text-xl font-bold text-[var(--text-primary)] tracking-tight">
                   JobQuest
                 </span>
               </Link>
@@ -194,7 +194,7 @@ const Navbar: React.FC = () => {
               <AuthButtons />
               <button
                 onClick={showDrawer}
-                className="2xl:hidden p-2 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                className="2xl:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 aria-label="Open menu"
               >
                 <FiMenu className="w-6 h-6" />
@@ -224,8 +224,8 @@ const Navbar: React.FC = () => {
         width={300}
         className="ant-drawer-dark"
         styles={{
-          body: { padding: 0, background: 'var(--bg-deep)' },
-          header: { background: 'var(--bg-deep)', borderBottom: '1px solid var(--border)' }
+          body: { padding: 0, background: 'var(--bg-primary)' },
+          header: { background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)' }
         }}
       >
         {drawerView === 'nav' ? (

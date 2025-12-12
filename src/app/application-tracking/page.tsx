@@ -255,13 +255,13 @@ const ApplicationTrackingPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'applied': return 'bg-[var(--primary)]/20 text-[var(--primary)] border-[var(--primary)]/30';
-      case 'interviewing': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      case 'offered': return 'bg-[var(--success)]/20 text-[var(--success)] border-[var(--success)]/30';
-      case 'rejected': return 'bg-[var(--danger)]/20 text-[var(--danger)] border-[var(--danger)]/30';
-      case 'submitted': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'expired': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-      default: return 'bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-glass)]';
+      case 'applied': return 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
+      case 'interviewing': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'offered': return 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20';
+      case 'rejected': return 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20';
+      case 'submitted': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'expired': return 'bg-[var(--text-muted)]/10 text-[var(--text-muted)] border-[var(--text-muted)]/20';
+      default: return 'bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border)]';
     }
   };
 
@@ -276,12 +276,12 @@ const ApplicationTrackingPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-6 lg:p-8 min-h-screen space-y-8">
+      <div className="p-6 lg:p-8 min-h-screen space-y-8 max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
+            <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+              <div className="p-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
                 <Briefcase className="w-8 h-8 text-[var(--primary)]" />
               </div>
               Application Tracking
@@ -294,7 +294,7 @@ const ApplicationTrackingPage = () => {
               setSelectedJob(undefined);
               setCreateJobModalVisible(true);
             }}
-            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+            className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             <span>Add Application</span>
@@ -302,7 +302,7 @@ const ApplicationTrackingPage = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-[var(--bg-surface)]/30 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-glass)]">
+        <div className="bg-[var(--bg-surface)] rounded-2xl p-6 border border-[var(--border)]">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
               <Filter className="w-4 h-4" />
@@ -317,14 +317,14 @@ const ApplicationTrackingPage = () => {
                   placeholder="Search jobs, companies..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
                 />
               </div>
 
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none appearance-none"
               >
                 <option value="all">All Statuses</option>
                 <option value="saved">Saved</option>
@@ -337,7 +337,7 @@ const ApplicationTrackingPage = () => {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none appearance-none"
               >
                 <option value="all">All Priorities</option>
                 <option value="high">High</option>
@@ -347,7 +347,7 @@ const ApplicationTrackingPage = () => {
 
               <button
                 onClick={() => { setSearchText(''); setStatusFilter('all'); setPriorityFilter('all'); setPlatformFilter('all'); }}
-                className="px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] rounded-xl transition-all flex items-center justify-center gap-2"
+                className="px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--primary)] rounded-xl transition-all flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Reset Filters</span>
@@ -359,7 +359,7 @@ const ApplicationTrackingPage = () => {
         {/* Job List */}
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
+            <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
@@ -372,15 +372,15 @@ const ApplicationTrackingPage = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-5 transition-all hover:shadow-lg hover:shadow-[var(--primary)]/5 group"
+                    className="bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--primary)]/50 rounded-xl p-5 transition-all hover:shadow-md group"
                   >
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)]/20 to-[var(--secondary)]/20 flex items-center justify-center border border-[var(--primary)]/30 text-[var(--primary)] font-bold text-xl">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--bg-deep)] flex items-center justify-center border border-[var(--border)] text-[var(--primary)] font-bold text-xl">
                           {job.company.charAt(0)}
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-white group-hover:text-[var(--primary)] transition-colors cursor-pointer" onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}>
+                          <h3 className="text-xl font-bold text-[var(--text-main)] group-hover:text-[var(--primary)] transition-colors cursor-pointer" onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}>
                             {job.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-[var(--text-muted)]">
@@ -415,7 +415,7 @@ const ApplicationTrackingPage = () => {
                             href={job.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                            className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                             title="View Job Post"
                           >
                             <ExternalLink className="w-5 h-5" />
@@ -426,7 +426,7 @@ const ApplicationTrackingPage = () => {
                             setSelectedJobForCoverLetter(job);
                             setCoverLetterModalVisible(true);
                           }}
-                          className="p-2 text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 rounded-lg transition-colors"
+                          className="p-2 text-purple-400 hover:text-purple-300 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Generate Cover Letter"
                         >
                           <Sparkles className="w-5 h-5" />
@@ -444,21 +444,21 @@ const ApplicationTrackingPage = () => {
                             });
                             setReminderModalVisible(true);
                           }}
-                          className="p-2 text-[var(--warning)] hover:text-[var(--warning)]/80 hover:bg-[var(--warning)]/10 rounded-lg transition-colors"
+                          className="p-2 text-[var(--warning)] hover:text-[var(--warning)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Set Reminder"
                         >
                           <Bell className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}
-                          className="p-2 text-[var(--primary)] hover:text-[var(--primary)]/80 hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
+                          className="p-2 text-[var(--primary)] hover:text-[var(--primary)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Edit"
                         >
                           <Edit className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(job._id)}
-                          className="p-2 text-[var(--danger)] hover:text-[var(--danger)]/80 hover:bg-[var(--danger)]/10 rounded-lg transition-colors"
+                          className="p-2 text-[var(--danger)] hover:text-[var(--danger)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -468,11 +468,11 @@ const ApplicationTrackingPage = () => {
                   </motion.div>
                 ))
               ) : (
-                <div className="text-center py-16 border border-dashed border-[var(--border-glass)] rounded-2xl bg-[var(--bg-surface)]/20">
-                  <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="text-center py-16 border border-dashed border-[var(--border)] rounded-2xl bg-[var(--bg-surface)]">
+                  <div className="w-20 h-20 bg-[var(--bg-deep)] rounded-full flex items-center justify-center mx-auto mb-6 border border-[var(--border)]">
                     <Briefcase className="w-10 h-10 text-[var(--text-muted)]" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">No applications found</h3>
+                  <h3 className="text-xl font-bold text-[var(--text-main)] mb-2">No applications found</h3>
                   <p className="text-[var(--text-muted)] mb-6">
                     {searchText || statusFilter !== 'all'
                       ? 'Try adjusting your filters to see more results.'
@@ -480,7 +480,7 @@ const ApplicationTrackingPage = () => {
                   </p>
                   <button
                     onClick={() => { setSelectedJob(undefined); setCreateJobModalVisible(true); }}
-                    className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
+                    className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all"
                   >
                     Add Application
                   </button>
@@ -496,7 +496,7 @@ const ApplicationTrackingPage = () => {
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -506,7 +506,7 @@ const ApplicationTrackingPage = () => {
             <button
               onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / pageSize), p + 1))}
               disabled={currentPage === Math.ceil(totalCount / pageSize)}
-              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -541,7 +541,7 @@ const ApplicationTrackingPage = () => {
               type="text"
               value={reminderForm.title}
               onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -551,7 +551,7 @@ const ApplicationTrackingPage = () => {
                 type="date"
                 value={reminderForm.dueDate}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueDate: e.target.value })}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
               />
             </div>
             <div>
@@ -560,7 +560,7 @@ const ApplicationTrackingPage = () => {
                 type="time"
                 value={reminderForm.dueTime}
                 onChange={(e) => setReminderForm({ ...reminderForm, dueTime: e.target.value })}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
               />
             </div>
           </div>
@@ -569,7 +569,7 @@ const ApplicationTrackingPage = () => {
             <select
               value={reminderForm.priority}
               onChange={(e) => setReminderForm({ ...reminderForm, priority: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -579,13 +579,13 @@ const ApplicationTrackingPage = () => {
           <div className="flex justify-end gap-3 mt-6">
             <button
               onClick={() => setReminderModalVisible(false)}
-              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateReminder}
-              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors"
+              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors"
             >
               Set Reminder
             </button>

@@ -276,7 +276,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
       title={job ? "Edit Job Application" : "Add New Job Application"}
       width="max-w-2xl"
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
@@ -289,7 +289,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={title}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="e.g. Senior Frontend Developer"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.title ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.title ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
             </div>
             {errors.title && <p className="text-[var(--danger)] text-xs mt-1">{errors.title}</p>}
@@ -306,7 +306,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={company}
                 onChange={(e) => handleFieldChange('company', e.target.value)}
                 placeholder="e.g. Tech Corp"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.company ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.company ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
             </div>
             {errors.company && <p className="text-[var(--danger)] text-xs mt-1">{errors.company}</p>}
@@ -323,7 +323,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={location}
                 onChange={(e) => handleFieldChange('location', e.target.value)}
                 placeholder="e.g. Remote, New York"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.location ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.location ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
             </div>
             {errors.location && <p className="text-[var(--danger)] text-xs mt-1">{errors.location}</p>}
@@ -338,7 +338,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={jobUrl}
                 onChange={(e) => handleFieldChange('jobUrl', e.target.value)}
                 placeholder="https://..."
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none transition-colors ${errors.jobUrl ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none ${errors.jobUrl ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
             </div>
             {errors.jobUrl && <p className="text-[var(--danger)] text-xs mt-1">{errors.jobUrl}</p>}
@@ -351,7 +351,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+              className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
             >
               <option value="saved">Saved</option>
               <option value="applied">Applied</option>
@@ -368,7 +368,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+              className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
             >
               <option value="high">High</option>
               <option value="medium">Medium</option>
@@ -381,7 +381,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+              className="w-full px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
             >
               <option value="linkedin">LinkedIn</option>
               <option value="indeed">Indeed</option>
@@ -402,7 +402,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 type="date"
                 value={datePosted}
                 onChange={(e) => setDatePosted(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none"
               />
             </div>
           </div>
@@ -414,11 +414,11 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
               <select
                 value={selectedResumeId}
                 onChange={(e) => setSelectedResumeId(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
               >
                 <option value="">Select a resume...</option>
                 {resumes.map((resume) => (
-                  <option key={resume._id} value={resume._id}>
+                  <option key={resume._id} value={resume.title}>
                     {resume.title}
                   </option>
                 ))}
@@ -434,7 +434,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             onChange={(e) => handleFieldChange('description', e.target.value)}
             placeholder="Job description..."
             rows={3}
-            className={`w-full px-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none resize-none transition-colors ${errors.description ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+            className={`w-full px-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.description ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
           />
           {errors.description && <p className="text-[var(--danger)] text-xs mt-1">{errors.description}</p>}
           <p className="text-[var(--text-dim)] text-xs text-right">{description.length}/5000</p>
@@ -447,26 +447,26 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             onChange={(e) => handleFieldChange('notes', e.target.value)}
             placeholder="Additional notes..."
             rows={2}
-            className={`w-full px-4 py-2 bg-[var(--bg-deep)] border rounded-xl text-white focus:outline-none resize-none transition-colors ${errors.notes ? 'border-[var(--danger)] focus:border-[var(--danger)]' : 'border-[var(--border-glass)] focus:border-[var(--primary)]'}`}
+            className={`w-full px-4 py-2 bg-[var(--bg-surface)] border rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.notes ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
           />
           {errors.notes && <p className="text-[var(--danger)] text-xs mt-1">{errors.notes}</p>}
           <p className="text-[var(--text-dim)] text-xs text-right">{notes.length}/2000</p>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-glass)]">
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
           <button
             onClick={() => {
               resetForm();
               onClose();
             }}
-            className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+            className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
             {job ? "Update Job" : "Add Job"}

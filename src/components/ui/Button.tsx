@@ -29,7 +29,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variants = {
       primary:
-        "bg-gradient-to-r from-[var(--primary)] to-[#0066ff] text-black font-bold shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:shadow-[0_0_30px_rgba(0,242,255,0.5)] border-none",
+        "bg-[var(--primary)] text-black font-bold shadow-lg hover:shadow-xl hover:shadow-[var(--primary)]/30 border-none hover:scale-105",
       secondary:
         "bg-transparent border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary-glow)] hover:text-white shadow-[0_0_10px_rgba(0,242,255,0.1)]",
       ghost:
