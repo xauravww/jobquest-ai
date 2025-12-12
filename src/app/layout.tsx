@@ -44,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-[var(--bg-deep)] text-[var(--text-main)] min-h-screen flex flex-col overflow-x-hidden`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-[var(--bg-deep)] text-[var(--text-main)] min-h-screen flex flex-col overflow-x-hidden selection:bg-[var(--primary-dim)] selection:text-white`}
       >
         <Providers>
           <OnboardingCheck />
