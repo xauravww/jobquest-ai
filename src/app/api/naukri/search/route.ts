@@ -28,6 +28,60 @@ export async function POST(request: NextRequest) {
         const savedJobs = [];
         if (searchResults && searchResults.jobDetails) {
             for (const jobData of searchResults.jobDetails) {
+                // Check if job has external application (comprehensive detection)
+                const hasExternalApplication = jobData.applyUrl ||
+                    jobData.isExternal === true ||
+                    jobData.applicationType === 'external' ||
+                    jobData.mode === 'external' ||
+                    (jobData.staticUrl && jobData.staticUrl.startsWith('http') && (
+                        jobData.staticUrl.includes('.com') ||
+                        jobData.staticUrl.includes('.org') ||
+                        jobData.staticUrl.includes('.net') ||
+                        !jobData.staticUrl.includes('naukri.com')
+                    )) ||
+                    (jobData.footerPlaceholderLabel && (
+                        jobData.footerPlaceholderLabel.toLowerCase().includes('external') ||
+                        jobData.footerPlaceholderLabel.toLowerCase().includes('web job') ||
+                        jobData.footerPlaceholderLabel.toLowerCase().includes('posted on external')
+                    )) ||
+                    (jobData.placeholders && jobData.placeholders.some((p: any) =>
+                        p && typeof p === 'string' && (
+                            p.toLowerCase().includes('external') ||
+                            p.toLowerCase().includes('web job') ||
+                            p.toLowerCase().includes('posted on external')
+                        )
+                    )) ||
+                    (jobData.title && (
+                        jobData.title.toLowerCase().includes('external') ||
+                        jobData.title.toLowerCase().includes('web job')
+                    )) ||
+                    (jobData.jobDescription && (
+                        jobData.jobDescription.toLowerCase().includes('external site') ||
+                        jobData.jobDescription.toLowerCase().includes('posted on external') ||
+                        jobData.jobDescription.toLowerCase().includes('apply externally')
+                    ));
+
+                // Enhanced logging for jobs that might be external
+                if (savedJobs.length === 0 || hasExternalApplication || jobData.companyName === 'Vibeosys') {
+                    console.log('\n=== Job Analysis ===');
+                    console.log('Job ID:', jobData.jobId, 'Company:', jobData.companyName);
+                    console.log('Title:', jobData.title);
+                    console.log('All fields:', Object.keys(jobData));
+                    console.log('staticUrl:', jobData.staticUrl);
+                    console.log('isExternal:', jobData.isExternal);
+                    console.log('applyUrl:', jobData.applyUrl);
+                    console.log('mode:', jobData.mode);
+                    console.log('applicationType:', jobData.applicationType);
+                    console.log('showMultipleApply:', jobData.showMultipleApply);
+                    console.log('footerPlaceholderLabel:', jobData.footerPlaceholderLabel);
+                    console.log('placeholders:', jobData.placeholders);
+                    console.log('jobDescription (first 200 chars):', jobData.jobDescription?.substring(0, 200));
+                    console.log('tagsAndSkills:', jobData.tagsAndSkills);
+                    console.log('Detected as external:', hasExternalApplication);
+                    console.log('Assigned status:', hasExternalApplication ? 'external' : 'saved');
+                    console.log('===================\n');
+                }
+
                 const job = {
                     jobId: jobData.jobId,
                     title: jobData.title,
@@ -39,9 +93,12 @@ export async function POST(request: NextRequest) {
                     skills: jobData.tagsAndSkills ? jobData.tagsAndSkills.split(',').map((s: string) => s.trim()) : [],
                     source: 'naukri',
                     url: `https://www.naukri.com/job-listings-${jobData.jobId}`,
+                    externalApplyUrl: jobData.applyUrl || (jobData.staticUrl && jobData.staticUrl.startsWith('http') ? jobData.staticUrl : null),
+                    isExternalApplication: hasExternalApplication,
+                    applicationType: hasExternalApplication ? 'external' : 'naukri',
                     datePosted: new Date(jobData.postedDate),
                     userId: "dummy",
-                    status: 'saved',
+                    status: hasExternalApplication ? 'external' : 'saved',
                     isActive: true
                 };
 
