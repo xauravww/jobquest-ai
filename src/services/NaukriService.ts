@@ -17,7 +17,9 @@ export class NaukriService {
     private static BASE_URL = 'https://www.naukri.com';
     private static LOGIN_URL = `${NaukriService.BASE_URL}/central-login-services/v1/login`;
     private static SEARCH_URL = `${NaukriService.BASE_URL}/jobapi/v3/search`;
-    private static APPLY_URL = `${NaukriService.BASE_URL}/cloudgateway-workflow/workflow-services/apply-workflow/v1/apply`;
+    private static APPLY_URL = `${NaukriService.BASE_URL}/apply/v5/regapply`;
+
+
 
     private async retryWithBackoff<T>(
         fn: () => Promise<T>,
@@ -47,31 +49,48 @@ export class NaukriService {
             const response = await fetch(NaukriService.LOGIN_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'accept': 'application/json',
+                    'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'appid': '121',
+                    'cache-control': 'no-cache',
+                    'clientid': 'd3skt0p',
+                    'content-type': 'application/json',
+                    'gid': 'LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE',
+                    'pragma': 'no-cache',
+                    'priority': 'u=1, i',
+                    'nkparam': 'jH9QnltH+MuGKLwVCzx6nuqLOex1fiLfmrNahP7GLA0SQihJC6d0hDFoJXV65lyEzWcAjLQ7SuUTKBlHw4Artw==',
+                    'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin',
+                    'x-requested-with': 'XMLHttpRequest',
+                    'systemid': 'Naukri',
                 },
-                body: JSON.stringify({ username, password: pass }),
             });
 
+            if (response.status === 401) {
+                const error = new Error('Session expired. Please login again.');
+                (error as any).status = 401;
+                throw error;
+            }
+
+            if (response.status === 429) {
+                const error = new Error('Rate limit exceeded. Please try again later.');
+                (error as any).status = 429;
+                throw error;
+            }
+
             if (!response.ok) {
-                const error = new Error(`Login failed with status: ${response.status}`);
+                const errorText = await response.text();
+                console.log('Search failed response:', response.status, errorText);
+                const error = new Error(`Search failed with status: ${response.status}`);
                 (error as any).status = response.status;
                 throw error;
             }
 
-            const data = await response.json();
-
-            if (!data.authorization) {
-                throw new Error('Login successful but no authorization token received');
-            }
-
-            // Extract cookies from response headers
-            const cookies = response.headers.get('set-cookie') || '';
-
-            return {
-                authorization: data.authorization,
-                cookies: cookies,
-            };
+            return await response.json();
         });
     }
 
@@ -82,41 +101,54 @@ export class NaukriService {
                 urlType: 'search_by_key_loc',
                 searchType: 'adv',
                 keyword: criteria.keyword,
-                location: criteria.location,
+                location: "pune, mumbai, bengaluru, bangalore",
                 pageNo: (criteria.pageNo || 1).toString(),
-                sort: 'r', // relevance
+                sort: 'p',
+                k: criteria.keyword,
+                l: "pune, mumbai, bengaluru, bangalore",
+                nignbevent_src: 'jobsearchDeskGNB',
+                src: 'cluster',
+                latLong: '18.7506117_73.8764436',
+                sid: '17143714288347830_8',
             });
 
-            if (criteria.experience) {
-                params.append('experience', criteria.experience.toString());
-            }
-            if (criteria.salary) {
-                params.append('ctcFilter', criteria.salary);
-            }
+            // Add experience and salary filters
+            params.append('experience', '3');
+            ['6to10', '10to15', '15to25', '25to50', '50to75', '75to100'].forEach(filter => {
+                params.append('ctcFilter', filter);
+            });
 
             const response = await fetch(`${NaukriService.SEARCH_URL}?${params.toString()}`, {
                 method: 'GET',
                 headers: {
                     'accept': 'application/json',
+                    'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'appid': '121',
+                    'cache-control': 'no-cache',
+                    'clientid': 'd3skt0p',
+                    'content-type': 'application/json',
+                    'gid': 'LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE',
+                    'pragma': 'no-cache',
+                    'priority': 'u=1, i',
+                    'nkparam': 'jH9QnltH+MuGKLwVCzx6nuqLOex1fiLfmrNahP7GLA0SQihJC6d0hDFoJXV65lyEzWcAjLQ7SuUTKBlHw4Artw==',
+                    'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"Windows"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-origin',
+                    'x-requested-with': 'XMLHttpRequest',
+                    'systemid': 'Naukri',
+                    'Referer-Policy': 'strict-origin-when-cross-origin',
                     'authorization': `Bearer ${tokens.authorization}`,
-                    'cookie': tokens.cookies,
+                    'cookie': `nauk_at=${tokens.authorization}`,
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                 },
             });
 
-            if (response.status === 401) {
-                const error = new Error('Session expired. Please login again.');
-                (error as any).status = 401;
-                throw error;
-            }
-
-            if (response.status === 429) {
-                const error = new Error('Rate limit exceeded. Please try again later.');
-                (error as any).status = 429;
-                throw error;
-            }
-
             if (!response.ok) {
+                const errorText = await response.text();
+                console.log('Search failed response:', response.status, errorText);
                 const error = new Error(`Search failed with status: ${response.status}`);
                 (error as any).status = response.status;
                 throw error;
@@ -127,84 +159,10 @@ export class NaukriService {
     }
 
     async applyJob(jobId: string, tokens: NaukriTokens, answers: any = {}, userProfile?: string, aiConfig?: any, retryCount: number = 0): Promise<any> {
-        return this.retryWithBackoff(async () => {
-            const payload = {
-                strJobsarr: [jobId],
-                applyData: answers,
-                logstr: "", // This might need to be dynamic or fetched from search results
-                flowtype: "show",
-                crossdomain: true,
-                jquery: 1,
-                rdxMsgId: "",
-                chatBotSDK: true,
-                applyTypeId: "107",
-                closebtn: "y",
-                applySrc: "drecomm_profile", // or other source
-                sid: jobId,
-                mid: ""
-            };
-
-            const response = await fetch(NaukriService.APPLY_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'authorization': `Bearer ${tokens.authorization}`,
-                    'cookie': tokens.cookies,
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const result = await response.json();
-
-            // Handle specific error codes
-            if (response.status === 401) {
-                const error = new Error('Session expired. Please login again.');
-                (error as any).status = 401;
-                throw error;
-            }
-
-            if (response.status === 429) {
-                const error = new Error('Rate limit exceeded. Please try again later.');
-                (error as any).status = 429;
-                throw error;
-            }
-
-            if (response.status === 403) {
-                const error = new Error('Access forbidden. You may have exceeded daily application limits.');
-                (error as any).status = 403;
-                throw error;
-            }
-
-            // Check if questionnaire is required
-            if (result.jobs && result.jobs[0] && result.jobs[0].status === 400 && result.jobs[0].questionnaire) {
-                if (retryCount >= 2) {
-                    throw new Error('Maximum retry attempts reached for questionnaire handling');
-                }
-
-                console.log('Questionnaire detected, generating answers...');
-                const questionnaire = result.jobs[0].questionnaire;
-                const generatedAnswers = await this.generateAnswers(questionnaire, userProfile || '', aiConfig);
-
-                // Retry apply with answers (without retry wrapper for questionnaire retry)
-                return this.applyJob(jobId, tokens, generatedAnswers, userProfile, aiConfig, retryCount + 1);
-            }
-
-            // Check for "already applied" message
-            if (result.jobs?.[0]?.message?.toLowerCase().includes('already applied')) {
-                console.log(`Job ${jobId} already applied to`);
-                return { jobs: [{ jobId, status: 200, message: 'Already applied' }] };
-            }
-
-            if (!response.ok && result.jobs?.[0]?.status !== 400) {
-                const error = new Error(`Apply failed with status: ${response.status}`);
-                (error as any).status = response.status;
-                throw error;
-            }
-
-            return result;
-        });
+        throw new Error("Apply requires full browser session cookies. Not supported in API mode. Use browser automation for apply functionality.");
     }
+
+
 
     async generateAnswers(questionnaire: any[], userProfile: string, aiConfig?: any): Promise<any> {
         const answers: any = {};
@@ -280,9 +238,13 @@ export class NaukriService {
                     body: JSON.stringify(requestBody)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`AI API error: ${response.status}`);
-                }
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('Apply failed response:', response.status, errorText);
+                const error = new Error(`Apply failed with status: ${response.status}`);
+                (error as any).status = response.status;
+                throw error;
+            }
 
                 const data = await response.json();
                 let aiResponse;

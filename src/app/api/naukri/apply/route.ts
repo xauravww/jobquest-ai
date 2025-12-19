@@ -9,74 +9,52 @@ const mongoService = new MongoDBServiceClass();
 
 export async function POST(request: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        // const session = await getServerSession(authOptions);
+        // if (!session?.user?.email) {
+        //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        // }
 
-        const { jobId, tokens, answers } = await request.json();
+        const { jobId, answers } = await request.json();
 
-        if (!jobId || !tokens) {
+        if (!jobId) {
             return NextResponse.json(
-                { error: 'Job ID and tokens are required' },
+                { error: 'Job ID is required' },
                 { status: 400 }
             );
         }
 
-        // Get user profile and AI config
-        const User = (await import('@/models/User')).default;
-        const AIConfig = (await import('@/models/AIConfig')).default;
-        const Job = (await import('@/models/Job')).default;
-        const user = await User.findOne({ email: session.user.email });
+        console.log('Calling applyJob with jobId:', jobId);
+        const result = await naukriService.applyJob(jobId, { authorization: '', cookies: '' }, answers || {}, undefined, undefined);
+        console.log('Apply result:', result);
 
-        if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
-        }
+        // Update job status - skipped for testing
+        // if (result && result.jobs && result.jobs[0] && result.jobs[0].status === 200) {
+        //     await mongoService.updateJobForUser(user._id, jobId, { status: 'applied', appliedDate: new Date() });
 
-        // Build user profile string for AI
-        const profile = user.profile || {};
-        const userProfile = `Name: ${user.name || 'Not provided'}
-Email: ${user.email}
-Title: ${profile.title || 'Not specified'}
-Experience: ${profile.experience || 0} years
-Skills: ${profile.skills?.join(', ') || 'Not specified'}
-Education: ${profile.education?.map(e => `${e.degree} in ${e.field} from ${e.institution}`).join(', ') || 'Not specified'}
-Bio: ${profile.bio || 'Not provided'}
-Summary: ${profile.summary || 'Not provided'}`;
+        //     // Create Application record
+        //     const Application = (await import('@/models/Application')).default;
+        //     const job = await Job.findOne({ jobId, userId: user._id });
 
-        // Get active AI config
-        const aiConfig = await AIConfig.findOne({ userId: user._id, isActive: true });
+        //     if (job) {
+        //         const application = new Application({
+        //             userId: user._id,
+        //             jobId: job._id,
+        //             applicationId: `naukri_${jobId}_${Date.now()}`,
+        //             status: 'applied',
+        //             appliedDate: new Date(),
+        //             applicationMethod: 'auto_apply',
+        //             platform: 'naukri',
+        //             automationData: {
+        //                 isAutomated: true,
+        //                 automationScript: 'naukri-automation',
+        //                 lastAutomationRun: new Date(),
+        //                 automationStatus: 'completed'
+        //             }
+        //         });
 
-        const result = await naukriService.applyJob(jobId, tokens, answers, userProfile, aiConfig);
-
-        // Update job status and create application record if successful
-        if (result && result.jobs && result.jobs[0] && result.jobs[0].status === 200) {
-            await mongoService.updateJobForUser(user._id, jobId, { status: 'applied', appliedDate: new Date() });
-
-            // Create Application record
-            const Application = (await import('@/models/Application')).default;
-            const job = await Job.findOne({ jobId, userId: user._id });
-
-            if (job) {
-                const application = new Application({
-                    userId: user._id,
-                    jobId: job._id,
-                    applicationId: `naukri_${jobId}_${Date.now()}`,
-                    status: 'applied',
-                    appliedDate: new Date(),
-                    applicationMethod: 'auto_apply',
-                    platform: 'naukri',
-                    automationData: {
-                        isAutomated: true,
-                        automationScript: 'naukri-automation',
-                        lastAutomationRun: new Date(),
-                        automationStatus: 'completed'
-                    }
-                });
-
-                await application.save();
-            }
-        }
+        //         await application.save();
+        //     }
+        // }
 
         return NextResponse.json(result);
 

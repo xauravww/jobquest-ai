@@ -165,6 +165,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
         <NavLink href="/unified-dashboard" icon={<TrendingUp size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Analytics
         </NavLink>
+        <NavLink href="/naukri-automation" icon={<Users size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+          Auto Apply
+        </NavLink>
 
         {!isCollapsed && <div className="mt-4 mb-2 px-3 text-xs font-semibold text-[var(--text-dim)] uppercase tracking-wider">Job Search</div>}
         {isCollapsed && <div className="my-2 h-px bg-transparent mx-2" />}

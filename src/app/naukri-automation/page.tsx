@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, message, Table, Tag, Modal, Form, Space, Statistic } from 'antd';
 import { SearchOutlined, LoginOutlined, RobotOutlined, ReloadOutlined } from '@ant-design/icons';
+import AppLayout from '@/components/AppLayout';
 // Removed unused motion import
 
 interface NaukriTokens {
@@ -210,7 +211,8 @@ export default function NaukriAutomationPage() {
     ];
 
     return (
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
+        <AppLayout showFooter={false}>
+            <div className="p-8 max-w-7xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
                     Naukri Automation
@@ -405,6 +407,7 @@ export default function NaukriAutomationPage() {
                     ))}
                 </div>
             </Modal>
-        </div>
+            </div>
+        </AppLayout>
     );
 }
