@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
         //     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         // }
 
-        const { jobId, answers } = await request.json();
+        const { jobId, answers, tokens } = await request.json();
 
         if (!jobId) {
             return NextResponse.json(
@@ -23,9 +23,33 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (!tokens || !tokens.authorization || !tokens.cookies) {
+            return NextResponse.json(
+                { error: 'Valid tokens are required' },
+                { status: 400 }
+            );
+        }
+
         console.log('Calling applyJob with jobId:', jobId);
-        const result = await naukriService.applyJob(jobId, { authorization: '', cookies: '' }, answers || {}, undefined, undefined);
-        console.log('Apply result:', result);
+        console.log('Auth token preview:', tokens.authorization.substring(0, 50) + '...');
+        console.log('Cookie count:', tokens.cookies.split(';').length);
+
+        // Try the application
+        try {
+            const result = await naukriService.applyJob(jobId, tokens.authorization, tokens.cookies);
+            console.log('Apply result:', result);
+            return NextResponse.json(result);
+        } catch (error: any) {
+            // If 401, the token might be expired, suggest re-login
+            if (error.status === 401) {
+                console.log('Token appears expired, suggesting fresh login');
+                return NextResponse.json(
+                    { error: 'Session expired. Please login again.', code: 'TOKEN_EXPIRED' },
+                    { status: 401 }
+                );
+            }
+            throw error;
+        }
 
         // Update job status - skipped for testing
         // if (result && result.jobs && result.jobs[0] && result.jobs[0].status === 200) {
@@ -55,8 +79,6 @@ export async function POST(request: NextRequest) {
         //         await application.save();
         //     }
         // }
-
-        return NextResponse.json(result);
 
     } catch (error: any) {
         console.error('Apply API Error:', error);

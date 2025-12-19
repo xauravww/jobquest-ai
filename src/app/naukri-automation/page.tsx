@@ -96,6 +96,17 @@ export default function NaukriAutomationPage() {
             });
             const data = await res.json();
 
+            // Handle token expiration
+            if (res.status === 401 && data.code === 'TOKEN_EXPIRED') {
+                message.error('Session expired. Please login again.');
+                // Clear expired tokens
+                localStorage.removeItem('naukri_tokens');
+                setTokens(null);
+                // Show login modal
+                setIsLoginModalVisible(true);
+                return;
+            }
+
             if (data.jobs && data.jobs[0].status === 200) {
                 message.success('Applied successfully!');
                 // Update local job status
@@ -142,6 +153,17 @@ export default function NaukriAutomationPage() {
                 }),
             });
             const data = await res.json();
+
+            // Handle token expiration
+            if (res.status === 401 && data.code === 'TOKEN_EXPIRED') {
+                message.error('Session expired. Please login again.');
+                // Clear expired tokens
+                localStorage.removeItem('naukri_tokens');
+                setTokens(null);
+                // Show login modal
+                setIsLoginModalVisible(true);
+                return;
+            }
 
             if (data.jobs && data.jobs[0].status === 200) {
                 message.success('Applied successfully with answers!');

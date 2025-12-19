@@ -17,35 +17,11 @@ export class NaukriService {
     private static BASE_URL = 'https://www.naukri.com';
     private static LOGIN_URL = `${NaukriService.BASE_URL}/central-login-services/v1/login`;
     private static SEARCH_URL = `${NaukriService.BASE_URL}/jobapi/v3/search`;
-    private static APPLY_URL = `${NaukriService.BASE_URL}/apply/v5/regapply`;
+    private static APPLY_URL = `${NaukriService.BASE_URL}/cloudgateway-workflow/workflow-services/apply-workflow/v1/apply`;
 
 
-
-    private async retryWithBackoff<T>(
-        fn: () => Promise<T>,
-        retries: number = 3,
-        delay: number = 1000,
-        backoffFactor: number = 2
-    ): Promise<T> {
-        try {
-            return await fn();
-        } catch (error: any) {
-            if (retries > 0 && this.shouldRetry(error)) {
-                console.log(`Request failed, retrying in ${delay}ms... (${retries} retries left)`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return this.retryWithBackoff(fn, retries - 1, delay * backoffFactor);
-            }
-            throw error;
-        }
-    }
-
-    private shouldRetry(error: any): boolean {
-        // Retry on network errors, 5xx errors, or rate limiting
-        return !error.status || error.status >= 500 || error.status === 429;
-    }
 
     async login(username: string, pass: string): Promise<NaukriTokens> {
-        return this.retryWithBackoff(async () => {
             const response = await fetch(NaukriService.LOGIN_URL, {
                 method: 'POST',
                 headers: {
@@ -66,36 +42,55 @@ export class NaukriService {
                     'sec-fetch-mode': 'cors',
                     'sec-fetch-site': 'same-origin',
                     'x-requested-with': 'XMLHttpRequest',
-                    'systemid': 'Naukri',
+                    'systemid': 'jobseeker',
                 },
+                body: JSON.stringify({
+                    username: username,
+                    password: pass
+                }),
             });
 
-            if (response.status === 401) {
-                const error = new Error('Session expired. Please login again.');
-                (error as any).status = 401;
-                throw error;
+            console.log('Login response set-cookie:', response.headers.get('set-cookie'));
+
+            const data = await response.json();
+
+            // Ensure cookies array exists
+            if (!data.cookies) {
+                data.cookies = [];
             }
 
-            if (response.status === 429) {
-                const error = new Error('Rate limit exceeded. Please try again later.');
-                (error as any).status = 429;
-                throw error;
+            // Add cookies from set-cookie header
+            const setCookie = response.headers.get('set-cookie');
+            if (setCookie) {
+                const setCookies = setCookie.split(',').map(s => s.trim());
+                setCookies.forEach(cookieStr => {
+                    const parts = cookieStr.split(';');
+                    const nameValue = parts[0];
+                    const [name, value] = nameValue.split('=');
+                    if (name && value && !data.cookies.find((c: any) => c.name === name)) {
+                        data.cookies.push({ name, value });
+                    }
+                });
+            }
+            if (data.userStateInfo?.userState !== 'AUTHENTICATED') {
+                throw new Error('Login failed: User not authenticated');
             }
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.log('Search failed response:', response.status, errorText);
-                const error = new Error(`Search failed with status: ${response.status}`);
-                (error as any).status = response.status;
-                throw error;
+            const cookies = data.cookies || [];
+            const naukAtCookie = cookies.find((c: any) => c.name === 'nauk_at');
+            if (!naukAtCookie) {
+                throw new Error('Login failed: No authorization token');
             }
 
-            return await response.json();
-        });
+            const cookieString = cookies.map((c: any) => `${c.name}=${c.value}`).join('; ');
+
+            return {
+                authorization: naukAtCookie.value,
+                cookies: cookieString
+            };
     }
 
     async searchJobs(criteria: JobSearchCriteria, tokens: NaukriTokens) {
-        return this.retryWithBackoff(async () => {
             const params = new URLSearchParams({
                 noOfResults: '20',
                 urlType: 'search_by_key_loc',
@@ -155,11 +150,90 @@ export class NaukriService {
             }
 
             return await response.json();
-        });
     }
 
-    async applyJob(jobId: string, tokens: NaukriTokens, answers: any = {}, userProfile?: string, aiConfig?: any, retryCount: number = 0): Promise<any> {
-        throw new Error("Apply requires full browser session cookies. Not supported in API mode. Use browser automation for apply functionality.");
+    async applyJob(jobId: string, authToken: string, cookieString: string): Promise<any> {
+        const requestBody = {
+            strJobsarr: [jobId],
+            applyData: {},
+            logstr: "--drecomm_profile-2-F-0-1--17140801091455348-",
+            flowtype: "show",
+            crossdomain: true,
+            jquery: 1,
+            rdxMsgId: "",
+            chatBotSDK: true,
+            mandatory_skills: ["CSS","HTML","React.Js"],
+            optional_skills: ["Typescript","Angular"],
+            applyTypeId: "107",
+            closebtn: "y",
+            applySrc: "drecomm_profile",
+            sid: "17140801091455348",
+            mid: ""
+        };
+
+        console.log('Apply URL:', NaukriService.APPLY_URL);
+        console.log('Apply body:', JSON.stringify(requestBody));
+        console.log('Apply headers:', {
+            'accept': 'application/json',
+            'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+            'appid': '121',
+            'cache-control': 'no-cache',
+            'clientid': 'd3skt0p',
+            'content-type': 'application/json',
+            'gid': 'LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE',
+            'pragma': 'no-cache',
+            'priority': 'u=1, i',
+            'nkparam': 'jH9QnltH+MuGKLwVCzx6nuqLOex1fiLfmrNahP7GLA0SQihJC6d0hDFoJXV65lyEzWcAjLQ7SuUTKBlHw4Artw==',
+            'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'x-requested-with': 'XMLHttpRequest',
+            'systemid': 'Naukri',
+            'Referer-Policy': 'strict-origin-when-cross-origin',
+            'authorization': `Bearer ${authToken}`,
+            'cookie': cookieString
+        });
+
+        const response = await fetch(NaukriService.APPLY_URL, {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+                'appid': '121',
+                'cache-control': 'no-cache',
+                'clientid': 'd3skt0p',
+                'content-type': 'application/json',
+                'gid': 'LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE',
+                'pragma': 'no-cache',
+                'priority': 'u=1, i',
+                'nkparam': 'jH9QnltH+MuGKLwVCzx6nuqLOex1fiLfmrNahP7GLA0SQihJC6d0hDFoJXV65lyEzWcAjLQ7SuUTKBlHw4Artw==',
+                'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'empty',
+                'sec-fetch-mode': 'cors',
+                'sec-fetch-site': 'same-origin',
+                'x-requested-with': 'XMLHttpRequest',
+                'systemid': 'Naukri',
+                'Referer-Policy': 'strict-origin-when-cross-origin',
+                'authorization': `Bearer ${authToken}`,
+                'cookie': cookieString
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.log('Apply failed response:', response.status, errorText);
+            const error = new Error(`Apply failed with status: ${response.status}`);
+            (error as any).status = response.status;
+            throw error;
+        }
+
+        return response.json();
     }
 
 

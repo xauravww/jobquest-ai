@@ -43,7 +43,7 @@ Bio: ${profile.bio || 'Not provided'}
 Summary: ${profile.summary || 'Not provided'}`;
 
         // Apply with manual answers
-        const result = await naukriService.applyJob(jobId, tokens, answers, userProfile);
+        const result = await naukriService.applyJob(jobId, tokens.authorization, tokens.cookies);
 
         // Update job status if successful
         if (result && result.jobs && result.jobs[0] && result.jobs[0].status === 200) {
