@@ -5,27 +5,12 @@ import { useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useToast } from '@/contexts/ToastContext';
-import { Mail, Lock, Eye, EyeOff, LoaderCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Button } from 'antd';
+import { Mail, ArrowRight } from 'lucide-react';
+import AuthShell from '@/components/auth/AuthShell';
+import AuthField from '@/components/auth/AuthField';
+import PasswordField from '@/components/auth/PasswordField';
 
-// --- Reusable Input Component ---
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon: React.ReactNode;
-}
-
-const FormInput = React.forwardRef<HTMLInputElement, InputProps>(({ icon, ...props }, ref) => (
-  <div className="flex items-center bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl transition-all duration-300 focus-within:border-[var(--primary)] focus-within:shadow-[0_0_10px_var(--primary-glow)] overflow-hidden group hover:border-[var(--primary)]/50">
-    <span className="px-4 flex-shrink-0 text-[var(--text-muted)] group-focus-within:text-[var(--primary)] transition-colors">{icon}</span>
-    <input
-      ref={ref}
-      className="flex-1 px-4 py-3 bg-transparent border-none outline-none text-white placeholder-[var(--text-dim)]"
-      {...props}
-    />
-  </div>
-));
-FormInput.displayName = 'FormInput';
-
-
-// --- Main Sign-In Page Component ---
 const SignInPage: React.FC = () => {
   const { success, error } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +20,6 @@ const SignInPage: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -50,7 +34,7 @@ const SignInPage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!email || !password) {
-      error('Please fill in both fields.');
+      error('Enter your email and password to continue.');
       return;
     }
     setIsLoading(true);
@@ -64,13 +48,12 @@ const SignInPage: React.FC = () => {
 
       if (result?.error) {
         if (result.error === 'CredentialsSignin') {
-          error('Invalid email or password. Please check your credentials and try again.');
+          error('That email and password do not match. Try again.');
         } else {
           error(result.error);
         }
       } else if (result?.ok) {
-        success('Signed in successfully!');
-        // Check onboarding status
+        success('Welcome back.');
         const onboardingResponse = await fetch('/api/user/onboarding');
         const onboardingData = await onboardingResponse.json();
         if (onboardingResponse.ok && !onboardingData.user?.isOnboarded) {
@@ -80,180 +63,88 @@ const SignInPage: React.FC = () => {
         }
       }
     } catch (err) {
-      error('An unexpected error occurred. Please try again.');
+      error('Something went wrong on our end. Please try again.');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Render a skeleton or nothing until mounted to avoid flash of unstyled content
   if (!isMounted || status === 'loading' || status === 'authenticated') {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[var(--bg-deep)]">
-        <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
+        <div className="w-10 h-10 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <>
-      <div className="min-h-screen bg-[var(--bg-deep)] relative overflow-hidden flex items-center justify-center">
+    <AuthShell
+      title="Welcome back"
+      subtitle="Sign in to pick up where Applytron left off."
+      pitchTitle="Your applications kept moving while you were away."
+      pitchBody="Sign in to see what got applied, what needs a look, and what came back."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <AuthField
+          id="email"
+          name="email"
+          type="email"
+          label="Email"
+          autoComplete="email"
+          required
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          icon={<Mail className="w-5 h-5" strokeWidth={1.5} />}
+        />
 
-        {/* Background Elements */}
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--primary)]/20 rounded-full blur-[120px] animate-pulse-glow"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[var(--secondary)]/20 rounded-full blur-[120px] animate-pulse-glow" style={{ animationDelay: '2s' }}></div>
-
-        <div className="relative z-10 w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 p-6">
-
-          {/* Left Column - Branding (Hidden on mobile, visible on large screens) */}
-          <div className="hidden lg:flex flex-col justify-center items-start space-y-8">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-16 h-16 bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--primary)]/20 group-hover:scale-110 transition-transform duration-300">
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-4xl font-black text-white tracking-tight">JobQuest</span>
-                <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] tracking-wider uppercase">AI Powered</span>
-              </div>
+        <PasswordField
+          id="password"
+          name="password"
+          label="Password"
+          autoComplete="current-password"
+          required
+          placeholder="Your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          action={
+            <Link
+              href="/auth/forgot-password"
+              className="text-xs font-medium text-[var(--accent)] hover:underline"
+            >
+              Forgot?
             </Link>
+          }
+        />
 
-            <div className="space-y-6 max-w-lg">
-              <h1 className="text-5xl font-bold tracking-tight text-white leading-tight">
-                Unlock your next <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)]">career move</span>, faster.
-              </h1>
-              <p className="text-lg text-[var(--text-muted)] leading-relaxed">
-                Welcome back. Manage your applications, track your progress, and get hired with the power of AI.
-              </p>
-            </div>
-          </div>
+        <Button
+          htmlType="submit"
+          type="primary"
+          size="large"
+          block
+          loading={isLoading}
+          icon={!isLoading ? <ArrowRight className="w-4 h-4" /> : undefined}
+          iconPosition="end"
+          className="!h-11 !font-semibold"
+        >
+          {isLoading ? 'Signing in' : 'Sign in'}
+        </Button>
+      </form>
 
-          {/* Right Column - Form */}
-          <div className="flex items-center justify-center w-full">
-            <div className="w-full max-w-md">
-              {/* Mobile Logo (Visible only on mobile) */}
-              <div className="lg:hidden flex justify-center mb-8">
-                <Link href="/" className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] rounded-xl flex items-center justify-center shadow-lg shadow-[var(--primary)]/20">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-2xl font-black text-white tracking-tight">JobQuest</span>
-                </Link>
-              </div>
-
-              {/* Form Card */}
-              <div className="backdrop-blur-xl bg-[var(--bg-glass)] border border-[var(--border-glass)] rounded-2xl shadow-2xl shadow-black/50 p-8 relative overflow-hidden">
-                {/* Card Glow Effect */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--primary)] via-[var(--secondary)] to-[var(--primary)]"></div>
-
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Sign In</h2>
-                  <p className="text-[var(--text-muted)] text-base">Enter your credentials to access your account</p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-[var(--text-main)] mb-2 flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-[var(--primary)]" />
-                        Email Address
-                      </label>
-                      <FormInput
-                        id="email"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        required
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        icon={<Mail strokeWidth={1.5} className="w-5 h-5" />}
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label htmlFor="password" className="block text-sm font-medium text-[var(--text-main)] flex items-center gap-2">
-                          <Lock className="w-4 h-4 text-[var(--primary)]" />
-                          Password
-                        </label>
-                        <Link href="/auth/forgot-password" className="text-xs text-[var(--primary)] hover:text-[var(--primary-dim)] font-medium transition-colors hover:underline">
-                          Forgot?
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <FormInput
-                          id="password"
-                          name="password"
-                          type={showPassword ? 'text' : 'password'}
-                          autoComplete="current-password"
-                          required
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          icon={<Lock strokeWidth={1.5} className="w-5 h-5" />}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center px-4 text-[var(--text-muted)] hover:text-white transition-colors"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-4 px-6 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] hover:opacity-90 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-[var(--primary)]/25 hover:shadow-[0_0_20px_var(--primary-glow)] hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 group relative overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                    {isLoading ? (
-                      <>
-                        <LoaderCircle className="w-5 h-5 animate-spin" />
-                        <span className="relative z-10">Signing In...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="relative z-10">Sign In</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform relative z-10" />
-                      </>
-                    )}
-                  </button>
-                </form>
-
-                {/* Divider */}
-                <div className="relative my-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[var(--border-glass)]"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-4 bg-[var(--bg-surface)] text-[var(--text-muted)] rounded-full border border-[var(--border-glass)]">or continue with</span>
-                  </div>
-                </div>
-
-                {/* Social Login Placeholder */}
-                <div className="text-center p-4 bg-[var(--bg-surface)]/50 rounded-xl border border-[var(--border-glass)] border-dashed">
-                  <p className="text-xs text-[var(--text-muted)]">Social login coming soon</p>
-                </div>
-
-                {/* Sign Up Link */}
-                <div className="text-center mt-6">
-                  <p className="text-sm text-[var(--text-muted)]">
-                    Don't have an account?{' '}
-                    <Link href="/auth/signup" className="font-bold text-[var(--primary)] hover:text-[var(--secondary)] transition-colors hover:underline">
-                      Sign up for free
-                    </Link>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center gap-4 my-5">
+        <span className="flex-1 h-px bg-[var(--border)]" />
+        <span className="text-xs text-[var(--text-dim)]">More sign-in options soon</span>
+        <span className="flex-1 h-px bg-[var(--border)]" />
       </div>
-    </>
+
+      <p className="text-sm text-[var(--text-muted)] text-center">
+        New to Applytron?{' '}
+        <Link href="/auth/signup" className="font-semibold text-[var(--accent)] hover:underline">
+          Create an account
+        </Link>
+      </p>
+    </AuthShell>
   );
 };
 

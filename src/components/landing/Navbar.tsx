@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import Button from "@/components/ui/Button";
+import BrandMark from "@/components/ui/BrandMark";
 import Link from "next/link";
-import Image from "next/image";
 
 const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -35,18 +35,13 @@ const Navbar = () => {
             >
                 <div className="container mx-auto px-6">
                     <div
-                        className={`relative flex items-center justify-between px-6 py-3 rounded-full transition-all duration-300 ${isScrolled
-                            ? "bg-[var(--bg-glass)] backdrop-blur-xl shadow-lg shadow-[var(--primary-glow)]/10"
-                            : "bg-transparent"
+                        className={`relative flex items-center justify-between px-6 py-3 rounded-full transition-all duration-300 border ${isScrolled
+                            ? "bg-[var(--bg-glass)] backdrop-blur-xl border-[var(--border)]"
+                            : "bg-transparent border-transparent"
                             }`}
                     >
                         {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <Image src="/logo.png" alt="Applytron" width={32} height={32} className="transform group-hover:rotate-12 transition-transform" />
-                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                Applytron
-                            </span>
-                        </Link>
+                        <BrandMark />
 
                         {/* Desktop Nav */}
                         <div className="hidden md:flex items-center gap-8">

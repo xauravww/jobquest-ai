@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Archivo } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Providers from "./providers";
 import OnboardingCheck from "@/components/OnboardingCheck";
 
@@ -14,24 +12,32 @@ const inter = Inter({
   display: "swap",
 });
 
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  style: ["normal"],
+  display: "swap",
+});
+
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   style: ["normal"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Jobquest AI - AI-Powered Job Search Platform",
+  title: "Applytron - Your Job Search on Autopilot",
   description:
-    "Find your dream job faster with AI-powered job matching, automated applications, and personalized career insights.",
-  keywords: "job search, AI, career, employment, resume, applications",
-  authors: [{ name: "Jobquest AI Team" }],
+    "Applytron auto-applies to jobs for you — AI-tailored resumes, automatic applications, and smart follow-ups so you never miss an opportunity.",
+  keywords: "job search, AI, career, automation, resume, applications, auto-apply",
+  authors: [{ name: "Applytron" }],
   openGraph: {
-    title: "Jobquest AI - AI-Powered Job Search Platform",
+    title: "Applytron - Your Job Search on Autopilot",
     description:
-      "Find your dream job faster with AI-powered job matching, automated applications, and personalized career insights.",
+      "Applytron auto-applies to jobs for you — AI-tailored resumes, automatic applications, and smart follow-ups.",
     type: "website",
   },
 };
@@ -44,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-[var(--bg-deep)] text-[var(--text-main)] min-h-screen flex flex-col overflow-x-hidden selection:bg-[var(--primary-dim)] selection:text-white`}
+        className={`${inter.variable} ${archivo.variable} ${jetbrainsMono.variable} antialiased bg-[var(--bg-deep)] text-[var(--text-main)] min-h-screen flex flex-col overflow-x-hidden`}
       >
         <Providers>
           <OnboardingCheck />

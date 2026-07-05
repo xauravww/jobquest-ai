@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -29,17 +28,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variants = {
       primary:
-        "bg-[var(--primary)] text-black font-bold shadow-lg hover:shadow-xl hover:shadow-[var(--primary)]/30 border-none hover:scale-105",
+        "bg-[var(--accent)] text-[#0e1116] font-semibold border border-transparent hover:bg-[var(--accent-dim)]",
       secondary:
-        "bg-transparent border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary-glow)] hover:text-white shadow-[0_0_10px_rgba(0,242,255,0.1)]",
+        "bg-transparent border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-soft)]",
       ghost:
-        "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-white/5",
+        "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-raised)]",
       glass:
-        "bg-[var(--bg-glass)] backdrop-blur-md border border-[var(--border-glass)] text-white hover:bg-white/10 hover:border-[var(--border-glass-hover)]",
+        "bg-[var(--bg-glass)] backdrop-blur-md border border-[var(--border-glass)] text-[var(--text-main)] hover:border-[var(--border-glass-hover)]",
       danger:
-        "bg-gradient-to-r from-[var(--danger)] to-[#ff0080] text-white shadow-[0_0_20px_rgba(255,0,85,0.3)] hover:shadow-[0_0_30px_rgba(255,0,85,0.5)]",
+        "bg-[var(--danger)] text-white border border-transparent hover:opacity-90",
       white:
-        "bg-white text-black border border-gray-300 hover:bg-gray-50 shadow-sm",
+        "bg-[var(--text-main)] text-[#0e1116] border border-transparent hover:opacity-90",
     };
 
     const sizes = {
@@ -52,7 +51,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "relative inline-flex items-center justify-center rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden hover:scale-105 active:scale-95",
+          "relative inline-flex items-center justify-center rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden active:opacity-90",
           variants[variant],
           sizes[size],
           className

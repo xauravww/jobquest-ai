@@ -13,7 +13,31 @@ function ToastContainerWrapper() {
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm }}>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: "#ff6b4a",
+          colorInfo: "#ff6b4a",
+          colorSuccess: "#3fb950",
+          colorWarning: "#d9a441",
+          colorError: "#e5534b",
+          colorBgBase: "#0e1116",
+          colorBgContainer: "#161b22",
+          colorBgElevated: "#1c2230",
+          colorText: "#e6e9ef",
+          colorTextSecondary: "#8a93a6",
+          colorBorder: "#232a36",
+          colorBorderSecondary: "#232a36",
+          borderRadius: 8,
+          fontFamily:
+            "var(--font-inter), Inter, system-ui, -apple-system, sans-serif",
+        },
+        components: {
+          Button: { primaryShadow: "none", defaultShadow: "none" },
+        },
+      }}
+    >
       <SessionProvider>
         <ToastProvider>
           {children}
