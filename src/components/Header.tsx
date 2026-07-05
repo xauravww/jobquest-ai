@@ -23,10 +23,10 @@ const Header = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Profile', href: '/user-profile', icon: User },
     { name: 'Applications', href: '/application-tracking', icon: BarChart3 },
-    { name: 'AI Jobs', href: '/ai-filtering-v2', icon: Briefcase },
+    { name: 'AI Jobs', href: '/ai-filtering', icon: Briefcase },
     { name: 'Auto Apply', href: '/naukri-automation', icon: Users },
+    { name: 'Settings', href: '/settings', icon: User },
   ];
 
   return (

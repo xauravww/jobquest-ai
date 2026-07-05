@@ -140,17 +140,29 @@ button:disabled,
   cursor: not-allowed;
 }
 
-/* Kill browser autofill background */
+/* Kill browser autofill background + text color */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 9999px var(--bg-raised) inset !important;
   box-shadow: 0 0 0 9999px var(--bg-raised) inset !important;
+  -webkit-text-fill-color: var(--text-main) !important;
   caret-color: var(--text-main) !important;
   background-color: var(--bg-raised) !important;
   color: var(--text-main) !important;
   transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Antd input text color — all variants */
+.ant-input,
+.ant-input-affix-wrapper .ant-input,
+.ant-input-password .ant-input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"] {
+  color: var(--text-main) !important;
 }
 
 /* Accessibility */
@@ -180,10 +192,17 @@ input:-webkit-autofill:active {
 .ant-modal-content,
 .ant-dropdown-menu,
 .ant-message-notice-content {
-  background-color: var(--bg-surface) !important;
   border-color: var(--border) !important;
   color: var(--text-main) !important;
   box-shadow: none !important;
+}
+
+.ant-select-dropdown {
+  background-color: var(--bg-raised) !important;
+}
+
+.ant-select-item {
+  color: var(--text-main) !important;
 }
 
 .ant-select-selector:hover,

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Form, Input, Select, Checkbox, Button, Card, Progress } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Form, Input, Select, Checkbox, Button, Progress } from 'antd';
 import { useRouter } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
 import {
   User,
   Mail,
@@ -11,16 +12,18 @@ import {
   DollarSign,
   CheckCircle,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import BrandMark from '@/components/ui/BrandMark';
 
 const { TextArea } = Input;
-const { Option } = Select;
+
+const STORAGE_KEY = 'applytron_onboarding';
 
 interface OnboardingData {
   name: string;
-  email: string;
   title: string;
   location: string;
   skills: string[];
@@ -29,68 +32,108 @@ interface OnboardingData {
   jobTypes: string[];
   locations: string[];
   remote: boolean;
-  salaryRange: {
-    min: number;
-    max: number;
-  };
+  salaryRange: { min: number; max: number };
   industries: string[];
 }
 
+const SKILL_OPTIONS = ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python'];
+const JOB_TYPES = [
+  { value: 'full-time', label: 'Full-time' },
+  { value: 'part-time', label: 'Part-time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'freelance', label: 'Freelance' },
+  { value: 'internship', label: 'Internship' },
+];
+const LOCATIONS = ['Remote', 'New York', 'San Francisco', 'Los Angeles', 'Chicago', 'Austin', 'Seattle'];
+const INDUSTRIES = ['Technology', 'Healthcare', 'Finance', 'Education', 'E-commerce', 'Consulting', 'Manufacturing', 'Marketing'];
+
 const OnboardingPage: React.FC = () => {
   const { success, error } = useToast();
-  const [currentStep, setCurrentStep] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const { data: session, status } = useSession();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [form] = Form.useForm();
   const [formValues, setFormValues] = useState<Partial<OnboardingData>>({});
-  const [otp, setOtp] = useState<string>('');
-  const [otpSent, setOtpSent] = useState<boolean>(false);
-  const [otpVerified, setOtpVerified] = useState<boolean>(false);
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
-  React.useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const res = await fetch('/api/user/profile');
-        if (res.ok) {
-          const data = await res.json();
-          const fullName = data.personalInfo.fullName;
-          form.setFieldsValue({
-            name: fullName,
-            email: data.personalInfo.email,
-          });
-          setFormValues((prev) => ({ ...prev, name: fullName, email: data.personalInfo.email }));
+  // Restore saved progress from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const { step, values } = JSON.parse(saved);
+        if (values) {
+          setFormValues(values);
+          form.setFieldsValue(values);
         }
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
+        if (typeof step === 'number') setCurrentStep(step);
       }
+    } catch {
+      /* ignore corrupt data */
     }
-    fetchProfile();
+    setHydrated(true);
   }, [form]);
 
+  // Pre-fill name from session (register data)
+  useEffect(() => {
+    if (session?.user?.name && hydrated) {
+      const name = session.user.name;
+      form.setFieldsValue({ name });
+      setFormValues((prev) => ({ ...prev, name }));
+    }
+  }, [session, form, hydrated]);
+
+  // Auto-save progress on every change
+  const saveProgress = useCallback((step: number, values: Partial<OnboardingData>) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ step, values }));
+    } catch {
+      /* storage full, ignore */
+    }
+  }, []);
+
+  const handleValuesChange = useCallback((_: unknown, allValues: Partial<OnboardingData>) => {
+    const merged = { ...formValues, ...allValues };
+    setFormValues(merged);
+    saveProgress(currentStep, merged);
+  }, [formValues, currentStep, saveProgress]);
+
   const steps = [
-    { title: 'Personal Info', description: 'Basic information' },
-    { title: 'Professional Details', description: 'Your background' },
-    { title: 'Job Preferences', description: 'What you\'re looking for' },
-    { title: 'Complete', description: 'Ready to start!' },
-    { title: 'Verify Email', description: 'OTP Verification' }
+    { title: 'Personal Info' },
+    { title: 'Professional Details' },
+    { title: 'Job Preferences' },
+    { title: 'Complete' },
+    { title: 'Verify Email' },
   ];
 
-  const handleNext = async (): Promise<void> => {
+  const handleNext = async () => {
     try {
       const values = await form.validateFields();
-      setFormValues((prev) => ({ ...prev, ...values }));
-      if (currentStep < steps.length - 1) setCurrentStep((s) => s + 1);
+      const merged = { ...formValues, ...values };
+      setFormValues(merged);
+      const next = currentStep + 1;
+      if (next < steps.length) {
+        setCurrentStep(next);
+        saveProgress(next, merged);
+      }
     } catch {
-      /* stay on current step */
+      /* stay */
     }
   };
 
-  const handlePrevious = (): void => {
-    if (currentStep > 0) setCurrentStep((s) => s - 1);
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      const prev = currentStep - 1;
+      setCurrentStep(prev);
+      saveProgress(prev, formValues);
+    }
   };
 
   const handleComplete = async () => {
-    console.log('Onboarding form values:', formValues);
     setLoading(true);
     try {
       const response = await fetch('/api/user/onboarding', {
@@ -98,12 +141,10 @@ const OnboardingPage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formValues),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         success('Profile setup complete!');
-        // Onboarding will be marked complete after OTP verification
+        localStorage.removeItem(STORAGE_KEY);
       } else {
         error(data.error || 'Failed to save profile');
       }
@@ -116,38 +157,32 @@ const OnboardingPage: React.FC = () => {
   };
 
   const sendOtp = async () => {
-    const email = form.getFieldValue('email');
-    console.log('Sending OTP to email:', email);
+    const email = session?.user?.email;
     if (!email) {
-      console.error('Email is required');
       error('Email is required');
       return;
     }
     try {
-      console.log('Making fetch request to /api/user/send-otp');
       const response = await fetch('/api/user/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      console.log('Response status:', response.status);
       if (response.ok) {
-        console.log('OTP sent successfully');
         success('OTP sent to your email');
         setOtpSent(true);
       } else {
         const errorData = await response.json();
-        console.error('Failed to send OTP:', errorData);
         error(errorData.error || 'Failed to send OTP');
       }
     } catch (err) {
-      console.error('Network error while sending OTP:', err);
+      console.error(err);
       error('Network error while sending OTP');
     }
   };
 
   const verifyOtp = async () => {
-    const email = form.getFieldValue('email');
+    const email = session?.user?.email;
     if (!email) {
       error('Email is required');
       return;
@@ -161,7 +196,7 @@ const OnboardingPage: React.FC = () => {
       if (response.ok) {
         success('Email verified successfully');
         setOtpVerified(true);
-        // Onboarding is now complete after OTP verification
+        localStorage.removeItem(STORAGE_KEY);
         router.push('/dashboard');
       } else {
         error('Invalid OTP');
@@ -172,203 +207,93 @@ const OnboardingPage: React.FC = () => {
     }
   };
 
+  if (status === 'loading' || !hydrated) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[var(--bg-deep)]">
+        <div className="w-10 h-10 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const iconClass = 'w-4 h-4 text-[var(--text-dim)]';
+  const userEmail = session?.user?.email || '';
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-xl font-semibold text-white mb-3">Welcome to JobQuest AI!</h2>
-              <p className="text-gray-300 text-base">Let&apos;s set up your profile to find the perfect job opportunities.</p>
+          <div className="space-y-5">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-[var(--text-main)] mb-2">Welcome to Applytron</h2>
+              <p className="text-[var(--text-muted)]">Set up your profile so we can find roles that fit.</p>
             </div>
-
-            <Form.Item name="name" rules={[{ required: true, message: 'Please enter your full name' }]}>
-              <Input
-                prefix={<User className="w-5 h-5 text-gray-400" />}
-                placeholder="Your full name"
-                size="large"
-                className="bg-bg-card text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-              />
+            <Form.Item name="name" label="Full name" rules={[{ required: true, message: 'Enter your full name' }]}>
+              <Input prefix={<User className={iconClass} />} placeholder="Your full name" size="large" allowClear />
             </Form.Item>
-
-            <Form.Item
-              name="email"
-              rules={[
-                { required: true, message: 'Please enter your email' },
-                { type: 'email', message: 'Please enter a valid email' }
-              ]}
-            >
+            {/* Email from session — read-only display */}
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1.5">Email</label>
               <Input
-                prefix={<Mail className="w-5 h-5 text-gray-400" />}
-                placeholder="your.email@example.com"
+                prefix={<Mail className={iconClass} />}
+                value={userEmail}
                 size="large"
-                className="bg-bg-card text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
+                disabled
               />
+              <p className="text-xs text-[var(--text-dim)] mt-1">From your account. Cannot be changed here.</p>
+            </div>
+            <Form.Item name="title" label="Job title" rules={[{ required: true, message: 'Enter your job title' }]}>
+              <Input prefix={<Briefcase className={iconClass} />} placeholder="e.g., Frontend Developer" size="large" allowClear />
             </Form.Item>
-
-            <Form.Item name="title" rules={[{ required: true, message: 'Please enter your job title' }]}>
-              <Input
-                prefix={<Briefcase className="w-5 h-5 text-gray-400" />}
-                placeholder="e.g., Frontend Developer, Product Manager"
-                size="large"
-                className="bg-bg-card text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-              />
-            </Form.Item>
-
-            <Form.Item name="location" rules={[{ required: true, message: 'Please enter your location' }]}>
-              <Input
-                prefix={<MapPin className="w-5 h-5 text-gray-400" />}
-                placeholder="e.g., San Francisco, CA"
-                size="large"
-                className="bg-bg-card text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-              />
+            <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Enter your location' }]}>
+              <Input prefix={<MapPin className={iconClass} />} placeholder="e.g., San Francisco, CA" size="large" allowClear />
             </Form.Item>
           </div>
         );
 
       case 1:
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-xl font-semibold text-white mb-3">Professional Background</h2>
-              <p className="text-gray-300 text-base">Tell us about your experience and skills.</p>
+          <div className="space-y-5">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-[var(--text-main)] mb-2">Professional background</h2>
+              <p className="text-[var(--text-muted)]">Tell us about your experience and skills.</p>
             </div>
-
-            <Form.Item name="experienceYears" rules={[{ required: true, message: 'Please enter your years of experience' }]}>
-              <Input
-                type="number"
-                min={0}
-                max={50}
-                prefix={<Briefcase className="w-5 h-5 text-gray-400" />}
-                placeholder="Years of experience"
-                size="large"
-                className="bg-gray-800/70 text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-              />
+            <Form.Item name="experienceYears" label="Years of experience" rules={[{ required: true, message: 'Enter years of experience' }]}>
+              <Input type="number" min={0} max={50} prefix={<Briefcase className={iconClass} />} placeholder="Years of experience" size="large" />
             </Form.Item>
-
-            <Form.Item name="skills" rules={[{ required: true, message: 'Please add at least one skill' }]}>
-              <Select
-                mode="tags"
-                placeholder="Add your skills (e.g., React, Python, Project Management)"
-                size="large"
-                className="bg-gray-700 text-white rounded-md"
-                classNames={{
-                  root: '',
-                  popup: { root: 'select-dark-popup' },
-                }}
-              >
-                <Option value="JavaScript">JavaScript</Option>
-                <Option value="TypeScript">TypeScript</Option>
-                <Option value="React">React</Option>
-                <Option value="Node.js">Node.js</Option>
-                <Option value="Python">Python</Option>
-              </Select>
+            <Form.Item name="skills" label="Skills" rules={[{ required: true, message: 'Add at least one skill' }]}>
+              <Select mode="tags" placeholder="Type or pick a skill, e.g. React, Python" size="large" options={SKILL_OPTIONS.map((s) => ({ value: s, label: s }))} />
             </Form.Item>
-
-            <Form.Item name="summary" rules={[{ required: true, message: 'Please provide a professional summary' }]}>
-              <TextArea
-                placeholder="Brief description of your professional background and career goals..."
-                rows={4}
-                className="bg-gray-800/70 text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-              />
+            <Form.Item name="summary" label="Summary" rules={[{ required: true, message: 'Provide a short summary' }]}>
+              <TextArea placeholder="Brief description of your background and goals..." rows={4} />
             </Form.Item>
           </div>
         );
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-xl font-semibold text-white mb-3">Job Preferences</h2>
-              <p className="text-gray-300 text-base">What kind of opportunities are you looking for?</p>
+          <div className="space-y-5">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-[var(--text-main)] mb-2">Job preferences</h2>
+              <p className="text-[var(--text-muted)]">What kind of roles are you looking for?</p>
             </div>
-
-            <Form.Item name="jobTypes" rules={[{ required: true, message: 'Please select at least one job type' }]}>
-              <Select
-                mode="multiple"
-                placeholder="Preferred job types"
-                size="large"
-                className="bg-gray-800/70 text-white rounded-md"
-                classNames={{
-                  root: '',
-                  popup: { root: 'select-dark-popup' },
-                }}
-              >
-                <Option value="full-time">Full-time</Option>
-                <Option value="part-time">Part-time</Option>
-                <Option value="contract">Contract</Option>
-                <Option value="freelance">Freelance</Option>
-                <Option value="internship">Internship</Option>
-              </Select>
+            <Form.Item name="jobTypes" label="Job types" rules={[{ required: true, message: 'Select at least one job type' }]}>
+              <Select mode="multiple" placeholder="Preferred job types" size="large" options={JOB_TYPES} />
             </Form.Item>
-
-            <Form.Item name="locations" rules={[{ required: true, message: 'Please add preferred locations' }]}>
-              <Select
-                mode="tags"
-                placeholder="Preferred locations (e.g., New York, Remote, San Francisco)"
-                size="large"
-                className="bg-gray-800/70 text-white rounded-md"
-                classNames={{
-                  root: '',
-                  popup: { root: 'select-dark-popup max-h-52 overflow-y-auto' },
-                }}
-                virtual={false}
-              >
-                <Option value="Remote">Remote</Option>
-                <Option value="New York">New York</Option>
-                <Option value="San Francisco">San Francisco</Option>
-                <Option value="Los Angeles">Los Angeles</Option>
-                <Option value="Chicago">Chicago</Option>
-                <Option value="Austin">Austin</Option>
-                <Option value="Seattle">Seattle</Option>
-              </Select>
+            <Form.Item name="locations" label="Preferred locations" rules={[{ required: true, message: 'Add preferred locations' }]}>
+              <Select mode="tags" placeholder="Type or pick a location" size="large" virtual={false} options={LOCATIONS.map((l) => ({ value: l, label: l }))} />
             </Form.Item>
-
-            <Form.Item name="industries" rules={[{ required: true, message: 'Please select industries of interest' }]}>
-              <Select
-                mode="multiple"
-                placeholder="Industries of interest"
-                size="large"
-                className="bg-gray-800/70 text-white rounded-md"
-                classNames={{
-                  root: '',
-                  popup: { root: 'select-dark-popup' },
-                }}
-              >
-                <Option value="Technology">Technology</Option>
-                <Option value="Healthcare">Healthcare</Option>
-                <Option value="Finance">Finance</Option>
-                <Option value="Education">Education</Option>
-                <Option value="E-commerce">E-commerce</Option>
-                <Option value="Consulting">Consulting</Option>
-                <Option value="Manufacturing">Manufacturing</Option>
-                <Option value="Marketing">Marketing</Option>
-              </Select>
+            <Form.Item name="industries" label="Industries" rules={[{ required: true, message: 'Select industries' }]}>
+              <Select mode="multiple" placeholder="Type or pick an industry" size="large" options={INDUSTRIES.map((i) => ({ value: i, label: i }))} />
             </Form.Item>
-
             <Form.Item name="remote" valuePropName="checked">
-              <Checkbox className="text-gray-300">I&apos;m open to remote work opportunities</Checkbox>
+              <Checkbox>Open to remote work</Checkbox>
             </Form.Item>
-
             <div className="grid grid-cols-2 gap-4">
-              <Form.Item name={['salaryRange', 'min']} rules={[{ required: true, message: 'Please enter minimum salary' }]}>
-                <Input
-                  type="number"
-                  prefix={<DollarSign className="w-4 h-4 text-gray-400" />}
-                  placeholder="Min salary"
-                  size="large"
-                  className="bg-gray-800/70 text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-                />
+              <Form.Item name={['salaryRange', 'min']} label="Min salary" rules={[{ required: true, message: 'Min salary' }]}>
+                <Input type="number" prefix={<DollarSign className={iconClass} />} placeholder="Min salary" size="large" />
               </Form.Item>
-
-              <Form.Item name={['salaryRange', 'max']} rules={[{ required: true, message: 'Please enter maximum salary' }]}>
-                <Input
-                  type="number"
-                  prefix={<DollarSign className="w-4 h-4 text-gray-400" />}
-                  placeholder="Max salary"
-                  size="large"
-                  className="bg-gray-800/70 text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-                />
+              <Form.Item name={['salaryRange', 'max']} label="Max salary" rules={[{ required: true, message: 'Max salary' }]}>
+                <Input type="number" prefix={<DollarSign className={iconClass} />} placeholder="Max salary" size="large" />
               </Form.Item>
             </div>
           </div>
@@ -377,31 +302,27 @@ const OnboardingPage: React.FC = () => {
       case 3:
         return (
           <div className="text-center space-y-6">
-            <div className="mb-6">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-white mb-3">You&apos;re All Set!</h2>
-              <p className="text-gray-300 text-base">Your profile is ready. Let&apos;s find you some amazing job opportunities.</p>
+            <div className="w-14 h-14 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mx-auto">
+              <CheckCircle className="w-7 h-7 text-[var(--accent)]" />
             </div>
-
-            <div className="rounded-lg p-6 bg-bg-card">
-              <h3 className="text-lg font-semibold text-white mb-4 text-center">What&apos;s Next?</h3>
-              <ul className="text-left space-y-2 text-gray-200">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Access your personalized dashboard</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Get job recommendations based on your profile</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Track your applications and interviews</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span>Receive AI-powered career insights</span>
-                </li>
+            <div>
+              <h2 className="text-xl font-bold text-[var(--text-main)] mb-2">You are all set</h2>
+              <p className="text-[var(--text-muted)]">Your profile is ready. One last step: verify your email.</p>
+            </div>
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-deep)] p-5 text-left">
+              <h3 className="font-semibold text-[var(--text-main)] mb-3">What happens next</h3>
+              <ul className="space-y-2">
+                {[
+                  'Access your personalized dashboard',
+                  'Get job recommendations based on your profile',
+                  'Track applications and interviews',
+                  'Applytron applies and follows up for you',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                    <CheckCircle className="w-4 h-4 text-[var(--live)] shrink-0" />
+                    {item}
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -409,98 +330,84 @@ const OnboardingPage: React.FC = () => {
 
       case 4:
         return (
-          <div className="space-y-6 max-w-md mx-auto">
-            <h2 className="text-xl font-semibold text-white mb-4">Verify Your Email</h2>
+          <div className="space-y-5 max-w-md mx-auto">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold text-[var(--text-main)] mb-2">Verify your email</h2>
+              <p className="text-[var(--text-muted)]">We will send a code to {userEmail}.</p>
+            </div>
             {!otpSent ? (
-              <Button type="primary" onClick={sendOtp} className="w-full">
-                Send OTP to {form.getFieldValue('email') || 'your email'}
+              <Button type="primary" size="large" block onClick={sendOtp}>
+                Send verification code
               </Button>
             ) : otpVerified ? (
-              <p className="text-green-500 font-semibold">Email verified successfully!</p>
+              <p className="text-[var(--live)] font-semibold text-center">Email verified!</p>
             ) : (
               <>
-                <Input
-                  placeholder="Enter OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  size="large"
-                  className="bg-bg-card text-white placeholder-gray-500 hover:border-indigo-500 focus:border-indigo-500"
-                />
-                <div className="flex justify-between mt-4 gap-4">
-                  <Button type="primary" onClick={verifyOtp} className="w-1/2 mr-2">
-                    Verify OTP
+                <Input placeholder="Enter the code" value={otp} onChange={(e) => setOtp(e.target.value)} size="large" allowClear />
+                <div className="flex gap-3">
+                  <Button type="primary" size="large" block onClick={verifyOtp}>
+                    Verify
                   </Button>
-                  <Button type="default" onClick={sendOtp} className="w-1/2 ml-2">
-                    Resend OTP
+                  <Button size="large" block onClick={sendOtp}>
+                    Resend
                   </Button>
                 </div>
               </>
             )}
           </div>
         );
+
       default:
         return null;
     }
   };
 
   return (
-    <>
-      {/* Scoped dark styles for Select dropdown using the new API */}
-      <style jsx global>{`
-        .select-dark-popup {
-          background-color: rgb(31 41 55); /* bg-gray-800 */
-          color: #fff;
-        }
-        .select-dark-popup .ant-select-item {
-          color: #e5e7eb; /* text-gray-200 */
-        }
-        .select-dark-popup .ant-select-item-option-active:not(.ant-select-item-option-disabled),
-        .select-dark-popup .ant-select-item-option:hover:not(.ant-select-item-option-disabled) {
-          background-color: rgb(79 70 229); /* indigo-600 */
-          color: #fff;
-        }
-        .select-dark-popup .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-          background-color: rgb(79 70 229); /* indigo-600 */
-          color: #fff;
-        }
-        .select-dark-popup .ant-empty-description {
-          color: #9ca3af; /* muted */
-        }
-      `}</style>
+    <div className="min-h-screen bg-[var(--bg-deep)] text-[var(--text-main)] flex flex-col">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+        <BrandMark size={28} textClass="text-lg" />
+        <Button
+          type="text"
+          danger
+          icon={<LogOut className="w-4 h-4" />}
+          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+        >
+          Log out
+        </Button>
+      </div>
 
-
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl mx-auto">
-          {/* Progress Bar */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-4xl font-bold text-white tracking-tight">Complete Your Profile</h1>
-              <span className="text-gray-300 text-lg">Step {currentStep + 1} of {steps.length}</span>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-xl">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold">Set up your profile</h1>
+              <span className="font-mono-ui text-xs text-[var(--text-muted)]">
+                {currentStep + 1} / {steps.length}
+              </span>
             </div>
             <Progress
               percent={((currentStep + 1) / steps.length) * 100}
               showInfo={false}
-              strokeColor="#6366f1"
-              trailColor="#374151"
+              strokeColor="var(--accent)"
+              trailColor="var(--border)"
+              size={['100%', 4]}
             />
           </div>
 
-          {/* Step Content */}
-          <Card className="bg-bg-card" styles={{ body: { padding: '2rem' } }}>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 sm:p-8">
             <Form
               form={form}
               onFinish={currentStep === steps.length - 1 ? handleComplete : handleNext}
+              onValuesChange={handleValuesChange}
               layout="vertical"
             >
               {renderStepContent()}
 
-              {/* Navigation */}
               <div className="flex justify-between mt-8">
                 <Button
-                  type="default"
+                  size="large"
                   onClick={handlePrevious}
                   disabled={currentStep === 0}
-                  className="bg-gray-700 text-white hover:bg-gray-600"
                   icon={<ArrowLeft className="w-4 h-4" />}
                 >
                   Previous
@@ -509,29 +416,31 @@ const OnboardingPage: React.FC = () => {
                 {currentStep < steps.length - 1 ? (
                   <Button
                     type="primary"
+                    size="large"
                     onClick={handleNext}
-                    className="bg-indigo-600 hover:bg-indigo-700"
                     icon={<ArrowRight className="w-4 h-4" />}
+                    iconPosition="end"
                   >
                     Next
                   </Button>
                 ) : (
                   <Button
                     type="primary"
+                    size="large"
                     htmlType="submit"
                     loading={loading}
-                    className="bg-green-600 hover:bg-green-700"
-                    icon={<CheckCircle className="w-4 h-4" />}
+                    icon={!loading ? <CheckCircle className="w-4 h-4" /> : undefined}
+                    iconPosition="end"
                   >
-                    {loading ? 'Setting up...' : 'Complete Setup'}
+                    {loading ? 'Saving' : 'Complete setup'}
                   </Button>
                 )}
               </div>
             </Form>
-          </Card>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

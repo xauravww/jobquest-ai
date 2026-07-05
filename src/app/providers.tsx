@@ -39,8 +39,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           Input: {
             colorTextPlaceholder: "#5c6575",
             activeBg: "#1c2230",
+            activeShadow: "none",
             hoverBg: "#1c2230",
             colorBgContainer: "#1c2230",
+          },
+          Select: {
+            selectorBg: "#1c2230",
+            optionActiveBg: "#232a36",
+            optionSelectedBg: "rgba(255, 107, 74, 0.12)",
+            optionSelectedColor: "#ff6b4a",
           },
         },
       }}

@@ -5,7 +5,6 @@ import { authOptions } from '../../../../lib/auth';
 
 interface OnboardingData {
   name: string;
-  email: string;
   title: string;
   location: string;
   skills: string[];
@@ -34,10 +33,8 @@ export async function POST(request: NextRequest) {
 
     const data: OnboardingData = await request.json();
 
-    console.log('Onboarding POST data:', data);
-
-    // Validate required fields
-    const requiredFields = ['name', 'email', 'title', 'location', 'skills', 'experienceYears', 'summary', 'jobTypes', 'locations', 'industries'];
+    // Validate required fields — email comes from session, never from client
+    const requiredFields = ['name', 'title', 'location', 'skills', 'experienceYears', 'summary', 'jobTypes', 'locations', 'industries'];
     for (const field of requiredFields) {
       if (!data[field as keyof OnboardingData]) {
         return NextResponse.json(
