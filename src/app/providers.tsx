@@ -23,6 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           colorWarning: "#d9a441",
           colorError: "#e5534b",
           colorBgBase: "#0e1116",
+          colorTextBase: "#ffffff",
           colorBgContainer: "#161b22",
           colorBgElevated: "#1c2230",
           colorText: "#e6e9ef",
@@ -35,6 +36,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
         components: {
           Button: { primaryShadow: "none", defaultShadow: "none" },
+          Input: {
+            colorTextPlaceholder: "#5c6575",
+            activeBg: "#1c2230",
+            hoverBg: "#1c2230",
+            colorBgContainer: "#1c2230",
+          },
         },
       }}
     >

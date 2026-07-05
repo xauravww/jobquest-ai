@@ -140,6 +140,19 @@ button:disabled,
   cursor: not-allowed;
 }
 
+/* Kill browser autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px var(--bg-raised) inset !important;
+  box-shadow: 0 0 0 9999px var(--bg-raised) inset !important;
+  caret-color: var(--text-main) !important;
+  background-color: var(--bg-raised) !important;
+  color: var(--text-main) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
 /* Accessibility */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -161,9 +174,6 @@ button:disabled,
    Ant Design — flat, token-aligned. providers.tsx sets the main
    tokens; these guard components that read raw classes.
 ----------------------------------------------------------------*/
-.ant-btn,
-.ant-input,
-.ant-input-affix-wrapper,
 .ant-select-selector,
 .ant-picker,
 .ant-card,
@@ -176,9 +186,6 @@ button:disabled,
   box-shadow: none !important;
 }
 
-.ant-btn:hover,
-.ant-input:hover,
-.ant-input-affix-wrapper:hover,
 .ant-select-selector:hover,
 .ant-picker:hover {
   border-color: var(--accent) !important;
