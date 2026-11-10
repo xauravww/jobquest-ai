@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     // Get user's active AI config
     const { default: AIConfig } = await import('@/models/AIConfig');
     const activeConfig = await AIConfig.findOne({
-      userId: user._id,
+      userId: session.user.id,
       isActive: true
     });
 

@@ -43,8 +43,9 @@ export async function POST(request: NextRequest) {
     await initService();
     const aiFilterService = new AiFilterService();
 
-    const config = await resolveAIConfig(String(user._id), user.aiConfig);
+    const config = await resolveAIConfig(String(session.user.id), user.aiConfig);
     aiFilterService.saveConfig(config);
+    console.log('[fix-text] session email=', session.user.email, 'session id=', session.user.id, 'user._id=', String(user._id));
     console.log('[fix-text] resolved AI config:', { provider: config.provider, apiUrl: config.apiUrl, model: config.model });
 
     const systemPrompt = `You are an expert resume and professional profile editor.

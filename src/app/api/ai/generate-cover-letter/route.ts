@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (aiConfig) {
       aiFilterService.saveConfig(aiConfig);
     } else {
-      const resolved = await resolveAIConfig(String(user._id), user.aiConfig);
+      const resolved = await resolveAIConfig(String(session.user.id), user.aiConfig);
       aiFilterService.saveConfig(resolved);
     }
 
