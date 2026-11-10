@@ -93,4 +93,21 @@ describe('ResumeEditView', () => {
     expect(textarea.value).toContain('<li>React</li>');
     expect(textarea.value).toContain('<li>TypeScript</li>');
   });
+
+  it('shows the Edit Mode toggle and toggles read-only state', () => {
+    render(<ResumeEditView resume={resumeWithContent} onBack={vi.fn()} onSave={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^HTML$/i }));
+
+    // Design mode is the default and Edit Mode starts on.
+    const toggle = screen.getByRole('switch', { name: /Toggle edit mode/i });
+    expect(toggle).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText(/On — click any word and type/i)).toBeInTheDocument();
+
+    // Turn it off → document becomes read-only.
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText(/Off — the document is read-only/i)).toBeInTheDocument();
+  });
 });

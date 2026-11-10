@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import { ArrowLeft, CheckCircle, Plus, Trash2, Code2, ListChecks } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -91,6 +91,11 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
   const [htmlSrc, setHtmlSrc] = useState<string>(resume.html || '');
   const [htmlView, setHtmlView] = useState<'design' | 'source'>('design');
   const [designKey, setDesignKey] = useState(0);
+  // Edit Mode toggle for the in-place design editor. When off, the document is
+  // read-only (like viewing the PDF); when on, you can click any text and type.
+  const [editOn, setEditOn] = useState(true);
+  const editOnRef = useRef(editOn);
+  editOnRef.current = editOn;
   const printRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -146,13 +151,23 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
   const handleIframeLoad = () => {
     const doc = iframeRef.current?.contentDocument;
     if (!doc || !doc.body) return;
-    doc.designMode = 'on';
+    doc.designMode = editOnRef.current ? 'on' : 'off';
+    doc.body.style.cursor = editOnRef.current ? 'text' : 'default';
     doc.body.style.margin = '0';
     doc.addEventListener('input', () => {
       const html = doc.documentElement ? doc.documentElement.outerHTML : doc.body.innerHTML;
       setHtmlSrc(html);
     });
   };
+
+  // Toggle edit mode without reloading the document: switch designMode and the
+  // cursor directly on the already-loaded iframe.
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc || !doc.body) return;
+    doc.designMode = editOn ? 'on' : 'off';
+    doc.body.style.cursor = editOn ? 'text' : 'default';
+  }, [editOn]);
 
   const applyHtml = (next: string) => {
     setHtmlSrc(next);
@@ -501,9 +516,34 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
 
             {htmlView === 'design' ? (
               <div>
-                <p className="text-xs text-[var(--text-dim)] mb-2">
-                  Click any text on the document to edit it in place — like a PDF in design mode.
-                </p>
+                {/* Edit Mode on/off toggle */}
+                <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2 border border-[var(--border-glass)] rounded-lg bg-[var(--bg-deep)]/40">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[var(--text-main)]">Edit Mode</p>
+                    <p className="text-[11px] text-[var(--text-dim)] truncate">
+                      {editOn
+                        ? 'On — click any word and type to edit it directly, like plain text.'
+                        : 'Off — the document is read-only, like viewing the PDF.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={editOn}
+                    aria-label="Toggle edit mode"
+                    onClick={() => setEditOn((v) => !v)}
+                    className={`relative shrink-0 w-12 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/40 ${
+                      editOn ? 'bg-[var(--primary)]' : 'bg-[var(--border)]'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        editOn ? 'translate-x-6' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 <div className="overflow-auto border border-[var(--border-glass)] rounded-lg bg-white" style={{ maxHeight: '70vh' }}>
                   <iframe
                     key={designKey}
@@ -512,7 +552,14 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
                     srcDoc={htmlSrc}
                     onLoad={handleIframeLoad}
                     className="block"
-                    style={{ width: 794, minHeight: 1123, border: 'none', background: '#fff' }}
+                    style={{
+                      width: 794,
+                      minHeight: 1123,
+                      border: 'none',
+                      background: '#fff',
+                      pointerEvents: editOn ? 'auto' : 'none',
+                      opacity: editOn ? 1 : 0.85,
+                    }}
                   />
                 </div>
               </div>
