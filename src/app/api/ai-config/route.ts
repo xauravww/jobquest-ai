@@ -44,6 +44,14 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
+    const configCount = await AIConfig.countDocuments({ userId: session.user.id });
+    if (configCount >= 2) {
+      return NextResponse.json(
+        { error: 'Maximum of 2 AI configurations allowed' },
+        { status: 400 }
+      );
+    }
+
     // Create new config
     const newConfig = new AIConfig({
       userId: session.user.id,
