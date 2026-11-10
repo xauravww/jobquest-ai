@@ -46,3 +46,6 @@ next-env.d.ts
 .agents/
 .taste-skill/
 skills-lock.json
+
+# generated resume PDFs
+public/resumes/
