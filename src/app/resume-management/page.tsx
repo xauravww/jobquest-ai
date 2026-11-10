@@ -3,19 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Modal from '@/components/ui/Modal';
+import ProfileCompletionBanner from '@/components/ProfileCompletionBanner';
 import {
   FileText,
   Upload as UploadIcon,
   Download,
   Trash2,
-  Plus,
   Star,
   Eye,
   Copy,
   BarChart3,
   File,
   CheckCircle,
-  X
+  X,
+  Pencil,
+  RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { confirmAction } from '@/lib/confirm';
@@ -44,7 +46,10 @@ interface Resume {
 const ResumeManagementPage = () => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingResume, setEditingResume] = useState<Resume | null>(null);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
 
@@ -64,6 +69,54 @@ const ResumeManagementPage = () => {
       toast.error('Failed to fetch resumes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const response = await fetch('/api/resumes/generate', {
+        method: 'POST',
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok) {
+        toast.success('Resume generated from your profile');
+        fetchResumes();
+      } else {
+        toast.error(data?.error || 'Failed to generate resume');
+      }
+    } catch (error) {
+      console.error('Generate error:', error);
+      toast.error('Failed to generate resume');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleEdit = (resume: Resume) => {
+    setEditingResume(resume);
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEdit = async (id: string, title: string, description: string) => {
+    try {
+      const response = await fetch(`/api/resumes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description }),
+      });
+      if (response.ok) {
+        toast.success('Resume updated');
+        setEditModalVisible(false);
+        setEditingResume(null);
+        fetchResumes();
+      } else {
+        const data = await response.json().catch(() => null);
+        toast.error(data?.error || 'Failed to update resume');
+      }
+    } catch (error) {
+      console.error('Edit error:', error);
+      toast.error('Failed to update resume');
     }
   };
 
@@ -177,6 +230,8 @@ const ResumeManagementPage = () => {
   return (
     <AppLayout showFooter={false}>
       <div className="p-6 lg:p-8 min-h-screen space-y-8">
+        <ProfileCompletionBanner />
+
         {/* Header */}
         <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
           <div>
@@ -186,17 +241,30 @@ const ResumeManagementPage = () => {
               </div>
               Resume Management
             </h1>
-            <p className="text-[var(--text-muted)] mt-2 ml-16">Manage and optimize your resumes for different applications</p>
+            <p className="text-[var(--text-muted)] mt-2 ml-16">Generate resumes from your profile and optimize them for each application</p>
           </div>
 
-          <Button
-            variant="primary"
-            onClick={() => setUploadModalVisible(true)}
-            leftIcon={<Plus className="w-5 h-5" />}
-            className="px-6 py-3"
-          >
-            Upload Resume
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setUploadModalVisible(true)}
+              leftIcon={<UploadIcon className="w-5 h-5" />}
+              className="px-5 py-3"
+            >
+              Upload
+            </Button>
+
+            <Button
+              variant="primary"
+              onClick={handleGenerate}
+              disabled={generating}
+              isLoading={generating}
+              leftIcon={<FileText className="w-5 h-5" />}
+              className="px-6 py-3"
+            >
+              {generating ? 'Generating...' : 'Generate Resume'}
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -330,47 +398,68 @@ const ResumeManagementPage = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-[var(--border-glass)] mt-auto">
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setSelectedResume(resume);
-                        setPreviewModalVisible(true);
-                      }}
-                      leftIcon={<Eye className="w-4 h-4" />}
-                      className="flex-1 px-3 py-2 text-sm"
-                    >
-                      Preview
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleDuplicate(resume._id)}
-                      aria-label="Duplicate"
-                      className="p-2"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-
-                    {!resume.isDefault && (
+                  <div className="pt-4 border-t border-[var(--border-glass)] mt-auto space-y-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleEdit(resume)}
+                        leftIcon={<Pencil className="w-4 h-4" />}
+                        className="flex-1 px-3 py-2 text-sm"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={handleGenerate}
+                        disabled={generating}
+                        leftIcon={<RefreshCw className="w-4 h-4" />}
+                        className="flex-1 px-3 py-2 text-sm"
+                      >
+                        Regenerate
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
                       <Button
                         variant="ghost"
-                        onClick={() => handleSetDefault(resume._id)}
-                        aria-label="Set as Default"
+                        onClick={() => {
+                          setSelectedResume(resume);
+                          setPreviewModalVisible(true);
+                        }}
+                        leftIcon={<Eye className="w-4 h-4" />}
+                        className="flex-1 px-3 py-2 text-sm"
+                      >
+                        Preview
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleDuplicate(resume._id)}
+                        aria-label="Duplicate"
                         className="p-2"
                       >
-                        <Star className="w-4 h-4" />
+                        <Copy className="w-4 h-4" />
                       </Button>
-                    )}
 
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleDelete(resume._id)}
-                      aria-label="Delete"
-                      className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)]"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      {!resume.isDefault && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSetDefault(resume._id)}
+                          aria-label="Set as Default"
+                          className="p-2"
+                        >
+                          <Star className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleDelete(resume._id)}
+                        aria-label="Delete"
+                        className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)]"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -384,15 +473,28 @@ const ResumeManagementPage = () => {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">No resumes yet</h3>
                 <p className="text-[var(--text-muted)] text-center mb-6 max-w-md">
-                  Upload your first resume to get started with job applications and ATS optimization.
+                  Generate a resume from your profile in one click, or upload an existing PDF.
                 </p>
-                <Button
-                  variant="primary"
-                  onClick={() => setUploadModalVisible(true)}
-                  className="px-6 py-3"
-                >
-                  Upload Your First Resume
-                </Button>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <Button
+                    variant="primary"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    isLoading={generating}
+                    leftIcon={<FileText className="w-5 h-5" />}
+                    className="px-6 py-3"
+                  >
+                    {generating ? 'Generating...' : 'Generate Resume'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setUploadModalVisible(true)}
+                    leftIcon={<UploadIcon className="w-5 h-5" />}
+                    className="px-5 py-3"
+                  >
+                    Upload PDF
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -414,6 +516,17 @@ const ResumeManagementPage = () => {
           setPreviewModalVisible(false);
           setSelectedResume(null);
         }}
+      />
+
+      {/* Edit Modal */}
+      <EditModalComponent
+        visible={editModalVisible}
+        resume={editingResume}
+        onClose={() => {
+          setEditModalVisible(false);
+          setEditingResume(null);
+        }}
+        onSave={handleSaveEdit}
       />
     </AppLayout>
   );
@@ -623,6 +736,95 @@ const PreviewModalComponent = ({ visible, resume, onClose }: {
           </Button>
         </div>
       </div>
+    </Modal>
+  );
+};
+
+const EditModalComponent = ({ visible, resume, onClose, onSave }: {
+  visible: boolean;
+  resume: Resume | null;
+  onClose: () => void;
+  onSave: (id: string, title: string, description: string) => void;
+}) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (resume) {
+      setTitle(resume.title);
+      setDescription(resume.description || '');
+    }
+  }, [resume]);
+
+  const handleSubmit = async () => {
+    if (!resume) return;
+    if (!title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(resume._id, title.trim(), description.trim());
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={visible}
+      onClose={onClose}
+      title="Edit Resume"
+      width="max-w-lg"
+    >
+      {resume && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title <span className="text-[var(--danger)]">*</span></label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Software Engineer Resume"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Brief description..."
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-glass)]">
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              className="px-4 py-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSubmit}
+              disabled={saving}
+              isLoading={saving}
+              className="px-4 py-2"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 };

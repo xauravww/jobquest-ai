@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/mongodb';
+import Resume from '@/models/Resume';
 import { jsPDF } from 'jspdf';
+import path from 'path';
 
 // ═══════════════════════════════════════════════
 // Data cleaning — normalize mangled parser output
@@ -483,32 +485,33 @@ export async function POST() {
     const pdfBuffer = Buffer.from(pdfOutput);
 
     const now = new Date();
-    const hasDefault = await db.collection('resumes').findOne({ userEmail: session.user.email, isDefault: true });
+    const safeName = name.replace(/\s+/g, '_');
+    const fileName = `${safeName}_Resume.pdf`;
+    const filePath = `/resumes/${Date.now()}_${fileName}`;
+    const fullPath = path.join(process.cwd(), 'public', filePath);
+    const fs = await import('fs/promises');
+    await fs.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.writeFile(fullPath, pdfBuffer);
 
-    await db.collection('resumes').insertOne({
-      userEmail: session.user.email,
+    const hasDefault = await Resume.findOne({ userId: user._id, isDefault: true, isActive: true });
+
+    const resume = await Resume.create({
+      userId: user._id,
       title: `${name} — Resume`,
       description: 'Auto-generated from profile',
       database: 'default',
       type: 'ats_optimized',
-      fileName: `${name.replace(/\s+/g, '_')}_Resume.pdf`,
-      fileData: pdfBuffer,
+      fileName,
+      filePath,
       fileSize: pdfBuffer.length,
+      mimeType: 'application/pdf',
       atsScore: 92,
       isDefault: !hasDefault,
       isActive: true,
       usageCount: 0,
-      createdAt: now,
-      updatedAt: now,
     });
 
-    return new NextResponse(pdfBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${name.replace(/\s+/g, '_')}_Resume.pdf"`,
-      },
-    });
+    return NextResponse.json({ resume });
   } catch (err) {
     console.error('Resume generation error:', err);
     return NextResponse.json({ error: 'Failed to generate resume' }, { status: 500 });
