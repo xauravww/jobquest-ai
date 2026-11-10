@@ -136,12 +136,14 @@ function renderMarkdown(content: string): React.ReactNode {
   return <>{out}</>;
 }
 
+const PROFILE_ASSISTANT_INTRO = 'I can edit your profile. Tell me what to change, e.g. "shorten my bio" or "make the first project description tighter". Changes save automatically.';
+
 const ProfileChatbot: React.FC<ProfileChatbotProps> = ({ profile, onApplyChanges }) => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'I can edit your profile. Tell me what to change, e.g. "shorten my bio" or "make the first project description tighter". Changes save automatically.',
+      content: PROFILE_ASSISTANT_INTRO,
     },
   ]);
   const [input, setInput] = useState('');
@@ -201,6 +203,15 @@ const ProfileChatbot: React.FC<ProfileChatbotProps> = ({ profile, onApplyChanges
     }
   };
 
+  const clearChat = () => {
+    setMessages([
+      {
+        role: 'assistant',
+        content: PROFILE_ASSISTANT_INTRO,
+      },
+    ]);
+  };
+
   return (
     <>
       <Button
@@ -225,6 +236,15 @@ const ProfileChatbot: React.FC<ProfileChatbotProps> = ({ profile, onApplyChanges
               <p className="text-sm font-semibold" style={{ color: 'var(--text-main)' }}>Profile Assistant</p>
               <p className="text-xs" style={{ color: 'var(--text-dim)' }}>Fixes fields via your AI provider</p>
             </div>
+            <Button
+              onClick={clearChat}
+              size="sm"
+              variant="ghost"
+              aria-label="Clear chat"
+              className="!px-2 !py-1 text-xs flex items-center gap-1 shrink-0"
+            >
+              <X className="w-3.5 h-3.5" /> Clear
+            </Button>
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-0">
