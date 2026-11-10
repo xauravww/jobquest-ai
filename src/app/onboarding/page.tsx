@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Form, Input, Select, Checkbox, Button, Progress } from 'antd';
+import { Form, Input, Select, Checkbox, Progress } from 'antd';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
+import Button from '@/components/ui/Button';
 import {
   User,
   Mail,
@@ -209,8 +210,24 @@ const OnboardingPage: React.FC = () => {
 
   if (status === 'loading' || !hydrated) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[var(--bg-deep)]">
-        <div className="w-10 h-10 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[var(--bg-deep)] text-[var(--text-main)] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+          <div className="h-7 w-28 bg-[var(--bg-glass)] rounded-lg animate-pulse" />
+          <div className="h-9 w-24 bg-[var(--bg-glass)] rounded-lg animate-pulse" />
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl space-y-6">
+            <div className="space-y-3">
+              <div className="h-8 w-64 bg-[var(--bg-glass)] rounded-lg animate-pulse" />
+              <div className="h-4 w-40 bg-[var(--bg-glass)] rounded animate-pulse" />
+            </div>
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-surface)] p-6 sm:p-8 space-y-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-11 bg-[var(--bg-glass)] rounded-lg animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -228,7 +245,7 @@ const OnboardingPage: React.FC = () => {
               <p className="text-[var(--text-muted)]">Set up your profile so we can find roles that fit.</p>
             </div>
             <Form.Item name="name" label="Full name" rules={[{ required: true, message: 'Enter your full name' }]}>
-              <Input prefix={<User className={iconClass} />} placeholder="Your full name" size="large" allowClear />
+              <Input prefix={<User className={iconClass} />} placeholder="Your full name" size="middle" allowClear />
             </Form.Item>
             {/* Email from session — read-only display */}
             <div>
@@ -236,16 +253,16 @@ const OnboardingPage: React.FC = () => {
               <Input
                 prefix={<Mail className={iconClass} />}
                 value={userEmail}
-                size="large"
+                size="middle"
                 disabled
               />
               <p className="text-xs text-[var(--text-dim)] mt-1">From your account. Cannot be changed here.</p>
             </div>
             <Form.Item name="title" label="Job title" rules={[{ required: true, message: 'Enter your job title' }]}>
-              <Input prefix={<Briefcase className={iconClass} />} placeholder="e.g., Frontend Developer" size="large" allowClear />
+              <Input prefix={<Briefcase className={iconClass} />} placeholder="e.g., Frontend Developer" size="middle" allowClear />
             </Form.Item>
             <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Enter your location' }]}>
-              <Input prefix={<MapPin className={iconClass} />} placeholder="e.g., San Francisco, CA" size="large" allowClear />
+              <Input prefix={<MapPin className={iconClass} />} placeholder="e.g., San Francisco, CA" size="middle" allowClear />
             </Form.Item>
           </div>
         );
@@ -258,10 +275,10 @@ const OnboardingPage: React.FC = () => {
               <p className="text-[var(--text-muted)]">Tell us about your experience and skills.</p>
             </div>
             <Form.Item name="experienceYears" label="Years of experience" rules={[{ required: true, message: 'Enter years of experience' }]}>
-              <Input type="number" min={0} max={50} prefix={<Briefcase className={iconClass} />} placeholder="Years of experience" size="large" />
+              <Input type="number" min={0} max={50} prefix={<Briefcase className={iconClass} />} placeholder="Years of experience" size="middle" />
             </Form.Item>
             <Form.Item name="skills" label="Skills" rules={[{ required: true, message: 'Add at least one skill' }]}>
-              <Select mode="tags" placeholder="Type or pick a skill, e.g. React, Python" size="large" options={SKILL_OPTIONS.map((s) => ({ value: s, label: s }))} />
+              <Select mode="tags" placeholder="Type or pick a skill, e.g. React, Python" size="middle" options={SKILL_OPTIONS.map((s) => ({ value: s, label: s }))} />
             </Form.Item>
             <Form.Item name="summary" label="Summary" rules={[{ required: true, message: 'Provide a short summary' }]}>
               <TextArea placeholder="Brief description of your background and goals..." rows={4} />
@@ -277,23 +294,23 @@ const OnboardingPage: React.FC = () => {
               <p className="text-[var(--text-muted)]">What kind of roles are you looking for?</p>
             </div>
             <Form.Item name="jobTypes" label="Job types" rules={[{ required: true, message: 'Select at least one job type' }]}>
-              <Select mode="multiple" placeholder="Preferred job types" size="large" options={JOB_TYPES} />
+              <Select mode="multiple" placeholder="Preferred job types" size="middle" options={JOB_TYPES} />
             </Form.Item>
             <Form.Item name="locations" label="Preferred locations" rules={[{ required: true, message: 'Add preferred locations' }]}>
-              <Select mode="tags" placeholder="Type or pick a location" size="large" virtual={false} options={LOCATIONS.map((l) => ({ value: l, label: l }))} />
+              <Select mode="tags" placeholder="Type or pick a location" size="middle" virtual={false} options={LOCATIONS.map((l) => ({ value: l, label: l }))} />
             </Form.Item>
             <Form.Item name="industries" label="Industries" rules={[{ required: true, message: 'Select industries' }]}>
-              <Select mode="multiple" placeholder="Type or pick an industry" size="large" options={INDUSTRIES.map((i) => ({ value: i, label: i }))} />
+              <Select mode="multiple" placeholder="Type or pick an industry" size="middle" options={INDUSTRIES.map((i) => ({ value: i, label: i }))} />
             </Form.Item>
             <Form.Item name="remote" valuePropName="checked">
               <Checkbox>Open to remote work</Checkbox>
             </Form.Item>
             <div className="grid grid-cols-2 gap-4">
               <Form.Item name={['salaryRange', 'min']} label="Min salary" rules={[{ required: true, message: 'Min salary' }]}>
-                <Input type="number" prefix={<DollarSign className={iconClass} />} placeholder="Min salary" size="large" />
+                <Input type="number" prefix={<DollarSign className={iconClass} />} placeholder="e.g. 60000" size="middle" />
               </Form.Item>
               <Form.Item name={['salaryRange', 'max']} label="Max salary" rules={[{ required: true, message: 'Max salary' }]}>
-                <Input type="number" prefix={<DollarSign className={iconClass} />} placeholder="Max salary" size="large" />
+                <Input type="number" prefix={<DollarSign className={iconClass} />} placeholder="e.g. 120000" size="middle" />
               </Form.Item>
             </div>
           </div>
@@ -316,7 +333,7 @@ const OnboardingPage: React.FC = () => {
                   'Access your personalized dashboard',
                   'Get job recommendations based on your profile',
                   'Track applications and interviews',
-                  'Applytron applies and follows up for you',
+                  'Automated follow-ups',
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                     <CheckCircle className="w-4 h-4 text-[var(--live)] shrink-0" />
@@ -336,19 +353,19 @@ const OnboardingPage: React.FC = () => {
               <p className="text-[var(--text-muted)]">We will send a code to {userEmail}.</p>
             </div>
             {!otpSent ? (
-              <Button type="primary" size="large" block onClick={sendOtp}>
+              <Button variant="primary" className="w-full" onClick={sendOtp}>
                 Send verification code
               </Button>
             ) : otpVerified ? (
               <p className="text-[var(--live)] font-semibold text-center">Email verified!</p>
             ) : (
               <>
-                <Input placeholder="Enter the code" value={otp} onChange={(e) => setOtp(e.target.value)} size="large" allowClear />
+                <Input placeholder="Enter the code" value={otp} onChange={(e) => setOtp(e.target.value)} size="middle" allowClear />
                 <div className="flex gap-3">
-                  <Button type="primary" size="large" block onClick={verifyOtp}>
+                  <Button variant="primary" className="flex-1" onClick={verifyOtp}>
                     Verify
                   </Button>
-                  <Button size="large" block onClick={sendOtp}>
+                  <Button variant="secondary" className="flex-1" onClick={sendOtp}>
                     Resend
                   </Button>
                 </div>
@@ -367,9 +384,9 @@ const OnboardingPage: React.FC = () => {
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
         <BrandMark size={28} textClass="text-lg" />
         <Button
-          type="text"
-          danger
-          icon={<LogOut className="w-4 h-4" />}
+          variant="ghost"
+          size="sm"
+          leftIcon={<LogOut className="w-4 h-4" />}
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
         >
           Log out
@@ -405,32 +422,28 @@ const OnboardingPage: React.FC = () => {
 
               <div className="flex justify-between mt-8">
                 <Button
-                  size="large"
+                  variant="ghost"
                   onClick={handlePrevious}
                   disabled={currentStep === 0}
-                  icon={<ArrowLeft className="w-4 h-4" />}
+                  leftIcon={<ArrowLeft className="w-4 h-4" />}
                 >
                   Previous
                 </Button>
 
                 {currentStep < steps.length - 1 ? (
                   <Button
-                    type="primary"
-                    size="large"
+                    variant="primary"
                     onClick={handleNext}
-                    icon={<ArrowRight className="w-4 h-4" />}
-                    iconPosition="end"
+                    rightIcon={<ArrowRight className="w-4 h-4" />}
                   >
                     Next
                   </Button>
                 ) : (
                   <Button
-                    type="primary"
-                    size="large"
-                    htmlType="submit"
-                    loading={loading}
-                    icon={!loading ? <CheckCircle className="w-4 h-4" /> : undefined}
-                    iconPosition="end"
+                    variant="primary"
+                    type="submit"
+                    isLoading={loading}
+                    rightIcon={!loading ? <CheckCircle className="w-4 h-4" /> : undefined}
                   >
                     {loading ? 'Saving' : 'Complete setup'}
                   </Button>
