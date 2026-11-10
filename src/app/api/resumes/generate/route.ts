@@ -51,6 +51,31 @@ function extractProjectUrls(desc: string, existing: { liveUrl?: string; codeUrl?
   return { liveUrl, codeUrl, cleanDesc };
 }
 
+// Normalize a date (Date object, ISO string, or the long serialized form
+// like "Sat May 31 2025 05:30:00 GMT+0530 (India Standard Time)") into a
+// compact "Mon YYYY" label for the resume.
+function fmtShortDate(value: string | Date | null | undefined): string {
+  if (!value) return '';
+  const s = String(value).trim();
+  if (!s) return '';
+
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const mo = d.toLocaleString('en-US', { month: 'short' });
+    return `${mo} ${d.getFullYear()}`;
+  }
+
+  // Fallback: pull an English month + 4-digit year out of raw text.
+  const m = s.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*\d{1,2},?\s*(\d{4})/i);
+  if (m) {
+    const month = m[1].charAt(0).toUpperCase() + m[1].slice(1, 3).toLowerCase();
+    return `${month} ${m[2]}`;
+  }
+  const y = s.match(/(\d{4})/);
+  if (y) return y[1];
+  return s;
+}
+
 function cleanWorkEntry(w: { position?: string; company?: string; startDate?: string; endDate?: string; description?: string }) {
   // Profile data already has clean position/company fields; just normalize.
   const role = (w.position || '').replace(/\s+/g, ' ').trim();
@@ -61,19 +86,11 @@ function cleanWorkEntry(w: { position?: string; company?: string; startDate?: st
     .replace(/\s+/g, ' ')
     .trim();
 
-  const fmtDate = (d?: string) => {
-    if (!d) return '';
-    let s = String(d).trim();
-    // Collapse "AIJan 2025" -> "Jan 2025"
-    s = s.replace(/^[A-Za-z]+(?=Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i, '');
-    return s.replace(/^[^A-Za-z]*/, '');
-  };
-
   return {
     role,
     company,
-    startDate: fmtDate(w.startDate),
-    endDate: fmtDate(w.endDate),
+    startDate: fmtShortDate(w.startDate),
+    endDate: fmtShortDate(w.endDate),
     description,
   };
 }
