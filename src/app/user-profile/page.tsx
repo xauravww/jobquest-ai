@@ -3,60 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import AppLayout from '@/components/AppLayout';
-import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog, Trash2, Target, FileUp, ExternalLink, Sparkles } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Globe, Github, Linkedin, Edit3, Save, X, Plus, Briefcase, GraduationCap, Award, Code, Cog, Trash2, Target, FileUp, ExternalLink } from 'lucide-react';
 import { FormInput, FormInputNumber, FormDateInput, FormTextarea } from '@/components/ui/FormInput';
 import Modal from '@/components/ui/Modal';
 import AIProviderConfig from '@/components/AIProviderConfig';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
-
-const fixTextWithAI = async (text: string, context: string): Promise<string> => {
-  const res = await fetch('/api/ai/fix-text', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, context }),
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    throw new Error(data?.error || 'AI fix failed');
-  }
-  const data = await res.json();
-  return data.fixed || '';
-};
-
-const FixAIButton = ({ value, context, onFixed }: {
-  value: string;
-  context: string;
-  onFixed: (fixed: string) => void;
-}) => {
-  const [loading, setLoading] = useState(false);
-  const onClick = async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      const fixed = await fixTextWithAI(value, context);
-      if (fixed) onFixed(fixed);
-      toast.success('Updated with AI');
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'AI fix failed. Check your AI config.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={loading}
-      title="Fix with AI"
-      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--primary)] bg-[var(--primary)]/10 hover:bg-[var(--primary)] hover:text-black px-2 py-1 rounded-lg transition-colors disabled:opacity-50"
-    >
-      <Sparkles className="w-3.5 h-3.5" />
-      {loading ? 'Fixing\u2026' : 'Fix'}
-    </button>
-  );
-};
+import ProfileChatbot from '@/components/ProfileChatbot';
 
 interface WorkExperience {
   id: string;
@@ -202,7 +156,6 @@ const UserProfilePage = () => {
   const [newSkill, setNewSkill] = useState('');
   const [newCompany, setNewCompany] = useState('');
   const [newLocation, setNewLocation] = useState('');
-  const [aiFixingAll, setAiFixingAll] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -324,59 +277,42 @@ const UserProfilePage = () => {
     });
   };
 
-  const handleGlobalAIFix = async () => {
-    if (aiFixingAll) return;
-    setAiFixingAll(true);
-    try {
-      const prof = profile.professionalInfo;
-      const name = profile.personalInfo.fullName || 'the candidate';
-      const role = prof.currentRole || 'a professional';
-
-      type Task = { key: string; value: string; context: string };
-      const tasks: Task[] = [];
-
-      tasks.push({ key: 'bio', value: prof.bio, context: `Professional bio for ${name}, current role ${role}` });
-
-      (prof.workExperience || []).forEach((exp, i) => {
-        tasks.push({
-          key: `work-${i}`,
-          value: exp.description,
-          context: `Work experience description for ${exp.position || 'a role'} at ${exp.company || 'a company'}`,
-        });
-      });
-      (prof.projects || []).forEach((p, i) => {
-        tasks.push({ key: `project-${i}`, value: p.description, context: `Project description for ${p.name || 'a project'}` });
-      });
-      (prof.achievements || []).forEach((a, i) => {
-        tasks.push({ key: `achievement-${i}`, value: a.description, context: `Achievement description for ${a.title || 'an achievement'}` });
-      });
-
-      const results = await Promise.allSettled(tasks.map(t => fixTextWithAI(t.value, t.context)));
-      let fixedCount = 0;
-
-      results.forEach((r, i) => {
-        if (r.status !== 'fulfilled' || !r.value) return;
-        const t = tasks[i];
-        fixedCount++;
-        if (t.key === 'bio') {
-          setProfile(prev => ({ ...prev, professionalInfo: { ...prev.professionalInfo, bio: r.value } }));
-        } else if (t.key.startsWith('work-')) {
-          updateListItem('workExperience', Number(t.key.split('-')[1]), { description: r.value });
-        } else if (t.key.startsWith('project-')) {
-          updateListItem('projects', Number(t.key.split('-')[1]), { description: r.value });
-        } else if (t.key.startsWith('achievement-')) {
-          updateListItem('achievements', Number(t.key.split('-')[1]), { description: r.value });
+  // Apply nested changes from the chatbot (dot-notation paths, e.g. "professionalInfo.bio",
+  // "professionalInfo.projects.0.description"). Returns the number of fields applied.
+  const applyChatChanges = (changes: Record<string, unknown>): number => {
+    let applied = 0;
+    setProfile(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      for (const [path, value] of Object.entries(changes)) {
+        const parts = path.split('.');
+        let node: any = next;
+        let ok = true;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const key = parts[i];
+          const isIndex = /^\d+$/.test(key);
+          if (isIndex) {
+            if (!Array.isArray(node) || !node[Number(key)]) { ok = false; break; }
+            node = node[Number(key)];
+          } else {
+            if (node[key] === undefined || node[key] === null || typeof node[key] !== 'object') { ok = false; break; }
+            node = node[key];
+          }
         }
-      });
-
-      setIsEditing(true);
-      toast.success(fixedCount > 0 ? `AI fixed ${fixedCount} field${fixedCount === 1 ? '' : 's'}` : 'Nothing to fix');
-    } catch (err) {
-      console.error('Global AI fix error:', err);
-      toast.error('AI fix failed. Check your AI config.');
-    } finally {
-      setAiFixingAll(false);
-    }
+        if (!ok) continue;
+        const last = parts[parts.length - 1];
+        const lastIsIndex = /^\d+$/.test(last);
+        if (lastIsIndex) {
+          if (!Array.isArray(node) || !node[Number(last)]) continue;
+          node[Number(last)] = value;
+        } else {
+          node[last] = value;
+        }
+        applied++;
+      }
+      return next;
+    });
+    // Update happens async; return optimistic count from attempted changes.
+    return Object.keys(changes).length;
   };
 
   const handleAutofill = async () => {
@@ -588,16 +524,6 @@ const UserProfilePage = () => {
               </h1>
             </div>
             <div className="flex gap-3">
-              <Button
-                variant="ghost"
-                onClick={handleGlobalAIFix}
-                disabled={aiFixingAll}
-                isLoading={aiFixingAll}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-surface)] hover:bg-[var(--bg-glass)] text-[var(--text-muted)] hover:text-white rounded-xl transition-colors"
-              >
-                <Sparkles className="w-5 h-5" />
-                Fix with AI
-              </Button>
               <Button
                 variant="ghost"
                 onClick={() => setShowAutofillModal(true)}
@@ -852,13 +778,6 @@ const UserProfilePage = () => {
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <label className="block text-sm font-medium text-[var(--text-muted)]">Bio</label>
-                            {isEditing && (
-                              <FixAIButton
-                                value={profile.professionalInfo.bio}
-                                context={`Professional bio for ${profile.personalInfo.fullName || 'the candidate'}${profile.professionalInfo.currentRole ? `, current role ${profile.professionalInfo.currentRole}` : ''}`}
-                                onFixed={(fixed) => handleInputChange('professionalInfo', 'bio', fixed)}
-                              />
-                            )}
                           </div>
                           {isEditing ? (
                             <FormTextarea
@@ -1112,11 +1031,6 @@ const UserProfilePage = () => {
                                   <div>
                                     <div className="flex items-center justify-between mb-2">
                                       <label className="block text-sm font-medium text-[var(--text-muted)]">Description</label>
-                                      <FixAIButton
-                                        value={exp.description}
-                                        context={`Work experience description for ${exp.position || 'a role'} at ${exp.company || 'a company'}`}
-                                        onFixed={(fixed) => updateListItem('workExperience', index, { description: fixed })}
-                                      />
                                     </div>
                                     <FormTextarea
                                       value={exp.description}
@@ -1360,11 +1274,6 @@ const UserProfilePage = () => {
                                   <div>
                                     <div className="flex items-center justify-between mb-2">
                                       <label className="block text-sm font-medium text-[var(--text-muted)]">Description</label>
-                                      <FixAIButton
-                                        value={proj.description}
-                                        context={`Project description for ${proj.name || 'a project'}`}
-                                        onFixed={(fixed) => updateListItem('projects', index, { description: fixed })}
-                                      />
                                     </div>
                                     <FormTextarea
                                       value={proj.description}
@@ -1572,11 +1481,6 @@ const UserProfilePage = () => {
                                   <div>
                                     <div className="flex items-center justify-between mb-2">
                                       <label className="block text-sm font-medium text-[var(--text-muted)]">Description</label>
-                                      <FixAIButton
-                                        value={ach.description}
-                                        context={`Achievement description for ${ach.title || 'an achievement'}${ach.organization ? ` at ${ach.organization}` : ''}`}
-                                        onFixed={(fixed) => updateListItem('achievements', index, { description: fixed })}
-                                      />
                                     </div>
                                     <FormTextarea
                                       value={ach.description}
@@ -1930,6 +1834,8 @@ const UserProfilePage = () => {
           </div>
         </div>
       </div>
+
+      <ProfileChatbot profile={profile} onApplyChanges={applyChatChanges} />
     </AppLayout>
   );
 };

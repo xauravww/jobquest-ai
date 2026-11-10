@@ -26,6 +26,11 @@ interface SidebarProps {
   onLinkClick?: () => void;
 }
 
+const SectionLabel = ({ children, isCollapsed }: { children: React.ReactNode; isCollapsed?: boolean }) => {
+  if (isCollapsed) return <div className="my-2 h-px bg-[var(--border)] mx-2" />;
+  return <div className="mt-5 mb-2 px-3 text-[10px] font-semibold text-[var(--text-dim)] uppercase tracking-widest">{children}</div>;
+};
+
 const NavLink = ({ href, icon, children, pathname, isCollapsed, onLinkClick }: {
   href: string;
   icon: React.ReactNode;
@@ -37,21 +42,27 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, onLinkClick }: {
   const isDashboard = href === '/dashboard';
   const isActive = isDashboard ? pathname === href : pathname.startsWith(href) && href !== '/';
 
+  // Explicit colors (no reliance on Tailwind arbitrary-value classes).
+  const labelColor = isActive ? '#e6e9ef' : '#8a93a6';
+
   return (
     <Link
       href={href}
       onClick={onLinkClick}
       className={`relative group flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${isCollapsed ? 'justify-center' : ''
         } ${isActive
-          ? 'bg-[var(--bg-raised)] text-[var(--accent)]'
-          : 'text-[var(--text-muted)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-main)]'
+          ? 'bg-[var(--bg-raised)] border border-[var(--border-strong)]'
+          : 'border border-transparent hover:bg-[var(--bg-raised)]'
         }`}
+      style={{ color: labelColor }}
     >
-      <div className={`transition-colors duration-200 ${isActive ? 'text-[var(--accent)]' : 'group-hover:text-[var(--text-main)]'}`}>
+      <div style={{ color: labelColor }}>
         {icon}
       </div>
       {!isCollapsed && (
-        <span className="text-sm font-medium">{children}</span>
+        <span className="text-sm font-medium" style={{ color: labelColor }}>
+          {children}
+        </span>
       )}
     </Link>
   );
@@ -100,15 +111,23 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
 
       {/* Navigation */}
       <nav className="flex flex-col gap-0.5 flex-1">
+        <SectionLabel isCollapsed={isCollapsed}>Main</SectionLabel>
+
         <NavLink href="/dashboard" icon={<Home size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Dashboard
         </NavLink>
+
+        <SectionLabel isCollapsed={isCollapsed}>Automation</SectionLabel>
+
         <NavLink href="/job-search" icon={<Search size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Jobs Agent
         </NavLink>
         <NavLink href="/application-tracking" icon={<Briefcase size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Applications
         </NavLink>
+
+        <SectionLabel isCollapsed={isCollapsed}>Manage</SectionLabel>
+
         <NavLink href="/resume-management" icon={<FileText size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Resumes
         </NavLink>
@@ -118,6 +137,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
         <NavLink href="/user-profile" icon={<User size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Profile
         </NavLink>
+
+        <SectionLabel isCollapsed={isCollapsed}>Account</SectionLabel>
+
         <NavLink href="/settings" icon={<Settings size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Settings
         </NavLink>
