@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Cog, Lock, Link, Bot, Check, Plus, Trash2, X } from 'lucide-react';
+import { Cog, Lock, Link, Bot, Check, Plus, Trash2, X, Pencil } from 'lucide-react';
 import { FormInput, FormSelect } from '@/components/ui/FormInput';
 import Button from '@/components/ui/Button';
+import { confirmAction } from '@/lib/confirm';
 import toast from 'react-hot-toast';
 
 const AI_PROVIDERS = [
@@ -38,6 +39,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   const [apiKey, setApiKey] = useState('');
   const [apiUrl, setApiUrl] = useState('http://localhost:1234');
   const [model, setModel] = useState('local-model');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Fetch configs on modal open
   useEffect(() => {
@@ -84,7 +86,37 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
     }
   };
 
-  const handleCreateConfig = async () => {
+  const handleEditConfig = (config: AIConfig) => {
+    setAiProvider(config.provider);
+    setApiKey(config.apiKey || '');
+    setApiUrl(config.apiUrl || 'http://localhost:1234');
+    setModel(config.aiModel);
+    setEditingId(config._id);
+    setShowCreateForm(true);
+  };
+
+  const handleDeleteConfig = async (configId: string) => {
+    confirmAction({
+      title: 'Delete AI configuration?',
+      content: 'This will remove the saved configuration.',
+      onOk: async () => {
+        const response = await fetch(`/api/ai-config/${configId}`, { method: 'DELETE' });
+        if (response.ok) {
+          await fetchConfigs();
+          if (editingId === configId) {
+            setShowCreateForm(false);
+            setEditingId(null);
+            resetForm();
+          }
+          toast.success('AI configuration deleted');
+        } else {
+          toast.error('Failed to delete configuration');
+        }
+      },
+    });
+  };
+
+  const handleSaveConfig = async () => {
     if (!aiProvider || !model) {
       toast.error('Provider and model are required');
       return;
@@ -92,8 +124,9 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
 
     setLoading(true);
     try {
-      const response = await fetch('/api/ai-config', {
-        method: 'POST',
+      const isEditing = Boolean(editingId);
+      const response = await fetch(isEditing ? `/api/ai-config/${editingId}` : '/api/ai-config', {
+        method: isEditing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           provider: aiProvider,
@@ -107,13 +140,13 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
         await fetchConfigs();
         setShowCreateForm(false);
         resetForm();
-        toast.success('AI configuration created');
+        toast.success(isEditing ? 'AI configuration updated' : 'AI configuration created');
       } else {
-        throw new Error('Failed to create config');
+        throw new Error('Failed to save config');
       }
     } catch (error) {
-      console.error('Failed to create config:', error);
-      toast.error('Failed to create configuration');
+      console.error('Failed to save config:', error);
+      toast.error(editingId ? 'Failed to update configuration' : 'Failed to create configuration');
     } finally {
       setLoading(false);
     }
@@ -124,6 +157,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
     setApiKey('');
     setApiUrl('http://localhost:1234');
     setModel('local-model');
+    setEditingId(null);
   };
 
   // Update model default when aiProvider changes
@@ -168,7 +202,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
               <h3 className="text-lg font-semibold text-white">Your Configurations</h3>
               <Button
                 variant="primary"
-                onClick={() => setShowCreateForm(true)}
+                onClick={() => { resetForm(); setShowCreateForm(true); }}
               >
                 <Plus className="w-4 h-4" />
                 Add New Config
@@ -206,14 +240,34 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-[var(--text-dim)]">
-                          {new Date(config.lastSelectedAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1.5"
+                            aria-label="Edit configuration"
+                            onClick={(e) => { e.stopPropagation(); handleEditConfig(config); }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1.5 text-[var(--danger)]"
+                            aria-label="Delete configuration"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteConfig(config._id); }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="text-sm text-[var(--text-muted)] space-y-1">
                         <p><span className="text-[var(--text-dim)]">Model:</span> {config.aiModel}</p>
-                        {config.apiUrl && <p><span className="text-[var(--text-dim)]">URL:</span> {config.apiUrl}</p>}
+                        {config.apiUrl && <p><span className="text-[var(--text-dim)]">Base:</span> {config.apiUrl}</p>}
                         {config.apiKey && <p><span className="text-[var(--text-dim)]">API Key:</span> ••••••••</p>}
+                        <p className="text-xs text-[var(--text-dim)] pt-1">
+                          Selected {new Date(config.lastSelectedAt).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -227,7 +281,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
           {showCreateForm && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-white">Create New Configuration</h4>
+                <h4 className="text-lg font-semibold text-white">{editingId ? 'Edit Configuration' : 'Create New Configuration'}</h4>
                 <Button
                   variant="ghost"
                   onClick={() => { setShowCreateForm(false); resetForm(); }}
@@ -260,10 +314,10 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                   />
                 )}
 
-                {/* API URL (for LM Studio and Ollama) */}
+                {/* Base URL (for LM Studio, Ollama, OpenAI-compatible) */}
                 {requiresUrlAndModel && (
                   <FormInput
-                    label="API URL"
+                    label="Base URL"
                     value={apiUrl}
                     onChange={(e) => setApiUrl(e.target.value)}
                     placeholder="http://localhost:1234"
@@ -312,11 +366,11 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={handleCreateConfig}
+                  onClick={handleSaveConfig}
                   disabled={loading}
                   isLoading={loading}
                 >
-                  Create Configuration
+                  {editingId ? 'Save Changes' : 'Create Configuration'}
                 </Button>
               </div>
             </div>
