@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Button from '@/components/ui/Button';
-import { ArrowLeft, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Plus, Trash2, Code2, ListChecks } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { htmlElementToPdfBlob, blobToBase64 } from '@/lib/htmlToPdf';
 
 // Minimal resume shape the editor needs. The full page resumes (which come from
 // the API) carry an optional normalized `content` snapshot that auto-fills the
@@ -10,8 +11,11 @@ export interface EditResume {
   _id: string;
   title: string;
   description?: string;
+  html?: string;
   content?: {
     summary?: string;
+    email?: string;
+    location?: string;
     skills?: string[];
     workExperience?: any[];
     education?: any[];
@@ -22,7 +26,13 @@ export interface EditResume {
 interface Props {
   resume: EditResume;
   onBack: () => void;
-  onSave: (id: string, payload: { title: string; description: string; content: any }) => void;
+  onSave: (id: string, payload: {
+    title: string;
+    description: string;
+    content?: any;
+    html?: string;
+    pdfBase64?: string;
+  }) => void;
 }
 
 /**
@@ -30,6 +40,42 @@ interface Props {
  * auto-fills every section (summary, skills, experience, education, projects).
  * Saving sends the edited content back so the API can rebuild the PDF.
  */
+const STARTER_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; padding: 32px; }
+  h1 { font-size: 26px; margin: 0 0 2px; }
+  .contact { color: #444; font-size: 13px; margin-bottom: 18px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin: 18px 0 8px; }
+  .entry { margin-bottom: 10px; }
+  .entry .top { font-weight: bold; }
+  .entry .dates { float: right; color: #666; font-weight: normal; font-size: 12px; }
+  ul { margin: 4px 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+  <h1>Your Name</h1>
+  <div class="contact">email@example.com &bull; City, Country &bull; linkedin.com/in/you</div>
+
+  <h2>Summary</h2>
+  <p>Professional summary goes here.</p>
+
+  <h2>Experience</h2>
+  <div class="entry">
+    <div class="top">Job Title <span class="dates">May 2024 – Present</span></div>
+    <div>Company Name</div>
+    <ul><li>Highlight your impact.</li></ul>
+  </div>
+
+  <h2>Education</h2>
+  <div class="entry">
+    <div>Degree, Field — University (2020)</div>
+  </div>
+</body>
+</html>`;
+
 const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
   const c0 = resume.content || {};
   const [title, setTitle] = useState(resume.title);
@@ -40,6 +86,57 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
   const [edu, setEdu] = useState<any[]>((c0.education || []).map((e: any) => ({ ...e })));
   const [projects, setProjects] = useState<any[]>((c0.projects || []).map((p: any) => ({ ...p })));
   const [saving, setSaving] = useState(false);
+
+  const [mode, setMode] = useState<'form' | 'html'>('form');
+  const [htmlSrc, setHtmlSrc] = useState<string>(resume.html || '');
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br/>');
+
+  const formToHtml = () => {
+    const skillItems = skillsText.split(',').map(s => s.trim()).filter(Boolean).map(s => `<li>${escapeHtml(s)}</li>`).join('');
+    const workHtml = work.filter(w => w.role || w.company).map(w => `
+      <div class="entry">
+        <div class="top">${escapeHtml(w.role)} <span class="dates">${escapeHtml(w.startDate)} – ${escapeHtml(w.endDate || 'Present')}</span></div>
+        <div>${escapeHtml(w.company)}</div>
+        <ul><li>${escapeHtml(w.description || '')}</li></ul>
+      </div>`).join('');
+    const eduHtml = edu.filter(e => e.degree || e.school).map(e => `
+      <div class="entry">
+        <div>${escapeHtml(e.degree)} — ${escapeHtml(e.school)} (${escapeHtml(e.year)})</div>
+      </div>`).join('');
+    const projHtml = projects.filter(p => p.name).map(p => `
+      <div class="entry">
+        <div class="top">${escapeHtml(p.name)}</div>
+        <ul><li>${escapeHtml(p.description || '')}${p.liveUrl ? ` · ${escapeHtml(p.liveUrl)}` : ''}</li></ul>
+      </div>`).join('');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8" />
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; padding: 32px; }
+  h1 { font-size: 26px; margin: 0 0 2px; }
+  .contact { color: #444; font-size: 13px; margin-bottom: 18px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #bbb; padding-bottom: 3px; margin: 18px 0 8px; }
+  .entry { margin-bottom: 10px; }
+  .entry .top { font-weight: bold; }
+  .entry .dates { float: right; color: #666; font-weight: normal; font-size: 12px; }
+  ul { margin: 4px 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+  <h1>${escapeHtml(title)}</h1>
+  <div class="contact">${escapeHtml(c0.email || '')} &bull; ${escapeHtml(c0.location || '')}</div>
+  <h2>Summary</h2><p>${escapeHtml(summary)}</p>
+  ${skillItems ? `<h2>Skills</h2><ul>${skillItems}</ul>` : ''}
+  ${workHtml ? `<h2>Experience</h2>${workHtml}` : ''}
+  ${projHtml ? `<h2>Projects</h2>${projHtml}` : ''}
+  ${eduHtml ? `<h2>Education</h2>${eduHtml}` : ''}
+</body>
+</html>`;
+  };
 
   const updateItem = (setter: React.Dispatch<React.SetStateAction<any[]>>, index: number, patch: object) => {
     setter(prev => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
@@ -53,18 +150,43 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
       toast.error('Title is required');
       return;
     }
-    const existing = resume.content || {};
-    const content = {
-      ...existing,
-      summary,
-      skills: skillsText.split(',').map((s: string) => s.trim()).filter(Boolean),
-      workExperience: work.filter(w => (w.role || '').trim() || (w.company || '').trim()),
-      education: edu.filter(e => (e.degree || '').trim() || (e.school || '').trim()),
-      projects: projects.filter(p => (p.name || '').trim()),
-    };
     setSaving(true);
     try {
-      await onSave(resume._id, { title: title.trim(), description: description.trim(), content });
+      if (mode === 'html') {
+        // Free-form HTML mode: persist the raw HTML and generate the PDF in the
+        // browser from the live preview.
+        let pdfBase64: string | undefined;
+        if (printRef.current) {
+          try {
+            const blob = await htmlElementToPdfBlob(printRef.current);
+            pdfBase64 = await blobToBase64(blob);
+          } catch (err) {
+            console.error('HTML→PDF generation failed:', err);
+            toast.error('PDF generation failed — HTML will still be saved');
+          }
+        }
+        await onSave(resume._id, {
+          title: title.trim(),
+          description: description.trim(),
+          html: htmlSrc,
+          pdfBase64,
+        });
+      } else {
+        const existing = resume.content || {};
+        const content = {
+          ...existing,
+          summary,
+          skills: skillsText.split(',').map((s: string) => s.trim()).filter(Boolean),
+          workExperience: work.filter(w => (w.role || '').trim() || (w.company || '').trim()),
+          education: edu.filter(e => (e.degree || '').trim() || (e.school || '').trim()),
+          projects: projects.filter(p => (p.name || '').trim()),
+        };
+        await onSave(resume._id, {
+          title: title.trim(),
+          description: description.trim(),
+          content,
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -101,6 +223,27 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
       {/* Body */}
       <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
         <div className="max-w-3xl mx-auto space-y-5">
+          {/* Mode toggle */}
+          <div className="flex items-center gap-2 border-b border-[var(--border-glass)] pb-3">
+            <Button
+              variant={mode === 'form' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setMode('form')}
+              leftIcon={<ListChecks className="w-4 h-4" />}
+            >
+              Form
+            </Button>
+            <Button
+              variant={mode === 'html' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setMode('html')}
+              leftIcon={<Code2 className="w-4 h-4" />}
+            >
+              HTML
+            </Button>
+          </div>
+
+          <div style={{ display: mode === 'form' ? undefined : 'none' }}>
           {/* Metadata */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -311,6 +454,39 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
               {projects.length === 0 && (
                 <p className="text-xs text-[var(--text-dim)]">No projects.</p>
               )}
+            </div>
+          </div>
+          </div>
+
+          <div style={{ display: mode === 'html' ? undefined : 'none' }} className="space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h4 className="text-sm font-semibold text-[var(--text-main)]">HTML source</h4>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setHtmlSrc(formToHtml())} className="!px-3 !py-1 text-xs">
+                  Convert form → HTML
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setHtmlSrc(STARTER_HTML)} className="!px-3 !py-1 text-xs">
+                  Starter template
+                </Button>
+              </div>
+            </div>
+            <textarea
+              value={htmlSrc}
+              onChange={(e) => setHtmlSrc(e.target.value)}
+              spellCheck={false}
+              className="w-full h-80 font-mono text-xs p-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-lg text-white focus:outline-none"
+              placeholder="Paste your full HTML resume here…"
+            />
+            <div>
+              <h4 className="text-sm font-semibold text-[var(--text-main)] mb-2">Preview</h4>
+              <div className="overflow-auto border border-[var(--border-glass)] rounded-lg bg-white" style={{ maxHeight: '70vh' }}>
+                <div
+                  ref={printRef}
+                  className="mx-auto"
+                  style={{ width: 794, minHeight: 1123, background: '#fff', color: '#111' }}
+                  dangerouslySetInnerHTML={{ __html: htmlSrc }}
+                />
+              </div>
             </div>
           </div>
 

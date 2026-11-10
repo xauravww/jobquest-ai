@@ -15,6 +15,10 @@ const ResumeSchema = new mongoose.Schema({
   },
   description: String,
 
+  // Free-form HTML source (optional). When set, this is the resume body and is
+  // previewed/rendered directly instead of the structured content model.
+  html: String,
+
   // Resume Database
   database: {
     type: String,
@@ -109,8 +113,7 @@ const ResumeSchema = new mongoose.Schema({
   atsKeywords: [String],
 
   // Normalized resume content (source of truth for generated PDFs).
-  content: {
-    title: String,
+  content: {    title: String,
     location: String,
     summary: String,
     email: String,

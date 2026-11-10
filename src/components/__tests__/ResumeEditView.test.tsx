@@ -72,4 +72,20 @@ describe('ResumeEditView', () => {
     expect(payload.content.education).toHaveLength(1);
     expect(payload.content.projects).toHaveLength(1);
   });
+
+  it('switches to HTML mode and converts the form into HTML source', () => {
+    render(<ResumeEditView resume={resumeWithContent} onBack={vi.fn()} onSave={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^HTML$/i }));
+
+    const textarea = screen.getByPlaceholderText(/Paste your full HTML resume here/i) as HTMLTextAreaElement;
+    expect(textarea).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Convert form → HTML/i }));
+
+    expect(textarea.value).toContain('<h1>');
+    expect(textarea.value).toContain('Saurav — Resume');
+    expect(textarea.value).toContain('<li>React</li>');
+    expect(textarea.value).toContain('<li>TypeScript</li>');
+  });
 });

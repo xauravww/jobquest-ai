@@ -92,7 +92,32 @@ export async function PUT(
     if (typeof body.title === 'string') update.title = body.title.trim() || existing.title;
     if (typeof body.description === 'string') update.description = body.description.trim();
 
-    // Content change -> normalize, render a fresh PDF, and swap in the new file.
+    // Free-form HTML source (optional). Persist it as the resume body.
+    if (typeof body.html === 'string') update.html = body.html;
+
+    // Client-generated PDF (from the HTML editor) -> save the file as-is.
+    if (typeof body.pdfBase64 === 'string' && body.pdfBase64) {
+      try {
+        const pdfBuffer = Buffer.from(body.pdfBase64, 'base64');
+        const name = (user.name || existing.title.replace(/ — Resume$/, '') || 'Professional').trim();
+        const safeName = name.replace(/\s+/g, '_');
+        const fileName = `${safeName}_Resume.pdf`;
+        const filePath = `/resumes/${Date.now()}_${fileName}`;
+        const fullPath = path.join(process.cwd(), 'public', filePath);
+        await mkdir(path.dirname(fullPath), { recursive: true });
+        await writeFile(fullPath, pdfBuffer);
+
+        update.fileName = fileName;
+        update.filePath = filePath;
+        update.fileSize = pdfBuffer.length;
+        update.mimeType = 'application/pdf';
+      } catch (pdfErr) {
+        console.error('Failed to persist client-side PDF:', pdfErr);
+      }
+    }
+
+    // Structured content change -> normalize, render a fresh PDF, and swap in
+    // the new file (used by the Form mode).
     if (body.content !== undefined && body.content !== null) {
       const content = normalizeContent(body.content);
       update.content = content;

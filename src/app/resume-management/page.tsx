@@ -29,6 +29,7 @@ interface Resume {
   _id: string;
   title: string;
   description: string;
+  html?: string;
   database: 'default' | 'database1' | 'database2' | 'database3';
   type: 'standard' | 'latex' | 'ats_optimized' | 'creative';
   fileName: string;
@@ -131,7 +132,7 @@ const ResumeManagementPage = () => {
     setEditing(true);
   };
 
-  const handleSaveEdit = async (id: string, payload: { title: string; description: string; content?: unknown }) => {
+  const handleSaveEdit = async (id: string, payload: { title: string; description: string; content?: unknown; html?: string; pdfBase64?: string }) => {
     try {
       const response = await fetch(`/api/resumes/${id}`, {
         method: 'PUT',
@@ -633,7 +634,8 @@ const ResumePreviewView = ({ resume, onBack }: {
       {/* PDF embed */}
       <div className="rounded-xl border bg-white overflow-hidden" style={{ borderColor: 'var(--border)', height: '85vh' }}>
         <iframe
-          src={previewSrc}
+          src={resume.html ? undefined : previewSrc}
+          srcDoc={resume.html ? resume.html : undefined}
           title={resume.title}
           className="w-full h-full"
           style={{ border: 'none' }}
