@@ -437,7 +437,16 @@ export async function POST() {
 
     // ═══════════ ACHIEVEMENTS ═══════════
 
-    const achievements: string[] = (p.achievements || []).filter((a: string) => a && a.trim());
+    const achievements: string[] = (p.achievements || [])
+      .filter((a: any) => a && (typeof a === 'string' ? a.trim() : (a.title || a.description)))
+      .map((a: any) => {
+        if (typeof a === 'string') return a.trim();
+        const title = (a.title || '').trim();
+        const desc = (a.description || '').trim();
+        if (title && desc) return `${title}: ${desc}`;
+        return title || desc;
+      })
+      .filter(Boolean);
     if (achievements.length > 0) {
       secHead('Achievements & Extracurricular');
       for (const a of achievements) {
