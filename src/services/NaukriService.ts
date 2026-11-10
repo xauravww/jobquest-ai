@@ -394,6 +394,11 @@ export class NaukriService {
                     };
                 }
 
+                // Attach bearer token for hosted OpenAI-compatible endpoints
+                if (provider !== 'gemini' && aiConfig?.apiKey) {
+                    headers['Authorization'] = `Bearer ${aiConfig.apiKey}`;
+                }
+
                 const endpoint = provider === 'gemini'
                     ? `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent`
                     : `${apiUrl}/v1/chat/completions`;

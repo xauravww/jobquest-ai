@@ -185,6 +185,7 @@ export async function POST(request: NextRequest) {
           switch (provider) {
             case 'lm-studio':
             case 'ollama':
+            case 'openai-compatible':
               requestBody = {
                 model: model,
                 messages: [
@@ -229,6 +230,10 @@ export async function POST(request: NextRequest) {
 
             default:
               throw new Error(`Unsupported provider: ${provider}`);
+          }
+
+          if (provider !== 'gemini' && apiKey) {
+            headers.Authorization = `Bearer ${apiKey}`;
           }
 
           const endpoint = provider === 'gemini'

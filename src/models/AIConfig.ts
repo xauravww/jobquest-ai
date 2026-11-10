@@ -2,7 +2,7 @@ import mongoose, { Document, Schema, Model } from 'mongoose';
 
 export interface IAIConfig extends Document {
   userId: mongoose.Types.ObjectId;
-  provider: 'lm-studio' | 'ollama' | 'gemini';
+  provider: 'lm-studio' | 'ollama' | 'openai-compatible' | 'gemini';
   apiKey?: string;
   apiUrl?: string;
   aiModel: string;
@@ -21,7 +21,7 @@ const AIConfigSchema = new Schema<IAIConfig>(
     },
     provider: {
       type: String,
-      enum: ['lm-studio', 'ollama', 'gemini'],
+      enum: ['lm-studio', 'ollama', 'openai-compatible', 'gemini'],
       required: true,
     },
     apiKey: String,

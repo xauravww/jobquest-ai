@@ -98,7 +98,7 @@ class AiFilterService {
       if (this.config.provider === 'gemini' && !this.config.apiKey) {
         throw new Error('AI Filter Failed: API key missing. Please set up your AI provider in settings.');
       }
-      if ((this.config.provider === 'lm-studio' || this.config.provider === 'ollama') && !this.config.apiUrl) {
+      if ((this.config.provider === 'lm-studio' || this.config.provider === 'ollama' || this.config.provider === 'openai-compatible') && !this.config.apiUrl) {
         throw new Error('AI Filter Failed: API URL missing. Please set up your AI provider in settings.');
       }
 
@@ -155,6 +155,7 @@ class AiFilterService {
       switch (provider) {
         case 'lm-studio':
         case 'ollama':
+        case 'openai-compatible':
           requestBody = {
             model: model,
             messages: [
@@ -193,6 +194,11 @@ class AiFilterService {
 
         default:
           throw new Error(`Unsupported provider: ${provider}`);
+      }
+
+      // Attach bearer token for hosted OpenAI-compatible endpoints
+      if (provider !== 'gemini' && apiKey) {
+        headers.Authorization = `Bearer ${apiKey}`;
       }
 
       const endpoint = provider === 'gemini'
@@ -373,6 +379,7 @@ Please respond with a JSON array where each object has:
       switch (provider) {
         case 'lm-studio':
         case 'ollama':
+        case 'openai-compatible':
           requestBody = {
             model: model,
             messages: [
@@ -410,6 +417,11 @@ Please respond with a JSON array where each object has:
 
         default:
           throw new Error(`Unsupported provider: ${provider}`);
+      }
+
+      // Attach bearer token for hosted OpenAI-compatible endpoints
+      if (provider !== 'gemini' && apiKey) {
+        headers.Authorization = `Bearer ${apiKey}`;
       }
 
       const endpoint = provider === 'gemini'
@@ -505,6 +517,7 @@ Please respond with a JSON array where each object has:
       switch (provider) {
         case 'lm-studio':
         case 'ollama':
+        case 'openai-compatible':
           requestBody = {
             model: model,
             messages: [
@@ -542,6 +555,11 @@ Please respond with a JSON array where each object has:
 
         default:
           throw new Error(`Unsupported provider: ${provider}`);
+      }
+
+      // Attach bearer token for hosted OpenAI-compatible endpoints
+      if (provider !== 'gemini' && apiKey) {
+        headers.Authorization = `Bearer ${apiKey}`;
       }
 
       const endpoint = provider === 'gemini'

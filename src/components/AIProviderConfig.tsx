@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 
 const AI_PROVIDERS = [
+  { label: 'OpenAI-compatible', value: 'openai-compatible' },
   { label: 'LM Studio', value: 'lm-studio' },
   { label: 'Ollama', value: 'ollama' },
   { label: 'Gemini', value: 'gemini' }
@@ -129,13 +130,14 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   useEffect(() => {
     if (aiProvider === 'gemini') {
       setModel('gemini-2.0-flash');
-    } else if (aiProvider === 'lm-studio' || aiProvider === 'ollama') {
+    } else if (aiProvider === 'lm-studio' || aiProvider === 'ollama' || aiProvider === 'openai-compatible') {
       setModel('local-model');
     }
   }, [aiProvider]);
 
   const requiresApiKey = aiProvider === 'gemini';
-  const requiresUrlAndModel = aiProvider === 'lm-studio' || aiProvider === 'ollama';
+  const supportsApiKey = aiProvider === 'openai-compatible';
+  const requiresUrlAndModel = aiProvider === 'lm-studio' || aiProvider === 'ollama' || aiProvider === 'openai-compatible';
 
   if (!showConfig) return null;
 
@@ -246,15 +248,15 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                 />
 
                 {/* API Key (for Gemini) */}
-                {requiresApiKey && (
+                {(requiresApiKey || supportsApiKey) && (
                   <FormInput
                     label="API Key"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Gemini API key"
+                    placeholder={requiresApiKey ? 'Gemini API key' : 'Optional — for hosted endpoints'}
                     icon={<Lock className="w-4 h-4" />}
                     type="password"
-                    required
+                    required={requiresApiKey}
                   />
                 )}
 
