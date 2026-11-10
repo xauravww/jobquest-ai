@@ -11,7 +11,7 @@ interface ChatMessage {
 
 interface ProfileChatbotProps {
   profile: unknown;
-  onApplyChanges: (changes: Record<string, unknown>) => void;
+  onApplyChanges: (changes: Record<string, unknown>) => Promise<number>;
 }
 
 /* ------------------------------------------------------------------
@@ -141,7 +141,7 @@ const ProfileChatbot: React.FC<ProfileChatbotProps> = ({ profile, onApplyChanges
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Hi! Tell me what to fix, e.g. "shorten my bio" or "improve the first project description".',
+      content: 'I can edit your profile. Tell me what to change, e.g. "shorten my bio" or "make the first project description tighter". Changes save automatically.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -179,12 +179,15 @@ const ProfileChatbot: React.FC<ProfileChatbotProps> = ({ profile, onApplyChanges
 
       if (data?.action === 'edit' && data.changes) {
         const keys = Object.keys(data.changes);
-        onApplyChanges(data.changes);
+        const applied = await onApplyChanges(data.changes);
+        const n = applied > 0 ? applied : keys.length;
         setMessages((m) => [
           ...m,
           {
             role: 'assistant',
-            content: `Done. Updated ${keys.length} field${keys.length === 1 ? '' : 's'}: ${keys.join(', ')}. The changes are applied to the form below; press Save to persist them.`,
+            content: applied > 0
+              ? `Done. Updated ${n} field${n === 1 ? '' : 's'} and saved them to your profile.`
+              : 'I couldn\'t apply those changes because one of the referenced fields doesn\'t exist yet. Try rephrasing, or add the section first.',
           },
         ]);
       } else {

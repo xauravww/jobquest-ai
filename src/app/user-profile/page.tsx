@@ -278,41 +278,60 @@ const UserProfilePage = () => {
   };
 
   // Apply nested changes from the chatbot (dot-notation paths, e.g. "professionalInfo.bio",
-  // "professionalInfo.projects.0.description"). Returns the number of fields applied.
-  const applyChatChanges = (changes: Record<string, unknown>): number => {
+  // "professionalInfo.projects.0.description"), update the form, and persist immediately
+  // via the API so no manual Save is required.
+  const applyChatChanges = async (changes: Record<string, unknown>): Promise<number> => {
     let applied = 0;
-    setProfile(prev => {
-      const next = JSON.parse(JSON.stringify(prev));
-      for (const [path, value] of Object.entries(changes)) {
-        const parts = path.split('.');
-        let node: any = next;
-        let ok = true;
-        for (let i = 0; i < parts.length - 1; i++) {
-          const key = parts[i];
-          const isIndex = /^\d+$/.test(key);
-          if (isIndex) {
-            if (!Array.isArray(node) || !node[Number(key)]) { ok = false; break; }
-            node = node[Number(key)];
-          } else {
-            if (node[key] === undefined || node[key] === null || typeof node[key] !== 'object') { ok = false; break; }
-            node = node[key];
-          }
-        }
-        if (!ok) continue;
-        const last = parts[parts.length - 1];
-        const lastIsIndex = /^\d+$/.test(last);
-        if (lastIsIndex) {
-          if (!Array.isArray(node) || !node[Number(last)]) continue;
-          node[Number(last)] = value;
+    const next = JSON.parse(JSON.stringify(profile));
+    for (const [path, value] of Object.entries(changes)) {
+      const parts = path.split('.');
+      let node: any = next;
+      let ok = true;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const key = parts[i];
+        const isIndex = /^\d+$/.test(key);
+        if (isIndex) {
+          if (!Array.isArray(node) || !node[Number(key)]) { ok = false; break; }
+          node = node[Number(key)];
         } else {
-          node[last] = value;
+          if (node[key] === undefined || node[key] === null || typeof node[key] !== 'object') { ok = false; break; }
+          node = node[key];
         }
-        applied++;
       }
-      return next;
-    });
-    // Update happens async; return optimistic count from attempted changes.
-    return Object.keys(changes).length;
+      if (!ok) continue;
+      const last = parts[parts.length - 1];
+      const lastIsIndex = /^\d+$/.test(last);
+      if (lastIsIndex) {
+        if (!Array.isArray(node) || !node[Number(last)]) continue;
+        node[Number(last)] = value;
+      } else {
+        node[last] = value;
+      }
+      applied++;
+    }
+
+    if (applied === 0) return 0;
+
+    setProfile(next);
+
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+      if (response.ok) {
+        toast.success('Profile updated and saved');
+      } else {
+        const data = await response.json().catch(() => null);
+        toast.error(data?.error || 'Failed to save profile');
+      }
+    } catch (error) {
+      console.error('Error saving chatbot changes:', error);
+      toast.error('Failed to save profile');
+    }
+
+    return applied;
   };
 
   const handleAutofill = async () => {
