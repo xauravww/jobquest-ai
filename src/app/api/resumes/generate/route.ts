@@ -51,99 +51,42 @@ function extractProjectUrls(desc: string, existing: { liveUrl?: string; codeUrl?
   return { liveUrl, codeUrl, cleanDesc };
 }
 
-function cleanWorkRole(raw: string): { role: string; company: string } {
-  // "Digitech Services Pvt. Ltd.Jun 2025" → separate company from date
-  // "Prodoc AIJan 2025" → separate
-  const dateStripped = raw.replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4}.*$/i, '').trim();
-  return { role: dateStripped, company: '' };
-}
-
-function cleanWorkEntry(w: { role: string; company: string; startDate: string; endDate: string; description: string }) {
-  const desc = w.description || '';
-
-  // Extract actual role and company from description prefix
-  // Pattern: "Full Stack Developer (Contract, Remote)Delhi – ..."
-  // or "Full Stack Developer InternBengaluru, India – ..."
-  const roleMatch = desc.match(/^([\w\s]+(?:Developer|Engineer|Designer|Manager|Intern|Analyst|Architect|Lead)[\w\s()]*?)(?:\s*[-–—]|\n)/i);
-
-  let actualRole = '';
-  let actualCompany = '';
-  let cleanDesc = desc;
-
-  // Clean the role field — remove mashed dates
-  const roleCleaned = w.role
+function cleanWorkEntry(w: { position?: string; company?: string; startDate?: string; endDate?: string; description?: string }) {
+  // Profile data already has clean position/company fields; just normalize.
+  const role = (w.position || '').replace(/\s+/g, ' ').trim();
+  const description = (w.description || '').trim();
+  const company = (w.company || '')
     .replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4}.*$/i, '')
-    .replace(/\d{4}.*$/, '')
+    .replace(/^(Present|Current)$/i, '')
+    .replace(/\s+/g, ' ')
     .trim();
 
-  // If role field looks like a company name (has Ltd, Inc, AI, etc.)
-  const looksLikeCompany = /(?:Pvt|Ltd|Inc|LLC|Corp|AI|Tech|Services|Solutions|Group|Labs)\b/i.test(roleCleaned);
-
-  if (looksLikeCompany) {
-    actualCompany = roleCleaned;
-    // Try to get role from description
-    if (roleMatch) {
-      actualRole = roleMatch[1].replace(/\(.*?\)/g, '').replace(/\b(?:Delhi|Mumbai|Bengaluru|Bangalore|Remote|India|Hyderabad)\b.*/gi, '').trim();
-    }
-  } else {
-    actualRole = roleCleaned;
-    actualCompany = w.company
-      .replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4}.*$/i, '')
-      .replace(/^(Present|Current)$/i, '')
-      .trim();
-  }
-
-  // Clean description — remove role/location prefix
-  cleanDesc = cleanDesc
-    .replace(/^[\w\s()]+(?:Developer|Engineer|Designer|Manager|Intern|Analyst|Architect|Lead)[\w\s()]*?(?:Delhi|Mumbai|Bengaluru|Bangalore|Remote|India|Hyderabad)?[\s,]*[-–—]\s*/i, '')
-    .trim();
-
-  // Fix dates
-  const startDate = w.startDate.replace(/^[A-Za-z]+(?=\w)/i, (m) => {
-    // "AIJan" → "Jan"
-    const monthMatch = m.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i);
-    return monthMatch ? monthMatch[1] : m;
-  }).replace(/^[^A-Za-z]*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i, (m) => m.replace(/^[^A-Za-z]+/, ''));
+  const fmtDate = (d?: string) => {
+    if (!d) return '';
+    let s = String(d).trim();
+    // Collapse "AIJan 2025" -> "Jan 2025"
+    s = s.replace(/^[A-Za-z]+(?=Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i, '');
+    return s.replace(/^[^A-Za-z]*/, '');
+  };
 
   return {
-    role: actualRole || roleCleaned,
-    company: actualCompany,
-    startDate,
-    endDate: w.endDate,
-    description: cleanDesc,
+    role,
+    company,
+    startDate: fmtDate(w.startDate),
+    endDate: fmtDate(w.endDate),
+    description,
   };
 }
 
-function cleanEducation(edu: { degree: string; school: string; year: string }): { degree: string; school: string; year: string } {
-  let { degree, school, year } = edu;
+function cleanEducation(edu: { degree?: string; field?: string; institution?: string; endDate?: string }): { degree: string; school: string; year: string } {
+  const degree = (edu.degree || '').trim();
+  const field = (edu.field || '').trim();
+  const school = (edu.institution || '').replace(/^[-–—]\s*/, '').trim();
+  const year = edu.endDate ? (String(edu.endDate).match(/\d{4}/)?.[0] || '') : '';
 
-  // "BRCM College of Engineering and Technology2020" → separate school + year
-  // "B.Tech in Computer ScienceCGPA: 8.43/10" → separate degree + CGPA
-  const yearInDegree = degree.match(/(\d{4})$/);
-  if (yearInDegree) {
-    const beforeYear = degree.slice(0, -4).trim();
-    if (!year) year = yearInDegree[1];
+  const fullDegree = degree && field ? `${degree} in ${field}` : degree || field;
 
-    // Check if this is actually a school name (contains College/University/Institute)
-    if (/(?:College|University|Institute|School|Academy)/i.test(beforeYear)) {
-      if (!school) school = beforeYear;
-      degree = '';
-    } else {
-      degree = beforeYear;
-    }
-  }
-
-  // "B.Tech in Computer ScienceCGPA: 8.43/10"
-  const cgpaMatch = degree.match(/CGPA:\s*[\d.]+\/\d+/i);
-  if (cgpaMatch) {
-    degree = degree.replace(/CGPA:\s*[\d.]+\/\d+/i, '').trim();
-    degree = degree + ' (' + cgpaMatch[0] + ')';
-  }
-
-  // Clean school — remove leading dashes
-  school = school.replace(/^[-–—]\s*/, '').trim();
-
-  return { degree, school, year };
+  return { degree: fullDegree, school, year };
 }
 
 function splitBullets(desc: string): string[] {
@@ -193,15 +136,21 @@ export async function POST() {
     const linkedin: string = p.linkedin || '';
     const portfolio: string = p.portfolio || '';
 
-    const rawWork: Array<{ role: string; company: string; startDate: string; endDate: string; description: string }> = p.workExperience || [];
-    const rawEdu: Array<{ degree: string; school: string; year: string }> = p.education || [];
-    const rawProjects: Array<{ name: string; description: string; liveUrl?: string; codeUrl?: string }> = p.projects || [];
+    const rawWork: Array<{ position?: string; company?: string; startDate?: string; endDate?: string; description?: string }> = p.workExperience || [];
+    const rawEdu: Array<{ degree?: string; field?: string; institution?: string; endDate?: string }> = p.education || [];
+    const rawProjects: Array<{ name?: string; description?: string; url?: string; liveUrl?: string; codeUrl?: string }> = p.projects || [];
 
-    const workExperience = rawWork.map(cleanWorkEntry);
+    const workExperience = rawWork.map(cleanWorkEntry).filter(w => w.role || w.company);
     const education = rawEdu.map(cleanEducation).filter(e => e.degree || e.school);
     const projects = rawProjects.map(proj => {
-      const projName = cleanProjectName(proj.name);
-      const { liveUrl, codeUrl, cleanDesc } = extractProjectUrls(proj.description, proj);
+      const projName = cleanProjectName(proj.name || '');
+      // Profile has a single url; classify it as live vs github code link.
+      const withUrls = {
+        ...proj,
+        liveUrl: proj.liveUrl || (proj.url && !/github/i.test(proj.url) ? proj.url : ''),
+        codeUrl: proj.codeUrl || (proj.url && /github/i.test(proj.url) ? proj.url : ''),
+      };
+      const { liveUrl, codeUrl, cleanDesc } = extractProjectUrls(proj.description || '', withUrls);
       return { name: projName, description: cleanDesc, liveUrl, codeUrl };
     });
 
