@@ -99,7 +99,7 @@ class AiFilterService {
         throw new Error('AI Filter Failed: API key missing. Please set up your AI provider in settings.');
       }
       if ((this.config.provider === 'lm-studio' || this.config.provider === 'ollama' || this.config.provider === 'openai-compatible') && !this.config.apiUrl) {
-        throw new Error('AI Filter Failed: API URL missing. Please set up your AI provider in settings.');
+        throw new Error('AI Filter Failed: Base URL missing. Please set up your AI provider in settings.');
       }
 
       // Process jobs in chunks to avoid overwhelming the AI server
