@@ -114,18 +114,20 @@ const ResumeManagementPage = () => {
   };
 
   const handleEdit = async (resume: Resume) => {
-    setEditingResume(resume);
-    setEditing(true);
-    // Load the full resume (including its content snapshot) for editing.
+    let target = resume;
+    // Load the full resume (including its content snapshot) before opening the
+    // editor so the form auto-fills.
     try {
       const res = await fetch(`/api/resumes/${resume._id}`);
       if (res.ok) {
         const data = await res.json();
-        if (data?._id) setEditingResume(data);
+        if (data?._id) target = data;
       }
     } catch (error) {
       console.error('Error loading resume content:', error);
     }
+    setEditingResume(target);
+    setEditing(true);
   };
 
   const handleSaveEdit = async (id: string, payload: { title: string; description: string; content?: unknown }) => {
