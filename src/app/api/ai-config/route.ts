@@ -52,14 +52,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new config
+    // Create new config. The first config auto-activates so a fresh setup
+    // immediately has a working provider.
     const newConfig = new AIConfig({
       userId: session.user.id,
       provider,
       apiKey,
       apiUrl,
       aiModel,
-      isActive: false, // New configs start as inactive
+      isActive: configCount === 0,
       lastSelectedAt: new Date(),
     });
 

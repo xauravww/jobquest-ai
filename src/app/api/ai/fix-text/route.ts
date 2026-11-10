@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { resolveAIConfig } from '@/lib/aiConfig';
 
 // Import AI service dynamically
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,14 +43,8 @@ export async function POST(request: NextRequest) {
     await initService();
     const aiFilterService = new AiFilterService();
 
-    if (user.aiConfig) {
-      aiFilterService.saveConfig({
-        provider: user.aiConfig.provider,
-        apiUrl: user.aiConfig.apiUrl,
-        model: user.aiConfig.model,
-        apiKey: user.aiConfig.apiKey,
-      });
-    }
+    const config = await resolveAIConfig(String(user._id), user.aiConfig);
+    aiFilterService.saveConfig(config);
 
     const systemPrompt = `You are an expert resume and professional profile editor.
 

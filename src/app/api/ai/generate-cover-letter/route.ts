@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { fetchAndConvertToMarkdown } from '@/lib/urlReader';
+import { resolveAIConfig } from '@/lib/aiConfig';
 
 interface AIConfig {
   provider: string;
@@ -65,16 +66,12 @@ export async function POST(request: NextRequest) {
     await initService();
     const aiFilterService = new AiFilterService();
 
-    // Set AI configuration - use provided config or user's stored config
+    // Set AI configuration - use provided config or the user's active config
     if (aiConfig) {
       aiFilterService.saveConfig(aiConfig);
-    } else if (user.aiConfig) {
-      aiFilterService.saveConfig({
-        provider: user.aiConfig.provider,
-        apiUrl: user.aiConfig.apiUrl,
-        model: user.aiConfig.model,
-        apiKey: user.aiConfig.apiKey
-      });
+    } else {
+      const resolved = await resolveAIConfig(String(user._id), user.aiConfig);
+      aiFilterService.saveConfig(resolved);
     }
 
     // Get comprehensive user profile data for personalization
