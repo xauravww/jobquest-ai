@@ -78,6 +78,11 @@ describe('ResumeEditView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^HTML$/i }));
 
+    // Default view is the Design (in-place editable document) mode.
+    expect(screen.getByTitle('Resume design editor')).toBeInTheDocument();
+
+    // Switch to Source to inspect the HTML.
+    fireEvent.click(screen.getByRole('button', { name: /^Source$/i }));
     const textarea = screen.getByPlaceholderText(/Paste your full HTML resume here/i) as HTMLTextAreaElement;
     expect(textarea).toBeInTheDocument();
 

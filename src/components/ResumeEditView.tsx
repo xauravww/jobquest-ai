@@ -89,7 +89,10 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
 
   const [mode, setMode] = useState<'form' | 'html'>('form');
   const [htmlSrc, setHtmlSrc] = useState<string>(resume.html || '');
+  const [htmlView, setHtmlView] = useState<'design' | 'source'>('design');
+  const [designKey, setDesignKey] = useState(0);
   const printRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const escapeHtml = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br/>');
@@ -136,6 +139,24 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
   ${eduHtml ? `<h2>Education</h2>${eduHtml}` : ''}
 </body>
 </html>`;
+  };
+
+  // Turn the preview iframe into an editable "design mode" document. Any text
+  // can be clicked and edited in place; changes sync back to htmlSrc.
+  const handleIframeLoad = () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc || !doc.body) return;
+    doc.designMode = 'on';
+    doc.body.style.margin = '0';
+    doc.addEventListener('input', () => {
+      const html = doc.documentElement ? doc.documentElement.outerHTML : doc.body.innerHTML;
+      setHtmlSrc(html);
+    });
+  };
+
+  const applyHtml = (next: string) => {
+    setHtmlSrc(next);
+    setDesignKey((k) => k + 1); // force the design iframe to reload with new content
   };
 
   const updateItem = (setter: React.Dispatch<React.SetStateAction<any[]>>, index: number, patch: object) => {
@@ -460,33 +481,54 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
 
           <div style={{ display: mode === 'html' ? undefined : 'none' }} className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <h4 className="text-sm font-semibold text-[var(--text-main)]">HTML source</h4>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setHtmlSrc(formToHtml())} className="!px-3 !py-1 text-xs">
+                <Button variant={htmlView === 'design' ? 'primary' : 'ghost'} size="sm" onClick={() => { setHtmlView('design'); setDesignKey((k) => k + 1); }} className="!px-3 !py-1 text-xs">
+                  Design
+                </Button>
+                <Button variant={htmlView === 'source' ? 'primary' : 'ghost'} size="sm" onClick={() => setHtmlView('source')} className="!px-3 !py-1 text-xs">
+                  Source
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => applyHtml(formToHtml())} className="!px-3 !py-1 text-xs">
                   Convert form → HTML
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setHtmlSrc(STARTER_HTML)} className="!px-3 !py-1 text-xs">
+                <Button variant="ghost" size="sm" onClick={() => applyHtml(STARTER_HTML)} className="!px-3 !py-1 text-xs">
                   Starter template
                 </Button>
               </div>
             </div>
-            <textarea
-              value={htmlSrc}
-              onChange={(e) => setHtmlSrc(e.target.value)}
-              spellCheck={false}
-              className="w-full h-80 font-mono text-xs p-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-lg text-white focus:outline-none"
-              placeholder="Paste your full HTML resume here…"
-            />
-            <div>
-              <h4 className="text-sm font-semibold text-[var(--text-main)] mb-2">Preview</h4>
-              <div className="overflow-auto border border-[var(--border-glass)] rounded-lg bg-white" style={{ maxHeight: '70vh' }}>
-                <div
-                  ref={printRef}
-                  className="mx-auto"
-                  style={{ width: 794, minHeight: 1123, background: '#fff', color: '#111' }}
-                  dangerouslySetInnerHTML={{ __html: htmlSrc }}
-                />
+
+            {htmlView === 'design' ? (
+              <div>
+                <p className="text-xs text-[var(--text-dim)] mb-2">
+                  Click any text on the document to edit it in place — like a PDF in design mode.
+                </p>
+                <div className="overflow-auto border border-[var(--border-glass)] rounded-lg bg-white" style={{ maxHeight: '70vh' }}>
+                  <iframe
+                    key={designKey}
+                    ref={iframeRef}
+                    title="Resume design editor"
+                    srcDoc={htmlSrc}
+                    onLoad={handleIframeLoad}
+                    className="block"
+                    style={{ width: 794, minHeight: 1123, border: 'none', background: '#fff' }}
+                  />
+                </div>
               </div>
+            ) : (
+              <textarea
+                value={htmlSrc}
+                onChange={(e) => setHtmlSrc(e.target.value)}
+                spellCheck={false}
+                className="w-full h-80 font-mono text-xs p-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-lg text-white focus:outline-none"
+                placeholder="Paste your full HTML resume here…"
+              />
+            )}
+
+            {/* Hidden capture target used to rasterize the PDF on save. */}
+            <div aria-hidden style={{ position: 'absolute', left: -9999, top: 0, width: 794, backgroundColor: '#fff' }}>
+              <div ref={printRef} style={{ width: 794, minHeight: 1123, color: '#111' }} dangerouslySetInnerHTML={{ __html: htmlSrc }} />
             </div>
           </div>
 
