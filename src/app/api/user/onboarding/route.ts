@@ -12,12 +12,11 @@ interface OnboardingData {
   summary: string;
   jobTypes: string[];
   locations: string[];
-  remote: boolean;
+  remoteWork: boolean;
   salaryRange: {
     min: number;
     max: number;
   };
-  industries: string[];
 }
 
 export async function POST(request: NextRequest) {
@@ -31,10 +30,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: OnboardingData = await request.json();
+    const data = (await request.json()) as OnboardingData & { skip?: boolean };
+
+    // "Skip" path — mark the user onboarded without collecting profile data so
+    // they are not forced through setup. No fields are validated or written.
+    if (data.skip === true) {
+      const { db } = await connectToDatabase();
+      const result = await db.collection('users').updateOne(
+        { email: session.user.email },
+        {
+          $set: { isOnboarded: true, updatedAt: new Date() },
+          $setOnInsert: { createdAt: new Date() },
+        },
+        { upsert: true }
+      );
+
+      if (result.acknowledged) {
+        return NextResponse.json({ success: true, message: 'Onboarding skipped' });
+      }
+      return NextResponse.json(
+        { error: 'Failed to update profile' },
+        { status: 500 }
+      );
+    }
 
     // Validate required fields — email comes from session, never from client
-    const requiredFields = ['name', 'title', 'location', 'skills', 'experienceYears', 'summary', 'jobTypes', 'locations', 'industries'];
+    const requiredFields = ['name', 'title', 'location', 'skills', 'experienceYears', 'summary', 'jobTypes', 'locations'];
     for (const field of requiredFields) {
       if (!data[field as keyof OnboardingData]) {
         return NextResponse.json(
@@ -67,9 +88,8 @@ export async function POST(request: NextRequest) {
           preferences: {
             jobTypes: data.jobTypes,
             locations: data.locations,
-            remote: data.remote,
+            remoteWork: data.remoteWork,
             salaryRange: data.salaryRange,
-            industries: data.industries,
           },
           updatedAt: new Date(),
         },

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Form, Input, Select, Checkbox, Progress } from 'antd';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
@@ -15,6 +15,7 @@ import {
   ArrowRight,
   ArrowLeft,
   LogOut,
+  FileUp,
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import BrandMark from '@/components/ui/BrandMark';
@@ -32,9 +33,8 @@ interface OnboardingData {
   summary: string;
   jobTypes: string[];
   locations: string[];
-  remote: boolean;
+  remoteWork: boolean;
   salaryRange: { min: number; max: number };
-  industries: string[];
 }
 
 const SKILL_OPTIONS = ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python'];
@@ -46,7 +46,6 @@ const JOB_TYPES = [
   { value: 'internship', label: 'Internship' },
 ];
 const LOCATIONS = ['Remote', 'New York', 'San Francisco', 'Los Angeles', 'Chicago', 'Austin', 'Seattle'];
-const INDUSTRIES = ['Technology', 'Healthcare', 'Finance', 'Education', 'E-commerce', 'Consulting', 'Manufacturing', 'Marketing'];
 
 const OnboardingPage: React.FC = () => {
   const { success, error } = useToast();
@@ -60,6 +59,8 @@ const OnboardingPage: React.FC = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [autofilling, setAutofilling] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Restore saved progress from localStorage
   useEffect(() => {
@@ -131,6 +132,73 @@ const OnboardingPage: React.FC = () => {
       const prev = currentStep - 1;
       setCurrentStep(prev);
       saveProgress(prev, formValues);
+    }
+  };
+
+  const handleAutofill = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name)) {
+      error('Please choose a PDF file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      error('Resume must be under 10 MB');
+      return;
+    }
+
+    setAutofilling(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/resumes/parse', { method: 'POST', body: fd });
+      const parsed = await res.json();
+      if (!res.ok) {
+        error(parsed.error || 'Failed to parse resume');
+        return;
+      }
+
+      const next: Partial<OnboardingData> = {};
+      if (parsed.name) next.name = parsed.name;
+      if (parsed.title) next.title = parsed.title;
+      if (parsed.location) next.location = parsed.location;
+      if (Array.isArray(parsed.skills) && parsed.skills.length) next.skills = parsed.skills;
+      if (parsed.summary) next.summary = parsed.summary;
+      if (parsed.experienceYears) next.experienceYears = parsed.experienceYears;
+
+      const merged = { ...formValues, ...next };
+      form.setFieldsValue(next);
+      setFormValues(merged);
+      saveProgress(currentStep, merged);
+      success('Resume parsed — review and continue');
+    } catch {
+      error('Network error while reading resume');
+    } finally {
+      setAutofilling(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/user/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skip: true }),
+      });
+      if (res.ok) {
+        localStorage.removeItem(STORAGE_KEY);
+        router.push('/dashboard');
+      } else {
+        const d = await res.json();
+        error(d.error || 'Could not skip setup');
+      }
+    } catch {
+      error('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -258,6 +326,18 @@ const OnboardingPage: React.FC = () => {
               />
               <p className="text-xs text-[var(--text-dim)] mt-1">From your account. Cannot be changed here.</p>
             </div>
+            <div>
+              <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleAutofill} />
+              <Button
+                variant="secondary"
+                onClick={() => fileInputRef.current?.click()}
+                isLoading={autofilling}
+                leftIcon={<FileUp className="w-4 h-4" />}
+              >
+                Autofill with Resume
+              </Button>
+              <p className="text-xs text-[var(--text-dim)] mt-1">Fill your details automatically from a PDF resume.</p>
+            </div>
             <Form.Item name="title" label="Job title" rules={[{ required: true, message: 'Enter your job title' }]}>
               <Input prefix={<Briefcase className={iconClass} />} placeholder="e.g., Frontend Developer" size="middle" allowClear />
             </Form.Item>
@@ -299,10 +379,7 @@ const OnboardingPage: React.FC = () => {
             <Form.Item name="locations" label="Preferred locations" rules={[{ required: true, message: 'Add preferred locations' }]}>
               <Select mode="tags" placeholder="Type or pick a location" size="middle" virtual={false} options={LOCATIONS.map((l) => ({ value: l, label: l }))} />
             </Form.Item>
-            <Form.Item name="industries" label="Industries" rules={[{ required: true, message: 'Select industries' }]}>
-              <Select mode="multiple" placeholder="Type or pick an industry" size="middle" options={INDUSTRIES.map((i) => ({ value: i, label: i }))} />
-            </Form.Item>
-            <Form.Item name="remote" valuePropName="checked">
+            <Form.Item name="remoteWork" valuePropName="checked">
               <Checkbox>Open to remote work</Checkbox>
             </Form.Item>
             <div className="grid grid-cols-2 gap-4">
@@ -383,14 +460,24 @@ const OnboardingPage: React.FC = () => {
     <div className="min-h-screen bg-[var(--bg-deep)] text-[var(--text-main)] flex flex-col">
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
         <BrandMark size={28} textClass="text-lg" />
-        <Button
-          variant="ghost"
-          size="sm"
-          leftIcon={<LogOut className="w-4 h-4" />}
-          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-        >
-          Log out
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSkip}
+            disabled={loading}
+          >
+            Skip for now
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            leftIcon={<LogOut className="w-4 h-4" />}
+            onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+          >
+            Log out
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-4">
