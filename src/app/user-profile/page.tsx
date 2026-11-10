@@ -652,9 +652,9 @@ const UserProfilePage = () => {
 
           <Modal isOpen={showAutofillModal} onClose={() => setShowAutofillModal(false)} title="Autofill with Resume" width="max-w-md">
             <div className="space-y-4">
-              <label className="flex flex-col items-center justify-center gap-3 border border-dashed border-[var(--border-glass)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--primary)]/50 transition-colors bg-[var(--bg-deep)]/50">
+              <label className="flex flex-col items-center justify-center gap-2.5 border border-dashed border-[var(--border-glass)] rounded-xl p-5 text-center cursor-pointer hover:border-[var(--primary)]/50 transition-colors bg-[var(--bg-deep)]/50">
                 <input type="file" accept="application/pdf,.pdf" onChange={handleFileSelect} className="hidden" />
-                <FileUp className="w-8 h-8 text-[var(--text-muted)]" />
+                <FileUp className="w-7 h-7 text-[var(--text-muted)]" />
                 {selectedResumeFile ? (
                   <span className="text-sm text-[var(--text-main)] font-medium break-all">{selectedResumeFile.name}</span>
                 ) : (
