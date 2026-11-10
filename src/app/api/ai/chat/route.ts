@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     const userPrompt = `Here is the user's current profile:\n<profile>\n${profileJson}\n</profile>\n\nUser said: "${message}"`;
 
-    const raw = await aiFilterService.generateCoverLetter(SYSTEM_PROMPT, userPrompt);
+    const raw = await aiFilterService.generateCoverLetter(SYSTEM_PROMPT, userPrompt, history);
     if (!raw) {
       return NextResponse.json({ error: 'No response from AI provider' }, { status: 502 });
     }

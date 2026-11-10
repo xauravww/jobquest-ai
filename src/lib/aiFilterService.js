@@ -366,7 +366,7 @@ Please respond with a JSON array where each object has:
   /**
    * Generate cover letter using AI
    */
-  async generateCoverLetter(systemPrompt, userPrompt) {
+  async generateCoverLetter(systemPrompt, userPrompt, history) {
     try {
       const { provider, apiUrl, model, apiKey } = this.config;
 
@@ -375,6 +375,14 @@ Please respond with a JSON array where each object has:
       let headers = {
         'Content-Type': 'application/json',
       };
+
+      // Conversation history (optional) — injected between system and latest user turn.
+      const historyMessages = Array.isArray(history) && history.length
+        ? history
+          .filter((h) => h && typeof h.content === 'string' && h.content.trim())
+          .slice(-10)
+          .map((h) => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content }))
+        : [];
 
       switch (provider) {
         case 'lm-studio':
@@ -387,6 +395,7 @@ Please respond with a JSON array where each object has:
                 role: 'system',
                 content: systemPrompt
               },
+              ...historyMessages,
               {
                 role: 'user',
                 content: userPrompt
@@ -399,11 +408,18 @@ Please respond with a JSON array where each object has:
 
         case 'gemini':
           requestBody = {
-            contents: [{
-              parts: [{
-                text: `${systemPrompt}\n\n${userPrompt}`
-              }]
-            }],
+            contents: [
+              ...historyMessages.map((h) => ({
+                role: h.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: h.content }],
+              })),
+              {
+                role: 'user',
+                parts: [{
+                  text: `${systemPrompt}\n\n${userPrompt}`
+                }]
+              }
+            ],
             generationConfig: {
               temperature: 0.7,
               maxOutputTokens: 1000,
