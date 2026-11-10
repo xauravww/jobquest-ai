@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
+import Button from '@/components/ui/Button';
 
 interface CustomCalendarPickerProps {
   value?: dayjs.Dayjs;
@@ -77,7 +78,8 @@ const CustomCalendarPicker: React.FC<CustomCalendarPickerProps> = ({
   return (
     <div className={`bg-surface p-6 rounded-lg shadow-lg ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <button
+        <Button
+          variant="ghost"
           className="text-primary hover:text-primary-hover"
           onClick={handlePrevMonth}
           aria-label="Previous month"
@@ -85,9 +87,10 @@ const CustomCalendarPicker: React.FC<CustomCalendarPickerProps> = ({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19l-7-7 7-7"></path>
           </svg>
-        </button>
+        </Button>
         <span className="text-lg font-medium">{currentMonth.format('MMMM YYYY')}</span>
-        <button
+        <Button
+          variant="ghost"
           className="text-primary hover:text-primary-hover"
           onClick={handleNextMonth}
           aria-label="Next month"
@@ -95,7 +98,7 @@ const CustomCalendarPicker: React.FC<CustomCalendarPickerProps> = ({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5l7 7-7 7"></path>
           </svg>
-        </button>
+        </Button>
       </div>
       <div className="picker-grid">
         <div className="text-text-secondary text-sm font-medium">Su</div>

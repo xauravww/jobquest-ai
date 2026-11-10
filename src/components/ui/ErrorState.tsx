@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import Button from '@/components/ui/Button';
 
 interface ErrorStateProps {
   title?: string;
@@ -32,13 +33,13 @@ const ErrorState: React.FC<ErrorStateProps> = ({
       
       <div className="flex flex-col sm:flex-row gap-3">
         {onRetry && (
-          <button
+          <Button
+            variant="primary"
             onClick={onRetry}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-success hover:from-success hover:to-primary text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-gray-900"
+            leftIcon={<RefreshCw className="w-4 h-4" />}
           >
-            <RefreshCw className="w-4 h-4" />
             Try Again
-          </button>
+          </Button>
         )}
         
         {showHomeButton && (

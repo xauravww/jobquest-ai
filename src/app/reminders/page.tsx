@@ -16,9 +16,12 @@ import {
   Plus
 } from 'lucide-react';
 import RemindersSkeleton from '@/components/ui/RemindersSkeleton';
+import { confirmAction } from '@/lib/confirm';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import Button from '@/components/ui/Button';
+import { Select } from 'antd';
 
 interface Reminder {
   _id: string;
@@ -172,23 +175,27 @@ const RemindersPage = () => {
     }
   };
 
-  const handleDeleteReminder = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this reminder?')) return;
-    setActionLoading(id);
-    try {
-      const response = await fetch(`/api/reminders/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        toast.success('Reminder deleted');
-        refetchData();
-      } else {
-        toast.error('Failed to delete reminder');
-      }
-    } catch (error) {
-      console.error('Error deleting reminder:', error);
-      toast.error('Error deleting reminder');
-    } finally {
-      setActionLoading(null);
-    }
+  const handleDeleteReminder = (id: string) => {
+    confirmAction({
+      title: 'Delete this reminder?',
+      onOk: async () => {
+        setActionLoading(id);
+        try {
+          const response = await fetch(`/api/reminders/${id}`, { method: 'DELETE' });
+          if (response.ok) {
+            toast.success('Reminder deleted');
+            refetchData();
+          } else {
+            toast.error('Failed to delete reminder');
+          }
+        } catch (error) {
+          console.error('Error deleting reminder:', error);
+          toast.error('Error deleting reminder');
+        } finally {
+          setActionLoading(null);
+        }
+      },
+    });
   };
 
   const getFilteredReminders = () => {
@@ -270,13 +277,14 @@ const RemindersPage = () => {
             <p className="text-[var(--text-muted)] mt-2 ml-16">Manage your job search reminders and important deadlines</p>
           </div>
 
-          <button
+          <Button
+            variant="primary"
             onClick={() => { setEditingReminder(undefined); setShowCreateModal(true); }}
-            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+            className="px-6 py-3"
           >
             <Plus className="w-5 h-5" />
             <span>Add Reminder</span>
-          </button>
+          </Button>
         </div>
 
         {/* Search and Filters */}
@@ -299,8 +307,9 @@ const RemindersPage = () => {
                 { key: 'upcoming', label: 'Upcoming', icon: Clock },
                 { key: 'overdue', label: 'Overdue', icon: Bell }
               ].map(({ key, label, icon: Icon }) => (
-                <button
+                <Button
                   key={key}
+                  variant="secondary"
                   onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all whitespace-nowrap ${activeFilter === key
                       ? 'bg-[var(--primary)] text-black shadow-lg shadow-[var(--primary)]/20'
@@ -308,7 +317,7 @@ const RemindersPage = () => {
                     }`}
                 >
                   <Icon className="w-4 h-4" /> {label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -337,12 +346,13 @@ const RemindersPage = () => {
               {debouncedQuery ? 'Try adjusting your search terms' : 'Start by adding your first reminder to stay organized'}
             </p>
             {!debouncedQuery && (
-              <button
+              <Button
+                variant="primary"
                 onClick={() => { setEditingReminder(undefined); setShowCreateModal(true); }}
                 className="px-6 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
               >
                 Add Your First Reminder
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -400,55 +410,64 @@ const RemindersPage = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-4 md:mt-0">
-                      <select
+                      <Select
                         value={reminder.status}
-                        onChange={(e) => handleStatusUpdate(reminder._id, e.target.value)}
+                        onChange={(v) => handleStatusUpdate(reminder._id, v)}
                         disabled={actionLoading === reminder._id}
-                        className="bg-[var(--bg-deep)] border border-[var(--border-glass)] text-white text-sm rounded-lg px-2 py-2 focus:border-[var(--primary)] focus:outline-none"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
-                        <option value="snoozed">Snoozed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
+                        options={[
+                          { value: 'pending', label: 'Pending' },
+                          { value: 'completed', label: 'Completed' },
+                          { value: 'snoozed', label: 'Snoozed' },
+                          { value: 'cancelled', label: 'Cancelled' }
+                        ]}
+                        className="w-full"
+                      />
 
                       {reminder.status === 'pending' && (
                         <>
-                          <button
+                          <Button
+                            variant="secondary"
                             onClick={() => handleCompleteReminder(reminder._id)}
                             disabled={actionLoading === reminder._id}
                             className="p-2 bg-[var(--success)]/10 hover:bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/20 rounded-lg transition-colors"
                             title="Mark as Complete"
+                            aria-label="Mark as Complete"
                           >
                             <CheckCircle className="w-5 h-5" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="secondary"
                             onClick={() => handleSnoozeReminder(reminder._id, new Date(Date.now() + 24 * 60 * 60 * 1000))}
                             disabled={actionLoading === reminder._id}
                             className="p-2 bg-[var(--warning)]/10 hover:bg-[var(--warning)]/20 text-[var(--warning)] border border-[var(--warning)]/20 rounded-lg transition-colors"
                             title="Snooze for 24 hours"
+                            aria-label="Snooze for 24 hours"
                           >
                             <PauseCircle className="w-5 h-5" />
-                          </button>
+                          </Button>
                         </>
                       )}
 
-                      <button
+                      <Button
+                        variant="secondary"
                         onClick={() => { setEditingReminder(reminder); setShowCreateModal(true); }}
                         disabled={actionLoading === reminder._id}
                         className="p-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-colors"
                         title="Edit"
+                        aria-label="Edit"
                       >
                         <Edit className="w-5 h-5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
                         onClick={() => handleDeleteReminder(reminder._id)}
                         disabled={actionLoading === reminder._id}
                         className="p-2 bg-[var(--danger)]/10 hover:bg-[var(--danger)]/20 text-[var(--danger)] border border-[var(--danger)]/20 rounded-lg transition-colors"
                         title="Delete"
+                        aria-label="Delete"
                       >
                         <Trash2 className="w-5 h-5" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </motion.div>
@@ -461,23 +480,25 @@ const RemindersPage = () => {
         {total > itemsPerPage && (
           <div className="flex justify-center mt-8">
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
               >
                 Previous
-              </button>
+              </Button>
               <span className="px-4 py-2 text-[var(--text-muted)]">
                 Page {currentPage} of {Math.ceil(total / itemsPerPage)}
               </span>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setCurrentPage(p => Math.min(Math.ceil(total / itemsPerPage), p + 1))}
                 disabled={currentPage === Math.ceil(total / itemsPerPage)}
                 className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}

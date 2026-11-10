@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import Button from '@/components/ui/Button';
 
 interface ModalProps {
     isOpen: boolean;
@@ -47,12 +48,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width =
                         >
                             <div className="flex items-center justify-between p-6 border-b border-[var(--border-glass)]">
                                 <h3 className="text-xl font-bold text-white">{title}</h3>
-                                <button
+                                <Button
+                                    variant="ghost"
                                     onClick={onClose}
-                                    className="p-2 text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-glass)] rounded-lg transition-colors"
+                                    aria-label="Close"
+                                    className="p-2"
                                 >
                                     <X className="w-5 h-5" />
-                                </button>
+                                </Button>
                             </div>
                             <div className="p-6 overflow-y-auto custom-scrollbar">
                                 {children}

@@ -13,7 +13,8 @@ export async function GET() {
 
     await dbConnect();
     
-    const user = await User.findOne({ email: session.user.email });
+    const email = session.user.email.trim().toLowerCase();
+    const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -23,6 +24,7 @@ export async function GET() {
       personalInfo: {
         fullName: user.name || '',
         email: user.email || '',
+        resumeEmail: user.profile?.resumeEmail || '',
         phone: user.profile?.phone || '',
         location: user.profile?.location || 'Remote',
         website: user.profile?.portfolioUrl || '',
@@ -49,7 +51,7 @@ export async function GET() {
           currency: user.preferences?.salaryRange?.currency || 'USD'
         },
         remoteWork: user.preferences?.remoteWork || false,
-        targetRole: user.profile?.title || 'Software Developer',
+        targetRole: user.preferences?.targetRole || user.profile?.title || 'Software Developer',
         targetCompanies: user.preferences?.targetCompanies || [],
         notifications: {
           email: user.preferences?.notifications?.email ?? true,
@@ -95,9 +97,13 @@ export async function PUT(request: NextRequest) {
     };
 
     // Handle personal info updates
+    // Note: email is intentionally NOT updated here — identity comes from the
+    // authenticated session, never from untrusted client/resume input. Setting
+    // it from the parsed resume was causing E11000 duplicate-key conflicts
+    // when the resume email matched an existing user.
     if (personalInfo) {
       if (personalInfo.fullName !== undefined) updateData.name = personalInfo.fullName;
-      if (personalInfo.email !== undefined) updateData.email = personalInfo.email;
+      if (personalInfo.resumeEmail !== undefined) updateData['profile.resumeEmail'] = personalInfo.resumeEmail;
       if (personalInfo.phone !== undefined) updateData['profile.phone'] = personalInfo.phone;
       if (personalInfo.location !== undefined) updateData['profile.location'] = personalInfo.location;
       if (personalInfo.website !== undefined) updateData['profile.portfolioUrl'] = personalInfo.website;
@@ -169,6 +175,7 @@ export async function PUT(request: NextRequest) {
       if (preferences.salaryRange?.min !== undefined) updateData['preferences.salaryRange.min'] = preferences.salaryRange.min;
       if (preferences.salaryRange?.max !== undefined) updateData['preferences.salaryRange.max'] = preferences.salaryRange.max;
       if (preferences.remoteWork !== undefined) updateData['preferences.remoteWork'] = preferences.remoteWork;
+      if (preferences.targetRole !== undefined) updateData['preferences.targetRole'] = preferences.targetRole;
       if (preferences.targetCompanies !== undefined) updateData['preferences.targetCompanies'] = preferences.targetCompanies;
     }
 
@@ -181,11 +188,16 @@ export async function PUT(request: NextRequest) {
       if (aiConfig.enabled !== undefined) updateData['aiConfig.enabled'] = aiConfig.enabled;
     }
 
+    const email = session.user.email.trim().toLowerCase();
     const user = await User.findOneAndUpdate(
-      { email: session.user.email },
+      { email },
       updateData,
-      { new: true, upsert: true }
+      { new: true }
     );
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ message: 'Profile updated successfully', user });
   } catch (error) {

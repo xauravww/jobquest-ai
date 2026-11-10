@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as AntCalendar, Input, Pagination, Tooltip, Tag } from 'antd';
+import { Calendar as AntCalendar, Input, Pagination, Tooltip, Tag, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import AppLayout from '@/components/AppLayout';
+import Button from '@/components/ui/Button';
 import {
   Calendar,
   Clock,
@@ -286,10 +287,10 @@ const RemindersCalendarPage = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl border border-primary/30">
+            <div className="p-3 bg-primary/15 rounded-xl border border-primary/30">
               <Target className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-white">
               My Schedule
             </h1>
           </div>
@@ -300,29 +301,31 @@ const RemindersCalendarPage = () => {
 
         {/* Quick Actions */}
         <div className="flex justify-center gap-4 mb-8">
-          <button
+          <Button
+            variant="primary"
             onClick={() => {
               setCreateType('reminder');
               setEditingReminder(undefined);
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+            leftIcon={<Bell className="w-5 h-5" />}
+            className="px-6 py-4"
           >
-            <Bell className="w-5 h-5" />
             Add Reminder
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="primary"
             onClick={() => {
               setCreateType('event');
               setEditingEvent(undefined);
               setShowCreateModal(true);
             }}
-            className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+            leftIcon={<Calendar className="w-5 h-5" />}
+            className="px-6 py-4"
           >
-            <Calendar className="w-5 h-5" />
             Add Event
-          </button>
+          </Button>
         </div>
 
         {/* Search and Filters */}
@@ -351,17 +354,15 @@ const RemindersCalendarPage = () => {
                   { key: 'upcoming', label: 'Upcoming', icon: Clock },
                   { key: 'overdue', label: 'Overdue', icon: Bell }
                 ].map(({ key, label, icon: Icon }) => (
-                  <button
+                  <Button
                     key={key}
+                    variant={activeFilter === key ? 'primary' : 'secondary'}
                     onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${activeFilter === key
-                      ? 'bg-primary text-white shadow-lg'
-                      : 'bg-bg-light hover:bg-bg-card text-text-secondary hover:text-white'
-                    }`}
+                    leftIcon={<Icon className="w-4 h-4" />}
+                    className="px-4 py-2"
                   >
-                    <Icon className="w-4 h-4" />
                     {label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -385,20 +386,16 @@ const RemindersCalendarPage = () => {
 
               return (
                 <div style={{ padding: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <select
+                  <Select
                     value={month}
-                    onChange={e => {
-                      const newMonth = parseInt(e.target.value, 10);
+                    onChange={(v) => {
+                      const newMonth = v;
                       const newValue = value.clone().month(newMonth);
                       onChange(newValue);
                     }}
-                  >
-                    {monthNames.map((name, i) => (
-                      <option key={i} value={i}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
+                    options={monthNames.map((name, i) => ({ value: i, label: name }))}
+                    className="w-full"
+                  />
                 </div>
               );
             }}

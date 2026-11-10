@@ -72,15 +72,17 @@ const Header = () => {
             {/* User Menu */}
             {status === 'authenticated' ? (
               <div className="relative">
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 p-1"
+                  aria-label="Toggle user menu"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
-                </button>
+                </Button>
 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
@@ -104,7 +106,8 @@ const Header = () => {
                       <Settings className="w-4 h-4 inline mr-2" />
                       Settings
                     </Link>
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => {
                         signOut();
                         setIsUserMenuOpen(false);
@@ -113,7 +116,7 @@ const Header = () => {
                     >
                       <LogOut className="w-4 h-4 inline mr-2" />
                       Sign out
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Button from '@/components/ui/Button';
 import { FormInput } from '@/components/ui/FormInput';
+import { Select } from 'antd';
+import { confirmAction } from '@/lib/confirm';
 import {
   StickyNote,
   Plus,
@@ -163,24 +165,27 @@ export default function FleetingNotesPage() {
     }
   };
 
-  const deleteNote = async (noteId: string) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+  const deleteNote = (noteId: string) => {
+    confirmAction({
+      title: 'Delete this note?',
+      onOk: async () => {
+        try {
+          const response = await fetch(`/api/notes/fleeting?id=${noteId}`, {
+            method: 'DELETE',
+          });
 
-    try {
-      const response = await fetch(`/api/notes/fleeting?id=${noteId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        setNotes(prev => prev.filter(note => note.id !== noteId));
-        toast.success('Note deleted');
-      } else {
-        toast.error('Failed to delete note');
-      }
-    } catch (error) {
-      console.error('Error deleting note:', error);
-      toast.error('Error deleting note');
-    }
+          if (response.ok) {
+            setNotes(prev => prev.filter(note => note.id !== noteId));
+            toast.success('Note deleted');
+          } else {
+            toast.error('Failed to delete note');
+          }
+        } catch (error) {
+          console.error('Error deleting note:', error);
+          toast.error('Error deleting note');
+        }
+      },
+    });
   };
 
   const toggleArchive = async (noteId: string, archived: boolean) => {
@@ -319,15 +324,16 @@ export default function FleetingNotesPage() {
                 icon={<Search className="w-4 h-4" />}
               />
 
-              <select
+              <Select
                 value={filterSource}
-                onChange={(e) => setFilterSource(e.target.value as any)}
-                className="px-4 py-3 bg-bg-light border border-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="all">All Sources</option>
-                <option value="web">Web Only</option>
-                <option value="telegram">Telegram Only</option>
-              </select>
+                onChange={(v) => setFilterSource(v as 'all' | 'web' | 'telegram')}
+                options={[
+                  { value: 'all', label: 'All Sources' },
+                  { value: 'web', label: 'Web Only' },
+                  { value: 'telegram', label: 'Telegram Only' }
+                ]}
+                className="w-full"
+              />
 
               <div className="flex gap-2">
                 <Button

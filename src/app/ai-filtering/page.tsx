@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bot, Building, ExternalLink, Search, Sparkles, Filter, RotateCcw, MapPin, Calendar, Save } from 'lucide-react';
+import { Bot, Building, ExternalLink, Search, Check, Filter, RotateCcw, MapPin, Calendar, Save } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import { FormInput, FormInputNumber, FormDateInput } from '@/components/ui/FormInput';
 
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
+import Button from "@/components/ui/Button";
 
 // Define types for Job and Props
 interface AIAnalysis {
@@ -87,9 +88,9 @@ const JobCard = ({ job, onTrack, onSkip }: {
   onSkip: (job: Job) => void;
 }) => {
   const getCardBorderClass = () => {
-    if (job.userAction === 'track') return 'border-[var(--success)]/30 bg-[var(--success)]/5 shadow-[0_0_15px_rgba(52,211,153,0.1)]';
+    if (job.userAction === 'track') return 'border-[var(--success)]/30 bg-[var(--success)]/5';
     if (job.userAction === 'skip') return 'border-[var(--danger)]/20 bg-[var(--bg-surface)] opacity-60 grayscale-[0.5]';
-    return 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/50 hover:shadow-[0_0_20px_rgba(45,212,191,0.1)]';
+    return 'border-[var(--border)] bg-[var(--bg-surface)] hover:border-[var(--primary)]/50';
   };
 
   const getAIAnalysisColor = () => {
@@ -100,9 +101,6 @@ const JobCard = ({ job, onTrack, onSkip }: {
 
   return (
     <div className={`group relative rounded-xl p-6 border transition-all duration-300 ${getCardBorderClass()}`}>
-      {/* Hover Glow Effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-xl" />
-
       <div className="relative flex justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-start justify-between gap-4">
@@ -141,7 +139,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
             <div className={`mt-2 p-3 rounded-lg text-sm ${getAIAnalysisColor()}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${job.aiAnalysis.isHiringPost ? 'bg-[var(--success)] shadow-[0_0_8px_var(--success)]' : 'bg-[var(--danger)]'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${job.aiAnalysis.isHiringPost ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`}></div>
                   <span className="font-semibold tracking-wide">
                     {job.aiAnalysis.isHiringPost ? 'HIRING SIGNAL DETECTED' : 'NO HIRING SIGNAL'}
                   </span>
@@ -175,36 +173,44 @@ const JobCard = ({ job, onTrack, onSkip }: {
         <div className="flex flex-col items-end gap-2 ml-4">
           {!job.userAction && (
             <div className="flex flex-col gap-2 w-full sm:w-auto">
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => onTrack(job)}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black text-sm font-bold rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(52,211,153,0.3)] hover:shadow-[0_0_20px_rgba(52,211,153,0.5)] hover:-translate-y-0.5"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black text-sm font-bold rounded-lg transition-all duration-200"
               >
                 <Save size={16} />
                 Track
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => onSkip(job)}
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-light)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] text-sm font-medium rounded-lg transition-all duration-200 hover:bg-[var(--danger)]/5"
               >
                 <span className="text-lg leading-none">×</span> Skip
-              </button>
+              </Button>
             </div>
           )}
           {job.userAction === 'track' && (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => onSkip(job)}
               className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] text-xs font-medium rounded-lg transition-all duration-200"
             >
               Undo & Skip
-            </button>
+            </Button>
           )}
           {job.userAction === 'skip' && (
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => onTrack(job)}
               className="flex items-center gap-2 px-3 py-1.5 bg-[var(--success)]/10 border border-[var(--success)]/30 hover:bg-[var(--success)]/20 text-[var(--success)] text-xs font-bold rounded-lg transition-all duration-200"
             >
               Undo & Track
-            </button>
+            </Button>
           )}
           <a
             href={job.url}
@@ -237,7 +243,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
 // Enhanced Loading Components
 const ChunkLoadingSpinner = () => (
   <div className="flex items-center justify-center py-8">
-    <div className="flex items-center gap-3 px-5 py-2.5 bg-[var(--bg-surface)] border border-[var(--primary)]/20 rounded-full shadow-[0_0_15px_rgba(45,211,191,0.1)]">
+    <div className="flex items-center gap-3 px-5 py-2.5 bg-[var(--bg-surface)] border border-[var(--primary)]/20 rounded-full">
       <div className="w-5 h-5 border-2 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin"></div>
       <span className="text-[var(--text-main)] text-sm font-medium tracking-wide">AI Analysis in progress...</span>
     </div>
@@ -309,8 +315,8 @@ const ChunkHeader = ({
   onTrackAll: () => void;
   onSkipAll: () => void;
 }) => (
-  <div className={`flex items-center justify-between p-6 mb-6 rounded-xl backdrop-blur-md border transition-all duration-300 ${isFiltered ? 'bg-[var(--success)]/5 border-[var(--success)]/20 shadow-[0_0_20px_rgba(52,211,153,0.05)]' :
-    isLoading ? 'bg-[var(--primary)]/5 border-[var(--primary)]/20 shadow-[0_0_20px_rgba(45,212,191,0.05)]' :
+  <div className={`flex items-center justify-between p-6 mb-6 rounded-xl backdrop-blur-md border transition-all duration-300 ${isFiltered ? 'bg-[var(--success)]/5 border-[var(--success)]/20' :
+    isLoading ? 'bg-[var(--primary)]/5 border-[var(--primary)]/20' :
       error ? 'bg-[var(--danger)]/5 border-[var(--danger)]/20' :
         'bg-[var(--bg-card)]/80 border-[var(--border)] shadow-sm'
     }`}>
@@ -337,39 +343,45 @@ const ChunkHeader = ({
     </div>
     <div className="flex gap-3 flex-wrap">
       {!isFiltered && !isLoading && (
-        <button
+        <Button
+          variant="primary"
           onClick={onFilter}
           disabled={isLoading}
-          className="group flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black font-bold py-2.5 px-5 rounded-lg transition-all duration-200 shadow-[0_0_15px_rgba(45,211,191,0.3)] hover:shadow-[0_0_20px_rgba(45,211,191,0.5)] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="group flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black font-bold py-2.5 px-5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Sparkles size={16} className="group-hover:animate-spin-slow" />
           AI Filter
-        </button>
+        </Button>
       )}
       {isFiltered && !isLoading && (
         <div className="flex gap-2">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onReset}
             className="flex items-center gap-2 bg-[var(--bg-light)] hover:bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-main)] font-medium py-2 px-4 rounded-lg transition-all duration-200"
           >
             <RotateCcw size={14} />
             Reset
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
             onClick={onTrackAll}
             disabled={filteredJobs === 0}
             className="flex items-center gap-2 bg-[var(--success)] hover:bg-[var(--success)]/90 disabled:bg-[var(--bg-light)] disabled:text-[var(--text-muted)] text-black font-bold py-2 px-4 rounded-lg transition-all duration-200 shadow-sm disabled:shadow-none"
           >
             <Save size={14} />
             Track All
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onSkipAll}
             disabled={filteredJobs === 0}
             className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] font-medium py-2 px-4 rounded-lg transition-all duration-200"
           >
             Skip All
-          </button>
+          </Button>
         </div>
       )}
       {isLoading && <ChunkLoadingSpinner />}
@@ -381,7 +393,7 @@ const ChunkHeader = ({
 const InitialPrompt = () => (
   <div className="text-center py-24">
     <div className="relative mb-8 group">
-      <div className="w-24 h-24 bg-[var(--bg-surface)] rounded-2xl flex items-center justify-center mx-auto border border-[var(--border)] shadow-[0_0_30px_rgba(45,212,191,0.1)] group-hover:shadow-[0_0_50px_rgba(45,212,191,0.2)] transition-all duration-500">
+      <div className="w-24 h-24 bg-[var(--bg-surface)] rounded-2xl flex items-center justify-center mx-auto border border-[var(--border)] transition-all duration-500">
         <Search size={48} className="text-[var(--primary)] group-hover:scale-110 transition-transform duration-500" />
       </div>
       <div className="absolute -top-2 -right-2 w-4 h-4 bg-[var(--primary)] rounded-full animate-ping opacity-75"></div>
@@ -389,19 +401,19 @@ const InitialPrompt = () => (
     </div>
     <h3 className="text-3xl font-bold text-[var(--text-main)] mb-4 tracking-tight">Find Your Next Opportunity</h3>
     <p className="text-[var(--text-muted)] text-lg max-w-lg mx-auto leading-relaxed mb-10">
-      Use the search bar above to discover jobs with <span className="text-[var(--primary)] font-medium">AI-powered filtering</span> and smart analysis.
+      Use the search bar above to find matching roles.
     </p>
     <div className="flex items-center justify-center gap-8 text-sm text-[var(--text-dim)]">
       <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
-        <div className="w-2 h-2 bg-[var(--primary)] rounded-full shadow-[0_0_8px_var(--primary)]"></div>
+        <div className="w-2 h-2 bg-[var(--primary)] rounded-full"></div>
         <span>AI Analysis</span>
       </div>
       <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
-        <div className="w-2 h-2 bg-[var(--success)] rounded-full shadow-[0_0_8px_var(--success)]"></div>
+        <div className="w-2 h-2 bg-[var(--success)] rounded-full"></div>
         <span>Smart Filtering</span>
       </div>
       <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border)]">
-        <div className="w-2 h-2 bg-[var(--secondary)] rounded-full shadow-[0_0_8px_var(--secondary)]"></div>
+        <div className="w-2 h-2 bg-[var(--secondary)] rounded-full"></div>
         <span>Date Range Search</span>
       </div>
     </div>
@@ -915,7 +927,7 @@ const JobSearchPage = () => {
     setHasDate: (value: boolean | undefined) => void;
   }) => (
     <div className="bg-[var(--bg-surface)]/80 backdrop-blur-md rounded-2xl p-6 mb-8 border border-[var(--border)] shadow-lg relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--primary)] via-[var(--secondary)] to-[var(--primary)] opacity-50" />
+      <div className="absolute top-0 left-0 w-full h-1 bg-[var(--primary)] opacity-40" />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-[var(--primary)]/10 rounded-lg border border-[var(--primary)]/20">
@@ -923,24 +935,26 @@ const JobSearchPage = () => {
           </div>
           <h3 className="text-xl font-bold text-[var(--text-main)]">Advanced Filters</h3>
         </div>
-        <button
+        <Button
+          variant="ghost"
           onClick={() => setShowFilters(false)}
           className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-light)] rounded-lg transition-colors"
+          aria-label="Close filters"
         >
           ×
-        </button>
+        </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Date Filters - Your Core Feature */}
         <FormDateInput
           label="Posted After"
           value={filters.postedAfter}
-          onChange={(e) => handleFilterChange('postedAfter', e.target.value)}
+          onChange={(v) => handleFilterChange('postedAfter', v)}
         />
         <FormDateInput
           label="Posted Before"
           value={filters.postedBefore}
-          onChange={(e) => handleFilterChange('postedBefore', e.target.value)}
+          onChange={(v) => handleFilterChange('postedBefore', v)}
         />
 
         {/* Location Filter */}
@@ -980,12 +994,11 @@ const JobSearchPage = () => {
         <div className="md:col-span-2 lg:col-span-3">
           <div className="group flex items-center gap-4 p-4 bg-[var(--bg-light)]/30 hover:bg-[var(--bg-light)]/50 rounded-xl border border-[var(--border)] transition-colors cursor-pointer" onClick={() => handleFilterChange('onlyHiringPosts', !filters.onlyHiringPosts)}>
             <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${filters.onlyHiringPosts ? 'bg-[var(--primary)] border-[var(--primary)]' : 'bg-[var(--bg-surface)] border-[var(--text-muted)]'}`}>
-              {filters.onlyHiringPosts && <Sparkles size={14} className="text-black" />}
+              {filters.onlyHiringPosts && <Check size={14} strokeWidth={3} className="text-black" />}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-sm font-bold text-[var(--text-main)]">Only Hiring Posts</span>
-                <span className="px-2 py-0.5 bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] uppercase tracking-wider rounded font-bold border border-[var(--primary)]/20">AI Powered</span>
               </div>
               <div className="text-xs text-[var(--text-muted)]">
                 AI detects: job titles, &quot;hiring&quot;, &quot;apply&quot;, salary mentions, and other hiring indicators
@@ -1129,21 +1142,21 @@ const JobSearchPage = () => {
       <div className="p-6 min-h-screen">
         <div className="mb-12 text-center">
           <div className="inline-flex items-center gap-4 mb-6 px-8 py-4 bg-[var(--bg-surface)]/50 backdrop-blur-sm border border-[var(--border)] rounded-full shadow-lg">
-            <div className="p-2.5 bg-gradient-to-br from-[var(--primary)] to-[var(--primary-dim)] rounded-xl shadow-[0_0_15px_rgba(45,211,191,0.3)]">
+            <div className="p-2.5 bg-[var(--primary)] rounded-xl">
               <Bot className="w-6 h-6 text-black" />
             </div>
             <div className="text-2xl font-bold text-[var(--text-main)] tracking-tight">
-              AI-Powered Job Search
+              Job Search
             </div>
           </div>
           <p className="text-[var(--text-muted)] text-lg max-w-2xl mx-auto leading-relaxed">
-            Discover opportunities with <span className="text-[var(--primary)] font-medium">intelligent filtering</span>, AI analysis, and advanced search capabilities.
+            Search jobs and filter results to fit your preferences.
           </p>
         </div>
         <div className="max-w-6xl mx-auto">
           {/* Search Bar and Controls */}
           <div className="mb-10 space-y-6">
-            <form id="searchForm" onSubmit={handleSearch} className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl p-2 shadow-lg hover:shadow-[0_0_30px_rgba(0,0,0,0.3)] transition-shadow duration-300">
+            <form id="searchForm" onSubmit={handleSearch} className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl p-2 shadow-lg transition-shadow duration-300">
               <div className="flex gap-2">
                 <div className="flex-grow relative group">
                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -1156,7 +1169,9 @@ const JobSearchPage = () => {
                     className="text-lg py-4 pl-12 bg-transparent border-none focus:ring-0 w-full h-full"
                   />
                 </div>
-                <button
+                <Button
+                  variant="primary"
+                  size="lg"
                   type="submit"
                   disabled={isLoading}
                   className="bg-[var(--primary)] hover:bg-[var(--primary-dim)] text-black font-bold py-4 px-8 rounded-xl transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] flex items-center justify-center hover:scale-[1.02] active:scale-[0.98]"
@@ -1172,13 +1187,14 @@ const JobSearchPage = () => {
                       <span>Search</span>
                     </div>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
 
             {/* Filter and Save Controls */}
             <div className="flex gap-3 flex-wrap items-center justify-center">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 font-medium py-2.5 px-6 rounded-xl transition-all duration-200 border ${showFilters
                   ? 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/30'
@@ -1187,7 +1203,7 @@ const JobSearchPage = () => {
               >
                 <Filter size={16} />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </button>
+              </Button>
             </div>
           </div>
 

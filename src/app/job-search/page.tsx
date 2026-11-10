@@ -5,7 +5,10 @@ import { Search, MapPin, Calendar, Building, ExternalLink, Filter, Save, X, Chec
 import toast from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
+import ProfileCompletionBanner from '@/components/ProfileCompletionBanner';
 import { motion, AnimatePresence } from 'framer-motion';
+import Button from '@/components/ui/Button';
+import { Select } from 'antd';
 
 interface Job {
   id: string;
@@ -45,17 +48,17 @@ const JobCard = ({ job, onTrack, onSkip }: {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`rounded-xl p-6 border transition-all duration-300 ${getCardStyle()}`}
+      className={`rounded-xl p-4 border transition-all duration-300 ${getCardStyle()}`}
     >
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-3">
         <div className="flex-1">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[var(--bg-deep)] flex items-center justify-center border border-[var(--border)] text-[var(--primary)] font-bold text-xl flex-shrink-0">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[var(--bg-deep)] flex items-center justify-center border border-[var(--border)] text-[var(--primary)] font-bold text-base flex-shrink-0">
               {job.company.charAt(0)}
             </div>
             <div>
-              <h3 className="text-xl font-bold text-[var(--text-main)] mb-1">{job.title}</h3>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--text-muted)]">
+              <h3 className="text-lg font-bold text-[var(--text-main)] mb-0.5">{job.title}</h3>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--text-muted)]">
                 <span className="flex items-center gap-1">
                   <Building className="w-3 h-3 text-[var(--primary)]" />
                   {job.company}
@@ -74,7 +77,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-4">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             {job.salary && (
               <div className="px-3 py-1 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-full text-[var(--success)] text-xs font-medium flex items-center gap-1">
                 <DollarSign className="w-3 h-3" />
@@ -96,23 +99,27 @@ const JobCard = ({ job, onTrack, onSkip }: {
         <div className="flex flex-row md:flex-col items-center md:items-end gap-2 w-full md:w-auto ml-auto">
           {!job.userAction ? (
             <>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => onTrack(job)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--success)] hover:bg-[var(--success)]/90 text-black font-bold rounded-xl transition-all shadow-sm"
+                className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-[var(--success)] hover:bg-[var(--success)]/90 text-black font-bold rounded-lg transition-all shadow-sm"
               >
                 <Save className="w-4 h-4" />
                 <span>Track</span>
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => onSkip(job)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] rounded-xl transition-all"
+                className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-[var(--bg-deep)] border border-[var(--border)] hover:border-[var(--danger)] hover:text-[var(--danger)] text-[var(--text-muted)] rounded-lg transition-all"
               >
                 <X className="w-4 h-4" />
                 <span>Skip</span>
-              </button>
+              </Button>
             </>
           ) : (
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm ${job.userAction === 'track'
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm ${job.userAction === 'track'
               ? 'text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20'
               : 'text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20'
               }`}>
@@ -124,7 +131,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-xl transition-all"
+            className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-all"
           >
             <ExternalLink className="w-4 h-4" />
             <span>View</span>
@@ -133,8 +140,8 @@ const JobCard = ({ job, onTrack, onSkip }: {
       </div>
 
       {job.description && (
-        <div className="mt-4 p-4 bg-[var(--bg-deep)] rounded-xl border border-[var(--border)]">
-          <p className="text-[var(--text-muted)] text-sm line-clamp-3 leading-relaxed">{job.description}</p>
+        <div className="mt-3 p-3 bg-[var(--bg-deep)] rounded-lg border border-[var(--border)]">
+          <p className="text-[var(--text-muted)] text-sm line-clamp-2 leading-relaxed">{job.description}</p>
         </div>
       )}
     </motion.div>
@@ -151,6 +158,7 @@ const JobSearchPage = () => {
     search: '',
     source: 'all'
   });
+  const [showFilters, setShowFilters] = useState(false);
 
   const filterTrackedJobs = async (jobs: Job[]) => {
     try {
@@ -269,89 +277,127 @@ const JobSearchPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-6 lg:p-8 min-h-screen space-y-8 max-w-[1600px] mx-auto">
+      <div className="p-6 lg:p-8 min-h-screen space-y-4 max-w-[1600px] mx-auto">
+        <ProfileCompletionBanner />
+
         {/* Header */}
         <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
           <div>
-            <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
-              <div className="p-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
-                <Globe className="w-8 h-8 text-[var(--primary)]" />
+            <h1 className="text-2xl font-bold text-[var(--text-main)] flex items-center gap-2.5">
+              <div className="p-1.5 bg-[var(--bg-surface)] rounded-lg border border-[var(--border)]">
+                <Globe className="w-5 h-5 text-[var(--primary)]" />
               </div>
               Job Search
             </h1>
-            <p className="text-[var(--text-muted)] mt-2 ml-16">Search jobs from multiple sources in one place</p>
           </div>
         </div>
 
         {/* Search Form */}
-        <div className="bg-[var(--bg-surface)] rounded-2xl p-6 border border-[var(--border)]">
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-medium">Search Criteria</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)]">
+          <form onSubmit={handleSearch} className="p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 flex items-center bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg transition-colors">
+                <Search className="ml-3 w-4 h-4 text-[var(--text-muted)] flex-shrink-0 pointer-events-none" />
                 <input
                   type="text"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                   placeholder="Keywords (e.g. React Developer)"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder-[var(--text-dim)]"
                 />
+                {filters.search && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <input
-                  type="text"
-                  value={filters.location}
-                  onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Location (e.g. Remote)"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
-                />
-              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={() => setShowFilters(v => !v)}
+                className="shrink-0 h-8 px-4 rounded-lg flex items-center justify-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                <span>{showFilters ? 'Hide filters' : 'Filters'}</span>
+              </Button>
 
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                <select
-                  value={filters.source}
-                  onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none appearance-none"
-                >
-                  <option value="all">All Sources</option>
-                  <option value="findwork">FindWork</option>
-                  <option value="jooble">Jooble</option>
-                  <option value="usajobs">USAJOBS</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-              <label className="flex items-center gap-3 text-[var(--text-main)] cursor-pointer group">
-                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${filters.remote ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[var(--text-muted)] group-hover:border-[var(--primary)]'}`}>
-                  {filters.remote && <CheckCircle className="w-3.5 h-3.5 text-black" />}
-                </div>
-                <input
-                  type="checkbox"
-                  checked={filters.remote}
-                  onChange={(e) => setFilters(prev => ({ ...prev, remote: e.target.checked }))}
-                  className="hidden"
-                />
-                <span className="group-hover:text-[var(--primary)] transition-colors">Remote Only</span>
-              </label>
-
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 type="submit"
                 disabled={loading || !filters.search.trim()}
-                className="w-full sm:w-auto px-8 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="shrink-0 h-8 px-6 rounded-lg bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <Search className="w-5 h-5" />
-                <span>{loading ? 'Searching...' : 'Search Jobs'}</span>
-              </button>
+                <Search className="w-4 h-4" />
+                <span>{loading ? 'Searching...' : 'Search'}</span>
+              </Button>
             </div>
+
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-[var(--border)] overflow-hidden"
+              >
+                <div className="relative flex items-center bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg transition-colors">
+                  <MapPin className="ml-3 w-4 h-4 text-[var(--text-muted)] flex-shrink-0 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={filters.location}
+                    onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="Location (e.g. Remote)"
+                    className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder-[var(--text-dim)]"
+                  />
+                  {filters.location && (
+                    <button
+                      type="button"
+                      onClick={() => setFilters(prev => ({ ...prev, location: '' }))}
+                      aria-label="Clear location"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  <Select
+                    value={filters.source}
+                    onChange={(v) => setFilters(prev => ({ ...prev, source: v as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
+                    options={[
+                      { value: 'all', label: 'All Sources' },
+                      { value: 'findwork', label: 'FindWork' },
+                      { value: 'jooble', label: 'Jooble' },
+                      { value: 'usajobs', label: 'USAJOBS' }
+                    ]}
+                    allowClear
+                    className="w-full"
+                  />
+                </div>
+
+                <label className="flex items-center gap-3 text-[var(--text-main)] cursor-pointer group">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${filters.remote ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[var(--text-muted)] group-hover:border-[var(--primary)]'}`}>
+                    {filters.remote && <CheckCircle className="w-3.5 h-3.5 text-black" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={filters.remote}
+                    onChange={(e) => setFilters(prev => ({ ...prev, remote: e.target.checked }))}
+                    className="hidden"
+                  />
+                  <span className="group-hover:text-[var(--primary)] transition-colors">Remote Only</span>
+                </label>
+              </motion.div>
+            )}
           </form>
         </div>
 

@@ -2,15 +2,13 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
 
 export default function NotFoundPage() {
   const router = useRouter();
 
   return (
-    <main className="flex-grow bg-gradient-to-b from-bg-dark via-bg-dark/90 to-bg-dark bg-opacity-90 text-text flex flex-col relative overflow-hidden">
-      {/* Animated Grid Background */}
-      <div className="mt-5 absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.1)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-5"></div>
-
+    <main className="flex-grow bg-bg-dark text-text flex flex-col relative overflow-hidden">
       {/* Animated Dots */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-cyan-400 rounded-full opacity-70 animate-ping"></div>
@@ -26,8 +24,6 @@ export default function NotFoundPage() {
       <div className="absolute bottom-40 left-20 w-12 h-12 border border-pink-400/30 rounded-full animate-spin-slow z-0"></div>
 
       <section className="hero-bg-effect flex flex-col items-center justify-center px-6 py-24 pt-32 text-center relative z-10 bg-bg-dark shadow-lg mt-5">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(56,189,248,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.1)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] animate-pulse z-5"></div>
-
         <div className="relative z-10">
           <h1 className="text-8xl md:text-9xl font-extrabold leading-tight tracking-tight mb-6 text-cyan-400">
             404
@@ -39,18 +35,20 @@ export default function NotFoundPage() {
             Oops! The page you&apos;re looking for doesn&apos;t exist. It might have been moved, deleted, or you entered the wrong URL.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
+            <Button
+              variant="primary"
               onClick={() => router.push('/')}
               className="button-primary"
             >
               Go Back Home
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => router.back()}
               className="button-secondary text-text"
             >
               Go Back
-            </button>
+            </Button>
           </div>
         </div>
       </section>

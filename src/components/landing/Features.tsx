@@ -1,80 +1,45 @@
 "use client";
 
 import React from "react";
-import Card from "@/components/ui/Card";
-import { Bot, Target, FileText, Zap, Shield, Globe } from "lucide-react";
-
-const features = [
-    {
-        title: "AI Matchmaker",
-        description: "Our advanced algorithms analyze thousands of data points to find jobs that perfectly align with your skills and career goals.",
-        icon: Bot,
-        color: "text-cyan-400",
-        colSpan: "md:col-span-2",
-    },
-    {
-        title: "Smart Resume",
-        description: "Automatically tailor your resume for each application to beat ATS systems.",
-        icon: FileText,
-        color: "text-purple-400",
-        colSpan: "md:col-span-1",
-    },
-    {
-        title: "Auto-Apply",
-        description: "Let our bot handle the tedious application forms while you focus on interview prep.",
-        icon: Zap,
-        color: "text-yellow-400",
-        colSpan: "md:col-span-1",
-    },
-    {
-        title: "Global Search",
-        description: "Access remote opportunities from top companies around the world.",
-        icon: Globe,
-        color: "text-green-400",
-        colSpan: "md:col-span-2",
-    },
-    {
-        title: "Privacy First",
-        description: "Your data is encrypted and never shared with recruiters without your permission.",
-        icon: Shield,
-        color: "text-red-400",
-        colSpan: "md:col-span-3",
-    },
-];
+import SectionHeading from "@/components/landing/SectionHeading";
+import { ICONS } from "@/components/landing/icons";
+import { features } from "@/components/landing/content";
 
 const Features = () => {
-    return (
-        <section id="features" className="py-24 relative">
-            <div className="container mx-auto px-6">
-                <div className="text-center max-w-3xl mx-auto mb-16">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                        Supercharge Your <span className="text-gradient-cosmic">Job Search</span>
-                    </h2>
-                    <p className="text-lg text-[var(--text-muted)]">
-                        Equip yourself with the most advanced tools in the galaxy to land your dream role.
-                    </p>
-                </div>
+  return (
+    <section id="features" className="px-6 py-24 md:py-28">
+      <div className="mx-auto w-full max-w-[1280px]">
+        <SectionHeading heading={features.heading} intro={features.intro} />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {features.map((feature, index) => (
-                        <Card
-                            key={index}
-                            className={`${feature.colSpan} flex flex-col justify-between min-h-[240px]`}
-                            glow={index === 0}
-                        >
-                            <div className={`w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center mb-6 ${feature.color}`}>
-                                <feature.icon className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                                <p className="text-[var(--text-muted)]">{feature.description}</p>
-                            </div>
-                        </Card>
-                    ))}
+        <div className="grid gap-4 md:grid-cols-3">
+          {features.steps.map((step) => {
+            const Icon = ICONS[step.icon];
+            return (
+              <div
+                key={step.n}
+                className="rounded-2xl border border-[var(--border)] bg-[var(--bg-surface)] p-8 flex flex-col gap-5 transition-all duration-200 hover:-translate-y-[2px] hover:border-[var(--border-strong)]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono-ui text-4xl font-medium text-[var(--accent)] leading-none">
+                    {step.n}
+                  </span>
+                  <Icon className="w-5 h-5 text-[var(--accent)]" />
                 </div>
-            </div>
-        </section>
-    );
+                <div>
+                  <h3 className="font-display text-2xl font-normal mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-[var(--text-muted)] leading-relaxed">
+                    {step.body}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
 };
 
 export default Features;

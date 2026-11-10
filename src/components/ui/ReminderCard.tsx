@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Button from '@/components/ui/Button';
 import {
     Clock,
     CheckCircle,
@@ -146,13 +147,14 @@ const ReminderCard: React.FC<ReminderCardProps> = ({
                 </div>
 
                 {reminder.status === 'pending' && onComplete && (
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={() => onComplete(reminder._id)}
-                        className="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
-                        title="Complete"
+                        aria-label="Complete"
+                        className="p-1 text-green-600 hover:bg-green-100"
                     >
                         <CheckCircle className="w-4 h-4" />
-                    </button>
+                    </Button>
                 )}
             </div>
         );
@@ -190,44 +192,48 @@ const ReminderCard: React.FC<ReminderCardProps> = ({
                     {reminder.status === 'pending' && (
                         <>
                             {onComplete && (
-                                <button
+                                <Button
+                                    variant="ghost"
                                     onClick={() => onComplete(reminder._id)}
-                                    className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-                                    title="Complete"
+                                    aria-label="Complete"
+                                    className="p-2 text-green-600 hover:bg-green-100"
                                 >
                                     <CheckCircle className="w-4 h-4" />
-                                </button>
+                                </Button>
                             )}
                             {onSnooze && (
-                                <button
+                                <Button
+                                    variant="ghost"
                                     onClick={() => onSnooze(reminder._id, new Date(Date.now() + 24 * 60 * 60 * 1000))}
-                                    className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors"
-                                    title="Snooze"
+                                    aria-label="Snooze"
+                                    className="p-2 text-yellow-600 hover:bg-yellow-100"
                                 >
                                     <PauseCircle className="w-4 h-4" />
-                                </button>
+                                </Button>
                             )}
                         </>
                     )}
 
                     {onEdit && (
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={() => onEdit(reminder)}
-                            className="p-2 text-text-muted hover:text-primary hover:bg-bg rounded-lg transition-colors"
-                            title="Edit"
+                            aria-label="Edit"
+                            className="p-2 text-text-muted hover:text-primary hover:bg-bg"
                         >
                             <Edit className="w-4 h-4" />
-                        </button>
+                        </Button>
                     )}
 
                     {onDelete && (
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={() => onDelete(reminder._id)}
-                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                            title="Delete"
+                            aria-label="Delete"
+                            className="p-2 text-red-600 hover:bg-red-100"
                         >
                             <Trash2 className="w-4 h-4" />
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>

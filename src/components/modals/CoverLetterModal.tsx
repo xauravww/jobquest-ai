@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Select } from 'antd';
 import Modal from '@/components/ui/Modal';
-import { FileText, Sparkles, Briefcase, X, Copy, ChevronDown, ChevronUp, ChevronsRight, AlertCircle } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import { FileText, Briefcase, X, Copy, ChevronDown, ChevronUp, ChevronsRight, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -216,14 +218,16 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
           <div className="bg-[var(--bg-surface)] rounded-xl p-4">
             <div className="flex justify-between items-center mb-3">
               <span className="text-white font-medium">Job Description</span>
-              <button
+              <Button
+                variant="secondary"
                 onClick={handleExtractContent}
                 disabled={isExtracted}
+                size="sm"
                 className="text-xs px-3 py-1.5 bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 rounded-lg hover:bg-[var(--primary)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
               >
                 <ChevronsRight className="w-3 h-3" />
                 Extract Text
-              </button>
+              </Button>
             </div>
             <textarea
               value={extractedContent}
@@ -236,25 +240,27 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
 
           <div className="bg-[var(--bg-surface)] rounded-xl p-4">
             <span className="block text-white font-medium mb-3">Cover Letter Style</span>
-            <select
+            <Select
               value={coverLetterType}
-              onChange={(e) => setCoverLetterType(e.target.value as any)}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-            >
-              <option value="concise">Concise (150-200 words) - Brief and to the point</option>
-              <option value="detailed">Detailed (300-400 words) - Comprehensive storytelling</option>
-              <option value="professional">Professional (250-350 words) - Formal corporate style</option>
-            </select>
+              onChange={(v) => setCoverLetterType(v as 'concise' | 'detailed' | 'professional')}
+              options={[
+                { value: 'concise', label: 'Concise (150-200 words)' },
+                { value: 'detailed', label: 'Detailed (300-400 words)' },
+                { value: 'professional', label: 'Professional (250-350 words)' },
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div className="bg-[var(--bg-surface)] rounded-xl overflow-hidden">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setShowProfileDetails(!showProfileDetails)}
               className="w-full flex items-center justify-between p-4 text-white font-medium hover:bg-[var(--bg-glass)] transition-colors"
             >
               <span>Customize Your Profile for this Letter</span>
               {showProfileDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
+            </Button>
             <AnimatePresence>
               {showProfileDetails && (
                 <motion.div
@@ -286,21 +292,18 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
 
               {!coverLetter && !generating && (
                 <div className="flex flex-col items-center justify-center h-full">
-                  <div className="p-4 bg-[var(--primary)]/10 rounded-full border-4 border-[var(--primary)]/20 mb-4">
-                    <Sparkles className="w-8 h-8 text-[var(--primary)]" />
-                  </div>
                   <h3 className="text-xl font-bold text-white mb-2">Ready to Generate?</h3>
                   <p className="text-[var(--text-muted)] text-sm max-w-xs mb-6">
                     Once you have the job description, click the button below to generate your personalized cover letter.
                   </p>
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={handleGenerateCoverLetter}
                     disabled={!job || !isExtracted}
-                    className="px-8 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-8 py-3"
                   >
-                    <Sparkles className="w-5 h-5" />
                     <span>Generate Cover Letter</span>
-                  </button>
+                  </Button>
                   <p className="text-center text-xs text-[var(--text-muted)] mt-4">AI resume builder is coming soon!</p>
                 </div>
               )}
@@ -312,18 +315,24 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
                     <h4 className="font-bold text-sm">Error</h4>
                     <p className="text-sm opacity-90">{error}</p>
                   </div>
-                  <button onClick={() => setError('')} className="ml-auto hover:bg-[var(--danger)]/20 p-1 rounded-lg">
+                  <Button variant="ghost" onClick={() => setError('')} aria-label="Dismiss error" className="ml-auto hover:bg-[var(--danger)]/20 p-1 rounded-lg">
                     <X className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               )}
 
               {(generating || coverLetter) && (
                 <div className="w-full h-full flex flex-col">
                   {generating ? (
-                    <div className="flex flex-col items-center justify-center h-full flex-grow">
-                      <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)] mb-4"></div>
-                      <p className="text-[var(--text-muted)]">Our AI is writing your personalized cover letter...</p>
+                    <div className="w-full flex flex-col justify-center h-full flex-grow space-y-3">
+                      <div className="h-6 bg-[var(--bg-glass)] rounded w-1/3 animate-pulse"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-[var(--bg-glass)] rounded w-full animate-pulse"></div>
+                        <div className="h-4 bg-[var(--bg-glass)] rounded w-11/12 animate-pulse"></div>
+                        <div className="h-4 bg-[var(--bg-glass)] rounded w-5/6 animate-pulse"></div>
+                        <div className="h-4 bg-[var(--bg-glass)] rounded w-full animate-pulse"></div>
+                        <div className="h-4 bg-[var(--bg-glass)] rounded w-2/3 animate-pulse"></div>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4 flex flex-col h-full">
@@ -331,28 +340,31 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
                         <pre className="text-[var(--text-main)] whitespace-pre-wrap font-sans text-sm leading-relaxed">{coverLetter}</pre>
                       </div>
                       <div className="flex justify-end gap-3 pt-2">
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={() => setCoverLetter('')}
                           className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors flex items-center gap-2"
                         >
                           <X className="w-4 h-4" />
                           <span>Discard</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
                           onClick={handleCopy}
                           className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors flex items-center gap-2"
                         >
                           <Copy className="w-4 h-4" />
                           <span>Copy</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="primary"
                           onClick={handleSaveCoverLetter}
                           disabled={loading}
                           className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
                           {loading ? <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div> : <FileText className="w-4 h-4" />}
                           <span>{loading ? 'Saving...' : 'Save to Notes'}</span>
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   )}

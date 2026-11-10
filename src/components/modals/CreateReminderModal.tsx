@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Select, DatePicker } from 'antd';
+import dayjs from 'dayjs';
 import { Tag, AlertCircle, Repeat, Clock, FileText, Plus, Trash2, Bell } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 
 interface Reminder {
@@ -242,11 +245,10 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Due Date <span className="text-[var(--danger)]">*</span></label>
-                            <input
-                                type="date"
-                                value={formData.dueDate}
-                                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                            <DatePicker
+                                value={formData.dueDate ? dayjs(formData.dueDate) : null}
+                                onChange={(d) => setFormData({ ...formData, dueDate: d ? d.format('YYYY-MM-DD') : '' })}
+                                className="w-full"
                             />
                         </div>
                         <div>
@@ -263,34 +265,36 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Type</label>
-                            <select
+                            <Select
                                 value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-                            >
-                                <option value="follow_up">Follow Up</option>
-                                <option value="interview_prep">Interview Preparation</option>
-                                <option value="application_deadline">Application Deadline</option>
-                                <option value="interview_scheduled">Interview Scheduled</option>
-                                <option value="offer_response">Offer Response</option>
-                                <option value="networking">Networking</option>
-                                <option value="skill_development">Skill Development</option>
-                                <option value="job_search">Job Search</option>
-                                <option value="custom">Custom</option>
-                            </select>
+                                onChange={(v) => setFormData({ ...formData, type: v })}
+                                options={[
+                                    { value: 'follow_up', label: 'Follow Up' },
+                                    { value: 'interview_prep', label: 'Interview Preparation' },
+                                    { value: 'application_deadline', label: 'Application Deadline' },
+                                    { value: 'interview_scheduled', label: 'Interview Scheduled' },
+                                    { value: 'offer_response', label: 'Offer Response' },
+                                    { value: 'networking', label: 'Networking' },
+                                    { value: 'skill_development', label: 'Skill Development' },
+                                    { value: 'job_search', label: 'Job Search' },
+                                    { value: 'custom', label: 'Custom' },
+                                ]}
+                                className="w-full"
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
-                            <select
+                            <Select
                                 value={formData.priority}
-                                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-                            >
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                                <option value="urgent">Urgent</option>
-                            </select>
+                                onChange={(v) => setFormData({ ...formData, priority: v })}
+                                options={[
+                                    { value: 'low', label: 'Low' },
+                                    { value: 'medium', label: 'Medium' },
+                                    { value: 'high', label: 'High' },
+                                    { value: 'urgent', label: 'Urgent' },
+                                ]}
+                                className="w-full"
+                            />
                         </div>
                     </div>
                 </section>
@@ -303,18 +307,18 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
                     <div>
                         <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Related Application</label>
-                        <select
+                        <Select
                             value={formData.applicationId}
-                            onChange={(e) => setFormData({ ...formData, applicationId: e.target.value })}
-                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-                        >
-                            <option value="">None</option>
-                            {applications.map((app) => (
-                                <option key={app._id} value={app._id}>
-                                    {app.jobId?.title || 'Untitled'} at {app.jobId?.company || 'Unknown Company'}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(v) => setFormData({ ...formData, applicationId: v })}
+                            options={[
+                                { value: '', label: 'None' },
+                                ...applications.map((app) => ({
+                                    value: app._id,
+                                    label: `${app.jobId?.title || 'Untitled'} at ${app.jobId?.company || 'Unknown Company'}`,
+                                })),
+                            ]}
+                            className="w-full"
+                        />
 
                         {formData.applicationId && (() => {
                             const selectedApp = applications.find(app => app._id === formData.applicationId);
@@ -364,15 +368,16 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6 border-l-2 border-[var(--border-glass)]">
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Pattern</label>
-                                <select
+                                <Select
                                     value={formData.recurrencePattern}
-                                    onChange={(e) => setFormData({ ...formData, recurrencePattern: e.target.value })}
-                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-                                >
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
+                                    onChange={(v) => setFormData({ ...formData, recurrencePattern: v })}
+                                    options={[
+                                        { value: 'daily', label: 'Daily' },
+                                        { value: 'weekly', label: 'Weekly' },
+                                        { value: 'monthly', label: 'Monthly' },
+                                    ]}
+                                    className="w-full"
+                                />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Interval</label>
@@ -386,11 +391,10 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">End Date</label>
-                                <input
-                                    type="date"
-                                    value={formData.recurrenceEndDate}
-                                    onChange={(e) => setFormData({ ...formData, recurrenceEndDate: e.target.value })}
-                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                                <DatePicker
+                                    value={formData.recurrenceEndDate ? dayjs(formData.recurrenceEndDate) : null}
+                                    onChange={(d) => setFormData({ ...formData, recurrenceEndDate: d ? d.format('YYYY-MM-DD') : '' })}
+                                    className="w-full"
                                 />
                             </div>
                         </div>
@@ -408,54 +412,59 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-[var(--bg-deep)] rounded-xl relative group">
                                 <div>
                                     <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Type</label>
-                                    <select
+                                    <Select
                                         value={notification.type}
-                                        onChange={(e) => {
+                                        onChange={(v) => {
                                             const newNotifications = [...formData.notifications];
-                                            newNotifications[index] = { ...notification, type: e.target.value };
+                                            newNotifications[index] = { ...notification, type: v };
                                             setFormData({ ...formData, notifications: newNotifications });
                                         }}
-                                        className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none appearance-none"
-                                    >
-                                        <option value="in_app">In-App</option>
-                                        <option value="email">Email</option>
-                                        <option value="push">Push</option>
-                                    </select>
+                                        options={[
+                                            { value: 'in_app', label: 'In-App' },
+                                            { value: 'email', label: 'Email' },
+                                            { value: 'push', label: 'Push' },
+                                        ]}
+                                        className="w-full"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-[var(--text-muted)] mb-1">Timing</label>
-                                    <select
+                                    <Select
                                         value={notification.timing}
-                                        onChange={(e) => {
+                                        onChange={(v) => {
                                             const newNotifications = [...formData.notifications];
-                                            newNotifications[index] = { ...notification, timing: e.target.value };
+                                            newNotifications[index] = { ...notification, timing: v };
                                             setFormData({ ...formData, notifications: newNotifications });
                                         }}
-                                        className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none appearance-none"
-                                    >
-                                        <option value="on_time">On Time</option>
-                                        <option value="15_min_before">15 minutes before</option>
-                                        <option value="1_hour_before">1 hour before</option>
-                                        <option value="1_day_before">1 day before</option>
-                                        <option value="1_week_before">1 week before</option>
-                                    </select>
+                                        options={[
+                                            { value: 'on_time', label: 'On Time' },
+                                            { value: '15_min_before', label: '15 minutes before' },
+                                            { value: '1_hour_before', label: '1 hour before' },
+                                            { value: '1_day_before', label: '1 day before' },
+                                            { value: '1_week_before', label: '1 week before' },
+                                        ]}
+                                        className="w-full"
+                                    />
                                 </div>
                                 {formData.notifications.length > 1 && (
-                                    <button
+                                    <Button
+                                        variant="danger"
                                         onClick={() => {
                                             const newNotifications = [...formData.notifications];
                                             newNotifications.splice(index, 1);
                                             setFormData({ ...formData, notifications: newNotifications });
                                         }}
+                                        aria-label={`Remove notification ${index + 1}`}
                                         className="absolute -top-2 -right-2 bg-[var(--danger)] text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
                                         <Trash2 className="w-3 h-3" />
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
                         ))}
 
-                        <button
+                        <Button
+                            variant="secondary"
                             onClick={() => {
                                 setFormData({
                                     ...formData,
@@ -466,25 +475,27 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                         >
                             <Plus className="w-4 h-4" />
                             <span>Add Notification</span>
-                        </button>
+                        </Button>
                     </div>
                 </section>
 
                 <div className="flex justify-end gap-3 pt-6">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
                         className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
                     >
                         Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         onClick={handleSubmit}
                         disabled={loading}
                         className="px-6 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
                         {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
                         {editingReminder ? 'Update Reminder' : 'Create Reminder'}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Modal>

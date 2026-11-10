@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Select, DatePicker } from 'antd';
 import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 import { Calendar, MapPin, Users, FileText, Plus, Trash2, Clock, Link as LinkIcon, Video, Building } from 'lucide-react';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
@@ -289,44 +291,47 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Type</label>
-              <select
+              <Select
                 value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-              >
-                <option value="interview">Interview</option>
-                <option value="phone_screening">Phone Screening</option>
-                <option value="technical_interview">Technical Interview</option>
-                <option value="final_interview">Final Interview</option>
-                <option value="other">Other</option>
-              </select>
+                onChange={(v) => setType(v)}
+                options={[
+                  { value: 'interview', label: 'Interview' },
+                  { value: 'phone_screening', label: 'Phone Screening' },
+                  { value: 'technical_interview', label: 'Technical Interview' },
+                  { value: 'final_interview', label: 'Final Interview' },
+                  { value: 'other', label: 'Other' },
+                ]}
+                className="w-full"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Status</label>
-              <select
+              <Select
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="completed">Completed</option>
-              </select>
+                onChange={(v) => setStatus(v)}
+                options={[
+                  { value: 'scheduled', label: 'Scheduled' },
+                  { value: 'confirmed', label: 'Confirmed' },
+                  { value: 'cancelled', label: 'Cancelled' },
+                  { value: 'completed', label: 'Completed' },
+                ]}
+                className="w-full"
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
-              <select
+              <Select
                 value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+                onChange={(v) => setPriority(v)}
+                options={[
+                  { value: 'low', label: 'Low' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'high', label: 'High' },
+                ]}
+                className="w-full"
+              />
             </div>
           </div>
         </section>
@@ -351,11 +356,10 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Start <span className="text-[var(--danger)]">*</span></label>
               <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                <DatePicker
+                  value={startDate ? dayjs(startDate) : null}
+                  onChange={(d) => setStartDate(d ? d.format('YYYY-MM-DD') : '')}
+                  className="flex-1 w-full"
                 />
                 {!isAllDay && (
                   <input
@@ -371,11 +375,10 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">End <span className="text-[var(--danger)]">*</span></label>
               <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="flex-1 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                <DatePicker
+                  value={endDate ? dayjs(endDate) : null}
+                  onChange={(d) => setEndDate(d ? d.format('YYYY-MM-DD') : '')}
+                  className="flex-1 w-full"
                 />
                 {!isAllDay && (
                   <input
@@ -480,16 +483,17 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <select
+                  <Select
                     value={attendee.role}
-                    onChange={(e) => handleAttendeeChange(index, 'role', e.target.value)}
-                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none appearance-none"
-                  >
-                    <option value="interviewer">Interviewer</option>
-                    <option value="hr">HR</option>
-                    <option value="recruiter">Recruiter</option>
-                    <option value="hiring_manager">Hiring Manager</option>
-                  </select>
+                    onChange={(v) => handleAttendeeChange(index, 'role', v)}
+                    options={[
+                      { value: 'interviewer', label: 'Interviewer' },
+                      { value: 'hr', label: 'HR' },
+                      { value: 'recruiter', label: 'Recruiter' },
+                      { value: 'hiring_manager', label: 'Hiring Manager' },
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <input
@@ -501,23 +505,26 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   />
                 </div>
                 <div className="md:col-span-1 flex justify-center">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => handleRemoveAttendee(index)}
+                    aria-label={`Remove attendee ${index + 1}`}
                     className="p-1.5 text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
 
-            <button
+            <Button
+              variant="secondary"
               onClick={handleAddAttendee}
               className="w-full py-2 border border-dashed border-[var(--border-glass)] rounded-xl text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>Add Attendee</span>
-            </button>
+            </Button>
           </div>
         </section>
 
@@ -529,18 +536,18 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Related Application</label>
-            <select
+            <Select
               value={applicationId}
-              onChange={(e) => setApplicationId(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-            >
-              <option value="">None</option>
-              {applications.map((app) => (
-                <option key={app._id} value={app._id}>
-                  {app.jobId?.title || 'Untitled'} at {app.jobId?.company || 'Unknown Company'}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setApplicationId(v)}
+              options={[
+                { value: '', label: 'None' },
+                ...applications.map((app) => ({
+                  value: app._id,
+                  label: `${app.jobId?.title || 'Untitled'} at ${app.jobId?.company || 'Unknown Company'}`,
+                })),
+              ]}
+              className="w-full"
+            />
 
             {applicationId && (() => {
               const selectedApp = applications.find(app => app._id === applicationId);
@@ -578,40 +585,45 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   placeholder={`Agenda Item ${index + 1}`}
                   className="flex-1 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
                 />
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => handleRemoveAgendaItem(index)}
+                  aria-label={`Remove agenda item ${index + 1}`}
                   className="p-2 text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             ))}
 
-            <button
+            <Button
+              variant="secondary"
               onClick={handleAddAgendaItem}
               className="w-full py-2 border border-dashed border-[var(--border-glass)] rounded-xl text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary)]/5 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>Add Agenda Item</span>
-            </button>
+            </Button>
           </div>
         </section>
 
         <div className="flex justify-end gap-3 pt-6">
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={loading}
             className="px-6 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
             {editingEvent ? 'Update Event' : 'Create Event'}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

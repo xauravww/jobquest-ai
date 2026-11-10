@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, message, Table, Tag, Modal, Form, Space, Statistic, Alert } from 'antd';
+import { Card, Button, Input, message, Table, Tag, Modal, Form, Space, Statistic, Alert, Select } from 'antd';
 import { SearchOutlined, LoginOutlined, RobotOutlined, ReloadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import AppLayout from '@/components/AppLayout';
 // Removed unused motion import
@@ -712,7 +712,7 @@ export default function NaukriAutomationPage() {
         <AppLayout showFooter={false}>
             <div className="p-8 max-w-7xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                <h1 className="text-3xl font-bold text-[var(--primary)]">
                     Naukri Automation
                 </h1>
                 <Space>
@@ -863,19 +863,16 @@ export default function NaukriAutomationPage() {
                             <p className="text-sm text-gray-500 mb-2">Type: {question.questionType}</p>
 
                             {question.questionType === 'List Menu' && question.answerOption && (
-                                <select
-                                    className="w-full p-2 border rounded"
-                                    value={manualAnswers[question.questionId] || ''}
-                                    onChange={(e) => setManualAnswers({
+                                <Select
+                                    className="w-full"
+                                    value={manualAnswers[question.questionId] || undefined}
+                                    onChange={(v) => setManualAnswers({
                                         ...manualAnswers,
-                                        [question.questionId]: e.target.value
+                                        [question.questionId]: v
                                     })}
-                                >
-                                    <option value="">Select an option</option>
-                                    {Object.entries(question.answerOption).map(([key, value]: [string, any]) => (
-                                        <option key={key} value={key}>{value}</option>
-                                    ))}
-                                </select>
+                                    placeholder="Select an option"
+                                    options={Object.entries(question.answerOption).map(([key, value]: [string, any]) => ({ value: key, label: value }))}
+                                />
                             )}
 
                             {question.questionType === 'Check Box' && question.answerOption && (

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
+import Button from '@/components/ui/Button';
 
 export interface ToastData {
   id: string;
@@ -97,13 +98,14 @@ const Toast: React.FC<ToastProps> = ({ id, type, title, message, duration = 3000
         </div>
       </div>
 
-      <button
+      <Button
+        variant="ghost"
         onClick={handleClose}
-        className="flex-shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors duration-200"
         aria-label="Close toast"
+        className="p-1"
       >
         <X className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 };

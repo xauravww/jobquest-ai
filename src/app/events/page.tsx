@@ -16,9 +16,11 @@ import {
   Trash2
 } from 'lucide-react';
 import EventsSkeleton from '@/components/ui/EventsSkeleton';
+import { confirmAction } from '@/lib/confirm';
 import CreateEventModal from '@/components/modals/CreateEventModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import Button from '@/components/ui/Button';
 
 interface CalendarEvent {
   _id: string;
@@ -108,20 +110,24 @@ const EventsPage = () => {
     setRefreshCounter(prev => prev + 1);
   };
 
-  const handleDeleteEvent = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
-    try {
-      const response = await fetch(`/api/calendar/events/${id}`, { method: 'DELETE' });
-      if (response.ok) {
-        toast.success('Event deleted successfully');
-        refetchData();
-      } else {
-        toast.error('Failed to delete event');
-      }
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      toast.error('Error deleting event');
-    }
+  const handleDeleteEvent = (id: string) => {
+    confirmAction({
+      title: 'Delete this event?',
+      onOk: async () => {
+        try {
+          const response = await fetch(`/api/calendar/events/${id}`, { method: 'DELETE' });
+          if (response.ok) {
+            toast.success('Event deleted successfully');
+            refetchData();
+          } else {
+            toast.error('Failed to delete event');
+          }
+        } catch (error) {
+          console.error('Error deleting event:', error);
+          toast.error('Error deleting event');
+        }
+      },
+    });
   };
 
   const getFilteredEvents = () => {
@@ -182,13 +188,14 @@ const EventsPage = () => {
             <p className="text-[var(--text-muted)] mt-2 ml-16">Manage your job search events and important deadlines</p>
           </div>
 
-          <button
+          <Button
+            variant="primary"
             onClick={() => { setEditingEvent(undefined); setShowCreateModal(true); }}
-            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+            className="px-6 py-3"
           >
             <Plus className="w-5 h-5" />
             <span>Add Event</span>
-          </button>
+          </Button>
         </div>
 
         {/* Search and Filters */}
@@ -211,8 +218,9 @@ const EventsPage = () => {
                 { key: 'upcoming', label: 'Upcoming', icon: Clock },
                 { key: 'overdue', label: 'Overdue', icon: Calendar }
               ].map(({ key, label, icon: Icon }) => (
-                <button
+                <Button
                   key={key}
+                  variant="secondary"
                   onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all whitespace-nowrap ${activeFilter === key
                       ? 'bg-[var(--primary)] text-black shadow-lg shadow-[var(--primary)]/20'
@@ -220,7 +228,7 @@ const EventsPage = () => {
                     }`}
                 >
                   <Icon className="w-4 h-4" /> {label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -249,12 +257,13 @@ const EventsPage = () => {
               {debouncedQuery ? 'Try adjusting your search terms' : 'Start by adding your first event to stay organized'}
             </p>
             {!debouncedQuery && (
-              <button
+              <Button
+                variant="primary"
                 onClick={() => { setEditingEvent(undefined); setShowCreateModal(true); }}
                 className="px-6 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
               >
                 Add Your First Event
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -324,20 +333,24 @@ const EventsPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2 w-full md:w-auto mt-4 md:mt-0">
-                      <button
+                      <Button
+                        variant="secondary"
                         onClick={() => { setEditingEvent(event); setShowCreateModal(true); }}
                         className="flex-1 md:flex-none p-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-colors"
                         title="Edit"
+                        aria-label="Edit"
                       >
                         <Edit className="w-5 h-5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
                         onClick={() => handleDeleteEvent(event._id)}
                         className="flex-1 md:flex-none p-2 bg-[var(--danger)]/10 hover:bg-[var(--danger)]/20 text-[var(--danger)] border border-[var(--danger)]/20 rounded-lg transition-colors"
                         title="Delete"
+                        aria-label="Delete"
                       >
                         <Trash2 className="w-5 h-5" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </motion.div>
@@ -350,23 +363,25 @@ const EventsPage = () => {
         {total > itemsPerPage && (
           <div className="flex justify-center mt-8">
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
               >
                 Previous
-              </button>
+              </Button>
               <span className="px-4 py-2 text-[var(--text-muted)]">
                 Page {currentPage} of {Math.ceil(total / itemsPerPage)}
               </span>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setCurrentPage(p => Math.min(Math.ceil(total / itemsPerPage), p + 1))}
                 disabled={currentPage === Math.ceil(total / itemsPerPage)}
                 className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white disabled:opacity-50 hover:bg-[var(--bg-glass)] transition-colors"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}

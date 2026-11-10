@@ -25,6 +25,9 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '@/components/ui/Modal';
+import Button from "@/components/ui/Button";
+import ActivitySkeleton from '@/components/ui/ActivitySkeleton';
+import { Select, DatePicker } from 'antd';
 
 // --- Types ---
 interface ActivityItem {
@@ -117,21 +120,25 @@ const ActivityCard = ({ activity, onClick, onDelete, onComplete }: { activity: A
 
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           {activity.status !== 'completed' && (
-            <button
+            <Button
+              variant="ghost"
               onClick={(e) => { e.stopPropagation(); onComplete(activity); }}
               className="p-2 hover:bg-[var(--success)]/20 text-[var(--text-muted)] hover:text-[var(--success)] rounded-lg transition-colors"
               title="Mark as completed"
+              aria-label="Mark as completed"
             >
               <CheckCircle className="w-4 h-4" />
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="ghost"
             onClick={(e) => { e.stopPropagation(); onDelete(activity); }}
             className="p-2 hover:bg-[var(--danger)]/20 text-[var(--text-muted)] hover:text-[var(--danger)] rounded-lg transition-colors"
             title="Delete activity"
+            aria-label="Delete activity"
           >
             <Trash2 className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -164,12 +171,12 @@ const CustomCalendar = ({ activities, onDateSelect, selectedDate }: { activities
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-white">{currentMonth.format('MMMM YYYY')}</h3>
         <div className="flex gap-2">
-          <button onClick={() => setCurrentMonth(currentMonth.subtract(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors">
+          <Button variant="ghost" onClick={() => setCurrentMonth(currentMonth.subtract(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors" aria-label="Previous month">
             <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button onClick={() => setCurrentMonth(currentMonth.add(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors">
+          </Button>
+          <Button variant="ghost" onClick={() => setCurrentMonth(currentMonth.add(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors" aria-label="Next month">
             <ChevronRight className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -415,8 +422,8 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
+      <div className="h-64 pt-6">
+        <ActivitySkeleton count={3} />
       </div>
     );
   }
@@ -437,13 +444,14 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
         </div>
 
         <div className="flex flex-wrap gap-3 w-full lg:w-auto">
-          <button
+          <Button
+            variant="primary"
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+            className="px-4 py-2.5"
           >
             <Plus className="w-4 h-4" />
             <span>Add Activity</span>
-          </button>
+          </Button>
 
           <div className="relative flex-1 lg:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
@@ -457,18 +465,20 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
           </div>
 
           <div className="flex bg-[var(--bg-surface)] p-1 rounded-xl border border-[var(--border-glass)]">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setViewMode('list')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-[var(--text-muted)] hover:text-white'}`}
             >
               List
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={() => setViewMode('calendar')}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'calendar' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-[var(--text-muted)] hover:text-white'}`}
             >
               Calendar
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -476,16 +486,17 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
       {/* Filters */}
       <div className="flex flex-wrap gap-2">
         {['all', 'reminder', 'interview', 'event', 'follow_up'].map((type) => (
-          <button
+          <Button
+            variant="secondary"
             key={type}
             onClick={() => setFilterType(type)}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${filterType === type
-              ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)] shadow-[0_0_10px_var(--primary-glow)]'
+              ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)]'
               : 'bg-[var(--bg-surface)] border-[var(--border-glass)] text-[var(--text-muted)] hover:border-[var(--primary)]/50 hover:text-white'
               }`}
           >
             {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -543,16 +554,17 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Type</label>
-            <select
+            <Select
               value={activityForm.type}
-              onChange={(e) => setActivityForm({ ...activityForm, type: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
-            >
-              <option value="reminder">Reminder</option>
-              <option value="interview">Interview</option>
-              <option value="event">Event</option>
-              <option value="follow_up">Follow-up</option>
-            </select>
+              onChange={(v) => setActivityForm({ ...activityForm, type: v })}
+              options={[
+                { value: 'reminder', label: 'Reminder' },
+                { value: 'interview', label: 'Interview' },
+                { value: 'event', label: 'Event' },
+                { value: 'follow_up', label: 'Follow-up' },
+              ]}
+              className="w-full"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title</label>
@@ -567,11 +579,10 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
-              <input
-                type="date"
-                value={activityForm.date}
-                onChange={(e) => setActivityForm({ ...activityForm, date: e.target.value })}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              <DatePicker
+                value={activityForm.date ? dayjs(activityForm.date) : null}
+                onChange={(d) => setActivityForm({ ...activityForm, date: d ? d.format('YYYY-MM-DD') : '' })}
+                className="w-full"
               />
             </div>
             <div>
@@ -595,30 +606,33 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
-            <select
+            <Select
               value={activityForm.priority}
-              onChange={(e) => setActivityForm({ ...activityForm, priority: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+              onChange={(v) => setActivityForm({ ...activityForm, priority: v })}
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+                { value: 'urgent', label: 'Urgent' },
+              ]}
+              className="w-full"
+            />
           </div>
           <div className="flex justify-end gap-3 mt-6">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => setShowCreateModal(false)}
               className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleCreateActivity}
               className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors"
             >
               Create Activity
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

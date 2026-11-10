@@ -1,29 +1,25 @@
 import React from "react";
 import { Twitter, Linkedin, Mail, Github, Heart } from "lucide-react";
+import Button from "@/components/ui/Button";
 
 export default function Footer() {
   return (
     <footer className="relative border-t border-white/10 overflow-hidden" style={{ backgroundColor: 'var(--footer-bg)' }}>
-      {/* Background Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--footer-bg)]/80 via-[var(--footer-accent)]/10 to-[var(--footer-bg)]/90"></div>
-      <div className="absolute inset-0 bg-gradient-to-t from-[var(--footer-bg)]/50 to-transparent"></div>
-
       {/* Main Footer Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-[var(--footer-accent)] to-[var(--footer-bg)] rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--footer-accent)]/25">
+              <div className="w-12 h-12 bg-[var(--footer-accent)] rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-lg">J</span>
               </div>
               <div className="flex flex-col">
                 <h2 className="text-2xl font-black text-white tracking-tight">JobQuest</h2>
-                <span className="text-sm font-semibold text-[var(--footer-accent)] tracking-wider uppercase">AI Powered</span>
               </div>
             </div>
             <p className="text-slate-300 text-sm leading-relaxed mb-6">
-              Revolutionizing job search with AI-powered matching, automated applications, and personalized career insights.
+              Tailored resumes, automatic applications, and timely follow-ups.
             </p>
             <div className="flex items-center gap-3">
               <a
@@ -158,9 +154,9 @@ export default function Footer() {
                 placeholder="Enter your email"
                 className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[var(--footer-accent)] focus:border-transparent text-sm backdrop-blur-sm"
               />
-              <button className="px-6 py-3 bg-gradient-to-r from-[var(--footer-accent)] to-[var(--footer-bg)] hover:from-[var(--footer-accent)]/80 hover:to-[var(--footer-bg)]/80 text-white rounded-xl transition-all duration-300 font-medium text-sm shadow-lg shadow-[var(--footer-accent)]/25 hover:shadow-[var(--footer-accent)]/40 hover:scale-105">
+              <Button variant="primary" className="px-6 py-3">
                 Subscribe
-              </button>
+              </Button>
             </div>
           </div>
         </div>

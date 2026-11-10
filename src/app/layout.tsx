@@ -29,15 +29,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Applytron - Your Job Search on Autopilot",
+  title: "Applytron - Job Application Automation",
   description:
-    "Applytron auto-applies to jobs for you — AI-tailored resumes, automatic applications, and smart follow-ups so you never miss an opportunity.",
+    "Applytron auto-applies to jobs for you. AI-tailored resumes, automatic applications, and smart follow-ups so you never miss an opportunity.",
   keywords: "job search, AI, career, automation, resume, applications, auto-apply",
   authors: [{ name: "Applytron" }],
   openGraph: {
-    title: "Applytron - Your Job Search on Autopilot",
+    title: "Applytron - Job Application Automation",
     description:
-      "Applytron auto-applies to jobs for you — AI-tailored resumes, automatic applications, and smart follow-ups.",
+      "Applytron auto-applies to jobs for you. AI-tailored resumes, automatic applications, and smart follow-ups.",
     type: "website",
   },
 };

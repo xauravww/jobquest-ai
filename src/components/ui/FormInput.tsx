@@ -1,4 +1,6 @@
 import React from 'react';
+import { Select, DatePicker } from 'antd';
+import dayjs from 'dayjs';
 
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
@@ -14,17 +16,26 @@ interface FormInputNumberProps extends React.InputHTMLAttributes<HTMLInputElemen
   required?: boolean;
 }
 
-interface FormDateInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface FormDateInputProps {
   label?: string;
   error?: string;
   required?: boolean;
+  value?: string;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
 }
 
-interface FormSelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface FormSelectProps {
   label?: string;
   error?: string;
   options: Array<{ value: string; label: string }>;
   required?: boolean;
+  value?: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
 interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -34,7 +45,7 @@ interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaEle
 }
 
 const inputBase =
-  'w-full bg-[var(--bg-raised)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200';
+  'w-full bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg px-4 text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200';
 
 const errorBorder = 'border-[var(--accent-dim)] focus:border-[var(--accent-dim)]';
 
@@ -61,7 +72,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         )}
         <input
           {...props}
-          className={`${inputBase} ${icon ? 'pl-10' : ''} ${error ? errorBorder : ''}`}
+          className={`${inputBase} h-8 ${icon ? 'pl-10' : ''} ${error ? errorBorder : ''}`}
         />
         {error && (
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -104,7 +115,7 @@ export const FormInputNumber: React.FC<FormInputNumberProps> = ({
         <input
           type="number"
           {...props}
-          className={`${inputBase} ${icon ? 'pl-10' : ''} ${error ? errorBorder : ''}`}
+          className={`${inputBase} h-8 ${icon ? 'pl-10' : ''} ${error ? errorBorder : ''}`}
         />
       </div>
       {error && (
@@ -119,7 +130,9 @@ export const FormDateInput: React.FC<FormDateInputProps> = ({
   error,
   className = '',
   required = false,
-  ...props
+  value,
+  onChange,
+  disabled,
 }) => {
   return (
     <div className={`w-full ${className}`}>
@@ -128,10 +141,12 @@ export const FormDateInput: React.FC<FormDateInputProps> = ({
           {label} {required && <span className="text-[var(--accent)] ml-1">*</span>}
         </label>
       )}
-      <input
-        type="date"
-        {...props}
-        className={`${inputBase} ${error ? errorBorder : ''}`}
+      <DatePicker
+        value={value ? dayjs(value) : null}
+        onChange={(d) => onChange?.(d ? d.format('YYYY-MM-DD') : '')}
+        disabled={disabled}
+        status={error ? 'error' : undefined}
+        className="w-full"
       />
       {error && (
         <p className="text-[var(--accent-dim)] text-xs mt-2 flex items-center gap-1">
@@ -148,7 +163,10 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   options,
   className = '',
   required = false,
-  ...props
+  value,
+  onChange,
+  placeholder,
+  disabled,
 }) => {
   return (
     <div className={`w-full ${className}`}>
@@ -157,16 +175,15 @@ export const FormSelect: React.FC<FormSelectProps> = ({
           {label} {required && <span className="text-[var(--accent)] ml-1">*</span>}
         </label>
       )}
-      <select
-        {...props}
-        className={`${inputBase} appearance-none ${error ? errorBorder : ''}`}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <Select
+        value={value}
+        onChange={onChange}
+        options={options}
+        placeholder={placeholder}
+        disabled={disabled}
+        status={error ? 'error' : undefined}
+        className="w-full"
+      />
       {error && (
         <span className="text-[var(--accent-dim)] text-xs mt-1">{error}</span>
       )}
@@ -190,7 +207,7 @@ export const FormTextarea: React.FC<FormTextareaProps> = ({
       )}
       <textarea
         {...props}
-        className={`${inputBase} resize-none ${error ? errorBorder : ''}`}
+        className={`${inputBase} resize-none py-2 ${error ? errorBorder : ''}`}
       />
       {error && (
         <span className="text-[var(--accent-dim)] text-xs mt-1">{error}</span>

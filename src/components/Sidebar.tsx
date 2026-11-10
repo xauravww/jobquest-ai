@@ -14,11 +14,11 @@ import {
   Briefcase,
   LogOut,
   FileText,
-  Brain,
-  Bot,
   Calendar,
+  User,
 } from 'lucide-react';
 import BrandMark from '@/components/ui/BrandMark';
+import Button from "@/components/ui/Button";
 
 interface SidebarProps {
   className?: string;
@@ -55,11 +55,6 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, onLinkClick }: {
       )}
     </Link>
   );
-};
-
-const SectionLabel = ({ children, isCollapsed }: { children: React.ReactNode; isCollapsed?: boolean }) => {
-  if (isCollapsed) return <div className="my-2 h-px bg-[var(--border)] mx-2" />;
-  return <div className="mt-5 mb-2 px-3 text-[10px] font-semibold text-[var(--text-dim)] uppercase tracking-widest">{children}</div>;
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLinkClick }) => {
@@ -108,20 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
         <NavLink href="/dashboard" icon={<Home size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Dashboard
         </NavLink>
-
-        <SectionLabel isCollapsed={isCollapsed}>Automation</SectionLabel>
-
-        <NavLink href="/ai-filtering" icon={<Brain size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          Search Agent
-        </NavLink>
-        <NavLink href="/naukri-automation" icon={<Bot size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          Auto Apply
-        </NavLink>
-
-        <SectionLabel isCollapsed={isCollapsed}>Manage</SectionLabel>
-
         <NavLink href="/job-search" icon={<Search size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
-          Job Search
+          Jobs Agent
         </NavLink>
         <NavLink href="/application-tracking" icon={<Briefcase size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Applications
@@ -132,9 +115,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
         <NavLink href="/reminders-calendar" icon={<Calendar size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Calendar
         </NavLink>
-
-        <SectionLabel isCollapsed={isCollapsed}>Account</SectionLabel>
-
+        <NavLink href="/user-profile" icon={<User size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
+          Profile
+        </NavLink>
         <NavLink href="/settings" icon={<Settings size={18} />} pathname={pathname} isCollapsed={isCollapsed} onLinkClick={onLinkClick}>
           Settings
         </NavLink>
@@ -143,13 +126,14 @@ const Sidebar: React.FC<SidebarProps> = ({ className, isCollapsed = false, onLin
       {/* Sign out */}
       {session && (
         <div className="mt-auto pt-2 border-t border-[var(--border)]">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => signOut({ callbackUrl: '/auth/signin' })}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-raised)] hover:text-[var(--danger)] transition-all duration-200 ${isCollapsed ? 'justify-center' : ''}`}
           >
             <LogOut size={18} />
             {!isCollapsed && <span className="text-sm font-medium">Sign out</span>}
-          </button>
+          </Button>
         </div>
       )}
     </aside>

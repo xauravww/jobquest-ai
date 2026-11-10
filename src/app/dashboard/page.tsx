@@ -63,8 +63,7 @@ const DashboardPage = () => {
       <div className="p-4 md:p-8 bg-[var(--bg-deep)] min-h-screen text-[var(--text-main)]">
         <div className="max-w-7xl mx-auto space-y-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Mission Control</h1>
-            <p className="text-[var(--text-muted)]">
+            <p className="text-lg text-[var(--text-muted)]">
               Welcome back, <span className="text-[var(--accent)]">{session?.user?.name || 'User'}</span>.
             </p>
           </div>
@@ -74,10 +73,10 @@ const DashboardPage = () => {
           </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <section className="lg:col-span-2 h-[500px] lg:h-[600px]">
+            <section className="lg:col-span-2 h-[440px] md:h-[520px] lg:h-[600px]">
               <OpportunityFeed />
             </section>
-            <section className="lg:col-span-1 h-[500px] lg:h-[600px]">
+            <section className="lg:col-span-1 h-[440px] md:h-[520px] lg:h-[600px]">
               <ActivityLog />
             </section>
           </div>

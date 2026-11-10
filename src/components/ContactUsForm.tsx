@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Button from "@/components/ui/Button";
 
 export default function ContactUsForm() {
   const [formData, setFormData] = useState({
@@ -101,12 +102,13 @@ export default function ContactUsForm() {
           placeholder="Your Message"
         />
       </div>
-      <button
+      <Button
         type="submit"
+        variant="primary"
         className="w-full py-3 bg-primary text-primary-foreground font-semibold rounded-md shadow-md hover:bg-highlight transition"
       >
         Send Message
-      </button>
+      </Button>
     </form>
   );
 }

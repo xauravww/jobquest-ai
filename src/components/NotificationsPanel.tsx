@@ -21,6 +21,8 @@ import {
 import { notificationService } from '@/services/NotificationService';
 import type { Notification } from '@/services/NotificationService';
 import { motion, AnimatePresence } from 'framer-motion';
+import Button from "@/components/ui/Button";
+import { Select } from 'antd';
 
 interface NotificationsPanelProps {
   notifications: Notification[];
@@ -101,22 +103,24 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
+          <Button
+            variant="secondary"
             onClick={() => notificationService.markAllAsRead()}
             disabled={notificationService.getUnreadCount() === 0}
             className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Eye className="w-4 h-4" />
             <span className="hidden sm:inline">Mark All Read</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             onClick={() => notificationService.clearAll()}
             disabled={notifications.length === 0}
             className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[var(--danger)]/10 border border-[var(--danger)]/30 text-[var(--danger)] hover:bg-[var(--danger)]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
             <span className="hidden sm:inline">Clear All</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -140,34 +144,37 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
               />
             </div>
 
-            <select
+            <Select
               value={typeFilter}
-              onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-colors appearance-none"
-            >
-              <option value="all">All Types</option>
-              <option value="reminder">Reminders</option>
-              <option value="interview">Interviews</option>
-              <option value="follow_up">Follow-ups</option>
-              <option value="success">Success</option>
-              <option value="warning">Warnings</option>
-              <option value="error">Errors</option>
-            </select>
+              onChange={(v) => { setTypeFilter(v); setCurrentPage(1); }}
+              options={[
+                { value: 'all', label: 'All Types' },
+                { value: 'reminder', label: 'Reminders' },
+                { value: 'interview', label: 'Interviews' },
+                { value: 'follow_up', label: 'Follow-ups' },
+                { value: 'success', label: 'Success' },
+                { value: 'warning', label: 'Warnings' },
+                { value: 'error', label: 'Errors' },
+              ]}
+              className="w-full"
+            />
 
-            <select
+            <Select
               value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-colors appearance-none"
-            >
-              <option value="all">All Status</option>
-              <option value="unread">Unread</option>
-              <option value="read">Read</option>
-            </select>
+              onChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'unread', label: 'Unread' },
+                { value: 'read', label: 'Read' },
+              ]}
+              className="w-full"
+            />
           </div>
 
           {/* Quick filter pills */}
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => { setStatusFilter(statusFilter === 'unread' ? 'all' : 'unread'); setCurrentPage(1); }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${statusFilter === 'unread'
                 ? 'bg-[var(--warning)]/20 border-[var(--warning)] text-[var(--warning)]'
@@ -175,8 +182,9 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                 }`}
             >
               Unread ({notifications.filter(n => !n.read).length})
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => { setTypeFilter(typeFilter === 'reminder' ? 'all' : 'reminder'); setCurrentPage(1); }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${typeFilter === 'reminder'
                 ? 'bg-[var(--warning)]/20 border-[var(--warning)] text-[var(--warning)]'
@@ -184,8 +192,9 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                 }`}
             >
               Reminders ({notifications.filter(n => n.type === 'reminder').length})
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => { setTypeFilter(typeFilter === 'interview' ? 'all' : 'interview'); setCurrentPage(1); }}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${typeFilter === 'interview'
                 ? 'bg-[var(--danger)]/20 border-[var(--danger)] text-[var(--danger)]'
@@ -193,7 +202,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                 }`}
             >
               Interviews ({notifications.filter(n => n.type === 'interview').length})
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -234,7 +243,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                 >
                   {/* Unread indicator */}
                   {!notification.read && (
-                    <div className="absolute left-0 top-4 bottom-4 w-1 bg-[var(--primary)] rounded-r-full shadow-[0_0_10px_var(--primary-glow)]"></div>
+                    <div className="absolute left-0 top-4 bottom-4 w-1 bg-[var(--primary)] rounded-r-full"></div>
                   )}
 
                   <div className="flex items-start gap-4 pl-2">
@@ -259,21 +268,25 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
 
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         {!notification.read && (
-                          <button
+                          <Button
+                            variant="ghost"
                             onClick={(e) => { e.stopPropagation(); notificationService.markAsRead(notification.id); }}
                             className="p-1.5 text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
                             title="Mark as read"
+                            aria-label="Mark as read"
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={(e) => { e.stopPropagation(); notificationService.deleteNotification(notification.id); }}
                           className="p-1.5 text-[var(--danger)] hover:bg-[var(--danger)]/10 rounded-lg transition-colors"
                           title="Delete notification"
+                          aria-label="Delete notification"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -286,23 +299,27 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-6">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-5 h-5" />
-            </button>
+            </Button>
             <span className="text-[var(--text-muted)]">
               Page {currentPage} of {totalPages}
             </span>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
               className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              aria-label="Next page"
             >
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         )}
       </div>

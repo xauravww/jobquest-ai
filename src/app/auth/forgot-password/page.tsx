@@ -7,6 +7,7 @@ import { Button } from 'antd';
 import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
 import AuthShell from '@/components/auth/AuthShell';
 import AuthField from '@/components/auth/AuthField';
+import UIButton from "@/components/ui/Button";
 
 const ForgotPasswordPage: React.FC = () => {
   const { success, error } = useToast();
@@ -62,12 +63,13 @@ const ForgotPasswordPage: React.FC = () => {
 
           <p className="text-sm text-[var(--text-muted)]">
             Did not get it? Check spam or{' '}
-            <button
+            <UIButton
+              variant="ghost"
               onClick={() => setIsSubmitted(false)}
               className="font-semibold text-[var(--accent)] hover:underline"
             >
               try again
-            </button>
+            </UIButton>
           </p>
 
           <Link href="/auth/signin">

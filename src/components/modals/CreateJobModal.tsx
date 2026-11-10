@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Select, DatePicker } from 'antd';
 import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
-import { Briefcase, MapPin, Globe, Calendar, FileText, AlertCircle } from 'lucide-react';
+import { Briefcase, MapPin, Globe, AlertCircle } from 'lucide-react';
 
 interface Job {
   createdAt: string;
@@ -348,48 +350,51 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Status</label>
-            <select
+            <Select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
-            >
-              <option value="saved">Saved</option>
-              <option value="applied">Applied</option>
-              <option value="interviewing">Interviewing</option>
-              <option value="offered">Offered</option>
-              <option value="rejected">Rejected</option>
-              <option value="submitted">Submitted</option>
-              <option value="expired">Expired</option>
-            </select>
+              onChange={(v) => setStatus(v)}
+              options={[
+                { value: 'saved', label: 'Saved' },
+                { value: 'applied', label: 'Applied' },
+                { value: 'interviewing', label: 'Interviewing' },
+                { value: 'offered', label: 'Offered' },
+                { value: 'rejected', label: 'Rejected' },
+                { value: 'submitted', label: 'Submitted' },
+                { value: 'expired', label: 'Expired' },
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
-            <select
+            <Select
               value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
-            >
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
+              onChange={(v) => setPriority(v)}
+              options={[
+                { value: 'high', label: 'High' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'low', label: 'Low' },
+              ]}
+              className="w-full"
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Platform</label>
-            <select
+            <Select
               value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
-              className="w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
-            >
-              <option value="linkedin">LinkedIn</option>
-              <option value="indeed">Indeed</option>
-              <option value="glassdoor">Glassdoor</option>
-              <option value="company-website">Company Website</option>
-              <option value="referral">Referral</option>
-              <option value="other">Other</option>
-            </select>
+              onChange={(v) => setPlatform(v)}
+              options={[
+                { value: 'linkedin', label: 'LinkedIn' },
+                { value: 'indeed', label: 'Indeed' },
+                { value: 'glassdoor', label: 'Glassdoor' },
+                { value: 'company-website', label: 'Company Website' },
+                { value: 'referral', label: 'Referral' },
+                { value: 'other', label: 'Other' },
+              ]}
+              className="w-full"
+            />
           </div>
         </div>
 
@@ -397,12 +402,10 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date Posted</label>
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-              <input
-                type="date"
-                value={datePosted}
-                onChange={(e) => setDatePosted(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none"
+              <DatePicker
+                value={datePosted ? dayjs(datePosted) : null}
+                onChange={(d) => setDatePosted(d ? d.format('YYYY-MM-DD') : '')}
+                className="w-full"
               />
             </div>
           </div>
@@ -410,19 +413,18 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Resume Used</label>
             <div className="relative">
-              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-              <select
+              <Select
                 value={selectedResumeId}
-                onChange={(e) => setSelectedResumeId(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none appearance-none"
-              >
-                <option value="">Select a resume...</option>
-                {resumes.map((resume) => (
-                  <option key={resume._id} value={resume.title}>
-                    {resume.title}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setSelectedResumeId(v)}
+                options={[
+                  { value: '', label: 'Select a resume...' },
+                  ...resumes.map((resume) => ({
+                    value: resume.title,
+                    label: resume.title,
+                  })),
+                ]}
+                className="w-full"
+              />
             </div>
           </div>
         </div>
@@ -454,7 +456,8 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         </div>
 
         <div className="flex justify-end gap-3 pt-4">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => {
               resetForm();
               onClose();
@@ -462,15 +465,16 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             className="px-4 py-2 rounded-lg bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={loading}
             className="px-4 py-2 rounded-lg bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
             {job ? "Update Job" : "Add Job"}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

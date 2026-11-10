@@ -32,6 +32,9 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '@/components/ui/Modal';
+import Button from "@/components/ui/Button";
+import ActivitySkeleton from '@/components/ui/ActivitySkeleton';
+import { Select, DatePicker } from 'antd';
 
 // --- Types ---
 interface Contact {
@@ -95,7 +98,7 @@ const ContactCard = ({ contact, onClick }: { contact: Contact; onClick: () => vo
     >
         <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white font-bold text-lg">
                     {contact.name.charAt(0)}
                 </div>
                 <div>
@@ -162,13 +165,15 @@ const FollowUpCard = ({ followUp, onComplete }: { followUp: FollowUp; onComplete
             </div>
 
             {followUp.status !== 'completed' && (
-                <button
+                <Button
+                    variant="ghost"
                     onClick={(e) => { e.stopPropagation(); onComplete(followUp); }}
                     className="p-2 hover:bg-[var(--success)]/20 text-[var(--text-muted)] hover:text-[var(--success)] rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                     title="Mark as completed"
+                    aria-label="Mark as completed"
                 >
                     <CheckCircle className="w-4 h-4" />
-                </button>
+                </Button>
             )}
         </div>
     </motion.div>
@@ -292,8 +297,8 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
+            <div className="h-64 pt-6">
+                <ActivitySkeleton count={3} />
             </div>
         );
     }
@@ -313,20 +318,22 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
                 </div>
 
                 <div className="flex gap-3">
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={() => setShowContactModal(true)}
                         className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] transition-all flex items-center gap-2"
                     >
                         <UserPlus className="w-4 h-4" />
                         <span>Add Contact</span>
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="primary"
                         onClick={() => setShowFollowUpModal(true)}
                         className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-all flex items-center gap-2 shadow-lg shadow-[var(--primary)]/25"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Schedule Follow-up</span>
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -334,7 +341,8 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
             <div className="border-b border-[var(--border-glass)]">
                 <div className="flex gap-6">
                     {['followups', 'contacts', 'history'].map((tab) => (
-                        <button
+                        <Button
+                            variant="ghost"
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
                             className={`pb-4 text-sm font-medium transition-all relative ${activeTab === tab ? 'text-[var(--primary)]' : 'text-[var(--text-muted)] hover:text-white'
@@ -344,10 +352,10 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
                             {activeTab === tab && (
                                 <motion.div
                                     layoutId="activeTabIndicator"
-                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] shadow-[0_0_10px_var(--primary-glow)]"
+                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)]"
                                 />
                             )}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             </div>
@@ -417,22 +425,23 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
                         className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
                     />
                     <div className="flex justify-end gap-3 mt-6">
-                        <button onClick={() => setShowContactModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white">Cancel</button>
-                        <button onClick={handleCreateContact} className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold">Add Contact</button>
+                        <Button variant="secondary" onClick={() => setShowContactModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white">Cancel</Button>
+                        <Button variant="primary" onClick={handleCreateContact} className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold">Add Contact</Button>
                     </div>
                 </div>
             </Modal>
 
             <Modal isOpen={showFollowUpModal} onClose={() => setShowFollowUpModal(false)} title="Schedule Follow-up">
                 <div className="space-y-4">
-                    <select
+                    <Select
                         value={followUpForm.contactId}
-                        onChange={(e) => setFollowUpForm({ ...followUpForm, contactId: e.target.value })}
-                        className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
-                    >
-                        <option value="">Select Contact</option>
-                        {contacts.map(c => <option key={c.id} value={c.id}>{c.name} ({c.company})</option>)}
-                    </select>
+                        onChange={(v) => setFollowUpForm({ ...followUpForm, contactId: v })}
+                        options={[
+                            { value: '', label: 'Select Contact' },
+                            ...contacts.map(c => ({ value: c.id, label: `${c.name} (${c.company})` })),
+                        ]}
+                        className="w-full"
+                    />
                     <input
                         type="text"
                         placeholder="Subject"
@@ -446,15 +455,14 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
                         onChange={(e) => setFollowUpForm({ ...followUpForm, message: e.target.value })}
                         className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none h-24 resize-none"
                     />
-                    <input
-                        type="date"
-                        value={followUpForm.scheduledDate}
-                        onChange={(e) => setFollowUpForm({ ...followUpForm, scheduledDate: e.target.value })}
-                        className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                    <DatePicker
+                        value={followUpForm.scheduledDate ? dayjs(followUpForm.scheduledDate) : null}
+                        onChange={(d) => setFollowUpForm({ ...followUpForm, scheduledDate: d ? d.format('YYYY-MM-DD') : '' })}
+                        className="w-full"
                     />
                     <div className="flex justify-end gap-3 mt-6">
-                        <button onClick={() => setShowFollowUpModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white">Cancel</button>
-                        <button onClick={handleCreateFollowUp} className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold">Schedule</button>
+                        <Button variant="secondary" onClick={() => setShowFollowUpModal(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white">Cancel</Button>
+                        <Button variant="primary" onClick={handleCreateFollowUp} className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold">Schedule</Button>
                     </div>
                 </div>
             </Modal>

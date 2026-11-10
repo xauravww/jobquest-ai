@@ -18,7 +18,10 @@ import {
   X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { confirmAction } from '@/lib/confirm';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Select } from 'antd';
+import Button from '@/components/ui/Button';
 
 interface Resume {
   _id: string;
@@ -108,21 +111,25 @@ const ResumeManagementPage = () => {
     }
   };
 
-  const handleDelete = async (resumeId: string) => {
-    if (!confirm('Are you sure you want to delete this resume?')) return;
-    try {
-      const response = await fetch(`/api/resumes/${resumeId}`, {
-        method: 'DELETE',
-      });
+  const handleDelete = (resumeId: string) => {
+    confirmAction({
+      title: 'Delete this resume?',
+      onOk: async () => {
+        try {
+          const response = await fetch(`/api/resumes/${resumeId}`, {
+            method: 'DELETE',
+          });
 
-      if (response.ok) {
-        toast.success('Resume deleted successfully');
-        fetchResumes();
-      }
-    } catch (error) {
-      console.error('Error deleting resume:', error);
-      toast.error('Failed to delete resume');
-    }
+          if (response.ok) {
+            toast.success('Resume deleted successfully');
+            fetchResumes();
+          }
+        } catch (error) {
+          console.error('Error deleting resume:', error);
+          toast.error('Failed to delete resume');
+        }
+      },
+    });
   };
 
   const handleDuplicate = async (resumeId: string) => {
@@ -182,13 +189,14 @@ const ResumeManagementPage = () => {
             <p className="text-[var(--text-muted)] mt-2 ml-16">Manage and optimize your resumes for different applications</p>
           </div>
 
-          <button
+          <Button
+            variant="primary"
             onClick={() => setUploadModalVisible(true)}
-            className="px-6 py-3 bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] text-white font-bold rounded-xl shadow-lg shadow-[var(--primary)]/25 hover:shadow-[var(--primary)]/40 hover:scale-105 transition-all flex items-center gap-2"
+            leftIcon={<Plus className="w-5 h-5" />}
+            className="px-6 py-3"
           >
-            <Plus className="w-5 h-5" />
-            <span>Upload Resume</span>
-          </button>
+            Upload Resume
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -242,8 +250,21 @@ const ResumeManagementPage = () => {
 
         {/* Resume Grid */}
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin shadow-[0_0_20px_var(--primary-glow)]"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] rounded-xl p-6 animate-pulse">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="h-8 w-8 bg-[var(--bg-glass)] rounded-lg"></div>
+                  <div className="h-6 w-14 bg-[var(--bg-glass)] rounded-full"></div>
+                </div>
+                <div className="h-5 bg-[var(--bg-glass)] rounded w-2/3 mb-2"></div>
+                <div className="space-y-2 mb-4">
+                  <div className="h-4 bg-[var(--bg-glass)] rounded w-full"></div>
+                  <div className="h-4 bg-[var(--bg-glass)] rounded w-1/2"></div>
+                </div>
+                <div className="h-8 bg-[var(--bg-glass)] rounded-lg w-24"></div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -310,42 +331,46 @@ const ResumeManagementPage = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-4 border-t border-[var(--border-glass)] mt-auto">
-                    <button
+                    <Button
+                      variant="secondary"
                       onClick={() => {
                         setSelectedResume(resume);
                         setPreviewModalVisible(true);
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--primary)]/10 hover:bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/20 rounded-lg transition-colors text-sm font-medium"
+                      leftIcon={<Eye className="w-4 h-4" />}
+                      className="flex-1 px-3 py-2 text-sm"
                     >
-                      <Eye className="w-4 h-4" />
                       Preview
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => handleDuplicate(resume._id)}
-                      className="p-2 bg-[var(--bg-surface)] hover:bg-[var(--secondary)]/20 text-[var(--text-muted)] hover:text-[var(--secondary)] border border-[var(--border-glass)] hover:border-[var(--secondary)]/30 rounded-lg transition-colors"
-                      title="Duplicate"
+                      aria-label="Duplicate"
+                      className="p-2"
                     >
                       <Copy className="w-4 h-4" />
-                    </button>
+                    </Button>
 
                     {!resume.isDefault && (
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => handleSetDefault(resume._id)}
-                        className="p-2 bg-[var(--bg-surface)] hover:bg-[var(--warning)]/20 text-[var(--text-muted)] hover:text-[var(--warning)] border border-[var(--border-glass)] hover:border-[var(--warning)]/30 rounded-lg transition-colors"
-                        title="Set as Default"
+                        aria-label="Set as Default"
+                        className="p-2"
                       >
                         <Star className="w-4 h-4" />
-                      </button>
+                      </Button>
                     )}
 
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => handleDelete(resume._id)}
-                      className="p-2 bg-[var(--bg-surface)] hover:bg-[var(--danger)]/20 text-[var(--text-muted)] hover:text-[var(--danger)] border border-[var(--border-glass)] hover:border-[var(--danger)]/30 rounded-lg transition-colors"
-                      title="Delete"
+                      aria-label="Delete"
+                      className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)]"
                     >
                       <Trash2 className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 </motion.div>
               ))}
@@ -361,12 +386,13 @@ const ResumeManagementPage = () => {
                 <p className="text-[var(--text-muted)] text-center mb-6 max-w-md">
                   Upload your first resume to get started with job applications and ATS optimization.
                 </p>
-                <button
+                <Button
+                  variant="primary"
                   onClick={() => setUploadModalVisible(true)}
-                  className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
+                  className="px-6 py-3"
                 >
                   Upload Your First Resume
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -458,30 +484,32 @@ const UploadModalComponent = ({ visible, onClose, onUpload }: {
 
         <div>
           <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Database</label>
-          <select
+          <Select
             value={form.database}
-            onChange={(e) => setForm({ ...form, database: e.target.value })}
-            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-          >
-            <option value="default">Default Database</option>
-            <option value="database1">Database 1</option>
-            <option value="database2">Database 2</option>
-            <option value="database3">Database 3</option>
-          </select>
+            onChange={(v) => setForm({ ...form, database: v })}
+            options={[
+              { value: 'default', label: 'Default Database' },
+              { value: 'database1', label: 'Database 1' },
+              { value: 'database2', label: 'Database 2' },
+              { value: 'database3', label: 'Database 3' }
+            ]}
+            className="w-full"
+          />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Type</label>
-          <select
+          <Select
             value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none appearance-none"
-          >
-            <option value="standard">Standard</option>
-            <option value="ats_optimized">ATS Optimized</option>
-            <option value="latex">LaTeX</option>
-            <option value="creative">Creative</option>
-          </select>
+            onChange={(v) => setForm({ ...form, type: v })}
+            options={[
+              { value: 'standard', label: 'Standard' },
+              { value: 'ats_optimized', label: 'ATS Optimized' },
+              { value: 'latex', label: 'LaTeX' },
+              { value: 'creative', label: 'Creative' }
+            ]}
+            className="w-full"
+          />
         </div>
 
         <div>
@@ -516,20 +544,22 @@ const UploadModalComponent = ({ visible, onClose, onUpload }: {
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-glass)]">
-          <button
+          <Button
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+            className="px-4 py-2"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={uploading}
-            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            isLoading={uploading}
+            className="px-4 py-2"
           >
-            {uploading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
             {uploading ? 'Uploading...' : 'Upload'}
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>
@@ -584,12 +614,13 @@ const PreviewModalComponent = ({ visible, resume, onClose }: {
         </div>
 
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="secondary"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-white hover:bg-[var(--bg-glass)] transition-colors"
+            className="px-4 py-2"
           >
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

@@ -38,12 +38,6 @@ const AuthShell: React.FC<AuthShellProps> = ({
         <BrandMark />
 
         <div className="flex-1 flex flex-col justify-center max-w-md">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <span className="w-2 h-2 rounded-full bg-[var(--live)] animate-pulse" />
-            <span className="font-mono-ui text-xs tracking-[0.2em] uppercase text-[var(--text-muted)]">
-              On autopilot
-            </span>
-          </div>
           <h2 className="font-display text-4xl font-bold leading-tight mb-4">
             {pitchTitle}
           </h2>
@@ -71,8 +65,8 @@ const AuthShell: React.FC<AuthShellProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-sm py-8">
+        <div className="flex-1 flex justify-center">
+          <div className="w-full max-w-sm mt-auto lg:my-auto pb-6">
             <div className="mb-6">
               <h1 className="font-display text-3xl font-bold mb-1.5">{title}</h1>
               <p className="text-[var(--text-muted)]">{subtitle}</p>

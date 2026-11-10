@@ -25,6 +25,7 @@ import { notificationService, NotificationPreferences } from '@/services/Notific
 import { telegramService } from '@/services/TelegramService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import Button from '@/components/ui/Button';
 
 const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -268,10 +269,11 @@ const SettingsPage = () => {
     isActive: boolean;
     onClick: () => void;
   }) => (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all w-full text-left relative overflow-hidden group ${isActive
-        ? 'bg-[var(--primary)] text-black shadow-[0_0_20px_rgba(var(--primary-rgb),0.4)]'
+        ? 'bg-[var(--primary)] text-black'
         : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-surface)]'
         }`}
     >
@@ -282,23 +284,25 @@ const SettingsPage = () => {
       {isActive && (
         <motion.div
           layoutId="activeTabGlow"
-          className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"
+          className="absolute inset-0 bg-white/10"
           initial={false}
           transition={{ duration: 0.3 }}
         />
       )}
-    </button>
+    </Button>
   );
 
   const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: (checked: boolean) => void, disabled?: boolean }) => (
-    <button
+    <Button
+      variant="ghost"
       onClick={() => !disabled && onChange(!checked)}
       className={`relative w-12 h-6 rounded-full transition-colors ${checked ? 'bg-[var(--primary)]' : 'bg-[var(--bg-deep)] border border-[var(--border-glass)]'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      aria-label={checked ? 'Turn off' : 'Turn on'}
     >
       <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'
         }`} />
-    </button>
+    </Button>
   );
 
   return (
@@ -380,14 +384,15 @@ const SettingsPage = () => {
                           <Bot className="w-5 h-5 text-[var(--primary)]" />
                           Agent Configuration
                         </h2>
-                        <button
+                        <Button
+                          variant="primary"
                           onClick={saveAgentSettings}
                           disabled={loading}
-                          className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"
+                          className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50"
                         >
                           <Save className="w-4 h-4" />
                           {loading ? 'Saving...' : 'Save Changes'}
-                        </button>
+                        </Button>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -492,14 +497,15 @@ const SettingsPage = () => {
                           <Bell className="w-5 h-5 text-[var(--warning)]" />
                           Notification Preferences
                         </h2>
-                        <button
+                        <Button
+                          variant="primary"
                           onClick={saveNotificationSettings}
                           disabled={loading}
                           className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50"
                         >
                           <Save className="w-4 h-4" />
                           {loading ? 'Saving...' : 'Save Changes'}
-                        </button>
+                        </Button>
                       </div>
 
                       {/* Notification Channels */}
@@ -520,13 +526,15 @@ const SettingsPage = () => {
                                 checked={notificationPrefs.inApp}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, inApp: checked }))}
                               />
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={() => testNotification('inApp')}
                                 className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
                                 title="Test Notification"
+                                aria-label="Test in-app notification"
                               >
                                 <TestTube className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
 
@@ -543,13 +551,15 @@ const SettingsPage = () => {
                                 checked={notificationPrefs.push}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, push: checked }))}
                               />
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={() => testNotification('push')}
                                 className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
                                 title="Test Notification"
+                                aria-label="Test push notification"
                               >
                                 <TestTube className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
 
@@ -567,14 +577,16 @@ const SettingsPage = () => {
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, telegram: checked }))}
                                 disabled={!telegramStatus.connected}
                               />
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={() => testNotification('telegram')}
                                 disabled={!telegramStatus.connected}
                                 className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors disabled:opacity-50"
                                 title="Test Notification"
+                                aria-label="Test telegram notification"
                               >
                                 <TestTube className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
 
@@ -591,13 +603,15 @@ const SettingsPage = () => {
                                 checked={notificationPrefs.email}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, email: checked }))}
                               />
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={() => testNotification('email')}
                                 className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-colors"
                                 title="Test Notification"
+                                aria-label="Test email notification"
                               >
                                 <TestTube className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -678,14 +692,15 @@ const SettingsPage = () => {
                             }`}>
                             {telegramStatus.connected ? 'Connected' : 'Disconnected'}
                           </span>
-                          <button
+                          <Button
+                            variant="primary"
                             onClick={saveTelegramSettings}
                             disabled={loading}
                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-colors disabled:opacity-50"
                           >
                             <Save className="w-4 h-4" />
                             {loading ? 'Saving...' : 'Save & Connect'}
-                          </button>
+                          </Button>
                         </div>
                       </div>
 
@@ -817,14 +832,15 @@ const SettingsPage = () => {
                           <Mail className="w-5 h-5 text-[var(--danger)]" />
                           Email Settings
                         </h2>
-                        <button
+                        <Button
+                          variant="danger"
                           onClick={saveEmailSettings}
                           disabled={loading}
                           className="flex items-center gap-2 px-4 py-2 bg-[var(--danger)] text-white font-bold rounded-xl hover:bg-[var(--danger)]/90 transition-colors disabled:opacity-50"
                         >
                           <Save className="w-4 h-4" />
                           {loading ? 'Saving...' : 'Save Changes'}
-                        </button>
+                        </Button>
                       </div>
 
                       <div className="space-y-6">

@@ -11,14 +11,14 @@ type Row = {
 
 // Static reel: deterministic order, no Math.random (keeps SSR/CSR stable).
 const REEL: Row[] = [
-  { time: "14:22", action: "Applied", company: "Stripe" },
-  { time: "14:19", action: "Tailored", company: "Figma" },
-  { time: "14:17", action: "Applied", company: "Vercel" },
-  { time: "14:14", action: "Follow-up", company: "Linear" },
-  { time: "14:11", action: "Applied", company: "Notion" },
-  { time: "14:07", action: "Tailored", company: "Ramp" },
-  { time: "14:03", action: "Applied", company: "Datadog" },
-  { time: "13:58", action: "Follow-up", company: "Airtable" },
+  { time: "14:22", action: "Applied", company: "Veyra" },
+  { time: "14:19", action: "Tailored", company: "Halden" },
+  { time: "14:17", action: "Applied", company: "Marcove" },
+  { time: "14:14", action: "Follow-up", company: "Kinfolk" },
+  { time: "14:11", action: "Applied", company: "Osprey" },
+  { time: "14:07", action: "Tailored", company: "Rambolt" },
+  { time: "14:03", action: "Applied", company: "Brightwell" },
+  { time: "13:58", action: "Follow-up", company: "Far Point" },
 ];
 
 const ACTION_META: Record<Row["action"], { icon: React.ElementType; cls: string }> = {

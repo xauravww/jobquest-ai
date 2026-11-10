@@ -20,17 +20,18 @@ export const authOptions: NextAuthOptions = {
         try {
           await connectDB();
 
-          const user = await User.findOne({ email: credentials.email });
+          const email = credentials.email.trim().toLowerCase();
+          const user = await User.findOne({ email });
 
           if (!user) {
-            console.log('User not found:', credentials.email);
+            console.log('User not found:', email);
             return null;
           }
 
           const isPasswordValid = await user.comparePassword(credentials.password);
 
           if (!isPasswordValid) {
-            console.log('Invalid password for user:', credentials.email);
+            console.log('Invalid password for user:', email);
             return null;
           }
 
@@ -69,6 +70,9 @@ export const authOptions: NextAuthOptions = {
           id: token.id as string,
           role: token.role as string,
         };
+        if (session.user.email) {
+          session.user.email = String(session.user.email).trim().toLowerCase();
+        }
       }
       return session;
     },

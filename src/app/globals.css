@@ -49,7 +49,6 @@
   /* ---- Back-compat aliases (other pages still read these) ---- */
   --primary: var(--accent);
   --primary-dim: var(--accent-dim);
-  --primary-glow: var(--accent-soft);
   --secondary: var(--text-muted);
   --secondary-dim: var(--text-dim);
   --success: var(--live);
@@ -165,12 +164,6 @@ input[type="number"] {
   color: var(--text-main) !important;
 }
 
-/* Accessibility */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -195,6 +188,18 @@ input[type="number"] {
   border-color: var(--border) !important;
   color: var(--text-main) !important;
   box-shadow: none !important;
+}
+
+.ant-select-selector {
+  background-color: var(--bg-deep) !important;
+}
+
+.ant-select-single .ant-select-selector {
+  height: 32px !important;
+}
+
+.ant-picker {
+  background-color: var(--bg-deep) !important;
 }
 
 .ant-select-dropdown {

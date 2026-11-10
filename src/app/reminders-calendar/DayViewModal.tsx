@@ -5,6 +5,7 @@ import { Modal, Button } from 'antd';
 import { Calendar, Edit, Trash2, Clock, MapPin, Users } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
 import { RiDeleteBin6Line } from 'react-icons/ri';
+import { confirmAction } from '@/lib/confirm';
 
 interface CalendarItem {
   id: string;
@@ -39,22 +40,25 @@ const DayViewModal: React.FC<DayViewModalProps> = ({
   onEditItem,
   onRefresh
 }) => {
-  const handleDeleteItem = async (item: CalendarItem) => {
-    if (!confirm(`Are you sure you want to delete this ${item.type}?`)) return;
+  const handleDeleteItem = (item: CalendarItem) => {
+    confirmAction({
+      title: `Delete this ${item.type}?`,
+      onOk: async () => {
+        try {
+          const endpoint = item.type === 'reminder' ? `/api/reminders/${item.id}` : `/api/calendar/events/${item.id}`;
+          const response = await fetch(endpoint, { method: 'DELETE' });
 
-    try {
-      const endpoint = item.type === 'reminder' ? `/api/reminders/${item.id}` : `/api/calendar/events/${item.id}`;
-      const response = await fetch(endpoint, { method: 'DELETE' });
-
-      if (response.ok) {
-        onRefresh();
-        onClose();
-      } else {
-        console.error('Failed to delete item');
-      }
-    } catch (error) {
-      console.error('Error deleting item:', error);
-    }
+          if (response.ok) {
+            onRefresh();
+            onClose();
+          } else {
+            console.error('Failed to delete item');
+          }
+        } catch (error) {
+          console.error('Error deleting item:', error);
+        }
+      },
+    });
   };
 
   const sortedItems = [...items].sort((a, b) => {

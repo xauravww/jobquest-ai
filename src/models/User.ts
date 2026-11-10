@@ -66,6 +66,7 @@ export interface IUser extends Document {
     linkedinUrl?: string;
     githubUrl?: string;
     portfolioUrl?: string;
+    resumeEmail?: string;
     projects?: Project[];
     achievements?: Achievement[];
     education?: Education[];
@@ -81,6 +82,7 @@ export interface IUser extends Document {
       currency: string;
     };
     remoteWork: boolean;
+    targetRole: string;
     targetCompanies: string[];
     notifications: {
       email: boolean;
@@ -165,6 +167,7 @@ const UserSchema = new Schema<IUser>(
       linkedinUrl: String,
       githubUrl: String,
       portfolioUrl: String,
+      resumeEmail: String,
       projects: [{
         name: String,
         description: String,
@@ -205,6 +208,7 @@ const UserSchema = new Schema<IUser>(
         currency: { type: String, default: 'USD' },
       },
       remoteWork: { type: Boolean, default: false },
+      targetRole: String,
       targetCompanies: [String],
       notifications: {
         email: { type: Boolean, default: true },

@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import {
-  Briefcase, Plus, Search, RefreshCw, Edit, Sparkles, Bell,
+  Briefcase, Plus, Search, RefreshCw, Edit, Bell, FileText,
   MapPin, Globe, Calendar, Trash2, ExternalLink, Filter, ChevronLeft, ChevronRight,
   CheckCircle, XCircle, Clock, AlertCircle
 } from 'lucide-react';
 import dayjs from 'dayjs';
+import { Select, DatePicker } from 'antd';
 import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 import CoverLetterModal from '@/components/modals/CoverLetterModal';
@@ -15,6 +16,8 @@ import { notificationService } from '@/services/NotificationService';
 import { telegramService } from '@/services/TelegramService';
 import { motion, AnimatePresence } from 'framer-motion';
 import Modal from '@/components/ui/Modal';
+import Button from "@/components/ui/Button";
+import { confirmAction } from '@/lib/confirm';
 
 // --- Types ---
 interface Job {
@@ -190,20 +193,24 @@ const ApplicationTrackingPage = () => {
     fetchJobs(currentPage, pageSize);
   }, [fetchJobs, currentPage, pageSize]);
 
-  const handleDelete = async (jobId: string) => {
-    if (!confirm('Are you sure you want to delete this application?')) return;
-    try {
-      const response = await fetch(`/api/applications/${jobId}`, { method: 'DELETE' });
-      if (response.ok) {
-        setJobs(prev => prev.filter(job => job._id !== jobId));
-        setFilteredJobs(prev => prev.filter(job => job._id !== jobId));
-        toast.success('Application deleted');
-      } else {
-        toast.error('Failed to delete application');
-      }
-    } catch (error) {
-      toast.error('Failed to delete application');
-    }
+  const handleDelete = (jobId: string) => {
+    confirmAction({
+      title: 'Delete this application?',
+      onOk: async () => {
+        try {
+          const response = await fetch(`/api/applications/${jobId}`, { method: 'DELETE' });
+          if (response.ok) {
+            setJobs(prev => prev.filter(job => job._id !== jobId));
+            setFilteredJobs(prev => prev.filter(job => job._id !== jobId));
+            toast.success('Application deleted');
+          } else {
+            toast.error('Failed to delete application');
+          }
+        } catch (error) {
+          toast.error('Failed to delete application');
+        }
+      },
+    });
   };
 
   const handleCreateReminder = async () => {
@@ -289,7 +296,9 @@ const ApplicationTrackingPage = () => {
             <p className="text-[var(--text-muted)] mt-2 ml-16">Track and manage your job applications effectively</p>
           </div>
 
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => {
               setSelectedJob(undefined);
               setCreateJobModalVisible(true);
@@ -298,7 +307,7 @@ const ApplicationTrackingPage = () => {
           >
             <Plus className="w-5 h-5" />
             <span>Add Application</span>
-          </button>
+          </Button>
         </div>
 
         {/* Filters */}
@@ -321,37 +330,40 @@ const ApplicationTrackingPage = () => {
                 />
               </div>
 
-              <select
+              <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none appearance-none"
-              >
-                <option value="all">All Statuses</option>
-                <option value="saved">Saved</option>
-                <option value="applied">Applied</option>
-                <option value="interviewing">Interviewing</option>
-                <option value="offered">Offered</option>
-                <option value="rejected">Rejected</option>
-              </select>
+                onChange={(v) => setStatusFilter(v)}
+                options={[
+                  { value: 'all', label: 'All Statuses' },
+                  { value: 'saved', label: 'Saved' },
+                  { value: 'applied', label: 'Applied' },
+                  { value: 'interviewing', label: 'Interviewing' },
+                  { value: 'offered', label: 'Offered' },
+                  { value: 'rejected', label: 'Rejected' }
+                ]}
+                className="w-full"
+              />
 
-              <select
+              <Select
                 value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none appearance-none"
-              >
-                <option value="all">All Priorities</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
+                onChange={(v) => setPriorityFilter(v)}
+                options={[
+                  { value: 'all', label: 'All Priorities' },
+                  { value: 'high', label: 'High' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'low', label: 'Low' }
+                ]}
+                className="w-full"
+              />
 
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => { setSearchText(''); setStatusFilter('all'); setPriorityFilter('all'); setPlatformFilter('all'); }}
                 className="px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--primary)] rounded-xl transition-all flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Reset Filters</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -421,17 +433,20 @@ const ApplicationTrackingPage = () => {
                             <ExternalLink className="w-5 h-5" />
                           </a>
                         )}
-                        <button
+                        <Button
+                          variant="ghost"
                           onClick={() => {
                             setSelectedJobForCoverLetter(job);
                             setCoverLetterModalVisible(true);
                           }}
                           className="p-2 text-purple-400 hover:text-purple-300 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Generate Cover Letter"
+                          aria-label="Generate Cover Letter"
                         >
-                          <Sparkles className="w-5 h-5" />
-                        </button>
-                        <button
+                          <FileText className="w-5 h-5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
                           onClick={() => {
                             setSelectedJobForReminder(job);
                             setReminderForm({
@@ -446,23 +461,28 @@ const ApplicationTrackingPage = () => {
                           }}
                           className="p-2 text-[var(--warning)] hover:text-[var(--warning)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Set Reminder"
+                          aria-label="Set Reminder"
                         >
                           <Bell className="w-5 h-5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
                           onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}
                           className="p-2 text-[var(--primary)] hover:text-[var(--primary)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Edit"
+                          aria-label="Edit"
                         >
                           <Edit className="w-5 h-5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="ghost"
                           onClick={() => handleDelete(job._id)}
                           className="p-2 text-[var(--danger)] hover:text-[var(--danger)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Delete"
+                          aria-label="Delete"
                         >
                           <Trash2 className="w-5 h-5" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </motion.div>
@@ -478,12 +498,14 @@ const ApplicationTrackingPage = () => {
                       ? 'Try adjusting your filters to see more results.'
                       : 'Start tracking your job search by adding your first application.'}
                   </p>
-                  <button
+                  <Button
+                    variant="primary"
+                    size="md"
                     onClick={() => { setSelectedJob(undefined); setCreateJobModalVisible(true); }}
                     className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all"
                   >
                     Add Application
-                  </button>
+                  </Button>
                 </div>
               )}
             </AnimatePresence>
@@ -493,23 +515,27 @@ const ApplicationTrackingPage = () => {
         {/* Pagination */}
         {totalCount > pageSize && (
           <div className="flex justify-center items-center gap-4 mt-8">
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
+              aria-label="Previous page"
             >
               <ChevronLeft className="w-5 h-5" />
-            </button>
+            </Button>
             <span className="text-[var(--text-muted)]">
               Page {currentPage} of {Math.ceil(totalCount / pageSize)}
             </span>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / pageSize), p + 1))}
               disabled={currentPage === Math.ceil(totalCount / pageSize)}
               className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
+              aria-label="Next page"
             >
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -547,11 +573,10 @@ const ApplicationTrackingPage = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
-              <input
-                type="date"
-                value={reminderForm.dueDate}
-                onChange={(e) => setReminderForm({ ...reminderForm, dueDate: e.target.value })}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
+              <DatePicker
+                value={reminderForm.dueDate ? dayjs(reminderForm.dueDate) : null}
+                onChange={(d) => setReminderForm({ ...reminderForm, dueDate: d ? d.format('YYYY-MM-DD') : '' })}
+                className="w-full"
               />
             </div>
             <div>
@@ -566,29 +591,32 @@ const ApplicationTrackingPage = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
-            <select
+            <Select
               value={reminderForm.priority}
-              onChange={(e) => setReminderForm({ ...reminderForm, priority: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+              onChange={(v) => setReminderForm({ ...reminderForm, priority: v })}
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' }
+              ]}
+              className="w-full"
+            />
           </div>
           <div className="flex justify-end gap-3 mt-6">
-            <button
+            <Button
+              variant="secondary"
               onClick={() => setReminderModalVisible(false)}
               className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleCreateReminder}
               className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors"
             >
               Set Reminder
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cog, Lock, Link, Bot, Check, Plus, Trash2, X } from 'lucide-react';
 import { FormInput, FormSelect } from '@/components/ui/FormInput';
+import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 
 const AI_PROVIDERS = [
@@ -141,46 +142,47 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-4xl bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="p-6 border-b border-[var(--border-glass)] flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[var(--border-glass)] flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
               <Cog className="w-6 h-6 text-[var(--primary)]" />
             </div>
             <h2 className="text-xl font-bold text-white">AI Provider Configuration</h2>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setShowConfig(false)}
+            aria-label="Close configuration"
             className="p-2 hover:bg-[var(--bg-glass)] rounded-lg transition-colors text-[var(--text-muted)] hover:text-white"
           >
             <X className="w-6 h-6" />
-          </button>
+          </Button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
-          {/* Existing Configurations */}
-          <div className="mb-8">
+        <div className="px-6 py-5 overflow-y-auto flex-1">
+          {!showCreateForm && (
+          <div className="mb-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Your Configurations</h3>
-              <button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary)]/90 transition-all"
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateForm(true)}
               >
                 <Plus className="w-4 h-4" />
                 Add New Config
-              </button>
+              </Button>
             </div>
 
             {configs.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-[var(--border-glass)] rounded-xl bg-[var(--bg-deep)]/50">
-                <Bot className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)] opacity-50" />
+              <div className="text-center py-8 border border-dashed border-[var(--border-glass)] rounded-xl bg-[var(--bg-deep)]/50">
+                <Bot className="w-12 h-12 mx-auto mb-3 text-[var(--text-muted)] opacity-50" />
                 <p className="text-[var(--text-muted)]">No AI configurations yet.</p>
-                <p className="text-sm text-[var(--text-dim)]">Create your first configuration to enable AI features.</p>
               </div>
             ) : (
               <>
                 {!configs.find(c => c.isActive) && (
                   <div className="mb-4 p-4 bg-[var(--warning)]/10 border border-[var(--warning)]/20 text-[var(--warning)] rounded-xl text-center font-medium">
-                    No active AI configuration selected. Please select a configuration to activate it.
+                    No active configuration selected.
                   </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,7 +190,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                     <div
                       key={config._id}
                       className={`p-4 rounded-xl border transition-all cursor-pointer relative group ${config.isActive
-                          ? 'border-[var(--primary)] bg-[var(--primary)]/10 shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)]'
+                          ? 'border-[var(--primary)] bg-[var(--primary)]/10'
                           : 'border-[var(--border-glass)] bg-[var(--bg-deep)] hover:border-[var(--primary)]/50 hover:bg-[var(--bg-surface)]'
                         }`}
                       onClick={() => handleSelectConfig(config._id)}
@@ -217,18 +219,28 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
               </>
             )}
           </div>
+          )}
 
           {/* Create New Configuration Form */}
           {showCreateForm && (
-            <div className="border-t border-[var(--border-glass)] pt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <h4 className="text-lg font-semibold text-white mb-6">Create New Configuration</h4>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-white">Create New Configuration</h4>
+                <Button
+                  variant="ghost"
+                  onClick={() => { setShowCreateForm(false); resetForm(); }}
+                  aria-label="Back to configurations"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* AI Provider Selection */}
                 <FormSelect
                   label="AI Provider"
                   value={aiProvider}
-                  onChange={(e) => setAiProvider(e.target.value)}
+                  onChange={(v) => setAiProvider(v)}
                   options={AI_PROVIDERS}
                   required
                 />
@@ -239,7 +251,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                     label="API Key"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter your Gemini API key"
+                    placeholder="Gemini API key"
                     icon={<Lock className="w-4 h-4" />}
                     type="password"
                     required
@@ -275,7 +287,7 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                   <FormSelect
                     label="Gemini Model"
                     value={model}
-                    onChange={(e) => setModel(e.target.value)}
+                    onChange={(v) => setModel(v)}
                     options={[
                       { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
                       { label: 'Gemini Pro', value: 'gemini-pro' },
@@ -284,58 +296,26 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                     required
                   />
                 )}
-
-                {/* Info Section */}
-                <div className="md:col-span-2">
-                  <div className="p-4 bg-[var(--bg-deep)] rounded-xl border border-[var(--border-glass)]">
-                    <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-[var(--primary)]" /> Provider Information
-                    </h4>
-                    <div className="text-xs text-[var(--text-muted)] space-y-1 ml-6">
-                      {aiProvider === 'lm-studio' && (
-                        <>
-                          <p>• LM Studio: Local AI server for running models like Llama, Mistral, etc.</p>
-                          <p>• Default URL: http://localhost:1234</p>
-                          <p>• No API key required - runs locally</p>
-                        </>
-                      )}
-                      {aiProvider === 'ollama' && (
-                        <>
-                          <p>• Ollama: Local AI model runner</p>
-                          <p>• Default URL: http://localhost:11434</p>
-                          <p>• No API key required - runs locally</p>
-                        </>
-                      )}
-                      {aiProvider === 'gemini' && (
-                        <>
-                          <p>• Google Gemini: Cloud AI service</p>
-                          <p>• Requires API key from Google AI Studio</p>
-                          <p>• Model will be set automatically (gemini-pro)</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-8">
-                <button
+              <div className="flex justify-end gap-3 mt-5">
+                <Button
+                  variant="ghost"
                   onClick={() => {
                     setShowCreateForm(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="primary"
                   onClick={handleCreateConfig}
                   disabled={loading}
-                  className="px-6 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  isLoading={loading}
                 >
-                  {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
-                  {loading ? 'Creating...' : 'Create Configuration'}
-                </button>
+                  Create Configuration
+                </Button>
               </div>
             </div>
           )}

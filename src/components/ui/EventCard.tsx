@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Button from '@/components/ui/Button';
 import { 
   Calendar, 
   Clock, 
@@ -185,12 +186,14 @@ const EventCard: React.FC<EventCardProps> = ({
         </div>
         
         {canJoin() && onJoin && (
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => onJoin(event)}
-            className="px-3 py-1 bg-success hover:bg-success/80 text-white rounded text-xs font-medium transition-colors"
+            className="px-3 py-1 text-xs"
           >
             Join
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -225,32 +228,35 @@ const EventCard: React.FC<EventCardProps> = ({
         
         <div className="flex items-center gap-1">
           {canJoin() && onJoin && (
-            <button
+            <Button
+              variant="primary"
               onClick={() => onJoin(event)}
-              className="px-3 py-1 bg-success hover:bg-success/80 text-white rounded text-sm font-medium transition-colors mr-2"
+              className="px-3 py-1 text-sm mr-2"
             >
               Join Meeting
-            </button>
+            </Button>
           )}
           
           {onEdit && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => onEdit(event)}
-              className="p-2 text-text-muted hover:text-success hover:bg-bg rounded-lg transition-colors"
-              title="Edit"
+              aria-label="Edit"
+              className="p-2 text-text-muted hover:text-success hover:bg-bg"
             >
               <Edit className="w-4 h-4" />
-            </button>
+            </Button>
           )}
           
           {onDelete && (
-            <button
+            <Button
+              variant="ghost"
               onClick={() => onDelete(event._id)}
-              className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-              title="Delete"
+              aria-label="Delete"
+              className="p-2 text-red-600 hover:bg-red-100"
             >
               <Trash2 className="w-4 h-4" />
-            </button>
+            </Button>
           )}
         </div>
       </div>

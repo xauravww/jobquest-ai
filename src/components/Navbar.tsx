@@ -11,6 +11,7 @@ import { FiMenu, FiLogOut } from 'react-icons/fi';
 import { FaUser } from 'react-icons/fa';
 import { LuLayoutDashboard, LuUserRound, LuInfo, LuStar, LuMessageSquare, LuPhone } from 'react-icons/lu';
 import Sidebar from './Sidebar';
+import Button from "@/components/ui/Button";
 
 const Navbar: React.FC = () => {
   const { data: session, status } = useSession();
@@ -141,14 +142,14 @@ const Navbar: React.FC = () => {
         ) : (
           <>
             <Link href="/auth/signin" onClick={closeDrawer}>
-              <button className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+              <Button variant="ghost" className="px-4 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
                 Sign In
-              </button>
+              </Button>
             </Link>
             <Link href="/auth/signup" onClick={closeDrawer}>
-              <button className="px-4 py-2 text-sm font-medium bg-[var(--primary)] text-[var(--text-inverse)] rounded-md hover:bg-[var(--primary-hover)] transition-colors">
+              <Button variant="primary" className="px-4 py-2 text-sm font-medium bg-[var(--primary)] text-[var(--text-inverse)] rounded-md hover:bg-[var(--primary-hover)] transition-colors">
                 Get Started
-              </button>
+              </Button>
             </Link>
           </>
         )}
@@ -192,13 +193,14 @@ const Navbar: React.FC = () => {
             {/* Actions */}
             <div className="flex items-center gap-4">
               <AuthButtons />
-              <button
+              <Button
+                variant="ghost"
                 onClick={showDrawer}
                 className="2xl:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 aria-label="Open menu"
               >
                 <FiMenu className="w-6 h-6" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -209,12 +211,13 @@ const Navbar: React.FC = () => {
         title={
           <div className="flex items-center justify-end w-full">
             {session && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={toggleDrawerView}
                 className="text-xs font-medium text-[var(--primary)] hover:text-[var(--primary-dim)]"
               >
                 {drawerView === 'nav' ? 'Switch to App Menu' : 'Switch to Navigation'}
-              </button>
+              </Button>
             )}
           </div>
         }
