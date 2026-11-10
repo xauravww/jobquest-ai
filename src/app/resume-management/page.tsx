@@ -47,7 +47,7 @@ const ResumeManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [editingResume, setEditingResume] = useState<Resume | null>(null);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [fullPreview, setFullPreview] = useState(false);
@@ -94,7 +94,7 @@ const ResumeManagementPage = () => {
 
   const handleEdit = async (resume: Resume) => {
     setEditingResume(resume);
-    setEditModalVisible(true);
+    setEditing(true);
     // Load the full resume (including its content snapshot) for editing.
     try {
       const res = await fetch(`/api/resumes/${resume._id}`);
@@ -116,7 +116,7 @@ const ResumeManagementPage = () => {
       });
       if (response.ok) {
         toast.success('Resume updated — PDF rebuilt');
-        setEditModalVisible(false);
+        setEditing(false);
         setEditingResume(null);
         fetchResumes();
       } else {
@@ -213,6 +213,15 @@ const ResumeManagementPage = () => {
             setFullPreview(false);
             setSelectedResume(null);
           }}
+        />
+      ) : editing && editingResume ? (
+        <ResumeEditView
+          resume={editingResume}
+          onBack={() => {
+            setEditing(false);
+            setEditingResume(null);
+          }}
+          onSave={handleSaveEdit}
         />
       ) : (
         <>
@@ -407,17 +416,6 @@ const ResumeManagementPage = () => {
             visible={uploadModalVisible}
             onClose={() => setUploadModalVisible(false)}
             onUpload={handleUpload}
-          />
-
-          {/* Edit Modal */}
-          <EditModalComponent
-            visible={editModalVisible}
-            resume={editingResume}
-            onClose={() => {
-              setEditModalVisible(false);
-              setEditingResume(null);
-            }}
-            onSave={handleSaveEdit}
           />
         </>
       )}
@@ -621,32 +619,20 @@ const ResumePreviewView = ({ resume, onBack }: {
   );
 };
 
-const EditModalComponent = ({ visible, resume, onClose, onSave }: {
-  visible: boolean;
-  resume: Resume | null;
-  onClose: () => void;
+const ResumeEditView = ({ resume, onBack, onSave }: {
+  resume: Resume;
+  onBack: () => void;
   onSave: (id: string, payload: { title: string; description: string; content: any }) => void;
 }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [summary, setSummary] = useState('');
-  const [skillsText, setSkillsText] = useState('');
-  const [work, setWork] = useState<any[]>([]);
-  const [edu, setEdu] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
+  const c0 = (resume as any).content || {};
+  const [title, setTitle] = useState(resume.title);
+  const [description, setDescription] = useState(resume.description || '');
+  const [summary, setSummary] = useState(c0.summary || '');
+  const [skillsText, setSkillsText] = useState((c0.skills || []).join(', '));
+  const [work, setWork] = useState<any[]>((c0.workExperience || []).map((w: any) => ({ ...w })));
+  const [edu, setEdu] = useState<any[]>((c0.education || []).map((e: any) => ({ ...e })));
+  const [projects, setProjects] = useState<any[]>((c0.projects || []).map((p: any) => ({ ...p })));
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!resume) return;
-    const c = (resume as any).content || {};
-    setTitle(resume.title);
-    setDescription(resume.description || '');
-    setSummary(c.summary || '');
-    setSkillsText((c.skills || []).join(', '));
-    setWork((c.workExperience || []).map((w: any) => ({ ...w })));
-    setEdu((c.education || []).map((e: any) => ({ ...e })));
-    setProjects((c.projects || []).map((p: any) => ({ ...p })));
-  }, [resume]);
 
   const updateItem = (setter: React.Dispatch<React.SetStateAction<any[]>>, index: number, patch: object) => {
     setter(prev => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
@@ -665,7 +651,7 @@ const EditModalComponent = ({ visible, resume, onClose, onSave }: {
     const content = {
       ...existing,
       summary,
-      skills: skillsText.split(',').map(s => s.trim()).filter(Boolean),
+      skills: skillsText.split(',').map((s: string) => s.trim()).filter(Boolean),
       workExperience: work.filter(w => (w.role || '').trim() || (w.company || '').trim()),
       education: edu.filter(e => (e.degree || '').trim() || (e.school || '').trim()),
       projects: projects.filter(p => (p.name || '').trim()),
@@ -679,14 +665,36 @@ const EditModalComponent = ({ visible, resume, onClose, onSave }: {
   };
 
   return (
-    <Modal
-      isOpen={visible}
-      onClose={onClose}
-      title="Edit Resume"
-      width="max-w-2xl"
-    >
-      {resume && (
-        <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-5">
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <div className="flex items-center gap-4 px-6 lg:px-8 py-4 border-b shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-raised)' }}>
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          leftIcon={<ArrowLeft className="w-5 h-5" />}
+          className="px-4 py-2 shrink-0"
+        >
+          Back
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-bold truncate" style={{ color: 'var(--text-main)' }}>Edit — {resume.title}</h2>
+          <p className="text-xs" style={{ color: 'var(--text-dim)' }}>Changes rebuild the PDF when you save</p>
+        </div>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={saving}
+          isLoading={saving}
+          leftIcon={<CheckCircle className="w-4 h-4" />}
+          className="px-5 py-2"
+        >
+          {saving ? 'Saving...' : 'Save & Rebuild'}
+        </Button>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 p-6 lg:p-8 overflow-y-auto">
+        <div className="max-w-3xl mx-auto space-y-5">
           {/* Metadata */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -900,27 +908,9 @@ const EditModalComponent = ({ visible, resume, onClose, onSave }: {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-glass)]">
-            <Button
-              variant="secondary"
-              onClick={onClose}
-              className="px-4 py-2"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={saving}
-              isLoading={saving}
-              className="px-4 py-2"
-            >
-              {saving ? 'Saving...' : 'Save & Rebuild'}
-            </Button>
-          </div>
         </div>
-      )}
-    </Modal>
+      </div>
+    </div>
   );
 };
 
