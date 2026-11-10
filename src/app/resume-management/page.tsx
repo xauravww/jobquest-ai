@@ -11,10 +11,8 @@ import {
   Trash2,
   Star,
   Eye,
-  Copy,
   File,
   CheckCircle,
-  X,
   Pencil,
   RefreshCw,
   ArrowLeft
@@ -148,22 +146,6 @@ const ResumeManagementPage = () => {
     }
   };
 
-  const handleSetDefault = async (resumeId: string) => {
-    try {
-      const response = await fetch(`/api/resumes/${resumeId}/set-default`, {
-        method: 'PUT',
-      });
-
-      if (response.ok) {
-        toast.success('Default resume updated');
-        fetchResumes();
-      }
-    } catch (error) {
-      console.error('Error setting default:', error);
-      toast.error('Failed to set default resume');
-    }
-  };
-
   const handleDelete = (resumeId: string) => {
     confirmAction({
       title: 'Delete this resume?',
@@ -183,22 +165,6 @@ const ResumeManagementPage = () => {
         }
       },
     });
-  };
-
-  const handleDuplicate = async (resumeId: string) => {
-    try {
-      const response = await fetch(`/api/resumes/${resumeId}/duplicate`, {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        toast.success('Resume duplicated successfully');
-        fetchResumes();
-      }
-    } catch (error) {
-      console.error('Error duplicating resume:', error);
-      toast.error('Failed to duplicate resume');
-    }
   };
 
   const getTypeColor = (type: string) => {
@@ -304,122 +270,86 @@ const ResumeManagementPage = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/50 rounded-xl p-6 transition-all hover:shadow-lg hover:shadow-[var(--primary)]/5 group flex flex-col h-full"
+                  className="bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--border-glass-hover)] rounded-xl p-5 flex flex-col h-full transition-colors"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[var(--primary)]/10 rounded-lg flex items-center justify-center border border-[var(--primary)]/20">
-                        <FileText className="w-5 h-5 text-[var(--primary)]" />
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-lg bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-[var(--text-muted)]" />
                       </div>
                       {resume.isDefault && (
-                        <div className="w-6 h-6 bg-[var(--warning)]/20 rounded-full flex items-center justify-center border border-[var(--warning)]/30" title="Default Resume">
-                          <Star className="w-3 h-3 text-[var(--warning)] fill-current" />
-                        </div>
+                        <span className="text-xs font-medium text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20 px-2 py-0.5 rounded-full">
+                          Default
+                        </span>
                       )}
                     </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold border ${getTypeColor(resume.type)}`}>
+                    <span className={`px-2 py-1 rounded-full text-[11px] font-medium border ${getTypeColor(resume.type)}`}>
                       {getTypeLabel(resume.type)}
                     </span>
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[var(--primary)] transition-colors truncate">
-                      {resume.title}
-                    </h3>
-                    <p className="text-[var(--text-muted)] text-sm mb-4 line-clamp-2 h-10">
-                      {resume.description || 'No description provided'}
-                    </p>
+                  <h3 className="text-base font-semibold text-[var(--text-main)] mb-1 truncate">{resume.title}</h3>
+                  <p className="text-sm text-[var(--text-muted)] line-clamp-2 flex-1 mb-4">
+                    {resume.description || 'No description provided'}
+                  </p>
 
-                    {/* Metadata */}
-                    <div className="space-y-2 mb-4 bg-[var(--bg-deep)]/50 p-3 rounded-lg border border-[var(--border-glass)]">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[var(--text-muted)]">Database</span>
-                        <span className="text-white capitalize">{resume.database ? resume.database.replace('_', ' ') : 'Default'}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[var(--text-muted)]">File Size</span>
-                        <span className="text-white">{formatFileSize(resume.fileSize)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[var(--text-muted)]">Usage</span>
-                        <span className="text-white">{resume.usageCount}</span>
-                      </div>
-                      {resume.atsScore !== undefined && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--text-muted)]">ATS Score</span>
-                          <span className={`font-bold ${resume.atsScore >= 80 ? 'text-[var(--success)]' : resume.atsScore >= 60 ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>
-                            {resume.atsScore}%
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                  {/* Meta */}
+                  <div className="flex items-center gap-4 text-xs text-[var(--text-dim)] mb-4">
+                    <span className="inline-flex items-center gap-1.5">
+                      <File className="w-3.5 h-3.5" />
+                      {formatFileSize(resume.fileSize)}
+                    </span>
+                    {resume.atsScore !== undefined && (
+                      <span className={`font-semibold ${resume.atsScore >= 80 ? 'text-[var(--success)]' : resume.atsScore >= 60 ? 'text-[var(--warning)]' : 'text-[var(--danger)]'}`}>
+                        {resume.atsScore}% ATS
+                      </span>
+                    )}
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-4 border-t border-[var(--border-glass)] mt-auto space-y-2">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleEdit(resume)}
-                        leftIcon={<Pencil className="w-4 h-4" />}
-                        className="flex-1 px-3 py-2 text-sm"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={handleGenerate}
-                        disabled={generating}
-                        leftIcon={<RefreshCw className="w-4 h-4" />}
-                        className="flex-1 px-3 py-2 text-sm"
-                      >
-                        Regenerate
-                      </Button>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedResume(resume);
-                          setFullPreview(true);
-                        }}
-                        leftIcon={<Eye className="w-4 h-4" />}
-                        className="flex-1 px-3 py-2 text-sm"
-                      >
-                        View
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleDuplicate(resume._id)}
-                        aria-label="Duplicate"
-                        className="p-2"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-
-                      {!resume.isDefault && (
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSetDefault(resume._id)}
-                          aria-label="Set as Default"
-                          className="p-2"
-                        >
-                          <Star className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleDelete(resume._id)}
-                        aria-label="Delete"
-                        className="p-2 text-[var(--text-muted)] hover:text-[var(--danger)]"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                  <div className="flex items-center gap-2 pt-3 border-t border-[var(--border)]">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedResume(resume);
+                        setFullPreview(true);
+                      }}
+                      leftIcon={<Eye className="w-4 h-4" />}
+                      className="flex-1"
+                    >
+                      View
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(resume)}
+                      aria-label="Edit"
+                      className="w-9 h-9 !p-0"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleGenerate}
+                      disabled={generating}
+                      aria-label="Regenerate"
+                      className="w-9 h-9 !p-0"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(resume._id)}
+                      aria-label="Delete"
+                      className="w-9 h-9 !p-0 text-[var(--text-muted)] hover:text-[var(--danger)]"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </motion.div>
               ))}
