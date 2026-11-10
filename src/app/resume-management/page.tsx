@@ -12,7 +12,6 @@ import {
   Star,
   Eye,
   Copy,
-  BarChart3,
   File,
   CheckCircle,
   X,
@@ -252,7 +251,6 @@ const ResumeManagementPage = () => {
               </div>
               Resume Management
             </h1>
-            <p className="text-[var(--text-muted)] mt-2 ml-16">Generate resumes from your profile and optimize them for each application</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -275,55 +273,6 @@ const ResumeManagementPage = () => {
             >
               {generating ? 'Generating...' : 'Generate Resume'}
             </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] rounded-xl p-6 flex items-center gap-4">
-            <div className="w-12 h-12 bg-[var(--primary)]/20 rounded-xl flex items-center justify-center border border-[var(--primary)]/30">
-              <FileText className="w-6 h-6 text-[var(--primary)]" />
-            </div>
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">Total Resumes</p>
-              <p className="text-2xl font-bold text-white">{resumes.length}</p>
-            </div>
-          </div>
-
-          <div className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] rounded-xl p-6 flex items-center gap-4">
-            <div className="w-12 h-12 bg-[var(--success)]/20 rounded-xl flex items-center justify-center border border-[var(--success)]/30">
-              <BarChart3 className="w-6 h-6 text-[var(--success)]" />
-            </div>
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">ATS Optimized</p>
-              <p className="text-2xl font-bold text-white">
-                {resumes.filter(r => r.type === 'ats_optimized').length}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] rounded-xl p-6 flex items-center gap-4">
-            <div className="w-12 h-12 bg-[var(--warning)]/20 rounded-xl flex items-center justify-center border border-[var(--warning)]/30">
-              <Star className="w-6 h-6 text-[var(--warning)]" />
-            </div>
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">Default Resume</p>
-              <p className="text-lg font-semibold text-white truncate max-w-[150px]">
-                {resumes.find(r => r.isDefault)?.title || 'None'}
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] rounded-xl p-6 flex items-center gap-4">
-            <div className="w-12 h-12 bg-[var(--secondary)]/20 rounded-xl flex items-center justify-center border border-[var(--secondary)]/30">
-              <Download className="w-6 h-6 text-[var(--secondary)]" />
-            </div>
-            <div>
-              <p className="text-[var(--text-muted)] text-sm">Total Usage</p>
-              <p className="text-2xl font-bold text-white">
-                {resumes.reduce((sum, r) => sum + r.usageCount, 0)}
-              </p>
-            </div>
           </div>
         </div>
 
