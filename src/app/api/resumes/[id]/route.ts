@@ -5,7 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
 import { unlink, mkdir, writeFile } from 'fs/promises';
 import path from 'path';
-import { normalizeContent, renderResumePdf } from '@/lib/resumeRenderer';
+import { normalizeContent, renderResumePdf, contentFromProfile } from '@/lib/resumeRenderer';
 
 export async function GET(
   request: NextRequest,
@@ -36,6 +36,15 @@ export async function GET(
 
     if (!resume) {
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
+    }
+
+    // Resumes generated before the content-snapshot feature have no `content`.
+    // Backfill from the user's profile so the editor auto-fills. The snapshot
+    // itself is persisted on the next save/regenerate.
+    const resumeContent = resume.content && resume.content.toObject ? resume.content.toObject() : resume.content;
+    const hasContent = resumeContent && Object.keys(resumeContent).length > 0;
+    if (!hasContent) {
+      resume.content = contentFromProfile(user);
     }
 
     return NextResponse.json(resume);

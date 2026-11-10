@@ -199,7 +199,7 @@ export function contentFromProfile(user: any): ResumeContent {
   return {
     title: p.title || '',
     location: p.location || '',
-    summary: p.summary || '',
+    summary: p.summary || p.bio || '',
     email: p.resumeEmail || user.email || '',
     linkedin: p.linkedin || '',
     portfolio: p.portfolio || '',
