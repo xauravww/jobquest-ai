@@ -245,19 +245,15 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
           <div className="mb-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Your Configurations</h3>
-              <div className="flex items-center gap-3">
+              {configs.length < MAX_CONFIGS && (
                 <Button
                   variant="primary"
-                  disabled={configs.length >= MAX_CONFIGS}
                   onClick={() => { resetForm(); setShowCreateForm(true); }}
                 >
                   <Plus className="w-4 h-4" />
                   Add New Config
                 </Button>
-                {configs.length >= MAX_CONFIGS && (
-                  <span className="text-xs text-[var(--text-muted)]">Limit of {MAX_CONFIGS} configurations reached</span>
-                )}
-              </div>
+              )}
             </div>
 
             {configs.length === 0 ? (
