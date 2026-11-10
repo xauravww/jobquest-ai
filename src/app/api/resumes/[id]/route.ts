@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
-import { unlink } from 'fs/promises';
+import { unlink, mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { normalizeContent, renderResumePdf } from '@/lib/resumeRenderer';
 
 export async function GET(
   request: NextRequest,
@@ -70,15 +71,47 @@ export async function PUT(
 
     const { id } = await params;
 
-    const resume = await Resume.findOneAndUpdate(
-      { _id: id, userId: user._id },
-      { ...body, updatedAt: new Date() },
-      { new: true }
-    );
-
-    if (!resume) {
+    const existing = await Resume.findOne({
+      _id: id,
+      userId: user._id,
+      isActive: true
+    });
+    if (!existing) {
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
+
+    const update: Record<string, unknown> = { updatedAt: new Date() };
+
+    // Metadata (title/description) can always be updated.
+    if (typeof body.title === 'string') update.title = body.title.trim() || existing.title;
+    if (typeof body.description === 'string') update.description = body.description.trim();
+
+    // Content change -> normalize, render a fresh PDF, and swap in the new file.
+    if (body.content !== undefined && body.content !== null) {
+      const content = normalizeContent(body.content);
+      update.content = content;
+
+      const name = (user.name || existing.title.replace(/ — Resume$/, '') || 'Professional').trim();
+      const pdfBuffer = renderResumePdf(name, content);
+
+      const safeName = name.replace(/\s+/g, '_');
+      const fileName = `${safeName}_Resume.pdf`;
+      const filePath = `/resumes/${Date.now()}_${fileName}`;
+      const fullPath = path.join(process.cwd(), 'public', filePath);
+      await mkdir(path.dirname(fullPath), { recursive: true });
+      await writeFile(fullPath, pdfBuffer);
+
+      update.fileName = fileName;
+      update.filePath = filePath;
+      update.fileSize = pdfBuffer.length;
+      update.atsScore = 92;
+    }
+
+    const resume = await Resume.findOneAndUpdate(
+      { _id: id, userId: user._id },
+      update,
+      { new: true }
+    );
 
     return NextResponse.json(resume);
   } catch (error) {

@@ -107,6 +107,36 @@ const ResumeSchema = new mongoose.Schema({
     max: 100
   },
   atsKeywords: [String],
+
+  // Normalized resume content (source of truth for generated PDFs).
+  content: {
+    title: String,
+    location: String,
+    summary: String,
+    email: String,
+    linkedin: String,
+    portfolio: String,
+    skills: [String],
+    workExperience: [{
+      role: String,
+      company: String,
+      startDate: String,
+      endDate: String,
+      description: String
+    }],
+    education: [{
+      degree: String,
+      school: String,
+      year: String
+    }],
+    projects: [{
+      name: String,
+      description: String,
+      liveUrl: String,
+      codeUrl: String
+    }],
+    achievements: [String]
+  },
   
   // Usage Tracking
   isDefault: {
