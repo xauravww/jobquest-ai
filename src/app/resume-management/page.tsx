@@ -17,7 +17,8 @@ import {
   CheckCircle,
   X,
   Pencil,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { confirmAction } from '@/lib/confirm';
@@ -51,7 +52,7 @@ const ResumeManagementPage = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingResume, setEditingResume] = useState<Resume | null>(null);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
-  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [fullPreview, setFullPreview] = useState(false);
 
   useEffect(() => {
     fetchResumes();
@@ -229,8 +230,18 @@ const ResumeManagementPage = () => {
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-6 lg:p-8 min-h-screen space-y-8">
-        <ProfileCompletionBanner />
+      {fullPreview && selectedResume ? (
+        <ResumePreviewView
+          resume={selectedResume}
+          onBack={() => {
+            setFullPreview(false);
+            setSelectedResume(null);
+          }}
+        />
+      ) : (
+        <>
+          <div className="p-6 lg:p-8 min-h-screen space-y-8">
+            <ProfileCompletionBanner />
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
@@ -423,12 +434,12 @@ const ResumeManagementPage = () => {
                         variant="ghost"
                         onClick={() => {
                           setSelectedResume(resume);
-                          setPreviewModalVisible(true);
+                          setFullPreview(true);
                         }}
                         leftIcon={<Eye className="w-4 h-4" />}
                         className="flex-1 px-3 py-2 text-sm"
                       >
-                        Preview
+                        View
                       </Button>
 
                       <Button
@@ -499,35 +510,27 @@ const ResumeManagementPage = () => {
             )}
           </div>
         )}
-      </div>
+          </div>
 
-      {/* Upload Modal */}
-      <UploadModalComponent
-        visible={uploadModalVisible}
-        onClose={() => setUploadModalVisible(false)}
-        onUpload={handleUpload}
-      />
+          {/* Upload Modal */}
+          <UploadModalComponent
+            visible={uploadModalVisible}
+            onClose={() => setUploadModalVisible(false)}
+            onUpload={handleUpload}
+          />
 
-      {/* Preview Modal */}
-      <PreviewModalComponent
-        visible={previewModalVisible}
-        resume={selectedResume}
-        onClose={() => {
-          setPreviewModalVisible(false);
-          setSelectedResume(null);
-        }}
-      />
-
-      {/* Edit Modal */}
-      <EditModalComponent
-        visible={editModalVisible}
-        resume={editingResume}
-        onClose={() => {
-          setEditModalVisible(false);
-          setEditingResume(null);
-        }}
-        onSave={handleSaveEdit}
-      />
+          {/* Edit Modal */}
+          <EditModalComponent
+            visible={editModalVisible}
+            resume={editingResume}
+            onClose={() => {
+              setEditModalVisible(false);
+              setEditingResume(null);
+            }}
+            onSave={handleSaveEdit}
+          />
+        </>
+      )}
     </AppLayout>
   );
 };
@@ -679,64 +682,52 @@ const UploadModalComponent = ({ visible, onClose, onUpload }: {
   );
 };
 
-const PreviewModalComponent = ({ visible, resume, onClose }: {
-  visible: boolean;
-  resume: Resume | null;
-  onClose: () => void;
+const ResumePreviewView = ({ resume, onBack }: {
+  resume: Resume;
+  onBack: () => void;
 }) => {
-  if (!resume) return null;
+  // Generated resumes store a local public path (/resumes/...pdf);
+  // uploaded resumes store a cloudinary secure_url. Both embed inline.
+  const previewSrc = resume.filePath || `/api/resumes/${resume._id}/download`;
+  const downloadHref = resume.filePath && resume.filePath.startsWith('/')
+    ? `/api/resumes/${resume._id}/download`
+    : resume.filePath || `/api/resumes/${resume._id}/download`;
 
   return (
-    <Modal
-      isOpen={visible}
-      onClose={onClose}
-      title={`Preview: ${resume.title}`}
-      width="max-w-4xl"
-    >
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl">
-          <div>
-            <h3 className="font-bold text-white">{resume.title}</h3>
-            <p className="text-[var(--text-muted)] text-sm mt-1">
-              {resume.type.replace('_', ' ').toUpperCase()} • {(resume.fileSize / 1024).toFixed(2)} KB
-            </p>
-          </div>
-          <a
-            href={`/api/resumes/${resume._id}/download`}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)]/20 text-[var(--primary)] border border-[var(--primary)]/30 rounded-xl hover:bg-[var(--primary)]/30 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download</span>
-          </a>
+    <div className="flex flex-col gap-6 p-6 lg:p-8 min-h-screen">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          leftIcon={<ArrowLeft className="w-5 h-5" />}
+          className="px-4 py-2 shrink-0"
+        >
+          Back
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-lg font-bold truncate" style={{ color: 'var(--text-main)' }}>{resume.title}</h2>
+          <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
+            {resume.type.replace('_', ' ').toUpperCase()} • {(resume.fileSize / 1024).toFixed(2)} KB
+          </p>
         </div>
-
-        <div className="bg-[var(--bg-deep)] rounded-xl border border-[var(--border-glass)] h-[600px] flex items-center justify-center relative overflow-hidden">
-          <div className="text-center z-10">
-            <div className="w-20 h-20 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-4 border border-[var(--border-glass)]">
-              <FileText className="w-10 h-10 text-[var(--text-muted)]" />
-            </div>
-            <p className="text-[var(--text-muted)] font-medium">
-              Preview not available in this view
-            </p>
-            <p className="text-[var(--text-dim)] text-sm mt-2">
-              Please download the file to view its contents
-            </p>
-          </div>
-          {/* Decorative background elements */}
-          <div className="absolute top-0 left-0 w-full h-full bg-[url('/grid.svg')] opacity-5"></div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="px-4 py-2"
-          >
-            Close
+        <a href={downloadHref} target="_blank" rel="noreferrer">
+          <Button variant="primary" leftIcon={<Download className="w-4 h-4" />} className="px-5 py-2">
+            Download
           </Button>
-        </div>
+        </a>
       </div>
-    </Modal>
+
+      {/* PDF embed */}
+      <div className="rounded-xl border bg-white overflow-hidden" style={{ borderColor: 'var(--border)', height: '85vh' }}>
+        <iframe
+          src={previewSrc}
+          title={resume.title}
+          className="w-full h-full"
+          style={{ border: 'none' }}
+        />
+      </div>
+    </div>
   );
 };
 
