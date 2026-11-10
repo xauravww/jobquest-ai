@@ -92,6 +92,27 @@ const ResumeManagementPage = () => {
     }
   };
 
+  const handleRegenerate = async (resumeId: string) => {
+    setGenerating(true);
+    try {
+      const response = await fetch(`/api/resumes/${resumeId}/regenerate`, {
+        method: 'POST',
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok) {
+        toast.success('Resume regenerated from its saved content');
+        fetchResumes();
+      } else {
+        toast.error(data?.error || 'Failed to regenerate resume');
+      }
+    } catch (error) {
+      console.error('Regenerate error:', error);
+      toast.error('Failed to regenerate resume');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleEdit = async (resume: Resume) => {
     setEditingResume(resume);
     setEditing(true);
@@ -354,7 +375,7 @@ const ResumeManagementPage = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleGenerate}
+                      onClick={() => handleRegenerate(resume._id)}
                       disabled={generating}
                       aria-label="Regenerate"
                       className="w-9 h-9 !p-0"
