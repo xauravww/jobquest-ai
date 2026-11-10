@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Cog, Lock, Link, Bot, Check, Plus, Trash2, X, Pencil } from 'lucide-react';
+import { Cog, Lock, Link, Bot, Check, Plus, Trash2, X, Pencil, Activity, Loader2 } from 'lucide-react';
 import { FormInput, FormSelect } from '@/components/ui/FormInput';
 import Button from '@/components/ui/Button';
 import { confirmAction } from '@/lib/confirm';
@@ -40,6 +40,8 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
   const [apiUrl, setApiUrl] = useState('http://localhost:1234');
   const [model, setModel] = useState('local-model');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [cardTesting, setCardTesting] = useState<Record<string, boolean>>({});
+  const [cardResults, setCardResults] = useState<Record<string, { ok: boolean; message: string }>>({});
 
   // Fetch configs on modal open
   useEffect(() => {
@@ -114,6 +116,43 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
         }
       },
     });
+  };
+
+  const handleTestCard = async (config: AIConfig) => {
+    setCardTesting((prev) => ({ ...prev, [config._id]: true }));
+    setCardResults((prev) => {
+      const next = { ...prev };
+      delete next[config._id];
+      return next;
+    });
+
+    try {
+      const response = await fetch('/api/ai-config/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: config.provider,
+          apiUrl: config.apiUrl,
+          apiKey: config.apiKey,
+          model: config.aiModel,
+        }),
+      });
+      const data = await response.json();
+      setCardResults((prev) => ({
+        ...prev,
+        [config._id]: {
+          ok: !!data.ok,
+          message: data.error || (data.reply ? 'Connected' : 'No response'),
+        },
+      }));
+    } catch {
+      setCardResults((prev) => ({
+        ...prev,
+        [config._id]: { ok: false, message: 'Connection failed' },
+      }));
+    } finally {
+      setCardTesting((prev) => ({ ...prev, [config._id]: false }));
+    }
   };
 
   const handleSaveConfig = async () => {
@@ -268,6 +307,29 @@ const AIProviderConfig = ({ showConfig, setShowConfig }: AIProviderConfigProps) 
                         <p className="text-xs text-[var(--text-dim)] pt-1">
                           Selected {new Date(config.lastSelectedAt).toLocaleDateString()}
                         </p>
+                      </div>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-glass)]">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1.5"
+                          aria-label="Test connection"
+                          disabled={cardTesting[config._id]}
+                          onClick={(e) => { e.stopPropagation(); handleTestCard(config); }}
+                        >
+                          {cardTesting[config._id] ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Activity className="w-4 h-4" />
+                          )}
+                          <span className="text-xs ml-1.5">Test</span>
+                        </Button>
+                        {cardResults[config._id] && (
+                          <span className={`flex items-center gap-1.5 text-xs ${cardResults[config._id].ok ? 'text-[var(--success)]' : 'text-[var(--danger)]'}`}>
+                            <span className={`w-2 h-2 rounded-full ${cardResults[config._id].ok ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'}`} />
+                            {cardResults[config._id].message}
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
