@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
 
     const config = await resolveAIConfig(String(user._id), user.aiConfig);
     aiFilterService.saveConfig(config);
+    console.log('[fix-text] resolved AI config:', { provider: config.provider, apiUrl: config.apiUrl, model: config.model });
 
     const systemPrompt = `You are an expert resume and professional profile editor.
 
@@ -71,9 +72,9 @@ Output ONLY the corrected/rewritten text. No labels, quotes, headers, or explana
     return NextResponse.json({ fixed: cleaned });
   } catch (error) {
     console.error('Fix text error:', error as Error);
-    return NextResponse.json(
-      { error: 'An error occurred while fixing text' },
-      { status: 500 }
-    );
+    const message = error instanceof Error && error.message
+      ? error.message
+      : 'An error occurred while fixing text';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

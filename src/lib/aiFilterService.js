@@ -461,20 +461,10 @@ Please respond with a JSON array where each object has:
         });
       } catch (networkError) {
         console.error('AI Filter Service - Cover Letter Generation - Network error:', networkError);
-
-        // Specific error handling based on status
-        if (networkError.status === 400) {
-          this.showToast('AI Filter Failed: Invalid request payload. Please check your input.');
-        } else if (networkError.status === 401) {
-          this.showToast('AI Filter Failed: Authentication failed. Please check your API key.');
-        } else if (networkError.status === 429) {
-          this.showToast('AI Filter Failed: Rate limit exceeded. Please try again later.');
-        } else if (networkError.status === 500) {
-          this.showToast('AI Filter Failed: Server error. Please try again later.');
-        } else {
-          this.showToast('AI Filter Failed: Could not connect to the AI service. Please check your internet connection or try again later.');
-        }
-        throw networkError;
+        const detail = networkError?.message || 'connection failed';
+        const enriched = new Error(`Could not reach AI provider (${provider}) at ${endpoint}: ${detail}`);
+        enriched.cause = networkError;
+        throw enriched;
       }
 
       const data = await response.json();

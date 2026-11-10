@@ -19,7 +19,8 @@ const DEFAULT_CONFIG: ResolvedAIConfig = {
  * Resolve the AI config that should be used for a user.
  * Priority:
  *   1. The active AIConfig (isActive) — the provider the user selected.
- *   2. If there is exactly one AIConfig, use it even if not flagged active.
+ *   2. The most recently used AIConfig (lastSelectedAt), so the last config
+ *      the user worked with is used even if not flagged active.
  *   3. Fallback to the user's stored aiConfig.
  *   4. Defaults.
  */
@@ -41,17 +42,14 @@ export async function resolveAIConfig(userId: string, userAiConfig?: {
     };
   }
 
-  const count = await AIConfig.countDocuments({ userId });
-  if (count === 1) {
-    const only = await AIConfig.findOne({ userId });
-    if (only) {
-      return {
-        provider: only.provider,
-        apiUrl: only.apiUrl || '',
-        model: only.aiModel,
-        apiKey: only.apiKey || '',
-      };
-    }
+  const latest = await AIConfig.findOne({ userId }).sort({ lastSelectedAt: -1 });
+  if (latest) {
+    return {
+      provider: latest.provider,
+      apiUrl: latest.apiUrl || '',
+      model: latest.aiModel,
+      apiKey: latest.apiKey || '',
+    };
   }
 
   if (userAiConfig?.provider) {
