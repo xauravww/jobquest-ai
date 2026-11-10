@@ -243,11 +243,26 @@ export function normalizeContent(raw: Partial<ResumeContent>): ResumeContent {
   };
 }
 
+// Returns true when a saved content snapshot actually carries any resume data.
+// A snapshot that exists but is empty (or only has blank title/description)
+// is treated as "no data" so the editor backfills from the profile instead.
+function hasMeaningfulContent(content: any): boolean {
+  if (!content || typeof content !== 'object') return false;
+  return Boolean(
+    ((content.summary || '').toString().trim()) ||
+    (Array.isArray(content.skills) && content.skills.length) ||
+    (Array.isArray(content.workExperience) && content.workExperience.length) ||
+    (Array.isArray(content.education) && content.education.length) ||
+    (Array.isArray(content.projects) && content.projects.length) ||
+    (Array.isArray(content.achievements) && content.achievements.length)
+  );
+}
+
 // Decide which content to use when loading a resume for editing. Resumes
-// created before the content-snapshot feature have no saved content, so we
-// backfill from the user's profile (this mirrors the GET route's behavior).
+// created before the content-snapshot feature have no saved content, and some
+// may have an empty snapshot; in both cases we backfill from the profile.
 export function resolveResumeContent(rawContent: unknown, user: any): ResumeContent {
-  if (rawContent && typeof rawContent === 'object' && Object.keys(rawContent).length > 0) {
+  if (hasMeaningfulContent(rawContent)) {
     return rawContent as ResumeContent;
   }
   return contentFromProfile(user);

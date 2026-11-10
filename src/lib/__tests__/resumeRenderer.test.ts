@@ -168,4 +168,23 @@ describe('resolveResumeContent (GET backfill for legacy resumes)', () => {
     const c = resolveResumeContent({}, makeUser());
     expect(c.skills.length).toBeGreaterThan(0);
   });
+
+  it('backfills when the snapshot is an empty shell (keys but no data)', () => {
+    const emptyShell = {
+      title: '', summary: '',
+      skills: [], workExperience: [], education: [], projects: [], achievements: [],
+    };
+    const c = resolveResumeContent(emptyShell, makeUser());
+    expect(c.summary).toContain('Dedicated software developer');
+    expect(c.skills.length).toBeGreaterThan(0);
+    expect(c.workExperience).toHaveLength(1);
+  });
+
+  it('keeps a snapshot that has real data', () => {
+    const c = resolveResumeContent(
+      { summary: '', skills: ['React'], workExperience: [], education: [], projects: [], achievements: [] },
+      makeUser()
+    );
+    expect(c.skills).toEqual(['React']);
+  });
 });

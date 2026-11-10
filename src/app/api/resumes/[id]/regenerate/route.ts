@@ -5,7 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
 import path from 'path';
 import { mkdir, writeFile } from 'fs/promises';
-import { normalizeContent, renderResumePdf, contentFromProfile } from '@/lib/resumeRenderer';
+import { renderResumePdf, resolveResumeContent } from '@/lib/resumeRenderer';
 
 export async function POST(
   request: NextRequest,
@@ -32,11 +32,9 @@ export async function POST(
     }
 
     // Rebuild from the resume's saved content; fall back to the profile when
-    // the resume predates content snapshots.
+    // the resume predates content snapshots or has an empty snapshot.
     const rawContent = resume.content && resume.content.toObject ? resume.content.toObject() : resume.content;
-    const content = rawContent && Object.keys(rawContent).length
-      ? normalizeContent(rawContent)
-      : contentFromProfile(user);
+    const content = resolveResumeContent(rawContent, user);
 
     const name = (user.name || resume.title.replace(/ — Resume$/, '') || 'Professional').trim();
     const pdfBuffer = renderResumePdf(name, content);
