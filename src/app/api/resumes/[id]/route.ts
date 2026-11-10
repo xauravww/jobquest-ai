@@ -5,7 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import Resume from '@/models/Resume';
 import { unlink, mkdir, writeFile } from 'fs/promises';
 import path from 'path';
-import { normalizeContent, renderResumePdf, contentFromProfile } from '@/lib/resumeRenderer';
+import { normalizeContent, renderResumePdf, resolveResumeContent } from '@/lib/resumeRenderer';
 
 export async function GET(
   request: NextRequest,
@@ -42,10 +42,7 @@ export async function GET(
     // Backfill from the user's profile so the editor auto-fills. The snapshot
     // itself is persisted on the next save/regenerate.
     const resumeContent = resume.content && resume.content.toObject ? resume.content.toObject() : resume.content;
-    const hasContent = resumeContent && Object.keys(resumeContent).length > 0;
-    if (!hasContent) {
-      resume.content = contentFromProfile(user);
-    }
+    resume.content = resolveResumeContent(resumeContent, user);
 
     return NextResponse.json(resume);
   } catch (error) {

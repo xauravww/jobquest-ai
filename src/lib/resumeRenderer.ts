@@ -65,11 +65,11 @@ function extractProjectUrls(desc: string, existing: { liveUrl?: string; codeUrl?
   let codeUrl = existing.codeUrl || '';
 
   if (!liveUrl) {
-    const liveMatch = desc.match(/Live:\s*([\w.-]+\.[\w.]+[\w/]*)/i);
+    const liveMatch = desc.match(/(?:Live(?:\s+Demo)?|Demo):\s*([\w.-]+\.[\w.]+[\w/]*)/i);
     if (liveMatch) liveUrl = 'https://' + liveMatch[1];
   }
   if (!codeUrl) {
-    const ghMatch = desc.match(/GitHub:\s*([\w.-]+(?:\/[\w.-]+)*)/i);
+    const ghMatch = desc.match(/(?:Source(?:\s+Code)?|GitHub):\s*([\w.-]+(?:\/[\w.-]+)*)/i);
     if (ghMatch) {
       const val = ghMatch[1];
       codeUrl = val.includes('github.com') ? 'https://' + val : 'https://github.com/' + val;
@@ -77,9 +77,15 @@ function extractProjectUrls(desc: string, existing: { liveUrl?: string; codeUrl?
   }
 
   const cleanDesc = desc
-    .replace(/[-–—]\s*Live:\s*[\w.-]+\.[\w.]+[\w/]*/gi, '')
-    .replace(/[-–—]?\s*GitHub:\s*[\w.-]+(?:\/[\w.-]+)*/gi, '')
+    .replace(/[-–—]?\s*(?:Live(?:\s+Demo)?|Demo):\s*[\w.-]+\.[\w.]+[\w/]*/gi, '')
+    .replace(/[-–—]?\s*(?:Source(?:\s+Code)?|GitHub):\s*[\w.-]+(?:\/[\w.-]+)*/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  // Normalize bare domains (e.g. "nebulaplan.vercel.app") to absolute URLs so
+  // stored content and the PDF links are consistent.
+  if (liveUrl && !/^https?:\/\//i.test(liveUrl)) liveUrl = 'https://' + liveUrl;
+  if (codeUrl && !/^https?:\/\//i.test(codeUrl)) codeUrl = 'https://' + codeUrl;
 
   return { liveUrl, codeUrl, cleanDesc };
 }
@@ -108,8 +114,8 @@ function fmtShortDate(value: string | Date | null | undefined): string {
   return s;
 }
 
-function cleanWorkEntry(w: { position?: string; company?: string; startDate?: string; endDate?: string; description?: string }): WorkEntry {
-  const role = (w.position || '').replace(/\s+/g, ' ').trim();
+function cleanWorkEntry(w: { role?: string; position?: string; company?: string; startDate?: string; endDate?: string; description?: string }): WorkEntry {
+  const role = ((w.role || w.position) || '').replace(/\s+/g, ' ').trim();
   const description = (w.description || '').trim();
   const company = (w.company || '')
     .replace(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4}.*$/i, '')
@@ -126,10 +132,10 @@ function cleanWorkEntry(w: { position?: string; company?: string; startDate?: st
   };
 }
 
-function cleanEducation(edu: { degree?: string; field?: string; institution?: string; endDate?: string }): EduEntry {
+function cleanEducation(edu: { degree?: string; field?: string; institution?: string; school?: string; endDate?: string }): EduEntry {
   const degree = (edu.degree || '').trim();
   const field = (edu.field || '').trim();
-  const school = (edu.institution || '').replace(/^[-–—]\s*/, '').trim();
+  const school = (edu.school || edu.institution || '').replace(/^[-–—]\s*/, '').trim();
   const year = edu.endDate ? (String(edu.endDate).match(/\d{4}/)?.[0] || '') : '';
 
   const fullDegree = degree && field ? `${degree} in ${field}` : degree || field;
@@ -201,8 +207,8 @@ export function contentFromProfile(user: any): ResumeContent {
     location: p.location || '',
     summary: p.summary || p.bio || '',
     email: p.resumeEmail || user.email || '',
-    linkedin: p.linkedin || '',
-    portfolio: p.portfolio || '',
+    linkedin: p.linkedinUrl || p.linkedin || '',
+    portfolio: p.portfolioUrl || p.portfolio || '',
     skills,
     workExperience,
     education,
@@ -232,9 +238,19 @@ export function normalizeContent(raw: Partial<ResumeContent>): ResumeContent {
       };
       const { liveUrl, codeUrl, cleanDesc } = extractProjectUrls(proj.description || '', withUrls);
       return { name: projName, description: cleanDesc, liveUrl, codeUrl };
-    }),
+    }).filter((proj: any) => proj.name),
     achievements: normalizeAchievements(raw.achievements || []),
   };
+}
+
+// Decide which content to use when loading a resume for editing. Resumes
+// created before the content-snapshot feature have no saved content, so we
+// backfill from the user's profile (this mirrors the GET route's behavior).
+export function resolveResumeContent(rawContent: unknown, user: any): ResumeContent {
+  if (rawContent && typeof rawContent === 'object' && Object.keys(rawContent).length > 0) {
+    return rawContent as ResumeContent;
+  }
+  return contentFromProfile(user);
 }
 
 // ═══════════════════════════════════════════════
