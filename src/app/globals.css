@@ -179,6 +179,70 @@ input[type="number"] {
    Ant Design — flat, token-aligned. providers.tsx sets the main
    tokens; these guard components that read raw classes.
 ----------------------------------------------------------------*/
+/* ---------------------------------------------------------------
+   Re-instate nav-link colors (antd cssinjs override).
+
+   antd injects `a { color: var(--colorPrimary) }` (coral) at runtime
+   via a <style> tag that sits OUTSIDE Tailwind's @layer. Per the CSS
+   cascade-layers spec, unlayered styles beat layered ones, so that rule
+   overrides Tailwind's `.text-[...]` color utilities on every anchor —
+   which is why nav links render coral/orange regardless of hover.
+
+   Fix: unlayered rules with higher specificity than antd's `a`
+   ((0,0,1)) reinstate the intended link colors.
+---------------------------------------------------------------*/
+header nav[aria-label="Primary"] a {
+  color: var(--text-muted);
+}
+header nav[aria-label="Primary"] a:hover {
+  color: var(--text-main);
+}
+
+/* Sidebar nav links — same antd `a` override guard, plus a deliberate
+   hover: brightened text/icon, raised surface, coral accent indicator bar. */
+.sidebar-nav-link {
+  position: relative;
+  color: var(--text-muted);
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.sidebar-nav-link .sidebar-nav-icon,
+.sidebar-nav-link .sidebar-nav-label {
+  color: inherit;
+}
+.sidebar-nav-link:hover {
+  color: var(--text-main);
+  background-color: var(--bg-raised);
+}
+.sidebar-nav-link.is-active {
+  color: var(--text-main);
+  background-color: var(--bg-raised);
+  border-color: var(--border-strong);
+}
+.sidebar-nav-link.is-active:hover {
+  color: var(--text-main);
+}
+/* Accent indicator bar */
+.sidebar-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 3px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--accent);
+  opacity: 0;
+  transform: translateY(-50%) scaleY(0);
+  transition: opacity 150ms ease, transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar-nav-link:hover::before,
+.sidebar-nav-link.is-active::before {
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+}
+
 .ant-select-selector,
 .ant-picker,
 .ant-card,

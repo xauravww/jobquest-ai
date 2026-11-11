@@ -9,14 +9,12 @@ import {
   Upload as UploadIcon,
   Download,
   Trash2,
-  Star,
   Eye,
   File,
   CheckCircle,
   Pencil,
   RefreshCw,
-  ArrowLeft,
-  Plus
+  ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { confirmAction } from '@/lib/confirm';
@@ -230,7 +228,7 @@ const ResumeManagementPage = () => {
   };
 
   return (
-    <AppLayout showFooter={false}>
+    <AppLayout showFooter={false} showSidebar={!editing}>
       {fullPreview && selectedResume ? (
         <ResumePreviewView
           resume={selectedResume}
@@ -315,13 +313,14 @@ const ResumeManagementPage = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--border-glass-hover)] rounded-xl p-5 flex flex-col h-full transition-colors"
+                  whileHover={{ y: -4, boxShadow: '0 12px 32px -16px rgba(0,0,0,0.7)' }}
+                  className="group bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--border-glass-hover)] rounded-xl p-5 flex flex-col h-full transition-colors duration-300"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-lg bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-[var(--text-muted)]" />
+                      <div className="w-9 h-9 rounded-lg bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center transition-colors duration-300 group-hover:border-[var(--border-glass-hover)]">
+                        <FileText className="w-4 h-4 text-[var(--text-muted)] transition-colors duration-300 group-hover:text-[var(--text-main)]" />
                       </div>
                       {resume.isDefault && (
                         <span className="text-xs font-medium text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20 px-2 py-0.5 rounded-full">

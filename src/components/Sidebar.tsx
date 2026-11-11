@@ -42,27 +42,16 @@ const NavLink = ({ href, icon, children, pathname, isCollapsed, onLinkClick }: {
   const isDashboard = href === '/dashboard';
   const isActive = isDashboard ? pathname === href : pathname.startsWith(href) && href !== '/';
 
-  // Explicit colors (no reliance on Tailwind arbitrary-value classes).
-  const labelColor = isActive ? '#e6e9ef' : '#8a93a6';
-
   return (
     <Link
       href={href}
       onClick={onLinkClick}
-      className={`relative group flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ${isCollapsed ? 'justify-center' : ''
-        } ${isActive
-          ? 'bg-[var(--bg-raised)] border border-[var(--border-strong)]'
-          : 'border border-transparent hover:bg-[var(--bg-raised)]'
-        }`}
-      style={{ color: labelColor }}
+      aria-current={isActive ? 'page' : undefined}
+      className={`sidebar-nav-link flex items-center gap-3 px-3 py-2 rounded-md ${isCollapsed ? 'justify-center' : ''} ${isActive ? 'is-active' : ''}`}
     >
-      <div style={{ color: labelColor }}>
-        {icon}
-      </div>
+      <div className="sidebar-nav-icon">{icon}</div>
       {!isCollapsed && (
-        <span className="text-sm font-medium" style={{ color: labelColor }}>
-          {children}
-        </span>
+        <span className="sidebar-nav-label text-sm font-medium">{children}</span>
       )}
     </Link>
   );

@@ -366,7 +366,7 @@ Please respond with a JSON array where each object has:
   /**
    * Generate cover letter using AI
    */
-  async generateCoverLetter(systemPrompt, userPrompt, history) {
+  async generateCoverLetter(systemPrompt, userPrompt, history, maxTokens = 1000) {
     try {
       const { provider, apiUrl, model, apiKey } = this.config;
 
@@ -402,7 +402,7 @@ Please respond with a JSON array where each object has:
               }
             ],
             temperature: 0.7,
-            max_tokens: 1000
+            max_tokens: maxTokens
           };
           break;
 
@@ -422,7 +422,7 @@ Please respond with a JSON array where each object has:
             ],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 1000,
+              maxOutputTokens: maxTokens,
             }
           };
           headers = {
