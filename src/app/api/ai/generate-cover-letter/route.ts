@@ -5,6 +5,8 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import { fetchAndConvertToMarkdown } from '@/lib/urlReader';
 import { resolveAIConfig } from '@/lib/aiConfig';
+import { buildCoverLetterSystemPrompt, type CoverLetterType } from '@/lib/coverLetterPrompt';
+import { buildUserPrompt } from '@/lib/coverLetterBuilder';
 
 interface AIConfig {
   provider: string;
@@ -22,7 +24,8 @@ interface CoverLetterRequestBody {
   aiConfig?: AIConfig;
   jobUrl?: string;
   profileDetails?: string;
-  coverLetterType?: 'concise' | 'detailed' | 'professional';
+  coverLetterType?: CoverLetterType[];
+  guidedAnswers?: { question: string; answer: string }[];
 }
 
 // Import AI service dynamically
@@ -50,13 +53,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Add explicit types for map parameters to fix TS errors
-    type WorkExp = { position: string; company: string; startDate?: string; endDate?: string; description: string };
-    type Project = { name: string; description: string };
-    type Education = { degree: string; field: string; institution: string };
-
     const body: CoverLetterRequestBody = await request.json();
-    const { jobId, jobTitle, company, jobDescription, location, aiConfig, jobUrl, profileDetails, coverLetterType = 'detailed' } = body;
+    const { jobId, jobTitle, company, jobDescription, location, aiConfig, jobUrl, profileDetails, coverLetterType = ['detailed'], guidedAnswers } = body;
 
     if (!jobTitle || !company) {
       return NextResponse.json({ error: 'Job title and company are required' }, { status: 400 });
@@ -94,55 +92,8 @@ export async function POST(request: NextRequest) {
       portfolioUrl: user.profile?.portfolioUrl || '',
     };
 
-    // Create system prompt based on cover letter type
-    const coverLetterTypePrompts = {
-      concise: `You are an expert career counselor specializing in concise, impactful cover letters. Generate a brief but compelling cover letter.
-
-Key requirements:
-1. Keep it to 150-200 words maximum (2-3 short paragraphs)
-2. Get straight to the point - no fluff
-3. Highlight 2-3 most relevant experiences/skills
-4. Use bullet points if needed for clarity
-5. Professional but direct tone
-6. Strong opening and closing
-
-Structure: Brief intro → Key qualifications → Call to action`,
-
-      detailed: `You are an expert career counselor specializing in comprehensive cover letters. Generate a detailed, storytelling cover letter.
-
-Key requirements:
-1. 300-400 words (3-4 paragraphs)
-2. Tell a compelling story using specific examples
-3. Include multiple relevant experiences, projects, and achievements
-4. Show personality and passion
-5. Conversational, engaging tone
-6. Detailed examples of impact and results
-
-Structure: Engaging intro → Detailed experience stories → Achievements/projects → Strong closing`,
-
-      professional: `You are an expert career counselor specializing in formal, corporate cover letters. Generate a polished, professional cover letter.
-
-Key requirements:
-1. 250-350 words (3 paragraphs)
-2. Formal but warm tone
-3. Focus on qualifications and fit
-4. Use professional language without jargon
-5. Emphasize value proposition
-6. Traditional business letter structure
-
-Structure: Professional introduction → Qualifications and fit → Professional closing`
-    };
-
-    let systemPrompt = coverLetterTypePrompts[coverLetterType] + `
-
-Universal requirements for all types:
-- Only output the cover letter text, no explanations
-- Make it personalized using the candidate's actual background
-- Never use placeholders like [Your Name] - use actual provided information
-- Highlight relevant skills that match the job requirements
-- Show genuine interest in the company and role
-- End with a strong call to action
-- Use the candidate's real experiences and achievements to make it compelling`;
+    // System prompt built from the "killer cover letter" methodology (see @/lib/coverLetterPrompt)
+    let systemPrompt = buildCoverLetterSystemPrompt(coverLetterType);
 
     // If jobUrl is provided and not null, fetch content and append to system prompt
     if (jobUrl && jobUrl.trim() !== '') {
@@ -157,47 +108,16 @@ Universal requirements for all types:
       }
     }
 
-    // Create user prompt with job and profile information
-    const userPrompt = `Please generate a professional cover letter for the following:
-
-Job Information:
-- Position: ${jobTitle}
-- Company: ${company}
-- Location: ${location || 'Not specified'}
-- Job Description: ${jobDescription || 'Not provided'}
-
-${profileDetails ? `Candidate Profile Details:\n${profileDetails}` : `Candidate Profile:
-- Name: ${userProfile.name}
-- Email: ${userProfile.email}
-- Phone: ${userProfile.phone}
-- Current Role: ${userProfile.currentRole}
-- Years of Experience: ${userProfile.experience} years
-- Location: ${userProfile.location}
-- Skills: ${Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills}
-- Bio/Summary: ${userProfile.bio}
-
-${userProfile.workExperience && userProfile.workExperience.length > 0 ? `Work Experience:
-${(userProfile.workExperience as WorkExp[]).map(exp => `- ${exp.position} at ${exp.company} (${exp.startDate ? new Date(exp.startDate).getFullYear() : 'Present'} - ${exp.endDate ? new Date(exp.endDate).getFullYear() : 'Present'})
-  ${exp.description || 'No description provided'}`).join('\n\n')}` : ''}
-
-${userProfile.projects && userProfile.projects.length > 0 ? `Key Projects:
-${(userProfile.projects as Project[]).filter(proj => proj.name && proj.description).map(proj => `- ${proj.name}: ${proj.description}`).join('\n')}` : ''}
-
-${userProfile.achievements && userProfile.achievements.length > 0 ? `Achievements:
-${userProfile.achievements.map((achievement: any) => `- ${achievement.title}: ${achievement.description}`).join('\n')}` : ''}
-
-${userProfile.certifications && userProfile.certifications.length > 0 ? `Certifications:
-${userProfile.certifications.map((cert: any) => `- ${cert.name} from ${cert.issuer}`).join('\n')}` : ''}
-
-${userProfile.education && userProfile.education.length > 0 ? `Education:
-${(userProfile.education as Education[]).map(edu => `- ${edu.degree} in ${edu.field} from ${edu.institution}`).join('\n')}` : ''}
-
-Contact Information:
-- LinkedIn: ${userProfile.linkedinUrl || 'Not provided'}
-- GitHub: ${userProfile.githubUrl || 'Not provided'}
-- Portfolio: ${userProfile.portfolioUrl || 'Not provided'}`}
-
-Please generate a compelling cover letter that highlights the candidate's specific achievements, work experience, and projects. Use the actual details provided rather than generic placeholders. Make it personal and authentic by referencing specific experiences and accomplishments.`;
+    // User prompt built from the job + profile (+ guided answers) — pure builder
+    const userPrompt = buildUserPrompt({
+      jobTitle,
+      company,
+      location,
+      jobDescription,
+      profileDetails,
+      guidedAnswers,
+      fallbackProfile: userProfile,
+    });
 
     // Generate cover letter using AI service
     const coverLetterContent = await aiFilterService.generateCoverLetter(systemPrompt, userPrompt);

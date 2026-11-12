@@ -1,22 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import {
   Briefcase, Plus, Search, RefreshCw, Edit, Bell, FileText,
-  MapPin, Globe, Calendar, Trash2, ExternalLink, Filter, ChevronLeft, ChevronRight,
-  CheckCircle, XCircle, Clock, AlertCircle, X
+  MapPin, Calendar, Trash2, ExternalLink, Filter,
+  X, Globe, Clock
 } from 'lucide-react';
 import dayjs from 'dayjs';
-import { Select, DatePicker, TimePicker } from 'antd';
+import { Select } from 'antd';
 import toast from 'react-hot-toast';
-import CreateJobModal from '@/components/modals/CreateJobModal';
-import CoverLetterModal from '@/components/modals/CoverLetterModal';
-import { notificationService } from '@/services/NotificationService';
-import { telegramService } from '@/services/TelegramService';
 import { motion, AnimatePresence } from 'framer-motion';
-import Modal from '@/components/ui/Modal';
 import Button from "@/components/ui/Button";
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { confirmAction } from '@/lib/confirm';
 
 // --- Types ---
@@ -66,94 +63,43 @@ interface ApiApplication {
   resumeUsed?: string;
 }
 
-interface UserProfile {
-  name: string;
-  experience: any[];
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  location?: string;
-  bio?: string;
-  skills?: string[] | string;
-  experienceYears?: number | string;
-  targetRole?: string;
-  education?: any[];
-  workExperience?: any[];
-}
-
 const ApplicationTrackingPage = () => {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const router = useRouter();
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Modals
-  const [createJobModalVisible, setCreateJobModalVisible] = useState(false);
-  const [coverLetterModalVisible, setCoverLetterModalVisible] = useState(false);
-  const [selectedJobForCoverLetter, setSelectedJobForCoverLetter] = useState<Job | undefined>(undefined);
+  const LIMIT = 10;
+  const seqRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Reminder Modal State
-  const [reminderModalVisible, setReminderModalVisible] = useState(false);
-  const [selectedJobForReminder, setSelectedJobForReminder] = useState<Job | undefined>(undefined);
-  const [reminderForm, setReminderForm] = useState({
-    title: '',
-    description: '',
-    dueDate: dayjs().add(1, 'week').format('YYYY-MM-DD'),
-    dueTime: '09:00',
-    priority: 'medium',
-    type: 'follow_up'
-  });
-
-  // User Profile
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: '', experience: [], firstName: '', lastName: '', email: '', location: '', bio: '', skills: [], experienceYears: '', targetRole: '', education: [], workExperience: []
-  });
-
-  // Pagination & Filters
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch User Profile
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await fetch('/api/user/profile');
-        if (response.ok) {
-          const data = await response.json();
-          setUserProfile({
-            ...data,
-            name: `${data.firstName || ''} ${data.lastName || ''}`.trim(),
-            experience: data.workExperience || [],
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-      }
-    };
-    fetchUserProfile();
-  }, []);
+  // Fetch jobs (infinite scroll)
+  const fetchJobs = useCallback(async (pageToLoad: number, append: boolean) => {
+    const mySeq = ++seqRef.current;
+    const params = new URLSearchParams();
+    params.append('page', String(pageToLoad));
+    params.append('limit', String(LIMIT));
+    if (searchText) params.append('search', searchText);
+    if (statusFilter !== 'all') params.append('status', statusFilter);
+    if (priorityFilter !== 'all') params.append('priority', priorityFilter);
+    if (platformFilter !== 'all') params.append('platform', platformFilter);
 
-  // Fetch Jobs
-  const fetchJobs = useCallback(async (page: number, limit: number) => {
+    if (append) setLoadingMore(true);
+    else setInitialLoading(true);
+
     try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.append('page', page.toString());
-      params.append('limit', limit.toString());
-      if (searchText) params.append('search', searchText);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (priorityFilter !== 'all') params.append('priority', priorityFilter);
-      if (platformFilter !== 'all') params.append('platform', platformFilter);
-
       const response = await fetch(`/api/applications?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch applications');
-
       const data = await response.json();
+      if (mySeq !== seqRef.current) return;
 
       const transformedJobs: Job[] = data.applications.map((app: ApiApplication) => {
         const jobData = typeof app.jobId === 'object' ? app.jobId : {};
@@ -172,26 +118,55 @@ const ApplicationTrackingPage = () => {
           notes: app.notes || '',
           createdAt: app.createdAt || new Date().toISOString(),
           appliedDate: app.appliedDate || new Date().toISOString(),
-          resumeUsed: app.resumeUsed || undefined
+          resumeUsed: app.resumeUsed || undefined,
         };
       });
 
-      setJobs(transformedJobs);
-      setFilteredJobs(transformedJobs);
-      setCurrentPage(page);
-      setPageSize(limit);
-      setTotalCount(data.totalCount || 0);
+      setFilteredJobs((prev) => {
+        if (!append) return transformedJobs;
+        const seen = new Set(prev.map((j) => j._id));
+        return [...prev, ...transformedJobs.filter((j) => !seen.has(j._id))];
+      });
+      setHasMore(transformedJobs.length >= LIMIT);
     } catch (error) {
+      if (mySeq !== seqRef.current) return;
       console.error('Error fetching applications:', error);
       toast.error('Failed to load applications');
     } finally {
-      setLoading(false);
+      if (mySeq === seqRef.current) {
+        setInitialLoading(false);
+        setLoadingMore(false);
+      }
     }
   }, [searchText, statusFilter, priorityFilter, platformFilter]);
 
+  // Reset + load first page when filters/search change
   useEffect(() => {
-    fetchJobs(currentPage, pageSize);
-  }, [fetchJobs, currentPage, pageSize]);
+    setFilteredJobs([]);
+    setPage(1);
+    fetchJobs(1, false);
+  }, [fetchJobs]);
+
+  // Load the next page when the sentinel bumps `page`
+  useEffect(() => {
+    if (page > 1) fetchJobs(page, true);
+  }, [page, fetchJobs]);
+
+  // IntersectionObserver sentinel -> request next page near the bottom
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !initialLoading) {
+          setPage((p) => p + 1);
+        }
+      },
+      { rootMargin: '300px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, initialLoading]);
 
   const handleDelete = (jobId: string) => {
     confirmAction({
@@ -200,64 +175,16 @@ const ApplicationTrackingPage = () => {
         try {
           const response = await fetch(`/api/applications/${jobId}`, { method: 'DELETE' });
           if (response.ok) {
-            setJobs(prev => prev.filter(job => job._id !== jobId));
             setFilteredJobs(prev => prev.filter(job => job._id !== jobId));
             toast.success('Application deleted');
           } else {
             toast.error('Failed to delete application');
           }
-        } catch (error) {
+        } catch {
           toast.error('Failed to delete application');
         }
       },
     });
-  };
-
-  const handleCreateReminder = async () => {
-    try {
-      if (!reminderForm.title.trim()) {
-        toast.error('Please enter a reminder title');
-        return;
-      }
-
-      const payload = {
-        title: reminderForm.title,
-        description: reminderForm.description,
-        dueDate: new Date(reminderForm.dueDate).toISOString(),
-        dueTime: reminderForm.dueTime,
-        type: reminderForm.type,
-        priority: reminderForm.priority,
-        status: 'pending',
-        tags: [],
-        applicationId: selectedJobForReminder?._id || null
-      };
-
-      const response = await fetch('/api/reminders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        toast.success('Reminder created successfully!');
-        setReminderModalVisible(false);
-
-        // Notifications
-        await notificationService.createNotification({
-          title: 'Reminder Setup',
-          message: `Reminder set for ${selectedJobForReminder?.title}`,
-          type: 'info'
-        });
-
-        if (telegramService.isConnectedToTelegram()) {
-          await telegramService.sendNotification('Reminder', `Reminder set for ${selectedJobForReminder?.title}`, 'reminder');
-        }
-      } else {
-        toast.error('Failed to create reminder');
-      }
-    } catch (error) {
-      toast.error('Failed to create reminder');
-    }
   };
 
   const getStatusColor = (status: string) => {
@@ -298,10 +225,7 @@ const ApplicationTrackingPage = () => {
           <Button
             variant="primary"
             size="md"
-            onClick={() => {
-              setSelectedJob(undefined);
-              setCreateJobModalVisible(true);
-            }}
+            onClick={() => router.push('/application-tracking/new')}
             className="px-6 py-3 bg-[var(--primary)] text-[var(--bg-deep)] font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
@@ -309,68 +233,124 @@ const ApplicationTrackingPage = () => {
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="bg-[var(--bg-surface)] rounded-2xl p-6 border border-[var(--border)]">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 text-[var(--text-muted)] mb-2">
-              <Filter className="w-4 h-4" />
-              <span className="text-sm font-medium">Filters & Search</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+        {/* Filters & Search (same UI as the Jobs Agent / job-search page) */}
+        <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)]">
+          <div className="p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 flex items-center bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg transition-colors">
+                <Search className="ml-3 w-4 h-4 text-[var(--text-muted)] flex-shrink-0 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Search jobs, companies..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  placeholder="Search jobs, companies..."
+                  className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
                 />
+                {searchText && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setSearchText('')}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 w-7 h-7 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
 
-              <Select
-                value={statusFilter}
-                onChange={(v) => setStatusFilter(v)}
-                options={[
-                  { value: 'all', label: 'All Statuses' },
-                  { value: 'saved', label: 'Saved' },
-                  { value: 'applied', label: 'Applied' },
-                  { value: 'interviewing', label: 'Interviewing' },
-                  { value: 'offered', label: 'Offered' },
-                  { value: 'rejected', label: 'Rejected' }
-                ]}
-                className="w-full"
-              />
-
-              <Select
-                value={priorityFilter}
-                onChange={(v) => setPriorityFilter(v)}
-                options={[
-                  { value: 'all', label: 'All Priorities' },
-                  { value: 'high', label: 'High' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'low', label: 'Low' }
-                ]}
-                className="w-full"
-              />
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                onClick={() => setShowFilters(v => !v)}
+                className="shrink-0 h-8 px-4 rounded-lg flex items-center justify-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                <span>{showFilters ? 'Hide filters' : 'Filters'}</span>
+              </Button>
 
               <Button
                 variant="ghost"
+                size="sm"
+                type="button"
                 onClick={() => { setSearchText(''); setStatusFilter('all'); setPriorityFilter('all'); setPlatformFilter('all'); }}
-                className="px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--primary)] rounded-xl transition-all flex items-center justify-center gap-2"
+                className="shrink-0 h-8 px-4 rounded-lg flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
-                <span>Reset Filters</span>
+                <span>Reset</span>
               </Button>
             </div>
+
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-[var(--border)] overflow-hidden"
+              >
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  <Select
+                    value={statusFilter}
+                    onChange={(v) => setStatusFilter(v ?? 'all')}
+                    options={[
+                      { value: 'all', label: 'All Statuses' },
+                      { value: 'saved', label: 'Saved' },
+                      { value: 'applied', label: 'Applied' },
+                      { value: 'interviewing', label: 'Interviewing' },
+                      { value: 'offered', label: 'Offered' },
+                      { value: 'rejected', label: 'Rejected' }
+                    ]}
+                    allowClear
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  <Select
+                    value={priorityFilter}
+                    onChange={(v) => setPriorityFilter(v ?? 'all')}
+                    options={[
+                      { value: 'all', label: 'All Priorities' },
+                      { value: 'high', label: 'High' },
+                      { value: 'medium', label: 'Medium' },
+                      { value: 'low', label: 'Low' }
+                    ]}
+                    allowClear
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  <Select
+                    value={platformFilter}
+                    onChange={(v) => setPlatformFilter(v ?? 'all')}
+                    options={[
+                      { value: 'all', label: 'All Platforms' },
+                      { value: 'linkedin', label: 'LinkedIn' },
+                      { value: 'naukri', label: 'Naukri' },
+                      { value: 'company_website', label: 'Company Website' },
+                      { value: 'other', label: 'Other' }
+                    ]}
+                    allowClear
+                    className="w-full"
+                  />
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
 
         {/* Job List */}
-        {loading ? (
+        {initialLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-center">
+              <LoadingSpinner size="lg" className="mx-auto mb-4" />
+              <p className="text-[var(--text-muted)]">Loading applications...</p>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
@@ -391,7 +371,7 @@ const ApplicationTrackingPage = () => {
                           {job.company.charAt(0)}
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold text-[var(--text-main)] group-hover:text-[var(--primary)] transition-colors cursor-pointer" onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}>
+                          <h3 className="text-xl font-bold text-[var(--text-main)] group-hover:text-[var(--primary)] transition-colors cursor-pointer" onClick={() => router.push(`/application-tracking/${job._id}/edit`)}>
                             {job.title}
                           </h3>
                           <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-[var(--text-muted)]">
@@ -435,11 +415,8 @@ const ApplicationTrackingPage = () => {
                         )}
                         <Button
                           variant="ghost"
-                          onClick={() => {
-                            setSelectedJobForCoverLetter(job);
-                            setCoverLetterModalVisible(true);
-                          }}
-            className="p-2 text-[var(--accent)] hover:text-[var(--accent-dim)] hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
+                          onClick={() => router.push(`/application-tracking/${job._id}/cover-letter`)}
+                          className="p-2 text-[var(--accent)] hover:text-[var(--accent-dim)] hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
             title="Generate Cover Letter"
                           aria-label="Generate Cover Letter"
                         >
@@ -447,18 +424,7 @@ const ApplicationTrackingPage = () => {
                         </Button>
                         <Button
                           variant="ghost"
-                          onClick={() => {
-                            setSelectedJobForReminder(job);
-                            setReminderForm({
-                              title: `Follow up: ${job.title} at ${job.company}`,
-                              description: '',
-                              dueDate: dayjs().add(1, 'week').format('YYYY-MM-DD'),
-                              dueTime: '09:00',
-                              priority: 'medium',
-                              type: 'follow_up'
-                            });
-                            setReminderModalVisible(true);
-                          }}
+                          onClick={() => router.push(`/application-tracking/${job._id}/reminder`)}
                           className="p-2 text-[var(--warning)] hover:text-[var(--warning)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Set Reminder"
                           aria-label="Set Reminder"
@@ -467,7 +433,7 @@ const ApplicationTrackingPage = () => {
                         </Button>
                         <Button
                           variant="ghost"
-                          onClick={() => { setSelectedJob(job); setCreateJobModalVisible(true); }}
+                          onClick={() => router.push(`/application-tracking/${job._id}/edit`)}
                           className="p-2 text-[var(--primary)] hover:text-[var(--primary)]/80 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                           title="Edit"
                           aria-label="Edit"
@@ -501,7 +467,7 @@ const ApplicationTrackingPage = () => {
                   <Button
                     variant="primary"
                     size="md"
-                    onClick={() => { setSelectedJob(undefined); setCreateJobModalVisible(true); }}
+                    onClick={() => router.push('/application-tracking/new')}
                     className="px-6 py-3 bg-[var(--primary)] text-[var(--bg-deep)] font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all"
                   >
                     Add Application
@@ -512,128 +478,29 @@ const ApplicationTrackingPage = () => {
           </div>
         )}
 
-        {/* Pagination */}
-        {totalCount > pageSize && (
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <span className="text-[var(--text-muted)]">
-              Page {currentPage} of {Math.ceil(totalCount / pageSize)}
-            </span>
-            <Button
-              variant="ghost"
-              onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / pageSize), p + 1))}
-              disabled={currentPage === Math.ceil(totalCount / pageSize)}
-              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
-              aria-label="Next page"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+        {/* Infinite scroll sentinel / end state */}
+        {!initialLoading && filteredJobs.length > 0 && (
+          <div>
+            {hasMore ? (
+              <div ref={sentinelRef} className="flex items-center justify-center py-6">
+                {loadingMore ? (
+                  <div className="w-full max-w-xs space-y-2">
+                    <div className="h-4 bg-[var(--bg-glass)] rounded w-full animate-pulse"></div>
+                    <div className="h-4 bg-[var(--bg-glass)] rounded w-2/3 animate-pulse"></div>
+                  </div>
+                ) : (
+                  <span className="text-[var(--text-muted)] text-sm">Scroll for more</span>
+                )}
+              </div>
+            ) : (
+              <p className="text-center text-sm text-[var(--text-muted)] py-6">
+                You&apos;ve reached the end
+              </p>
+            )}
           </div>
         )}
       </div>
 
-      {/* Modals */}
-      <CreateJobModal
-        visible={createJobModalVisible}
-        onClose={() => setCreateJobModalVisible(false)}
-        onJobCreated={() => { fetchJobs(currentPage, pageSize); setCreateJobModalVisible(false); }}
-        job={selectedJob}
-      />
-
-      <CoverLetterModal
-        visible={coverLetterModalVisible}
-        onClose={() => setCoverLetterModalVisible(false)}
-        job={selectedJobForCoverLetter}
-        userProfile={userProfile}
-      />
-
-      <Modal
-        isOpen={reminderModalVisible}
-        onClose={() => setReminderModalVisible(false)}
-        title="Set Follow-up Reminder"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={reminderForm.title}
-                onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
-                placeholder="Reminder title"
-                className="w-full h-8 pl-4 pr-9 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200"
-              />
-              {reminderForm.title && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setReminderForm({ ...reminderForm, title: '' })}
-                  aria-label="Clear title"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 w-6 h-6 rounded-md text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-transparent"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </Button>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
-              <DatePicker
-                value={reminderForm.dueDate ? dayjs(reminderForm.dueDate) : null}
-                onChange={(d) => setReminderForm({ ...reminderForm, dueDate: d ? d.format('YYYY-MM-DD') : '' })}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Time</label>
-              <TimePicker
-                value={reminderForm.dueTime ? dayjs(reminderForm.dueTime, 'HH:mm') : null}
-                onChange={(t) => setReminderForm({ ...reminderForm, dueTime: t ? t.format('HH:mm') : '' })}
-                format="HH:mm"
-                className="w-full"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
-            <Select
-              value={reminderForm.priority}
-              onChange={(v) => setReminderForm({ ...reminderForm, priority: v })}
-              allowClear
-              placeholder="Select priority"
-              options={[
-                { value: 'low', label: 'Low' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'high', label: 'High' }
-              ]}
-              className="w-full"
-            />
-          </div>
-          <div className="flex justify-end gap-3 mt-6">
-            <Button
-              variant="secondary"
-              onClick={() => setReminderModalVisible(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleCreateReminder}
-            >
-              Set Reminder
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </AppLayout>
   );
 };

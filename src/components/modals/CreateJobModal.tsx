@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Select, DatePicker, AutoComplete } from 'antd';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import AppLayout from '@/components/AppLayout';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
-import { Briefcase, MapPin, Globe, AlertCircle, X } from 'lucide-react';
+import { Briefcase, MapPin, Globe, X, Maximize2, ArrowLeft, Clock, Flag, FileText } from 'lucide-react';
 
 interface Job {
   createdAt: string;
@@ -32,6 +33,7 @@ interface CreateJobModalProps {
   onClose: () => void;
   onJobCreated: (newJob: Job | null) => void;
   job?: Job | null; // Optional job prop for edit mode
+  mode?: 'modal' | 'page'; // when 'page', render as a full page instead of a modal
 }
 
 interface ValidationErrors {
@@ -55,7 +57,9 @@ const ClearButton = ({ onClick, label, className = '' }: { onClick: () => void; 
   </Button>
 );
 
-const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalProps) => {
+const DEFAULT_PLATFORMS = ['LinkedIn', 'Indeed', 'Glassdoor', 'Company Website', 'Referral', 'Other'];
+
+const CreateJobModal = ({ visible, onClose, onJobCreated, job, mode = 'modal' }: CreateJobModalProps) => {
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
@@ -72,6 +76,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
   // New states for resumes
   const [resumes, setResumes] = useState<{ _id: string; title: string }[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
+  const [fullscreenField, setFullscreenField] = useState<'description' | 'notes' | null>(null);
 
   // Fetch resumes when modal opens
   useEffect(() => {
@@ -86,12 +91,19 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     title?: string;
     company?: string;
     location?: string;
+    platform?: string;
     jobId?: { title?: string; company?: string; location?: string };
   }
-  const [suggestions, setSuggestions] = useState<{ titles: string[]; companies: string[]; locations: string[] }>({
+  const [suggestions, setSuggestions] = useState<{
+    titles: string[];
+    companies: string[];
+    locations: string[];
+    platforms: string[];
+  }>({
     titles: [],
     companies: [],
-    locations: []
+    locations: [],
+    platforms: []
   });
 
   useEffect(() => {
@@ -108,7 +120,8 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           setSuggestions({
             titles: unique(apps.map((a) => a.jobId?.title || a.jobTitle || a.title)),
             companies: unique(apps.map((a) => a.jobId?.company || a.company)),
-            locations: unique(apps.map((a) => a.jobId?.location || a.location))
+            locations: unique(apps.map((a) => a.jobId?.location || a.location)),
+            platforms: unique(apps.map((a) => a.platform))
           });
         }
       } catch {
@@ -143,6 +156,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
       setDescription(job.description || '');
       setNotes(job.notes || '');
       setErrors({});
+      setFullscreenField(null);
 
       // Pre-select resume if available
       if (job.resumeUsed && typeof job.resumeUsed === 'string') {
@@ -176,6 +190,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     setNotes('');
     setErrors({});
     setSelectedResumeId('');
+    setFullscreenField(null);
   };
 
   const validateField = (field: string, value?: string): string | undefined => {
@@ -320,17 +335,8 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     }
   };
 
-  return (
-    <Modal
-      isOpen={visible}
-      onClose={() => {
-        resetForm();
-        onClose();
-      }}
-      title={job ? "Edit Job Application" : "Add New Job Application"}
-      width="max-w-2xl"
-    >
-      <div className="space-y-4">
+  const formContent = (
+    <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
@@ -388,20 +394,20 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Job URL</label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+            <div className={`relative flex items-center bg-[var(--bg-deep)] border rounded-lg transition-colors ${errors.jobUrl ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}>
+              <Globe className="ml-3 w-4 h-4 text-[var(--text-muted)] flex-shrink-0 pointer-events-none" />
               <input
                 type="text"
                 value={jobUrl}
                 onChange={(e) => handleFieldChange('jobUrl', e.target.value)}
                 placeholder="https://..."
-                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.jobUrl ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+                className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
               />
               {jobUrl && (
                 <ClearButton
                   onClick={() => handleFieldChange('jobUrl', '')}
                   label="Clear URL"
-                  className="right-2 top-1/2 -translate-y-1/2"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 w-7 h-7 rounded-lg"
                 />
               )}
             </div>
@@ -415,6 +421,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <Select
               value={status || undefined}
               onChange={(v) => setStatus(v ?? '')}
+              prefix={<Clock className="w-4 h-4 text-[var(--text-muted)]" />}
               showSearch
               allowClear
               placeholder="Select status"
@@ -436,6 +443,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <Select
               value={priority || undefined}
               onChange={(v) => setPriority(v ?? '')}
+              prefix={<Flag className="w-4 h-4 text-[var(--text-muted)]" />}
               showSearch
               allowClear
               placeholder="Select priority"
@@ -450,20 +458,14 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Platform</label>
-            <Select
-              value={platform || undefined}
-              onChange={(v) => setPlatform(v ?? '')}
-              showSearch
+            <AutoComplete
+              value={platform}
+              onChange={(value: string) => setPlatform(value)}
+              options={[...new Set([...DEFAULT_PLATFORMS, ...suggestions.platforms])].map((p) => ({ value: p }))}
+              filterOption={(input, option) => (option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+              prefix={<Globe className="w-4 h-4 text-[var(--text-muted)]" />}
               allowClear
-              placeholder="Select platform"
-              options={[
-                { value: 'linkedin', label: 'LinkedIn' },
-                { value: 'indeed', label: 'Indeed' },
-                { value: 'glassdoor', label: 'Glassdoor' },
-                { value: 'company-website', label: 'Company Website' },
-                { value: 'referral', label: 'Referral' },
-                { value: 'other', label: 'Other' },
-              ]}
+              placeholder="e.g. LinkedIn, AngelList"
               className="w-full"
             />
           </div>
@@ -488,11 +490,12 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
               <Select
                 value={selectedResumeId || undefined}
                 onChange={(v) => setSelectedResumeId(v ?? '')}
+                prefix={<FileText className="w-4 h-4 text-[var(--text-muted)]" />}
                 showSearch
                 allowClear
                 placeholder="Select a resume"
                 options={resumes.map((resume) => ({
-                  value: resume.title,
+                  value: resume._id,
                   label: resume.title,
                 }))}
                 className="w-full"
@@ -502,14 +505,38 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Description</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-[var(--text-muted)]">Description</label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreenField(fullscreenField === 'description' ? null : 'description');
+              }}
+              aria-label={fullscreenField === 'description' ? 'Collapse description' : 'Expand description'}
+              className="px-2 py-0.5 text-xs flex items-center gap-1"
+            >
+              {fullscreenField === 'description' ? (
+                <>
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  Expand
+                </>
+              )}
+            </Button>
+          </div>
           <div className="relative">
             <textarea
               value={description}
               onChange={(e) => handleFieldChange('description', e.target.value)}
               placeholder="Job description..."
-              rows={3}
-              className={`w-full px-4 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none resize-none transition-colors duration-200 ${errors.description ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+              className={`w-full px-4 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none resize-none transition-colors duration-200 ${errors.description ? 'border-[var(--danger)]' : 'border-[var(--border)]'} ${fullscreenField === 'description' ? 'h-[50vh] md:h-[58vh] text-base' : 'min-h-[100px]'}`}
             />
             {description && (
               <ClearButton
@@ -524,14 +551,38 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-[var(--text-muted)]">Notes</label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreenField(fullscreenField === 'notes' ? null : 'notes');
+              }}
+              aria-label={fullscreenField === 'notes' ? 'Collapse notes' : 'Expand notes'}
+              className="px-2 py-0.5 text-xs flex items-center gap-1"
+            >
+              {fullscreenField === 'notes' ? (
+                <>
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  Expand
+                </>
+              )}
+            </Button>
+          </div>
           <div className="relative">
             <textarea
               value={notes}
               onChange={(e) => handleFieldChange('notes', e.target.value)}
               placeholder="Additional notes..."
-              rows={2}
-              className={`w-full px-4 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none resize-none transition-colors duration-200 ${errors.notes ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+              className={`w-full px-4 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none resize-none transition-colors duration-200 ${errors.notes ? 'border-[var(--danger)]' : 'border-[var(--border)]'} ${fullscreenField === 'notes' ? 'h-[44vh] md:h-[52vh] text-base' : 'min-h-[76px]'}`}
             />
             {notes && (
               <ClearButton
@@ -559,14 +610,51 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           <Button
             variant="primary"
             onClick={handleSubmit}
-            disabled={loading}
-            className="px-4 py-2 rounded-lg bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            isLoading={loading}
+            className="px-4 py-2 rounded-lg bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors flex items-center gap-2"
           >
-            {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
             {job ? "Update Job" : "Add Job"}
           </Button>
         </div>
-      </div>
+    </div>
+  );
+
+  if (mode === 'page') {
+    return (
+      <AppLayout showFooter={false}>
+        <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
+            className="px-3 py-2 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <h1 className="text-2xl font-bold text-[var(--text-main)]">
+            {job ? 'Edit Job Application' : 'Add New Job Application'}
+          </h1>
+          {formContent}
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <Modal
+      isOpen={visible}
+      onClose={() => {
+        resetForm();
+        onClose();
+      }}
+      title={job ? "Edit Job Application" : "Add New Job Application"}
+      width="max-w-2xl"
+    >
+      {formContent}
     </Modal>
   );
 };
