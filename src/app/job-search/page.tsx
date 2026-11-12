@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
 import ProfileCompletionBanner from '@/components/ProfileCompletionBanner';
+import ExtensionBanner from '@/components/ExtensionBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { Select } from 'antd';
@@ -274,6 +275,7 @@ const JobSearchPage = () => {
     <AppLayout showFooter={false}>
       <div className="p-6 lg:p-8 min-h-screen space-y-4 max-w-[1600px] mx-auto">
         <ProfileCompletionBanner />
+        <ExtensionBanner />
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">

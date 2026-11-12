@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Settings,
   Bell,
@@ -16,7 +17,13 @@ import {
   Clock,
   Play,
   Pause,
-  Sliders
+  Sliders,
+  Chrome,
+  Key,
+  Download,
+  Copy,
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import { notificationService, NotificationPreferences } from '@/services/NotificationService';
@@ -27,8 +34,13 @@ import Button from '@/components/ui/Button';
 import Toggle from '@/components/ui/Toggle';
 
 const SettingsPage = () => {
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('agent');
+
+  // Extension Settings State
+  const [extensionConnected, setExtensionConnected] = useState(false);
+  const [extensionToken, setExtensionToken] = useState('jq_ext_' + Math.random().toString(36).substring(2, 12));
 
   // Agent Settings
   const [agentSettings, setAgentSettings] = useState({
@@ -66,7 +78,24 @@ const SettingsPage = () => {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['agent', 'notifications', 'telegram', 'extension'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    // Check stored extension status
+    const storedStatus = localStorage.getItem('jobquest_extension_connected') === 'true';
+    setExtensionConnected(storedStatus);
+
+    const storedToken = localStorage.getItem('jobquest_extension_token');
+    if (storedToken) {
+      setExtensionToken(storedToken);
+    } else {
+      const newToken = 'jq_ext_' + Math.random().toString(36).substring(2, 12);
+      setExtensionToken(newToken);
+      localStorage.setItem('jobquest_extension_token', newToken);
+    }
+  }, [searchParams]);
 
   const loadSettings = async () => {
     // Load notification preferences
@@ -175,6 +204,26 @@ const SettingsPage = () => {
     }
   };
 
+  const handleToggleExtensionConnection = (connected: boolean) => {
+    setExtensionConnected(connected);
+    localStorage.setItem('jobquest_extension_connected', String(connected));
+
+    window.postMessage({
+      type: 'JOBQUEST_CONNECT_EXTENSION',
+      payload: {
+        connected,
+        apiKey: extensionToken,
+        serverUrl: window.location.origin
+      }
+    }, '*');
+
+    if (connected) {
+      toast.success('Job Agent extension connected');
+    } else {
+      toast.success('Job Agent extension disconnected');
+    }
+  };
+
   const testNotification = async (type: 'email' | 'push' | 'telegram' | 'inApp') => {
     try {
       switch (type) {
@@ -252,6 +301,7 @@ const SettingsPage = () => {
                 { id: 'agent', label: 'Agent Config', icon: Bot },
                 { id: 'notifications', label: 'Notifications', icon: Bell },
                 { id: 'telegram', label: 'Telegram', icon: MessageSquare },
+                { id: 'extension', label: 'Chrome Extension', icon: Chrome },
               ].map(({ id, label, icon: Icon }) => {
                 const isActive = activeTab === id;
                 return (
@@ -746,6 +796,106 @@ const SettingsPage = () => {
                   )}
 
 
+
+                  {/* Chrome Extension Settings */}
+                  {activeTab === 'extension' && (
+                    <div className="space-y-8">
+                      <div className="flex items-center justify-between border-b border-[var(--border-glass)] pb-6">
+                        <div>
+                          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Chrome className="w-5 h-5 text-[var(--primary)]" />
+                            Job Agent Extension
+                          </h2>
+                          <p className="text-sm text-[var(--text-muted)] mt-1">
+                            Connect your browser extension to autofill forms and import jobs directly.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider border ${
+                              extensionConnected
+                                ? 'bg-[rgba(34,197,94,0.12)] text-[var(--live)] border-[rgba(34,197,94,0.3)]'
+                                : 'bg-[rgba(239,68,68,0.1)] text-[var(--danger)] border-[rgba(239,68,68,0.3)]'
+                            }`}
+                          >
+                            {extensionConnected ? 'Connected' : 'Disconnected'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Connection Toggle & Card */}
+                      <div className="p-6 bg-[var(--bg-deep)]/60 border border-[var(--border)] rounded-2xl space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <h3 className="font-semibold text-white flex items-center gap-2">
+                              <ShieldCheck className="w-4 h-4 text-[var(--live)]" />
+                              Extension Pairing Status
+                            </h3>
+                            <p className="text-sm text-[var(--text-muted)]">
+                              Enable to allow the extension to pull your resume profiles and application notes.
+                            </p>
+                          </div>
+                          <Toggle
+                            checked={extensionConnected}
+                            onChange={handleToggleExtensionConnection}
+                            label="Toggle extension connection"
+                          />
+                        </div>
+
+                        {/* Pairing Token */}
+                        <div className="pt-4 border-t border-[var(--border)] space-y-2">
+                          <label className="block text-xs font-mono uppercase text-[var(--text-dim)] tracking-wider">
+                            Pairing Token (API Key)
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 font-mono text-sm px-3.5 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg text-[var(--text-main)] truncate">
+                              {extensionToken}
+                            </div>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(extensionToken);
+                                toast.success('Pairing token copied to clipboard');
+                              }}
+                              leftIcon={<Copy className="w-3.5 h-3.5" />}
+                              className="h-10 px-3.5 shrink-0"
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                          <p className="text-xs text-[var(--text-muted)]">
+                            This token authenticates your browser extension with your local session.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Installation instructions */}
+                      <div className="p-6 bg-[var(--bg-deep)]/40 border border-[var(--border)] rounded-2xl space-y-4">
+                        <h3 className="font-semibold text-white flex items-center gap-2">
+                          <Download className="w-4 h-4 text-[var(--text-muted)]" />
+                          How to Load Extension in Chrome
+                        </h3>
+                        <ol className="list-decimal list-inside space-y-2.5 text-sm text-[var(--text-muted)] leading-relaxed">
+                          <li>
+                            Open <code className="text-white bg-[var(--bg-surface)] px-2 py-0.5 rounded border border-[var(--border)]">chrome://extensions</code> in your Chrome browser.
+                          </li>
+                          <li>
+                            Turn on <strong className="text-white">Developer mode</strong> using the switch at the top-right.
+                          </li>
+                          <li>
+                            Click <strong className="text-white">Load unpacked</strong> and select the directory:
+                            <div className="mt-1.5 p-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded font-mono text-xs text-[var(--text-main)] break-all">
+                              public/extension
+                            </div>
+                          </li>
+                          <li>
+                            Pin the <strong className="text-white">JobQuest Agent</strong> extension in your toolbar, then toggle connection above.
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  )}
 
                 </motion.div>
               </AnimatePresence>

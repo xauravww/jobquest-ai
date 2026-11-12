@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "JobQuest AI - Job Agent Autofill",
+  "version": "1.0.0",
+  "description": "Autofill job application forms and sync with your JobQuest AI dashboard.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "JobQuest Agent"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:3000/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
