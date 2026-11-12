@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Select, DatePicker } from 'antd';
 import dayjs from 'dayjs';
-import { Tag, AlertCircle, Repeat, Clock, FileText, Plus, Trash2, Bell } from 'lucide-react';
+import { Tag, Repeat, Plus, Trash2, Bell } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
@@ -310,6 +310,8 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                         <Select
                             value={formData.applicationId}
                             onChange={(v) => setFormData({ ...formData, applicationId: v })}
+                            showSearch
+                            placeholder="Search or select an application"
                             options={[
                                 { value: '', label: 'None' },
                                 ...applications.map((app) => ({
@@ -317,6 +319,9 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                     label: `${app.jobId?.title || 'Untitled'} at ${app.jobId?.company || 'Unknown Company'}`,
                                 })),
                             ]}
+                            filterOption={(input, option) =>
+                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                            }
                             className="w-full"
                         />
 

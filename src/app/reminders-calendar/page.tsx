@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as AntCalendar, Input, Pagination, Tooltip, Select } from 'antd';
+import WeekGantt from '@/components/ui/WeekGantt';
 import dayjs, { Dayjs } from 'dayjs';
 import AppLayout from '@/components/AppLayout';
 import Button from '@/components/ui/Button';
@@ -17,15 +17,15 @@ import {
   FileText,
   Search,
   Zap,
-  Target
+  Target,
+  X,
+  Filter
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
 import CreateEventModal from '@/components/modals/CreateEventModal';
 import DayViewModal from './DayViewModal';
-
-const { Search: AntSearch } = Input;
 
 interface ReminderResponse {
   _id: string;
@@ -88,20 +88,18 @@ const RemindersCalendarPage = () => {
   const [editingReminder, setEditingReminder] = useState<CalendarItem | undefined>(undefined);
   const [editingEvent, setEditingEvent] = useState<CalendarItem | undefined>(undefined);
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'upcoming' | 'overdue'>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [showDayViewModal, setShowDayViewModal] = useState(false);
   const [dayViewItems, setDayViewItems] = useState<CalendarItem[]>([]);
   const [dayViewDate, setDayViewDate] = useState<Dayjs | null>(null);
-  const itemsPerPage = 20;
 
-  const fetchData = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Fetch reminders with pagination
-      const remindersResponse = await fetch(`/api/reminders?page=${page}&limit=${itemsPerPage}`);
+      // Fetch reminders
+      const remindersResponse = await fetch('/api/reminders?page=1&limit=500');
       if (remindersResponse.ok) {
         const remindersData = await remindersResponse.json();
         const mappedReminders: CalendarItem[] = (remindersData.reminders || []).map((r: unknown) => {
@@ -121,10 +119,9 @@ const RemindersCalendarPage = () => {
           };
         });
         setReminders(mappedReminders);
-        setTotalPages(remindersData.pagination.pages || 1);
       }
 
-      // Fetch calendar events (no pagination assumed)
+      // Fetch calendar events
       const eventsResponse = await fetch('/api/calendar/events');
       if (eventsResponse.ok) {
         const eventsData = await eventsResponse.json();
@@ -153,11 +150,11 @@ const RemindersCalendarPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [itemsPerPage]);
+  }, []);
 
   useEffect(() => {
-    fetchData(currentPage);
-  }, [fetchData, currentPage]);
+    fetchData();
+  }, [fetchData]);
 
   // Combine and filter items based on active filter and search
   const getFilteredItems = (): CalendarItem[] => {
@@ -203,70 +200,12 @@ const RemindersCalendarPage = () => {
   const filteredItems = getFilteredItems();
 
   // Group items by date string for calendar rendering
-  const itemsByDate = filteredItems.reduce<Record<string, CalendarItem[]>>((acc, item) => {
-    const dateStr = item.date.format('YYYY-MM-DD');
-    if (!acc[dateStr]) acc[dateStr] = [];
-    acc[dateStr].push(item);
-    return acc;
-  }, {});
-
-  // Render items in calendar date cell
-  const dateCellRender = (value: Dayjs) => {
-    const dateStr = value.format('YYYY-MM-DD');
-    const items = itemsByDate[dateStr] || [];
-
-    const reminderCount = items.filter(item => item.type === 'reminder').length;
-    const eventCount = items.filter(item => item.type === 'event').length;
-
-    const handleEditItem = (item: CalendarItem) => {
-      if (item.type === 'reminder') {
-        setEditingReminder(item);
-        setCreateType('reminder');
-      } else {
-        setEditingEvent(item);
-        setCreateType('event');
-      }
-      setShowCreateModal(true);
-    };
-
-    return (
-      <div className="calendar-date-cell cursor-pointer" onClick={() => {
-        setSelectedDate(value);
-        setDayViewItems(items);
-        setDayViewDate(value);
-        setShowDayViewModal(true);
-      }}>
-        <ul>
-          {reminderCount > 0 && (
-            <li className="cursor-pointer" onClick={(e) => {
-              e.stopPropagation();
-              setSelectedDate(value);
-              setDayViewItems(items.filter(item => item.type === 'reminder'));
-              setDayViewDate(value);
-              setShowDayViewModal(true);
-            }}>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-soft)] text-[var(--accent)]">
-                {reminderCount} reminder{reminderCount > 1 ? 's' : ''}
-              </span>
-            </li>
-          )}
-          {eventCount > 0 && (
-            <li className="cursor-pointer" onClick={(e) => {
-              e.stopPropagation();
-              setSelectedDate(value);
-              setDayViewItems(items.filter(item => item.type === 'event'));
-              setDayViewDate(value);
-              setShowDayViewModal(true);
-            }}>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-raised)] text-[var(--text-main)] border border-[var(--border-strong)]">
-                {eventCount} event{eventCount > 1 ? 's' : ''}
-              </span>
-            </li>
-          )}
-        </ul>
-      </div>
-    );
-  };
+  // Week start (Monday) for the Gantt view
+  const weekStart = (() => {
+    const day = selectedDate.day();
+    const diff = day === 0 ? 6 : day - 1;
+    return selectedDate.startOf('day').subtract(diff, 'day');
+  })();
 
   if (loading) {
     return (
@@ -284,144 +223,124 @@ const RemindersCalendarPage = () => {
   return (
     <AppLayout showFooter={false}>
       <div className="p-6 lg:p-8 bg-[var(--bg-deep)] min-h-screen">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-[var(--accent-soft)] rounded-xl border border-[var(--accent)]/30">
-              <Target className="w-8 h-8 text-[var(--accent)]" />
-            </div>
-            <h1 className="text-3xl font-bold text-[var(--text-main)]">
+        {/* Header (compact, like application-tracking) */}
+        <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-[var(--text-main)] flex items-center gap-3">
+              <div className="p-2 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
+                <Target className="w-8 h-8 text-[var(--primary)]" />
+              </div>
               My Schedule
             </h1>
           </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="flex justify-center gap-4 mb-8">
-          <Button
-            variant="primary"
-            onClick={() => {
-              setCreateType('reminder');
-              setEditingReminder(undefined);
-              setShowCreateModal(true);
-            }}
-            leftIcon={<Bell className="w-5 h-5" />}
-            className="px-6 py-4"
-          >
-            Add Reminder
-          </Button>
-
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                setCreateType('reminder');
+                setEditingReminder(undefined);
+                setShowCreateModal(true);
+              }}
+              leftIcon={<Bell className="w-5 h-5" />}
+              className="px-5 py-2.5"
+            >
+              Add Reminder
+            </Button>
             <Button
               variant="secondary"
+              size="md"
               onClick={() => {
                 setCreateType('event');
                 setEditingEvent(undefined);
                 setShowCreateModal(true);
               }}
-            leftIcon={<Calendar className="w-5 h-5" />}
-            className="px-6 py-4"
-          >
-            Add Event
-          </Button>
+              leftIcon={<Calendar className="w-5 h-5" />}
+              className="px-5 py-2.5"
+            >
+              Add Event
+            </Button>
+          </div>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Filters (same UI as the Jobs Agent / job-search page) */}
         <div className="max-w-4xl mx-auto mb-8">
-          <div className="filter-panel rounded-xl p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              {/* Search */}
-              <div className="flex-1 w-full">
-                <AntSearch
-                  placeholder="Search your reminders and events..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  size="large"
-                  allowClear
-                  enterButton={<Search className="w-5 h-5" />}
-                  className="max-w-full rounded-lg"
-                  style={{ maxWidth: '100%' }}
-                />
+          <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)]">
+            <div className="p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1 flex items-center bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg transition-colors">
+                  <Search className="ml-3 w-4 h-4 text-[var(--text-muted)] flex-shrink-0 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search your reminders and events..."
+                    className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
+                  />
+                  {searchQuery && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 w-7 h-7 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
+
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => setShowFilters(v => !v)}
+                  className="shrink-0 h-8 px-4 rounded-lg flex items-center justify-center gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span>{showFilters ? 'Hide filters' : 'Filters'}</span>
+                </Button>
               </div>
 
-              {/* Quick Filters */}
-              <div className="flex gap-2">
-                {[
-                  { key: 'all', label: 'All', icon: Target },
-                  { key: 'today', label: 'Today', icon: Zap },
-                  { key: 'upcoming', label: 'Upcoming', icon: Clock },
-                  { key: 'overdue', label: 'Overdue', icon: Bell }
-                ].map(({ key, label, icon: Icon }) => (
-                  <Button
-                    key={key}
-                    variant={activeFilter === key ? 'primary' : 'secondary'}
-                    onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
-                    leftIcon={<Icon className="w-4 h-4" />}
-                    className="px-4 py-2"
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
+              {showFilters && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-3 border-t border-[var(--border)]">
+                  {[
+                    { key: 'all', label: 'All', icon: Target },
+                    { key: 'today', label: 'Today', icon: Zap },
+                    { key: 'upcoming', label: 'Upcoming', icon: Clock },
+                    { key: 'overdue', label: 'Overdue', icon: Bell }
+                  ].map(({ key, label, icon: Icon }) => (
+                    <Button
+                      key={key}
+                      type="button"
+                      variant={activeFilter === key ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setActiveFilter(key as 'all' | 'today' | 'upcoming' | 'overdue')}
+                      leftIcon={<Icon className="w-4 h-4" />}
+                      className="px-3 py-1.5 rounded-lg justify-start"
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Calendar */}
+        {/* Week Gantt view */}
         <div className="max-w-4xl mx-auto">
-          <AntCalendar
-            cellRender={(current, info) =>
-              info.type === 'date' ? dateCellRender(current) : info.originNode
-            }
-            fullscreen={false}
-            headerRender={({ value, onChange }) => {
-              const current = value.clone();
-              // dayjs does not have localeData, so use Intl API for month names
-              const month = current.month();
-              const year = current.year();
-
-              const monthNames = Array.from({ length: 12 }, (_, i) =>
-                new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(year, i))
-              );
-
-              return (
-                <div style={{ padding: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Select
-                    value={month}
-                    onChange={(v) => {
-                      const newMonth = v;
-                      const newValue = value.clone().month(newMonth);
-                      onChange(newValue);
-                    }}
-                    options={monthNames.map((name, i) => ({ value: i, label: name }))}
-                    className="w-full"
-                  />
-                </div>
-              );
-            }}
-            onSelect={(date) => {
+          <WeekGantt
+            items={filteredItems}
+            weekStart={weekStart}
+            onNavigate={(weeks) => setSelectedDate((d) => d.add(weeks, 'week'))}
+            onOpenDay={(items, date) => {
               setSelectedDate(date);
-              const dateStr = date.format('YYYY-MM-DD');
-              const items = itemsByDate[dateStr] || [];
-              setDayViewItems(items);
+              setDayViewItems(items as CalendarItem[]);
               setDayViewDate(date);
               setShowDayViewModal(true);
-              return null;
             }}
-            className="rounded-xl shadow-lg"
-          />
-        </div>
-
-        {/* Pagination Controls */}
-        <div className="flex justify-center mt-8">
-          <Pagination
-            current={currentPage}
-            total={totalPages * itemsPerPage}
-            pageSize={itemsPerPage}
-            onChange={(page) => setCurrentPage(page)}
-            showSizeChanger={false}
-            showQuickJumper
-            className="bg-[var(--bg-card)] rounded-lg p-4"
-            disabled={totalPages <= 1}
           />
         </div>
 
