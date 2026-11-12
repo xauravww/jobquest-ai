@@ -24,6 +24,7 @@ import { telegramService } from '@/services/TelegramService';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
+import Toggle from '@/components/ui/Toggle';
 
 const SettingsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -225,21 +226,6 @@ const SettingsPage = () => {
     }
   };
 
-  const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: (checked: boolean) => void, disabled?: boolean }) => (
-    <Button
-      variant="ghost"
-      onClick={() => !disabled && onChange(!checked)}
-      className={`relative w-12 h-7 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none ${checked
-        ? 'bg-[var(--primary)] border border-[var(--primary-dim)]'
-        : 'bg-[var(--bg-deep)] border border-[var(--border-strong)]'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-      aria-label={checked ? 'Turn off' : 'Turn on'}
-    >
-      <div className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white border border-[var(--border-glass)] shadow-[0_1px_3px_rgba(0,0,0,0.45)] transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'
-        }`} />
-    </Button>
-  );
-
   return (
     <AppLayout showFooter={false}>
       <div className="p-6 lg:p-8 min-h-screen bg-[var(--bg-deep)]">
@@ -321,7 +307,7 @@ const SettingsPage = () => {
                               <Zap className="w-4 h-4 text-[var(--primary)]" />
                               Agent Status
                             </h3>
-                            <ToggleSwitch
+                            <Toggle
                               checked={agentSettings.enabled}
                               onChange={(checked) => setAgentSettings(prev => ({ ...prev, enabled: checked }))}
                             />
@@ -342,19 +328,35 @@ const SettingsPage = () => {
                             Scan Frequency
                           </h3>
                           <div className="space-y-3">
-                            {['1h', '6h', '12h', '24h'].map((freq) => (
-                              <label key={freq} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-surface)] cursor-pointer hover:bg-[var(--bg-surface)]/80 transition-colors">
-                                <span className="text-sm text-white">Every {freq}</span>
-                                <input
-                                  type="radio"
-                                  name="scanFrequency"
-                                  value={freq}
-                                  checked={agentSettings.scanFrequency === freq}
-                                  onChange={(e) => setAgentSettings(prev => ({ ...prev, scanFrequency: e.target.value }))}
-                                  className="accent-[var(--primary)]"
-                                />
-                              </label>
-                            ))}
+                            {['1h', '6h', '12h', '24h'].map((freq) => {
+                              const isSelected = agentSettings.scanFrequency === freq;
+                              return (
+                                <label
+                                  key={freq}
+                                  onClick={() => setAgentSettings(prev => ({ ...prev, scanFrequency: freq }))}
+                                  className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[rgba(34,197,94,0.06)] border-[rgba(34,197,94,0.35)] shadow-sm'
+                                      : 'bg-[var(--bg-surface)] border-[var(--border)] hover:border-[var(--border-strong)]'
+                                  }`}
+                                >
+                                  <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-[var(--text-muted)]'}`}>
+                                    Every {freq}
+                                  </span>
+                                  <div
+                                    className={`w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                                      isSelected
+                                        ? 'border-2 border-[var(--live)] bg-[var(--live)]/20'
+                                        : 'border border-[var(--border-strong)] bg-transparent'
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--live)] animate-in zoom-in-50 duration-150" />
+                                    )}
+                                  </div>
+                                </label>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -371,7 +373,7 @@ const SettingsPage = () => {
                               <p className="font-medium text-white">Auto-Apply (Experimental)</p>
                               <p className="text-sm text-[var(--text-muted)]">Automatically apply to jobs with 95%+ match score</p>
                             </div>
-                            <ToggleSwitch
+                            <Toggle
                               checked={agentSettings.autoApply}
                               onChange={(checked) => setAgentSettings(prev => ({ ...prev, autoApply: checked }))}
                             />
@@ -382,7 +384,7 @@ const SettingsPage = () => {
                               <p className="font-medium text-white">Auto Follow-up</p>
                               <p className="text-sm text-[var(--text-muted)]">Draft follow-up emails for applied jobs</p>
                             </div>
-                            <ToggleSwitch
+                            <Toggle
                               checked={agentSettings.autoFollowUp}
                               onChange={(checked) => setAgentSettings(prev => ({ ...prev, autoFollowUp: checked }))}
                             />
@@ -440,7 +442,7 @@ const SettingsPage = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <ToggleSwitch
+                              <Toggle
                                 checked={notificationPrefs.inApp}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, inApp: checked }))}
                               />
@@ -465,7 +467,7 @@ const SettingsPage = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <ToggleSwitch
+                              <Toggle
                                 checked={notificationPrefs.push}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, push: checked }))}
                               />
@@ -490,7 +492,7 @@ const SettingsPage = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <ToggleSwitch
+                              <Toggle
                                 checked={notificationPrefs.telegram}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, telegram: checked }))}
                                 disabled={!telegramStatus.connected}
@@ -517,7 +519,7 @@ const SettingsPage = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <ToggleSwitch
+                              <Toggle
                                 checked={notificationPrefs.email}
                                 onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, email: checked }))}
                               />
@@ -541,21 +543,21 @@ const SettingsPage = () => {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
                             <span className="text-white font-medium">Interview Reminders</span>
-                            <ToggleSwitch
+                            <Toggle
                               checked={notificationPrefs.interviewReminders}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, interviewReminders: checked }))}
                             />
                           </div>
                           <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
                             <span className="text-white font-medium">Follow-up Reminders</span>
-                            <ToggleSwitch
+                            <Toggle
                               checked={notificationPrefs.followUpReminders}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, followUpReminders: checked }))}
                             />
                           </div>
                           <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
                             <span className="text-white font-medium">Application Deadlines</span>
-                            <ToggleSwitch
+                            <Toggle
                               checked={notificationPrefs.applicationDeadlines}
                               onChange={(checked) => setNotificationPrefs(prev => ({ ...prev, applicationDeadlines: checked }))}
                             />
