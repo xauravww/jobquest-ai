@@ -41,7 +41,7 @@ const DashboardPage = () => {
         const res = await fetch('/api/applications');
         if (res.ok) {
           const data = await res.json();
-          const apps = (data.applications || data || []).slice(0, 5).map((a: Record<string, string>) => ({
+          const apps = (data.applications || data || []).slice(0, 10).map((a: Record<string, string>) => ({
             id: a._id || a.id,
             role: a.jobTitle || a.role || a.title || 'Untitled',
             company: a.company || 'Unknown',

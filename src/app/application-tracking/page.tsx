@@ -13,7 +13,7 @@ import { Select } from 'antd';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from "@/components/ui/Button";
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ApplicationCardSkeleton from '@/components/ui/ApplicationCardSkeleton';
 import { confirmAction } from '@/lib/confirm';
 
 // --- Types ---
@@ -346,12 +346,7 @@ const ApplicationTrackingPage = () => {
 
         {/* Job List */}
         {initialLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <LoadingSpinner size="lg" className="mx-auto mb-4" />
-              <p className="text-[var(--text-muted)]">Loading applications...</p>
-            </div>
-          </div>
+          <ApplicationCardSkeleton count={5} />
         ) : (
           <div className="grid grid-cols-1 gap-4">
             <AnimatePresence mode="popLayout">

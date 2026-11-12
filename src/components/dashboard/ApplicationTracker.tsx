@@ -25,6 +25,8 @@ const statusStyle = (status: string) => {
 };
 
 const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({ applications = [] }) => {
+  const visibleApplications = applications.slice(0, 4);
+
   return (
     <div className="bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] p-6 h-full flex flex-col overflow-hidden">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-6 flex-shrink-0">
@@ -48,7 +50,7 @@ const ApplicationTracker: React.FC<ApplicationTrackerProps> = ({ applications = 
       <div className="flex-1 overflow-x-auto">
         {applications.length > 0 ? (
           <div className="flex gap-4 pb-2 min-w-max">
-            {applications.map(app => (
+            {visibleApplications.map(app => (
               <div key={app.id} className="w-[240px] sm:w-[260px] bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl p-4 flex flex-col">
                 <div className="flex justify-between items-start gap-2 mb-3">
                   <div className="min-w-0">

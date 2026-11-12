@@ -241,11 +241,21 @@ const JobCard = ({ job, onTrack, onSkip }: {
 };
 
 // Enhanced Loading Components
-const ChunkLoadingSpinner = () => (
-  <div className="flex items-center justify-center py-8">
-    <div className="flex items-center gap-3 px-5 py-2.5 bg-[var(--bg-surface)] border border-[var(--primary)]/20 rounded-full">
-      <div className="w-5 h-5 border-2 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin"></div>
-      <span className="text-[var(--text-main)] text-sm font-medium tracking-wide">AI Analysis in progress...</span>
+const ChunkLoadingSkeleton = () => (
+  <div className="w-full py-4 space-y-4">
+    <div className="flex items-center justify-between p-3.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl animate-pulse">
+      <div className="flex items-center gap-2.5">
+        <div className="w-2 h-2 rounded-full bg-[var(--live)] animate-ping" />
+        <span className="text-xs font-mono uppercase tracking-wider text-[var(--text-muted)]">
+          AI Analysis in progress...
+        </span>
+      </div>
+      <div className="h-4 w-28 bg-[var(--bg-raised)] rounded" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <JobCardSkeleton />
+      <JobCardSkeleton />
+      <JobCardSkeleton />
     </div>
   </div>
 );
@@ -384,7 +394,7 @@ const ChunkHeader = ({
           </Button>
         </div>
       )}
-      {isLoading && <ChunkLoadingSpinner />}
+      {isLoading && <ChunkLoadingSkeleton />}
     </div>
   </div>
 );

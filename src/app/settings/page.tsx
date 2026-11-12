@@ -6,13 +6,11 @@ import {
   Bell,
   MessageSquare,
   Mail,
-  Shield,
   Zap,
   Save,
   TestTube,
   CheckCircle,
   AlertCircle,
-  ExternalLink,
   Info,
   Bot,
   Clock,
@@ -65,15 +63,6 @@ const SettingsPage = () => {
     hasUsername: false
   });
 
-  // Email settings
-  const [emailSettings, setEmailSettings] = useState({
-    enabled: true,
-    address: '',
-    dailyDigest: true,
-    weeklyReport: true,
-    instantAlerts: true
-  });
-
   useEffect(() => {
     loadSettings();
   }, []);
@@ -122,17 +111,6 @@ const SettingsPage = () => {
       });
     }
 
-    // Load email settings from localStorage
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('emailSettings');
-        if (stored) {
-          setEmailSettings(JSON.parse(stored));
-        }
-      } catch (error) {
-        console.error('Failed to load email settings:', error);
-      }
-    }
   };
 
   const saveAgentSettings = async () => {
@@ -196,21 +174,6 @@ const SettingsPage = () => {
     }
   };
 
-  const saveEmailSettings = async () => {
-    try {
-      setLoading(true);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('emailSettings', JSON.stringify(emailSettings));
-      }
-      toast.success('Email settings saved');
-    } catch (error) {
-      console.error('Failed to save email settings:', error);
-      toast.error('Failed to save email settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const testNotification = async (type: 'email' | 'push' | 'telegram' | 'inApp') => {
     try {
       switch (type) {
@@ -262,45 +225,17 @@ const SettingsPage = () => {
     }
   };
 
-  const TabButton = ({ id, label, icon: Icon, isActive, onClick }: {
-    id: string;
-    label: string;
-    icon: any;
-    isActive: boolean;
-    onClick: () => void;
-  }) => (
-    <Button
-      variant="ghost"
-      onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all w-full text-left relative overflow-hidden group ${isActive
-        ? 'bg-[var(--primary)] text-black'
-        : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-surface)]'
-        }`}
-    >
-      <div className="relative z-10 flex items-center gap-3">
-        <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-[var(--text-muted)] group-hover:text-white'}`} />
-        {label}
-      </div>
-      {isActive && (
-        <motion.div
-          layoutId="activeTabGlow"
-          className="absolute inset-0 bg-white/10"
-          initial={false}
-          transition={{ duration: 0.3 }}
-        />
-      )}
-    </Button>
-  );
-
   const ToggleSwitch = ({ checked, onChange, disabled = false }: { checked: boolean, onChange: (checked: boolean) => void, disabled?: boolean }) => (
     <Button
       variant="ghost"
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative w-12 h-6 rounded-full transition-colors ${checked ? 'bg-[var(--primary)]' : 'bg-[var(--bg-deep)] border border-[var(--border-glass)]'
+      className={`relative w-12 h-7 rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none ${checked
+        ? 'bg-[var(--primary)] border border-[var(--primary-dim)]'
+        : 'bg-[var(--bg-deep)] border border-[var(--border-strong)]'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       aria-label={checked ? 'Turn off' : 'Turn on'}
     >
-      <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-0'
+      <div className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white border border-[var(--border-glass)] shadow-[0_1px_3px_rgba(0,0,0,0.45)] transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'
         }`} />
     </Button>
   );
@@ -324,59 +259,42 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-4 space-y-2 sticky top-24">
-                <TabButton
-                  id="agent"
-                  label="Agent Config"
-                  icon={Bot}
-                  isActive={activeTab === 'agent'}
-                  onClick={() => setActiveTab('agent')}
-                />
-                <TabButton
-                  id="notifications"
-                  label="Notifications"
-                  icon={Bell}
-                  isActive={activeTab === 'notifications'}
-                  onClick={() => setActiveTab('notifications')}
-                />
-                <TabButton
-                  id="telegram"
-                  label="Telegram"
-                  icon={MessageSquare}
-                  isActive={activeTab === 'telegram'}
-                  onClick={() => setActiveTab('telegram')}
-                />
-                <TabButton
-                  id="email"
-                  label="Email"
-                  icon={Mail}
-                  isActive={activeTab === 'email'}
-                  onClick={() => setActiveTab('email')}
-                />
-                <TabButton
-                  id="security"
-                  label="Security"
-                  icon={Shield}
-                  isActive={activeTab === 'security'}
-                  onClick={() => setActiveTab('security')}
-                />
-              </div>
+          <div className="space-y-8">
+            {/* Pill tab bar (profile style) */}
+            <div className="flex flex-wrap gap-1.5 bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-2">
+              {[
+                { id: 'agent', label: 'Agent Config', icon: Bot },
+                { id: 'notifications', label: 'Notifications', icon: Bell },
+                { id: 'telegram', label: 'Telegram', icon: MessageSquare },
+              ].map(({ id, label, icon: Icon }) => {
+                const isActive = activeTab === id;
+                return (
+                  <Button
+                    key={id}
+                    variant="ghost"
+                    onClick={() => setActiveTab(id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${isActive
+                      ? 'bg-[var(--primary)] text-black'
+                      : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--bg-glass)]'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </Button>
+                );
+              })}
             </div>
 
             {/* Content */}
-            <div className="lg:col-span-3">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-6 min-h-[600px]"
-                >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="bg-[var(--bg-surface)]/50 backdrop-blur-xl rounded-2xl p-6 min-h-[600px]"
+              >
                   {activeTab === 'agent' && (
                     <div className="space-y-8">
                       <div className="flex items-center justify-between border-b border-[var(--border-glass)] pb-6">
@@ -712,7 +630,7 @@ const SettingsPage = () => {
                             <p>To enable Telegram notifications:</p>
                             <ol className="list-decimal list-inside space-y-1 ml-2">
                               <li>Send <code className="bg-blue-500/20 px-1 rounded">/start</code> to our shared bot on Telegram</li>
-                              <li>Copy your Telegram User ID from the bot's response</li>
+                              <li>Copy your Telegram User ID from the bot&apos;s response</li>
                               <li>Enter your User ID below and save</li>
                               <li>Start using commands like <code className="bg-blue-500/20 px-1 rounded">fleeting: Your note here</code></li>
                             </ol>
@@ -825,117 +743,12 @@ const SettingsPage = () => {
                     </div>
                   )}
 
-                  {activeTab === 'email' && (
-                    <div className="space-y-8">
-                      <div className="flex items-center justify-between border-b border-[var(--border-glass)] pb-6">
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                          <Mail className="w-5 h-5 text-[var(--danger)]" />
-                          Email Settings
-                        </h2>
-                        <Button
-                          variant="danger"
-                          onClick={saveEmailSettings}
-                          disabled={loading}
-                          className="flex items-center gap-2 px-4 py-2 bg-[var(--danger)] text-white font-bold rounded-xl hover:bg-[var(--danger)]/90 transition-colors disabled:opacity-50"
-                        >
-                          <Save className="w-4 h-4" />
-                          {loading ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                      </div>
 
-                      <div className="space-y-6">
-                        <div className="flex items-center justify-between p-4 bg-[var(--bg-deep)]/50 border border-[var(--border-glass)] rounded-xl">
-                          <div>
-                            <p className="font-medium text-white">Email Notifications</p>
-                            <p className="text-sm text-[var(--text-muted)]">Enable email notifications</p>
-                          </div>
-                          <ToggleSwitch
-                            checked={emailSettings.enabled}
-                            onChange={(checked) => setEmailSettings(prev => ({ ...prev, enabled: checked }))}
-                          />
-                        </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">
-                            Email Address
-                          </label>
-                          <input
-                            type="email"
-                            placeholder="your.email@example.com"
-                            value={emailSettings.address}
-                            onChange={(e) => setEmailSettings(prev => ({ ...prev, address: e.target.value }))}
-                            className="w-full px-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none transition-all"
-                          />
-                        </div>
-
-                        <div className="border-t border-[var(--border-glass)] pt-6 space-y-4">
-                          <h3 className="text-lg font-semibold text-white">Email Types</h3>
-
-                          <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
-                            <span className="text-white font-medium">Daily Digest</span>
-                            <ToggleSwitch
-                              checked={emailSettings.dailyDigest}
-                              onChange={(checked) => setEmailSettings(prev => ({ ...prev, dailyDigest: checked }))}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
-                            <span className="text-white font-medium">Weekly Report</span>
-                            <ToggleSwitch
-                              checked={emailSettings.weeklyReport}
-                              onChange={(checked) => setEmailSettings(prev => ({ ...prev, weeklyReport: checked }))}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between p-3 bg-[var(--bg-deep)]/30 rounded-xl border border-[var(--border-glass)]">
-                            <span className="text-white font-medium">Instant Alerts</span>
-                            <ToggleSwitch
-                              checked={emailSettings.instantAlerts}
-                              onChange={(checked) => setEmailSettings(prev => ({ ...prev, instantAlerts: checked }))}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'security' && (
-                    <div className="space-y-8">
-                      <div className="flex items-center gap-2 border-b border-[var(--border-glass)] pb-6">
-                        <Shield className="w-6 h-6 text-[var(--success)]" />
-                        <h2 className="text-xl font-bold text-white">Security & Privacy</h2>
-                      </div>
-
-                      <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-4">
-                        <Info className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
-                        <div className="space-y-2">
-                          <h4 className="font-bold text-blue-400">Security Features</h4>
-                          <p className="text-sm text-blue-200/80">
-                            Advanced security features will be available in the next update.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="p-6 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)]">
-                          <h3 className="font-bold text-white mb-2">Data Privacy</h3>
-                          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                            Your job search data is stored locally and encrypted. We never share your personal information.
-                          </p>
-                        </div>
-
-                        <div className="p-6 bg-[var(--bg-deep)]/50 rounded-xl border border-[var(--border-glass)]">
-                          <h3 className="font-bold text-white mb-2">API Security</h3>
-                          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-                            All API communications are encrypted using HTTPS. Telegram credentials are stored securely.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </motion.div>
               </AnimatePresence>
-            </div>
-          </div>
         </div>
+      </div>
       </div>
     </AppLayout>
   );
