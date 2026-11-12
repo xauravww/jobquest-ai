@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, MapPin, Calendar, Building, ExternalLink, Filter, Save, X, CheckCircle, Globe, DollarSign } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, MapPin, Calendar, Building, ExternalLink, Filter, Save, X, CheckCircle, Globe, DollarSign, RefreshCw, Award, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AppLayout from '@/components/AppLayout';
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
@@ -20,8 +20,11 @@ interface Job {
   description?: string;
   publishedDate?: string;
   salary?: string;
-  source: 'findwork' | 'jooble' | 'usajobs' | 'other';
+  source: 'naukri' | 'findwork' | 'jooble' | 'usajobs' | 'other';
   userAction?: 'track' | 'skip' | null;
+  matchScore?: number;
+  reasons?: string[];
+  skills?: string[];
 }
 
 interface SearchFilters {
@@ -29,7 +32,7 @@ interface SearchFilters {
   remote: boolean;
   sortBy: 'relevance' | 'date';
   search: string;
-  source: 'all' | 'findwork' | 'jooble' | 'usajobs';
+  source: 'all' | 'naukri' | 'findwork' | 'jooble' | 'usajobs';
 }
 
 const JobCard = ({ job, onTrack, onSkip }: {
@@ -79,15 +82,32 @@ const JobCard = ({ job, onTrack, onSkip }: {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 mt-3">
+            {job.matchScore !== undefined && (
+              <div className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border flex items-center gap-1 ${
+                job.matchScore >= 70
+                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                  : job.matchScore >= 55
+                  ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                  : 'bg-[var(--bg-deep)] text-[var(--text-muted)] border-[var(--border)]'
+              }`}>
+                <Award className="w-3 h-3" />
+                <span>{job.matchScore}% Match</span>
+              </div>
+            )}
             {job.salary && (
               <div className="px-3 py-1 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-full text-[var(--success)] text-xs font-medium flex items-center gap-1">
                 <DollarSign className="w-3 h-3" />
                 {job.salary}
               </div>
             )}
-            <div className="px-3 py-1 rounded-full text-xs font-medium bg-[var(--bg-raised)] text-[var(--text-main)] border border-[var(--border-strong)]">
-              {job.source === 'findwork' ? 'FindWork' :
-                job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
+            <div className={`px-3 py-1 rounded-full text-xs font-medium border ${
+              job.source === 'naukri'
+                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                : 'bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]'
+            }`}>
+              {job.source === 'naukri' ? 'Naukri.com' :
+                job.source === 'findwork' ? 'FindWork' :
+                  job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
             </div>
           </div>
         </div>
@@ -145,8 +165,11 @@ const JobCard = ({ job, onTrack, onSkip }: {
 };
 
 const JobSearchPage = () => {
+  const [activeTab, setActiveTab] = useState<'tailored' | 'explore'>('tailored');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshingTailored, setRefreshingTailored] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [filters, setFilters] = useState<SearchFilters>({
     location: '',
     remote: false,
@@ -155,6 +178,50 @@ const JobSearchPage = () => {
     source: 'all'
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  // Fetch tailored jobs automatically on mount
+  const fetchTailoredJobs = async () => {
+    setLoading(true);
+    setRefreshingTailored(true);
+    try {
+      const res = await fetch('/api/naukri?action=tailored');
+      const data = await res.json();
+      if (data && data.jobs) {
+        setUserProfile(data.profile);
+        const mappedJobs: Job[] = data.jobs.map((j: any) => ({
+          id: j.id,
+          title: j.title,
+          company: j.company,
+          location: j.location,
+          url: j.url,
+          description: j.reasons && j.reasons.length > 0
+            ? `AI Fit: ${j.reasons.join(' • ')}`
+            : `Skills: ${j.skills.join(', ')}`,
+          publishedDate: new Date().toISOString(),
+          salary: j.salary,
+          source: 'naukri',
+          matchScore: j.matchScore,
+          reasons: j.reasons,
+          skills: j.skills,
+          userAction: null
+        }));
+
+        const filtered = await filterTrackedJobs(mappedJobs);
+        setJobs(filtered);
+      }
+    } catch (err) {
+      console.error('Error fetching tailored jobs:', err);
+    } finally {
+      setLoading(false);
+      setRefreshingTailored(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'tailored') {
+      fetchTailoredJobs();
+    }
+  }, [activeTab]);
 
   const filterTrackedJobs = async (jobs: Job[]) => {
     try {
@@ -277,19 +344,85 @@ const JobSearchPage = () => {
         <ProfileCompletionBanner />
         <ExtensionBanner />
 
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
+        {/* Header with Navigation Tabs */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center border-b border-[var(--border)] pb-4">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-main)] flex items-center gap-2.5">
               <div className="p-1.5 bg-[var(--bg-surface)] rounded-lg border border-[var(--border)]">
                 <Globe className="w-5 h-5 text-[var(--primary)]" />
               </div>
-              Job Search
+              Job Search &amp; Discovery
             </h1>
+            <p className="text-sm text-[var(--text-muted)] mt-1">
+              Autonomous matching &amp; multi-source job hunting with zero duplicates.
+            </p>
+          </div>
+
+          {/* Obsidian Tab Selector */}
+          <div className="flex items-center gap-1.5 p-1 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTab('tailored')}
+              className={`h-7 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 ${
+                activeTab === 'tailored'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-main)] border border-[var(--border-strong)]'
+                  : 'text-[var(--text-muted)] hover:text-white'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Tailored</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setActiveTab('explore')}
+              className={`h-7 px-3 rounded-lg text-xs font-semibold flex items-center gap-1.5 ${
+                activeTab === 'explore'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-main)] border border-[var(--border-strong)]'
+                  : 'text-[var(--text-muted)] hover:text-white'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+              <span>Search</span>
+            </Button>
           </div>
         </div>
 
-        {/* Search Form */}
+        {/* Tailored Profile Overview Card (Active on Tailored Tab) */}
+        {activeTab === 'tailored' && (
+          <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5" />
+                  Profile Matched
+                </span>
+                <span className="text-xs text-[var(--text-dim)]">•</span>
+                <span className="text-xs text-[var(--text-muted)] truncate">
+                  Target: <span className="text-white font-medium">{userProfile?.name || 'Saurav'}</span> ({userProfile?.headline || 'Full Stack Developer'})
+                </span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)]">
+                Ranked by skill match, role fit, and location. Tracked and skipped jobs are omitted.
+              </p>
+            </div>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={fetchTailoredJobs}
+              disabled={refreshingTailored}
+              className="h-8 px-3 text-xs shrink-0 flex items-center gap-1.5"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshingTailored ? 'animate-spin' : ''}`} />
+              <span>{refreshingTailored ? 'Refreshing' : 'Refresh'}</span>
+            </Button>
+          </div>
+        )}
+
+        {/* Search Form (Only on Explore tab) */}
+        {activeTab === 'explore' && (
         <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)]">
           <form onSubmit={handleSearch} className="p-4 space-y-3">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -371,9 +504,10 @@ const JobSearchPage = () => {
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                   <Select
                     value={filters.source}
-                    onChange={(v) => setFilters(prev => ({ ...prev, source: v as 'all' | 'findwork' | 'jooble' | 'usajobs' }))}
+                    onChange={(v) => setFilters(prev => ({ ...prev, source: v as 'all' | 'naukri' | 'findwork' | 'jooble' | 'usajobs' }))}
                     options={[
                       { value: 'all', label: 'All Sources' },
+                      { value: 'naukri', label: 'Naukri.com (Live Agent)' },
                       { value: 'findwork', label: 'FindWork' },
                       { value: 'jooble', label: 'Jooble' },
                       { value: 'usajobs', label: 'USAJOBS' }
@@ -399,6 +533,7 @@ const JobSearchPage = () => {
             )}
           </form>
         </div>
+        )}
 
         {/* Results */}
         {loading ? (
@@ -413,8 +548,9 @@ const JobSearchPage = () => {
                 </h2>
                 <div className="text-sm text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1 rounded-full border border-[var(--border)]">
                   {filters.source === 'all' ? 'Multiple Sources' :
-                    filters.source === 'findwork' ? 'FindWork API' :
-                      filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
+                    filters.source === 'naukri' ? 'Naukri Agent Feed' :
+                      filters.source === 'findwork' ? 'FindWork API' :
+                        filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
                 </div>
               </div>
             )}

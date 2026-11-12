@@ -40,6 +40,25 @@ const SettingsPage = () => {
 
   // Extension Settings State
   const [extensionConnected, setExtensionConnected] = useState(false);
+  const [loggerEnabled, setLoggerEnabled] = useState(false);
+  const [naukriStatus, setNaukriStatus] = useState<{
+    isLoggedIn: boolean;
+    cookieCount: number;
+    userEmail?: string | null;
+    lastChecked?: string;
+  }>({ isLoggedIn: false, cookieCount: 0 });
+  const [checkingNaukri, setCheckingNaukri] = useState(false);
+  const [capturedLogs, setCapturedLogs] = useState<Array<{
+    id: string;
+    timestamp: string;
+    method: string;
+    url: string;
+    hostname: string;
+    pathname: string;
+    curl: string;
+    responseStatus?: number;
+    responseBody?: string;
+  }>>([]);
   const [extensionToken, setExtensionToken] = useState('jq_ext_' + Math.random().toString(36).substring(2, 12));
 
   // Agent Settings
@@ -87,6 +106,55 @@ const SettingsPage = () => {
     const storedStatus = localStorage.getItem('jobquest_extension_connected') === 'true';
     setExtensionConnected(storedStatus);
 
+    const storedLogger = localStorage.getItem('jobquest_extension_logger') === 'true';
+    setLoggerEnabled(storedLogger);
+
+    // Request fresh logs and sync state from extension & local disk files
+    fetch('/api/agent-logs?limit=50')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.logs) {
+          setCapturedLogs(data.logs);
+        }
+      })
+      .catch(() => {});
+
+    const handleLogsResult = (event: MessageEvent) => {
+      if (event.data?.type === 'JOBQUEST_EXTENSION_PONG') {
+        if (event.data.payload?.connected !== undefined) {
+          setExtensionConnected(event.data.payload.connected);
+          localStorage.setItem('jobquest_extension_connected', String(event.data.payload.connected));
+        }
+        if (event.data.payload?.loggerEnabled !== undefined) {
+          setLoggerEnabled(event.data.payload.loggerEnabled);
+          localStorage.setItem('jobquest_extension_logger', String(event.data.payload.loggerEnabled));
+        }
+        if (event.data.payload?.naukri) {
+          setNaukriStatus(event.data.payload.naukri);
+        }
+        setCheckingNaukri(false);
+      }
+      if (event.data?.type === 'JOBQUEST_NAUKRI_STATUS_RESULT') {
+        if (event.data.payload) {
+          setNaukriStatus(event.data.payload);
+        }
+        setCheckingNaukri(false);
+      }
+      if (event.data?.type === 'JOBQUEST_LOGGER_STATE_CHANGED') {
+        setLoggerEnabled(event.data.payload?.loggerEnabled);
+        localStorage.setItem('jobquest_extension_logger', String(event.data.payload?.loggerEnabled));
+      }
+      if (event.data?.type === 'JOBQUEST_CONNECTION_STATE_CHANGED') {
+        setExtensionConnected(event.data.payload?.connected);
+        localStorage.setItem('jobquest_extension_connected', String(event.data.payload?.connected));
+      }
+      if (event.data?.type === 'JOBQUEST_NEW_CURL_ENTRY') {
+        setCapturedLogs((prev) => [event.data.payload, ...prev].slice(0, 50));
+      }
+    };
+    window.addEventListener('message', handleLogsResult);
+    window.postMessage({ type: 'JOBQUEST_EXTENSION_PING' }, '*');
+
     const storedToken = localStorage.getItem('jobquest_extension_token');
     if (storedToken) {
       setExtensionToken(storedToken);
@@ -95,6 +163,10 @@ const SettingsPage = () => {
       setExtensionToken(newToken);
       localStorage.setItem('jobquest_extension_token', newToken);
     }
+
+    return () => {
+      window.removeEventListener('message', handleLogsResult);
+    };
   }, [searchParams]);
 
   const loadSettings = async () => {
@@ -221,6 +293,32 @@ const SettingsPage = () => {
       toast.success('Job Agent extension connected');
     } else {
       toast.success('Job Agent extension disconnected');
+    }
+  };
+
+  const handleToggleLogger = (enabled: boolean) => {
+    setLoggerEnabled(enabled);
+    localStorage.setItem('jobquest_extension_logger', String(enabled));
+
+    window.postMessage({
+      type: 'JOBQUEST_SET_LOGGER',
+      payload: { enabled }
+    }, '*');
+
+    if (enabled) {
+      toast.success('cURL Logger enabled: capturing browser requests');
+    } else {
+      toast.success('cURL Logger disabled');
+    }
+  };
+
+  const handleClearLogs = async () => {
+    try {
+      await fetch('/api/agent-logs', { method: 'DELETE' });
+      setCapturedLogs([]);
+      toast.success('Local disk files & database cleared');
+    } catch {
+      toast.error('Failed to clear logs');
     }
   };
 
@@ -867,6 +965,210 @@ const SettingsPage = () => {
                           <p className="text-xs text-[var(--text-muted)]">
                             This token authenticates your browser extension with your local session.
                           </p>
+                        </div>
+                      </div>
+
+                      {/* Naukri.com Cookie / Login Status Card */}
+                      <div className="p-6 bg-[var(--bg-deep)]/60 border border-[var(--border)] rounded-2xl space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2.5">
+                              <h3 className="font-semibold text-white">Naukri.com Session &amp; Cookies</h3>
+                              <span
+                                className={`px-2.5 py-0.5 rounded-full text-xs font-mono uppercase tracking-wider border ${
+                                  naukriStatus.isLoggedIn
+                                    ? 'bg-[rgba(34,197,94,0.12)] text-[var(--live)] border-[rgba(34,197,94,0.3)]'
+                                    : 'bg-[rgba(239,68,68,0.1)] text-[var(--danger)] border-[rgba(239,68,68,0.3)]'
+                                }`}
+                              >
+                                {naukriStatus.isLoggedIn ? 'Active Session' : 'Not Logged In'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-[var(--text-muted)]">
+                              Monitors whether active authentication cookies (`nauk_at`, `NKAUTH`) are detected in your browser.
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                setCheckingNaukri(true);
+                                window.postMessage({ type: 'JOBQUEST_CHECK_NAUKRI' }, '*');
+                                setTimeout(() => setCheckingNaukri(false), 600);
+                              }}
+                              disabled={checkingNaukri}
+                              className="h-8 px-3 text-xs"
+                            >
+                              {checkingNaukri ? 'Checking...' : 'Check Status'}
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[var(--border)]">
+                          <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
+                            <div className="text-[11px] font-mono uppercase text-[var(--text-dim)]">Status</div>
+                            <div className="text-sm font-semibold text-[var(--text-main)] mt-0.5 flex items-center gap-1.5">
+                              <span className={`w-2 h-2 rounded-full ${naukriStatus.isLoggedIn ? 'bg-[var(--live)]' : 'bg-[var(--danger)]'}`} />
+                              {naukriStatus.isLoggedIn ? 'Connected' : 'Disconnected'}
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
+                            <div className="text-[11px] font-mono uppercase text-[var(--text-dim)]">Detected User</div>
+                            <div className="text-sm font-semibold text-[var(--text-main)] mt-0.5 truncate">
+                              {naukriStatus.userEmail || (naukriStatus.isLoggedIn ? 'Logged In' : 'None')}
+                            </div>
+                          </div>
+
+                          <div className="p-3 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)]">
+                            <div className="text-[11px] font-mono uppercase text-[var(--text-dim)]">Cookie Count</div>
+                            <div className="text-sm font-semibold text-[var(--text-main)] mt-0.5">
+                              {naukriStatus.cookieCount} cookies detected
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* cURL Request Logger Mode Panel */}
+                      <div className="p-6 bg-[var(--bg-deep)]/60 border border-[var(--border)] rounded-2xl space-y-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-white">Browser cURL Logger Mode</h3>
+                              <span className={`px-2 py-0.5 rounded text-[11px] font-mono uppercase ${
+                                loggerEnabled
+                                  ? 'bg-[rgba(34,197,94,0.15)] text-[var(--live)] border border-[rgba(34,197,94,0.3)]'
+                                  : 'bg-[var(--bg-raised)] text-[var(--text-dim)]'
+                              }`}>
+                                {loggerEnabled ? 'Recording' : 'Idle'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-[var(--text-muted)]">
+                              Record real HTTP requests, headers, and payloads sent by your browser to reproduce exact cURLs for agent automation.
+                            </p>
+                          </div>
+                          <Toggle
+                            checked={loggerEnabled}
+                            onChange={handleToggleLogger}
+                            label="Toggle cURL Logger"
+                          />
+                        </div>
+
+                        {/* Logs Console */}
+                        <div className="space-y-3 pt-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono uppercase text-[var(--text-muted)] tracking-wider">
+                                Captured cURL Requests ({capturedLogs.length})
+                              </span>
+                              <span className="text-[11px] text-[var(--text-dim)]">
+                                (Persisted in MongoDB &amp; data/agent-curl-logs/)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch('/api/agent-logs', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ logs: capturedLogs })
+                                    });
+                                    if (res.ok) {
+                                      toast.success('All logs synced to database & disk');
+                                    }
+                                  } catch {
+                                    toast.error('Sync failed');
+                                  }
+                                }}
+                                className="h-7 px-2.5 text-xs"
+                              >
+                                Sync to Disk
+                              </Button>
+                              {capturedLogs.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleClearLogs}
+                                  className="h-7 px-2 text-xs text-[var(--danger)] hover:bg-[var(--danger)]/10"
+                                >
+                                  Clear All
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          {capturedLogs.length === 0 ? (
+                            <div className="p-8 text-center border border-dashed border-[var(--border)] rounded-xl bg-[var(--bg-deep)]/30 text-xs text-[var(--text-dim)]">
+                              {loggerEnabled
+                                ? 'Logger active. Perform actions in any tab to record exact cURL commands.'
+                                : 'Logger is turned off. Toggle above to begin capturing browser requests.'}
+                            </div>
+                          ) : (
+                            <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar">
+                              {capturedLogs.map((log) => (
+                                <div
+                                  key={log.id}
+                                  className="p-3 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl hover:border-[var(--border-strong)] transition-colors flex flex-col gap-2"
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-[var(--bg-raised)] text-[var(--text-main)]">
+                                        {log.method}
+                                      </span>
+                                      {log.responseStatus && (
+                                        <span className={`text-[11px] font-mono font-semibold px-1.5 py-0.5 rounded ${
+                                          log.responseStatus >= 200 && log.responseStatus < 300
+                                            ? 'bg-[rgba(34,197,94,0.15)] text-[var(--live)]'
+                                            : 'bg-[rgba(239,68,68,0.15)] text-[var(--danger)]'
+                                        }`}>
+                                          {log.responseStatus}
+                                        </span>
+                                      )}
+                                      <span className="text-xs text-[var(--text-muted)] font-mono truncate">
+                                        {log.hostname}{log.pathname}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className="text-[11px] text-[var(--text-dim)] font-mono">
+                                        {log.timestamp}
+                                      </span>
+                                      {log.responseBody && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(log.responseBody || '');
+                                            toast.success('Response JSON copied');
+                                          }}
+                                          leftIcon={<Copy className="w-3 h-3" />}
+                                          className="h-7 px-2 text-xs text-[var(--text-muted)] hover:text-white"
+                                        >
+                                          Response
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(log.curl);
+                                          toast.success('Exact cURL command copied');
+                                        }}
+                                        leftIcon={<Copy className="w-3 h-3" />}
+                                        className="h-7 px-2 text-xs"
+                                      >
+                                        Copy cURL
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 

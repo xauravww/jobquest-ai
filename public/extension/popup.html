@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JobQuest Agent</title>
+  <title>JobQuest Agent & cURL Logger</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 320px;
+      width: 380px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #08090a;
       color: #f0f2f5;
@@ -42,34 +42,230 @@
       color: #ef4444;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
-    .content {
-      font-size: 12px;
-      color: #8b929e;
-      line-height: 1.5;
-      margin-bottom: 16px;
+    .card {
+      background: #101216;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
-    .btn {
+    .card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .card-desc {
+      font-size: 11px;
+      color: #8b929e;
+      margin-top: 2px;
+    }
+    .input-group {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .label {
+      font-size: 11px;
+      font-family: monospace;
+      color: #8b929e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .input-row {
+      display: flex;
+      gap: 6px;
+    }
+    .text-input {
+      flex: 1;
+      background: #08090a;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      padding: 7px 10px;
+      color: #f0f2f5;
+      font-size: 12px;
+      font-family: monospace;
+      outline: none;
+    }
+    .text-input:focus {
+      border-color: #f0f2f5;
+    }
+    .action-btn {
+      background: #181b20;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #f0f2f5;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .action-btn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .action-btn.primary {
+      background: #f0f2f5;
+      color: #08090a;
+      border-color: transparent;
+    }
+    .action-btn.primary:hover {
+      background: #d4d8e0;
+    }
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #181b20;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: .2s;
+      border-radius: 9999px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #8b929e;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #22c55e;
+      border-color: #22c55e;
+    }
+    input:checked + .slider:before {
+      transform: translateX(16px);
+      background-color: #08090a;
+    }
+    .logs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      margin-top: 4px;
+    }
+    .logs-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8b929e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .clear-btn:hover {
+      text-decoration: underline;
+    }
+    .logs-container {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      background: #08090a;
+    }
+    .log-item {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .log-item:hover {
+      background: #181b20;
+    }
+    .log-item:last-child {
+      border-bottom: none;
+    }
+    .method {
+      font-weight: 700;
+      font-family: monospace;
+      color: #f0f2f5;
+    }
+    .path {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #8b929e;
+    }
+    .copy-pill {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08);
+      color: #f0f2f5;
+      border: none;
+      cursor: pointer;
+    }
+    .copy-pill:hover {
+      background: #f0f2f5;
+      color: #08090a;
+    }
+    .empty-logs {
+      padding: 20px;
+      text-align: center;
+      color: #545b68;
+      font-size: 11px;
+    }
+    .status-msg {
+      font-size: 11px;
+      margin-top: 6px;
+      display: none;
+    }
+    .status-msg.success {
+      color: #22c55e;
+      display: block;
+    }
+    .status-msg.error {
+      color: #ef4444;
+      display: block;
+    }
+    .footer-btn {
       display: block;
       width: 100%;
       text-align: center;
-      background: #f0f2f5;
-      color: #08090a;
-      font-weight: 600;
-      font-size: 12px;
+      background: transparent;
+      color: #8b929e;
+      font-size: 11px;
       padding: 8px 12px;
       border-radius: 8px;
       text-decoration: none;
       cursor: pointer;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-top: 10px;
     }
-    .btn:hover {
-      background: #d4d8e0;
-    }
-    .footer {
-      margin-top: 12px;
-      text-align: center;
-      font-size: 11px;
-      color: #545b68;
+    .footer-btn:hover {
+      background: rgba(255,255,255,0.04);
+      color: #fff;
     }
   </style>
 </head>
@@ -78,11 +274,57 @@
     <div class="title">JobQuest Agent</div>
     <div id="statusBadge" class="badge disconnected">Disconnected</div>
   </div>
-  <p class="content" id="statusDesc">
-    Connect your extension to JobQuest AI to enable one-click form autofill and job syncing.
-  </p>
-  <button id="toggleBtn" class="btn">Connect Dashboard</button>
-  <div class="footer">v1.0.0 · JobQuest AI</div>
+
+  <!-- Pairing Card (For Cross-Browser / Separate Chrome Instances) -->
+  <div class="card">
+    <div class="card-title">Dashboard Pairing Code</div>
+    <div class="card-desc">Enter the Pairing Token from your JobQuest Settings page to connect this browser.</div>
+    <div class="input-group">
+      <label class="label" for="pairingInput">Pairing Token (API Key)</label>
+      <div class="input-row">
+        <input type="text" id="pairingInput" class="text-input" placeholder="e.g. jq_ext_..." />
+        <button id="savePairingBtn" class="action-btn primary">Connect</button>
+        <button id="disconnectBtn" class="action-btn" style="display: none;">Disconnect</button>
+      </div>
+      <div id="pairingMsg" class="status-msg"></div>
+    </div>
+  </div>
+
+  <!-- Naukri Session Status Card -->
+  <div class="card">
+    <div class="card-row">
+      <div>
+        <div class="card-title">Naukri.com Session</div>
+        <div class="card-desc" id="naukriDesc">Checking browser cookies...</div>
+      </div>
+      <div id="naukriBadge" class="badge disconnected">Checking</div>
+    </div>
+  </div>
+
+  <!-- cURL Logger Mode Switch -->
+  <div class="card">
+    <div class="card-row">
+      <div>
+        <div class="card-title">cURL Request Logger</div>
+        <div class="card-desc">Capture browser HTTP requests to train agent</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="loggerToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Captured Requests List -->
+  <div class="logs-header">
+    <div class="logs-title">Captured Requests (<span id="logCount">0</span>)</div>
+    <button id="clearLogsBtn" class="clear-btn">Clear</button>
+  </div>
+  <div class="logs-container" id="logsList">
+    <div class="empty-logs">Turn on logger mode and perform any action on job sites to capture exact cURL.</div>
+  </div>
+
+  <button id="settingsBtn" class="footer-btn">Open Dashboard Settings</button>
 
   <script src="popup.js"></script>
 </body>

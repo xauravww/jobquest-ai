@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getLatestNaukriJobs } from '@/lib/naukriService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,6 +53,51 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         errors.push('FindWork API error');
         console.error('FindWork API error:', error);
+      }
+    }
+
+    // Fetch from Naukri Agent feed if requested
+    if (source === 'all' || source === 'naukri') {
+      try {
+        const naukriJobs = getLatestNaukriJobs();
+        const searchLower = search.toLowerCase();
+        const locLower = location.toLowerCase();
+
+        const filteredNaukri = naukriJobs.filter(j => {
+          if (!searchLower && !locLower) return true;
+          
+          const fullJobText = `${j.title} ${j.company} ${j.skills.join(' ')} ${j.location}`.toLowerCase();
+          
+          // Split multi-word search into tokens (e.g., "web development" -> "web", "develop")
+          const tokens = searchLower.split(/\s+/).filter(Boolean);
+          const matchesQuery = tokens.length === 0 || tokens.some(token => {
+            const root = token.length > 5 && token.endsWith('ment') ? token.slice(0, -4) : token;
+            return fullJobText.includes(token) || fullJobText.includes(root);
+          });
+
+          const matchesLoc = !locLower || j.location.toLowerCase().includes(locLower);
+
+          return matchesQuery && matchesLoc;
+        });
+
+        const transformedJobs = filteredNaukri.map(job => ({
+          id: job.id,
+          title: job.title,
+          company: job.company,
+          location: job.location,
+          url: job.url,
+          description: `Key Skills: ${job.skills.join(', ')} • Experience: ${job.experience || 'Not specified'}`,
+          publishedDate: new Date().toISOString(),
+          salary: job.salary,
+          source: 'naukri'
+        }));
+
+        results.push(...transformedJobs);
+        totalCount += transformedJobs.length;
+        console.log(`✅ Naukri Agent: ${transformedJobs.length} live jobs synced`);
+      } catch (error) {
+        errors.push('Naukri Agent feed error');
+        console.error('Naukri feed error:', error);
       }
     }
 

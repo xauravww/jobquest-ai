@@ -1,15 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "JobQuest AI - Job Agent Autofill",
-  "version": "1.0.0",
-  "description": "Autofill job application forms and sync with your JobQuest AI dashboard.",
+  "name": "JobQuest AI - Job Agent Autofill & Logger",
+  "version": "1.3.1",
+  "description": "Autofill job application forms and capture exact browser HTTP requests and responses as cURL commands to train automation agents.",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "webRequest",
+    "cookies"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*",
+    "*://*.naukri.com/*",
+    "*://naukri.com/*",
     "https://*/*"
   ],
   "action": {
@@ -18,9 +23,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://localhost:3000/*", "https://*/*"],
+      "matches": ["http://localhost:3000/*", "http://127.0.0.1:3000/*", "https://*/*"],
       "js": ["content.js"],
-      "run_at": "document_end"
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["interceptor.js"],
+      "matches": ["<all_urls>"]
     }
   ],
   "background": {

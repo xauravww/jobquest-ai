@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import Job from '@/models/Job';
 import Application from '@/models/Application';
 import connectDB from '@/lib/db';
+import { getExactNaukriJd } from '@/lib/naukriService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +25,16 @@ export async function POST(request: NextRequest) {
     // Find existing job or create new one
     let job = await Job.findOne({ jobId, userId: session.user.id });
     
+    // Auto-enrich job description with exact JD from Naukri logs if available
+    let exactDescription = jobData?.description || '';
+    if (jobId && (jobId.includes('naukri') || jobData?.source === 'naukri')) {
+      const cleanNumericId = jobId.replace(/^naukri-/, '');
+      const fullJd = getExactNaukriJd(cleanNumericId);
+      if (fullJd) {
+        exactDescription = fullJd;
+      }
+    }
+
     if (!job && jobData) {
       // Create new job record
       job = new Job({
@@ -31,13 +42,15 @@ export async function POST(request: NextRequest) {
         title: jobData.title,
         company: jobData.company,
         location: jobData.location,
-        description: jobData.description || '',
+        description: exactDescription,
         salary: jobData.salary,
         source: jobData.source,
         url: jobData.url,
         datePosted: jobData.publishedDate ? new Date(jobData.publishedDate) : new Date(),
         userId: session.user.id
       });
+    } else if (job && exactDescription && (!job.description || job.description.length < exactDescription.length)) {
+      job.description = exactDescription;
     }
 
     if (!job) {

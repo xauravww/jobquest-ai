@@ -7,6 +7,7 @@ import { fetchAndConvertToMarkdown } from '@/lib/urlReader';
 import { resolveAIConfig } from '@/lib/aiConfig';
 import { buildCoverLetterSystemPrompt, type CoverLetterType } from '@/lib/coverLetterPrompt';
 import { buildUserPrompt } from '@/lib/coverLetterBuilder';
+import { getExactNaukriJd } from '@/lib/naukriService';
 
 interface AIConfig {
   provider: string;
@@ -92,11 +93,25 @@ export async function POST(request: NextRequest) {
       portfolioUrl: user.profile?.portfolioUrl || '',
     };
 
+    let effectiveJobDescription = jobDescription || '';
+
+    // If this is a Naukri job, attempt to resolve the full original JD from extension logs
+    if (jobId || (jobUrl && jobUrl.includes('naukri.com'))) {
+      const match = (jobId || jobUrl || '').match(/(\d{10,14})/);
+      if (match) {
+        const fullJd = getExactNaukriJd(match[1]);
+        if (fullJd && fullJd.length > effectiveJobDescription.length) {
+          effectiveJobDescription = fullJd;
+          console.log(`✅ Loaded exact Naukri JD (${fullJd.length} chars) for cover letter generation`);
+        }
+      }
+    }
+
     // System prompt built from the "killer cover letter" methodology (see @/lib/coverLetterPrompt)
     let systemPrompt = buildCoverLetterSystemPrompt(coverLetterType);
 
     // If jobUrl is provided and not null, fetch content and append to system prompt
-    if (jobUrl && jobUrl.trim() !== '') {
+    if (jobUrl && jobUrl.trim() !== '' && !effectiveJobDescription) {
       try {
         const urlContent = await fetchAndConvertToMarkdown(jobUrl);
         if (urlContent && urlContent.length > 0) {
@@ -113,7 +128,7 @@ export async function POST(request: NextRequest) {
       jobTitle,
       company,
       location,
-      jobDescription,
+      jobDescription: effectiveJobDescription,
       profileDetails,
       guidedAnswers,
       fallbackProfile: userProfile,
