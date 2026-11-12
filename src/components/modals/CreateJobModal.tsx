@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Select, DatePicker } from 'antd';
+import { Select, DatePicker, AutoComplete } from 'antd';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import dayjs from 'dayjs';
@@ -80,6 +80,44 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     }
   }, [visible]);
 
+  // Suggestions pulled from previously saved applications
+  interface SuggestionApp {
+    jobTitle?: string;
+    title?: string;
+    company?: string;
+    location?: string;
+    jobId?: { title?: string; company?: string; location?: string };
+  }
+  const [suggestions, setSuggestions] = useState<{ titles: string[]; companies: string[]; locations: string[] }>({
+    titles: [],
+    companies: [],
+    locations: []
+  });
+
+  useEffect(() => {
+    if (!visible) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch('/api/applications?limit=50');
+        if (!response.ok) return;
+        const data = await response.json();
+        const apps: SuggestionApp[] = Array.isArray(data) ? data : data.applications || [];
+        const unique = (items: Array<string | undefined>) => Array.from(new Set(items.filter((i): i is string => Boolean(i))));
+        if (!cancelled) {
+          setSuggestions({
+            titles: unique(apps.map((a) => a.jobId?.title || a.jobTitle || a.title)),
+            companies: unique(apps.map((a) => a.jobId?.company || a.company)),
+            locations: unique(apps.map((a) => a.jobId?.location || a.location))
+          });
+        }
+      } catch {
+        // ignore suggestion errors
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [visible]);
+
   const fetchResumes = async () => {
     try {
       const response = await fetch('/api/resumes');
@@ -140,28 +178,29 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     setSelectedResumeId('');
   };
 
-  const validateField = (field: string, value: string): string | undefined => {
+  const validateField = (field: string, value?: string): string | undefined => {
+    const text = value ?? '';
     switch (field) {
       case 'title':
-        if (!value.trim()) return 'Job title is required';
-        if (value.trim().length < 2) return 'Job title must be at least 2 characters';
-        if (value.trim().length > 100) return 'Job title must be less than 100 characters';
+        if (!text.trim()) return 'Job title is required';
+        if (text.trim().length < 2) return 'Job title must be at least 2 characters';
+        if (text.trim().length > 100) return 'Job title must be less than 100 characters';
         return undefined;
 
       case 'company':
-        if (!value.trim()) return 'Company name is required';
-        if (value.trim().length < 2) return 'Company name must be at least 2 characters';
-        if (value.trim().length > 100) return 'Company name must be less than 100 characters';
+        if (!text.trim()) return 'Company name is required';
+        if (text.trim().length < 2) return 'Company name must be at least 2 characters';
+        if (text.trim().length > 100) return 'Company name must be less than 100 characters';
         return undefined;
 
       case 'location':
-        if (value && value.length > 100) return 'Location must be less than 100 characters';
+        if (text && text.length > 100) return 'Location must be less than 100 characters';
         return undefined;
 
       case 'jobUrl':
-        if (value && value.trim()) {
+        if (text && text.trim()) {
           try {
-            new URL(value.trim());
+            new URL(text.trim());
           } catch {
             return 'Please enter a valid URL';
           }
@@ -169,11 +208,11 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         return undefined;
 
       case 'description':
-        if (value && value.length > 5000) return 'Description must be less than 5000 characters';
+        if (text && text.length > 5000) return 'Description must be less than 5000 characters';
         return undefined;
 
       case 'notes':
-        if (value && value.length > 2000) return 'Notes must be less than 2000 characters';
+        if (text && text.length > 2000) return 'Notes must be less than 2000 characters';
         return undefined;
 
       default:
@@ -206,17 +245,18 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFieldChange = (field: string, value: string) => {
-    const error = validateField(field, value);
+  const handleFieldChange = (field: string, value?: string) => {
+    const safe = value ?? '';
+    const error = validateField(field, safe);
     setErrors(prev => ({ ...prev, [field]: error }));
 
     switch (field) {
-      case 'title': setTitle(value); break;
-      case 'company': setCompany(value); break;
-      case 'location': setLocation(value); break;
-      case 'jobUrl': setJobUrl(value); break;
-      case 'description': setDescription(value); break;
-      case 'notes': setNotes(value); break;
+      case 'title': setTitle(safe); break;
+      case 'company': setCompany(safe); break;
+      case 'location': setLocation(safe); break;
+      case 'jobUrl': setJobUrl(safe); break;
+      case 'description': setDescription(safe); break;
+      case 'notes': setNotes(safe); break;
     }
   };
 
@@ -234,9 +274,9 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         company: company.trim(),
         location: location.trim(),
         jobUrl: jobUrl.trim(),
-        status,
-        priority,
-        platform,
+        status: status || 'saved',
+        priority: priority || 'medium',
+        platform: platform || 'other',
         datePosted: datePosted ? new Date(datePosted).toISOString() : null,
         description: description.trim(),
         notes: notes.trim(),
@@ -296,23 +336,17 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
               Job Title <span className="text-[var(--danger)]">*</span>
             </label>
-            <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => handleFieldChange('title', e.target.value)}
-                placeholder="e.g. Senior Frontend Developer"
-                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.title ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
-              />
-              {title && (
-                <ClearButton
-                  onClick={() => handleFieldChange('title', '')}
-                  label="Clear title"
-                  className="right-2 top-1/2 -translate-y-1/2"
-                />
-              )}
-            </div>
+            <AutoComplete
+              value={title}
+              onChange={(value: string) => handleFieldChange('title', value)}
+              options={suggestions.titles.map((t) => ({ value: t }))}
+              filterOption={(input, option) => (option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+              placeholder="e.g. Senior Frontend Developer"
+              prefix={<Briefcase className="w-4 h-4 text-[var(--text-muted)]" />}
+              allowClear
+              status={errors.title ? 'error' : undefined}
+              className="w-full"
+            />
             {errors.title && <p className="text-[var(--danger)] text-xs mt-1">{errors.title}</p>}
           </div>
 
@@ -320,23 +354,17 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
               Company <span className="text-[var(--danger)]">*</span>
             </label>
-            <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                value={company}
-                onChange={(e) => handleFieldChange('company', e.target.value)}
-                placeholder="e.g. Tech Corp"
-                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.company ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
-              />
-              {company && (
-                <ClearButton
-                  onClick={() => handleFieldChange('company', '')}
-                  label="Clear company"
-                  className="right-2 top-1/2 -translate-y-1/2"
-                />
-              )}
-            </div>
+            <AutoComplete
+              value={company}
+              onChange={(value: string) => handleFieldChange('company', value)}
+              options={suggestions.companies.map((c) => ({ value: c }))}
+              filterOption={(input, option) => (option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+              placeholder="e.g. Tech Corp"
+              prefix={<Briefcase className="w-4 h-4 text-[var(--text-muted)]" />}
+              allowClear
+              status={errors.company ? 'error' : undefined}
+              className="w-full"
+            />
             {errors.company && <p className="text-[var(--danger)] text-xs mt-1">{errors.company}</p>}
           </div>
         </div>
@@ -344,23 +372,17 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Location</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => handleFieldChange('location', e.target.value)}
-                placeholder="e.g. Remote, New York"
-                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.location ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
-              />
-              {location && (
-                <ClearButton
-                  onClick={() => handleFieldChange('location', '')}
-                  label="Clear location"
-                  className="right-2 top-1/2 -translate-y-1/2"
-                />
-              )}
-            </div>
+            <AutoComplete
+              value={location}
+              onChange={(value: string) => handleFieldChange('location', value)}
+              options={suggestions.locations.map((l) => ({ value: l }))}
+              filterOption={(input, option) => (option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
+              placeholder="e.g. Remote, New York"
+              prefix={<MapPin className="w-4 h-4 text-[var(--text-muted)]" />}
+              allowClear
+              status={errors.location ? 'error' : undefined}
+              className="w-full"
+            />
             {errors.location && <p className="text-[var(--danger)] text-xs mt-1">{errors.location}</p>}
           </div>
 
@@ -391,9 +413,11 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Status</label>
             <Select
-              value={status}
-              onChange={(v) => setStatus(v)}
+              value={status || undefined}
+              onChange={(v) => setStatus(v ?? '')}
+              showSearch
               allowClear
+              placeholder="Select status"
               options={[
                 { value: 'saved', label: 'Saved' },
                 { value: 'applied', label: 'Applied' },
@@ -410,9 +434,11 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Priority</label>
             <Select
-              value={priority}
-              onChange={(v) => setPriority(v)}
+              value={priority || undefined}
+              onChange={(v) => setPriority(v ?? '')}
+              showSearch
               allowClear
+              placeholder="Select priority"
               options={[
                 { value: 'high', label: 'High' },
                 { value: 'medium', label: 'Medium' },
@@ -425,9 +451,11 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Platform</label>
             <Select
-              value={platform}
-              onChange={(v) => setPlatform(v)}
+              value={platform || undefined}
+              onChange={(v) => setPlatform(v ?? '')}
+              showSearch
               allowClear
+              placeholder="Select platform"
               options={[
                 { value: 'linkedin', label: 'LinkedIn' },
                 { value: 'indeed', label: 'Indeed' },
@@ -458,16 +486,15 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Resume Used</label>
             <div className="relative">
               <Select
-                value={selectedResumeId}
-                onChange={(v) => setSelectedResumeId(v)}
+                value={selectedResumeId || undefined}
+                onChange={(v) => setSelectedResumeId(v ?? '')}
+                showSearch
                 allowClear
-                options={[
-                  { value: '', label: 'Select a resume...' },
-                  ...resumes.map((resume) => ({
-                    value: resume.title,
-                    label: resume.title,
-                  })),
-                ]}
+                placeholder="Select a resume"
+                options={resumes.map((resume) => ({
+                  value: resume.title,
+                  label: resume.title,
+                }))}
                 className="w-full"
               />
             </div>

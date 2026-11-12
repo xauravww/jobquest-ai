@@ -78,33 +78,67 @@ const CoverLetterModal = ({ visible, onClose, job, userProfile }: CoverLetterMod
   const [coverLetterType, setCoverLetterType] = useState<'concise' | 'detailed' | 'professional'>('detailed');
   const [showProfileDetails, setShowProfileDetails] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      // Reset states when modal opens
-      setCoverLetter('');
-      setError('');
-      setGenerating(false);
-      setExtractedContent('');
-      setIsExtracted(false);
+  const buildProfileString = (profile: UserProfile) => {
+    if (!profile) return '';
+    return `Profile Summary:
+Name: ${profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim()}
+Email: ${profile.email || ''}
+Location: ${profile.location || ''}
+Current Role: ${profile.targetRole || ''}
+Skills: ${Array.isArray(profile.skills) ? profile.skills.join(', ') : profile.skills || ''}
+Experience: ${profile.experienceYears || 0} years
 
-      // Pre-populate profile details from the userProfile prop
-      const profileString = userProfile ? `Profile Summary:
-Name: ${userProfile.name || `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim()}
-Email: ${userProfile.email || ''}
-Location: ${userProfile.location || ''}
-Current Role: ${userProfile.targetRole || ''}
-Skills: ${Array.isArray(userProfile.skills) ? userProfile.skills.join(', ') : userProfile.skills || ''}
-Experience: ${userProfile.experienceYears || 0} years
-
-${userProfile.workExperience && userProfile.workExperience.length > 0 ? `Work Experience:
-${userProfile.workExperience.map((exp: WorkExperience) => `• ${exp.position} at ${exp.company} (${exp.startDate || ''} - ${exp.endDate || 'Present'})
+${profile.workExperience && profile.workExperience.length > 0 ? `Work Experience:
+${profile.workExperience.map((exp: WorkExperience) => `• ${exp.position} at ${exp.company} (${exp.startDate || ''} - ${exp.endDate || 'Present'})
   ${exp.description || ''}`).join('\n\n')}` : ''}
 
-${userProfile.education && userProfile.education.length > 0 ? `Education:
-${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.field} from ${edu.institution} ${edu.gpa ? `(GPA: ${edu.gpa})` : ''}`).join('\n')}` : ''}` : '';
-      setProfileDetails(profileString);
-    }
-  }, [visible, userProfile]);
+${profile.education && profile.education.length > 0 ? `Education:
+${profile.education.map((edu: Education) => `• ${edu.degree} in ${edu.field} from ${edu.institution} ${edu.gpa ? `(GPA: ${edu.gpa})` : ''}`).join('\n')}` : ''}`;
+  };
+
+  useEffect(() => {
+    if (!visible) return;
+
+    // Reset states when modal opens
+    setCoverLetter('');
+    setError('');
+    setGenerating(false);
+    setExtractedContent('');
+    setIsExtracted(false);
+
+    // Auto-fetch the user's profile so we never rely on seeded/passed data
+    (async () => {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: UserProfile = {
+            name: data.personalInfo?.fullName || `${data.profile?.firstName || ''} ${data.profile?.lastName || ''}`.trim(),
+            firstName: data.personalInfo?.firstName || data.profile?.firstName,
+            lastName: data.personalInfo?.lastName || data.profile?.lastName,
+            email: data.personalInfo?.email || data.email,
+            location: data.personalInfo?.location || data.profile?.location,
+            bio: data.professionalInfo?.bio || data.profile?.bio,
+            skills: data.professionalInfo?.skills || data.profile?.skills,
+            experienceYears: data.professionalInfo?.experience || data.profile?.experienceYears,
+            targetRole: data.preferences?.targetRole || data.professionalInfo?.currentRole || data.profile?.title,
+            workExperience: data.professionalInfo?.workExperience || data.profile?.workExperience,
+            education: data.professionalInfo?.education || data.profile?.education,
+            experience: data.professionalInfo?.workExperience || data.profile?.workExperience || [],
+          };
+          setProfileDetails(buildProfileString(mapped));
+          return;
+        }
+      } catch {
+        // fall through to prop fallback
+      }
+      // Fallback to the passed-in profile only if fetching fails
+      if (userProfile) {
+        setProfileDetails(buildProfileString(userProfile));
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const handleExtractContent = () => {
     if (job?.description) {
@@ -139,17 +173,19 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
         }),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error('Failed to generate cover letter');
+        throw new Error(data?.error || 'Failed to generate cover letter');
       }
 
-      const data = await response.json();
-      setCoverLetter(data.coverLetter);
+      setCoverLetter(data?.coverLetter || '');
       toast.success('Cover letter generated successfully!');
     } catch (error) {
       console.error('Error generating cover letter:', error);
-      setError('Failed to generate cover letter. Please try again.');
-      toast.error('Failed to generate cover letter');
+      const message = error instanceof Error ? error.message : 'Failed to generate cover letter. Please try again.';
+      setError(message);
+      toast.error(message);
     } finally {
       setGenerating(false);
     }
@@ -234,7 +270,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
               onChange={(e) => setExtractedContent(e.target.value)}
               placeholder="Click 'Extract Text' or paste the job description here."
               rows={8}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none resize-none transition-colors duration-200"
             />
           </div>
 
@@ -275,7 +311,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
                       onChange={(e) => setProfileDetails(e.target.value)}
                       placeholder="Add or edit your profile details to customize the cover letter"
                       rows={6}
-                      className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none"
+                      className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none resize-none transition-colors duration-200"
                     />
                   </div>
                 </motion.div>
@@ -299,7 +335,7 @@ ${userProfile.education.map((edu: Education) => `• ${edu.degree} in ${edu.fiel
                   <Button
                     variant="primary"
                     onClick={handleGenerateCoverLetter}
-                    disabled={!job || !isExtracted}
+                    disabled={!job || !extractedContent.trim()}
                     className="px-8 py-3"
                   >
                     <span>Generate Cover Letter</span>
