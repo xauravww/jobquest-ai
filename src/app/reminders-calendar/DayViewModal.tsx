@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Modal, Button } from 'antd';
-import { Calendar, Edit, Trash2, Clock, MapPin, Users } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
+import { Calendar, Clock, MapPin, Users, Edit3, Trash2, Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
-import { RiDeleteBin6Line } from 'react-icons/ri';
 import { confirmAction } from '@/lib/confirm';
 
-interface CalendarItem {
+export interface CalendarItem {
   id: string;
   title: string;
   date: Dayjs;
@@ -29,6 +29,7 @@ interface DayViewModalProps {
   date: Dayjs;
   items: CalendarItem[];
   onEditItem: (item: CalendarItem) => void;
+  onAddNew?: (type: 'reminder' | 'event') => void;
   onRefresh: () => void;
 }
 
@@ -38,11 +39,14 @@ const DayViewModal: React.FC<DayViewModalProps> = ({
   date,
   items,
   onEditItem,
+  onAddNew,
   onRefresh
 }) => {
   const handleDeleteItem = (item: CalendarItem) => {
     confirmAction({
-      title: `Delete this ${item.type}?`,
+      title: `Delete ${item.type === 'reminder' ? 'Reminder' : 'Event'}`,
+      content: `Are you sure you want to delete "${item.title}"? This action cannot be undone.`,
+      okText: 'Delete',
       onOk: async () => {
         try {
           const endpoint = item.type === 'reminder' ? `/api/reminders/${item.id}` : `/api/calendar/events/${item.id}`;
@@ -68,120 +72,203 @@ const DayViewModal: React.FC<DayViewModalProps> = ({
     return a.title.localeCompare(b.title);
   });
 
+  const reminders = sortedItems.filter(i => i.type === 'reminder');
+  const events = sortedItems.filter(i => i.type === 'event');
+
   return (
     <Modal
-      title={
-        <div className="flex items-center gap-2 text-[var(--text-main)]">
-          <Calendar className="w-5 h-5 text-[var(--primary)]" />
-          {date.format('dddd, MMMM D, YYYY')}
-        </div>
-      }
-      open={isOpen}
-      onCancel={onClose}
-      width="min(600px, calc(100vw - 2rem))"
-      className="custom-dark-modal"
-      styles={{
-        mask: {
-          backdropFilter: 'blur(3px)',
-          backgroundColor: 'rgba(14, 17, 22, 0.7)'
-        }
-      }}
-      footer={[
-        <Button key="close" onClick={onClose}>
-          Close
-        </Button>,
-      ]}
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`${date.format('dddd, MMMM D, YYYY')}`}
+      width="max-w-2xl"
     >
-      <div className="max-h-[60vh] overflow-y-auto">
+      <div className="space-y-6">
+        {/* Header bar with summary & quick add */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-[var(--bg-deep)] rounded-xl border border-[var(--border)]">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium px-2.5 py-1 rounded-md bg-[rgba(255,255,255,0.06)] text-[var(--text-main)] border border-[var(--border)]">
+              {items.length} {items.length === 1 ? 'item' : 'items'}
+            </span>
+            <span className="text-xs text-[var(--text-muted)]">
+              {reminders.length} reminder{reminders.length === 1 ? '' : 's'} · {events.length} event{events.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          {onAddNew && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onAddNew('reminder')}
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
+                className="h-7 px-2.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]"
+              >
+                Reminder
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onAddNew('event')}
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
+                className="h-7 px-2.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)]"
+              >
+                Event
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Content list */}
         {sortedItems.length === 0 ? (
-          <div className="text-center py-8 text-[var(--text-muted)]">
-            <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>No items scheduled for this day</p>
+          <div className="text-center py-12 px-4 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-deep)]/40">
+            <Calendar className="w-10 h-10 mx-auto mb-3 text-[var(--text-dim)]" />
+            <h4 className="text-sm font-medium text-[var(--text-main)] mb-1">Nothing scheduled</h4>
+            <p className="text-xs text-[var(--text-muted)] mb-5">
+              No reminders or events on this day.
+            </p>
+            {onAddNew && (
+              <div className="inline-flex gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onAddNew('reminder')}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Add Reminder
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onAddNew('event')}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Add Event
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {sortedItems.map(item => (
-              <div
-                key={item.id}
-                className="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg hover:bg-[var(--bg-light)] transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color || (item.type === 'event' ? 'var(--text-muted)' : 'var(--accent)') }}
-                      />
-                      <h3 className="font-semibold text-[var(--text-main)]">{item.title}</h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        item.type === 'event'
-                          ? 'bg-[var(--bg-raised)] text-[var(--text-muted)] border border-[var(--border-strong)]'
-                          : 'bg-[var(--accent-soft)] text-[var(--accent)]'
-                      }`}>
-                        {item.type}
-                      </span>
+          <div className="space-y-3">
+            {sortedItems.map((item) => {
+              const isReminder = item.type === 'reminder';
+              const isCompleted = item.status === 'completed';
+
+              return (
+                <div
+                  key={item.id}
+                  className="group relative p-4 bg-[var(--bg-deep)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--border-strong)] rounded-xl transition-all duration-150"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      {/* Status indicator dot */}
+                      <div className="mt-1 flex-shrink-0">
+                        {isCompleted ? (
+                          <CheckCircle2 className="w-4 h-4 text-[var(--live)]" />
+                        ) : (
+                          <span
+                            className="block w-2.5 h-2.5 rounded-full ring-2 ring-black/40"
+                            style={{
+                              backgroundColor: item.color || (isReminder ? '#f0f2f5' : '#8b929e')
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h4 className="text-sm font-semibold text-[var(--text-main)] truncate">
+                            {item.title}
+                          </h4>
+                          <span
+                            className={`text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded-full border ${
+                              isReminder
+                                ? 'bg-[rgba(255,255,255,0.06)] text-[var(--text-main)] border-[var(--border)]'
+                                : 'bg-[rgba(139,146,158,0.12)] text-[var(--text-muted)] border-[var(--border)]'
+                            }`}
+                          >
+                            {item.type}
+                          </span>
+                          {item.priority && (
+                            <span className="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded-full bg-[rgba(255,255,255,0.03)] text-[var(--text-dim)] border border-[var(--border)]">
+                              {item.priority}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Metadata row */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--text-muted)] mt-1.5">
+                          {item.time && (
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+                              <span>{item.time}</span>
+                            </div>
+                          )}
+
+                          {item.location && (
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+                              <span className="truncate max-w-[200px]">{item.location}</span>
+                            </div>
+                          )}
+
+                          {item.attendeesCount !== undefined && item.attendeesCount > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-[var(--text-dim)]" />
+                              <span>{item.attendeesCount} attendee{item.attendeesCount !== 1 ? 's' : ''}</span>
+                            </div>
+                          )}
+
+                          {(item.jobTitle || item.jobCompany) && (
+                            <span className="text-[var(--text-dim)]">
+                              {item.jobTitle && item.jobCompany
+                                ? `${item.jobTitle} @ ${item.jobCompany}`
+                                : item.jobTitle || item.jobCompany}
+                            </span>
+                          )}
+                        </div>
+
+                        {item.description && (
+                          <p className="text-xs text-[var(--text-muted)] mt-2 line-clamp-2 leading-relaxed">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    {item.time && (
-                      <div className="flex items-center gap-1 text-sm text-[var(--text-muted)] mb-2">
-                        <Clock className="w-4 h-4" />
-                        {item.time}
-                      </div>
-                    )}
-
-                    {item.location && (
-                      <div className="flex items-center gap-1 text-sm text-[var(--text-muted)] mb-2">
-                        <MapPin className="w-4 h-4" />
-                        {item.location}
-                      </div>
-                    )}
-
-                    {item.attendeesCount && item.attendeesCount > 0 && (
-                      <div className="flex items-center gap-1 text-sm text-[var(--text-muted)] mb-2">
-                        <Users className="w-4 h-4" />
-                        {item.attendeesCount} attendee{item.attendeesCount !== 1 ? 's' : ''}
-                      </div>
-                    )}
-
-                    {item.description && (
-                      <p className="text-sm text-[var(--text-muted)] mb-2 line-clamp-2">
-                        {item.description}
-                      </p>
-                    )}
-
-                    {(item.jobTitle || item.jobCompany) && (
-                      <div className="text-xs text-[var(--text-muted)]">
-                        {item.jobTitle && item.jobCompany
-                          ? `${item.jobTitle} at ${item.jobCompany}`
-                          : item.jobTitle || item.jobCompany
-                        }
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      size="small"
-                      icon={<Edit className="w-4 h-4" />}
-                      onClick={() => onEditItem(item)}
-                      className="text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      danger
-                      icon={<RiDeleteBin6Line className="w-4 h-4" />}
-                      onClick={() => handleDeleteItem(item)}
-                    >
-                      Delete
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditItem(item)}
+                        aria-label="Edit"
+                        className="h-8 w-8 p-0 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteItem(item)}
+                        aria-label="Delete"
+                        className="h-8 w-8 p-0 text-[var(--text-dim)] hover:text-[var(--danger)]"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
+
+        {/* Modal footer */}
+        <div className="flex justify-end pt-3 border-t border-[var(--border)]">
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </div>
     </Modal>
   );

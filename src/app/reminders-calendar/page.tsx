@@ -22,7 +22,7 @@ import {
   Filter
 } from 'lucide-react';
 import { RiDeleteBin6Line } from 'react-icons/ri';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import CalendarSkeleton from '@/components/ui/CalendarSkeleton';
 import CreateReminderModal from '@/components/modals/CreateReminderModal';
 import CreateEventModal from '@/components/modals/CreateEventModal';
 import DayViewModal from './DayViewModal';
@@ -209,13 +209,10 @@ const RemindersCalendarPage = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-          <div className="p-8 bg-[var(--bg-deep)] min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <LoadingSpinner size="lg" className="mx-auto mb-4" />
-              <p className="text-[var(--text-muted)]">Loading reminders and calendar...</p>
-            </div>
-          </div>
+      <AppLayout showFooter={false}>
+        <div className="p-6 lg:p-8 bg-[var(--bg-deep)] min-h-screen">
+          <CalendarSkeleton />
+        </div>
       </AppLayout>
     );
   }
@@ -265,7 +262,7 @@ const RemindersCalendarPage = () => {
         </div>
 
         {/* Search and Filters (same UI as the Jobs Agent / job-search page) */}
-        <div className="max-w-4xl mx-auto mb-8">
+        <div className="max-w-6xl mx-auto mb-8">
           <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border)]">
             <div className="p-4 space-y-3">
               <div className="flex flex-col sm:flex-row gap-3">
@@ -329,12 +326,13 @@ const RemindersCalendarPage = () => {
           </div>
         </div>
 
-        {/* Week Gantt view */}
-        <div className="max-w-4xl mx-auto">
+        {/* Week Gantt / Schedule view */}
+        <div className="max-w-6xl mx-auto">
           <WeekGantt
             items={filteredItems}
             weekStart={weekStart}
             onNavigate={(weeks) => setSelectedDate((d) => d.add(weeks, 'week'))}
+            onToday={() => setSelectedDate(dayjs())}
             onOpenDay={(items, date) => {
               setSelectedDate(date);
               setDayViewItems(items as CalendarItem[]);
@@ -381,12 +379,22 @@ const RemindersCalendarPage = () => {
         )}
 
         {/* Day View Modal */}
-        {showDayViewModal && dayViewDate && dayViewItems && (
+        {showDayViewModal && dayViewDate && (
           <DayViewModal
             isOpen={showDayViewModal}
             onClose={() => setShowDayViewModal(false)}
             date={dayViewDate}
             items={dayViewItems}
+            onAddNew={(type) => {
+              setCreateType(type);
+              if (type === 'reminder') {
+                setEditingReminder(undefined);
+              } else {
+                setEditingEvent(undefined);
+              }
+              setShowCreateModal(true);
+              setShowDayViewModal(false);
+            }}
             onEditItem={(item) => {
               if (item.type === 'reminder') {
                 setEditingReminder(item);

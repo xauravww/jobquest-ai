@@ -22,7 +22,7 @@ const REEL: Row[] = [
 ];
 
 const ACTION_META: Record<Row["action"], { icon: React.ElementType; cls: string }> = {
-  Applied: { icon: CheckCircle2, cls: "text-[var(--accent)]" },
+  Applied: { icon: CheckCircle2, cls: "text-[var(--live)]" },
   Tailored: { icon: FileText, cls: "text-[var(--text-main)]" },
   "Follow-up": { icon: Send, cls: "text-[var(--text-muted)]" },
 };

@@ -2,38 +2,39 @@
 @import "tw-animate-css";
 
 /*
-  Theme: Ops Console (Applytron)
-  Near-black control-panel. Flat surfaces, hairline borders, one warm coral
-  accent, one functional green reserved for live/status. No gradients.
+  Theme: Linear Obsidian / Precision Studio
+  Deep obsidian surfaces, crisp neutral contrast, micro-hairlines with translucent alpha borders.
+  Monochromatic primary actions (stark off-white CTA with pitch black text), quiet secondary
+  tones, and reserved functional signals (emerald live, amber warning, red danger).
   This :root block is the single source of truth — antd mirrors it in providers.tsx.
 */
 
 :root {
-  /* Surfaces */
-  --bg-deep: #0e1116;      /* page */
-  --bg-surface: #161b22;   /* cards / panels */
-  --bg-raised: #1c2230;    /* hover / inputs */
+  /* Surfaces - Calibrated Obsidian / Zinc */
+  --bg-deep: #08090a;      /* page background / deep ground */
+  --bg-surface: #101216;   /* cards / panels / sidebars */
+  --bg-raised: #181b20;    /* inputs / table hover / elevated popovers */
 
-  /* Text */
-  --text-main: #e6e9ef;
-  --text-muted: #8a93a6;
-  --text-dim: #5c6575;
+  /* Text - High-legibility precision neutral */
+  --text-main: #f0f2f5;
+  --text-muted: #8b929e;
+  --text-dim: #545b68;
 
-  /* Accent — warm coral (single decorative accent) */
-  --accent: #ff6b4a;
-  --accent-dim: #e85535;
-  --accent-soft: rgba(255, 107, 74, 0.12);
+  /* Primary Accent - Crisp stark monochrome with subtle high-contrast punch */
+  --accent: #f0f2f5;
+  --accent-dim: #d4d8e0;
+  --accent-soft: rgba(240, 242, 245, 0.08);
 
-  /* Functional signal green — ONLY for live/status dots */
-  --live: #3fb950;
+  /* Functional signal green — ONLY for live/status dots and positive state */
+  --live: #22c55e;
 
   /* Status */
-  --warning: #d9a441;
-  --danger: #e5534b;
+  --warning: #eab308;
+  --danger: #ef4444;
 
-  /* Borders (hairline) */
-  --border: #232a36;
-  --border-strong: #2e3644;
+  /* Borders (hairline alpha for layered depth) */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
 
   /* Radius */
   --radius-sm: 0.375rem;
@@ -62,7 +63,7 @@
   --border-glass-hover: rgba(255, 255, 255, 0.16);
 
   /* Footer */
-  --footer-bg: #0e1116;
+  --footer-bg: #08090a;
   --footer-accent: var(--accent);
 }
 
@@ -92,8 +93,8 @@ body {
 }
 
 ::selection {
-  background: var(--accent);
-  color: #0e1116;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 /* Scrollbar */
@@ -232,7 +233,7 @@ header nav[aria-label="Primary"] a:hover {
   width: 3px;
   height: 16px;
   border-radius: 9999px;
-  background: var(--accent);
+  background: var(--text-main);
   opacity: 0;
   transform: translateY(-50%) scaleY(0);
   transition: opacity 150ms ease, transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -308,15 +309,15 @@ header nav[aria-label="Primary"] a:hover {
 }
 
 .ant-btn-primary {
-  background-color: var(--accent) !important;
-  border-color: var(--accent) !important;
-  color: #0e1116 !important;
+  background-color: #f0f2f5 !important;
+  border-color: #f0f2f5 !important;
+  color: #08090a !important;
   font-weight: 600;
 }
 
 .ant-btn-primary:hover {
-  background-color: var(--accent-dim) !important;
-  border-color: var(--accent-dim) !important;
+  background-color: #d4d8e0 !important;
+  border-color: #d4d8e0 !important;
   opacity: 1 !important;
 }
 

@@ -12,8 +12,8 @@ const WordHighlight = () => {
   const reduce = useReducedMotion();
 
   const word = (delay: number) => ({
-    initial: reduce ? { color: "var(--accent)" } : { color: "var(--text-dim)" },
-    whileInView: { color: "var(--accent)" },
+    initial: reduce ? { color: "var(--text-main)" } : { color: "var(--text-dim)" },
+    whileInView: { color: "var(--text-main)" },
     viewport: { once: true },
     transition: { duration: 0.5, delay, ease: "easeOut" as const },
   });

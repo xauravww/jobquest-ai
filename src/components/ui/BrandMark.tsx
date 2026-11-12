@@ -28,7 +28,7 @@ const BrandMark: React.FC<BrandMarkProps> = ({
   const inner = (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <span
-        className="inline-flex items-center justify-center rounded-lg bg-[var(--accent)] text-[#0e1116] shrink-0"
+        className="inline-flex items-center justify-center rounded-lg bg-[var(--text-main)] text-[#08090a] shrink-0 font-bold"
         style={{ width: size, height: size }}
       >
         <Zap style={{ width: size * 0.55, height: size * 0.55 }} fill="currentColor" strokeWidth={0} />

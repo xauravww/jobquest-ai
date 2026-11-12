@@ -28,17 +28,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variants = {
       primary:
-        "bg-[var(--accent)] text-[#0e1116] font-semibold border border-transparent hover:bg-[var(--accent-dim)]",
+        "bg-[#f0f2f5] text-[#08090a] font-semibold border border-transparent hover:bg-[#d4d8e0]",
       secondary:
-        "bg-transparent border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent-soft)]",
+        "bg-[var(--bg-raised)] border border-[var(--border-strong)] text-[var(--text-main)] hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.25)]",
       ghost:
         "bg-transparent text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-raised)]",
       glass:
         "bg-[var(--bg-glass)] backdrop-blur-md border border-[var(--border-glass)] text-[var(--text-main)] hover:border-[var(--border-glass-hover)]",
       danger:
-        "bg-[var(--danger)] text-[var(--bg-deep)] border border-transparent hover:opacity-90",
+        "bg-[var(--danger)] text-white border border-transparent hover:opacity-90",
       white:
-        "bg-[var(--text-main)] text-[#0e1116] border border-transparent hover:opacity-90",
+        "bg-[#ffffff] text-[#08090a] border border-transparent hover:bg-[#eaeaea]",
     };
 
     const sizes = {

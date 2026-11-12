@@ -17,7 +17,7 @@ const NavLink = ({ href, children }: { href: string; children: React.ReactNode }
     className="text-[15px] font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors relative group"
   >
     {children}
-    <span className="absolute -bottom-1 left-0 right-0 h-px bg-[var(--accent)] scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
+    <span className="absolute -bottom-1 left-0 right-0 h-px bg-[var(--text-main)] scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
   </Link>
 );
 

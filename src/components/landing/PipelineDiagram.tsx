@@ -28,7 +28,7 @@ const PipelineDiagram = () => {
             </div>
 
             <div className="text-center">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--accent)] text-[#0e1116] font-semibold">
+              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--text-main)] text-[#08090a] font-semibold">
                 <span className="text-sm">{pipeline.hub}</span>
               </div>
             </div>
