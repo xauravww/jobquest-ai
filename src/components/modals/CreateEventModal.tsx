@@ -264,7 +264,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
         {/* Basic Info */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white pb-2">Basic Information</h3>
+          <h3 className="text-lg font-medium text-[var(--text-main)] pb-2">Basic Information</h3>
 
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title <span className="text-[var(--danger)]">*</span></label>
@@ -273,7 +273,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter event title"
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
             />
           </div>
 
@@ -284,7 +284,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter event description"
               rows={2}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none resize-none"
             />
           </div>
 
@@ -338,11 +338,11 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Date & Time */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
             <Clock className="w-5 h-5" /> Date & Time
           </h3>
 
-          <label className="flex items-center gap-2 text-white cursor-pointer">
+          <label className="flex items-center gap-2 text-[var(--text-main)] cursor-pointer">
             <input
               type="checkbox"
               checked={isAllDay}
@@ -366,7 +366,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     type="time"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-32 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                    className="w-32 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                   />
                 )}
               </div>
@@ -385,7 +385,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     type="time"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-32 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                    className="w-32 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                   />
                 )}
               </div>
@@ -395,11 +395,11 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Location */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
             <MapPin className="w-5 h-5" /> Location
           </h3>
 
-          <label className="flex items-center gap-2 text-white cursor-pointer">
+          <label className="flex items-center gap-2 text-[var(--text-main)] cursor-pointer">
             <input
               type="checkbox"
               checked={isVirtual}
@@ -419,7 +419,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Enter physical address"
-                  className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                 />
               </div>
             </div>
@@ -434,7 +434,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     value={meetingLink}
                     onChange={(e) => setMeetingLink(e.target.value)}
                     placeholder="https://zoom.us/j/..."
-                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -447,7 +447,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     value={meetingId}
                     onChange={(e) => setMeetingId(e.target.value)}
                     placeholder="123-456-789"
-                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                   />
                 </div>
               </div>
@@ -457,7 +457,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Attendees */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
             <Users className="w-5 h-5" /> Attendees
           </h3>
 
@@ -470,7 +470,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     value={attendee.name}
                     onChange={(e) => handleAttendeeChange(index, 'name', e.target.value)}
                     placeholder="Name"
-                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-[var(--text-main)] text-sm focus:border-[var(--primary)] focus:outline-none"
                   />
                 </div>
                 <div className="md:col-span-3">
@@ -479,7 +479,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     value={attendee.email}
                     onChange={(e) => handleAttendeeChange(index, 'email', e.target.value)}
                     placeholder="Email"
-                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-[var(--text-main)] text-sm focus:border-[var(--primary)] focus:outline-none"
                   />
                 </div>
                 <div className="md:col-span-3">
@@ -501,7 +501,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     value={attendee.company}
                     onChange={(e) => handleAttendeeChange(index, 'company', e.target.value)}
                     placeholder="Company"
-                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-white text-sm focus:border-[var(--primary)] focus:outline-none"
+                    className="w-full px-3 py-1.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-lg text-[var(--text-main)] text-sm focus:border-[var(--primary)] focus:outline-none"
                   />
                 </div>
                 <div className="md:col-span-1 flex justify-center">
@@ -530,7 +530,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Associations */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
             <FileText className="w-5 h-5" /> Associations
           </h3>
 
@@ -570,7 +570,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Agenda */}
         <section className="space-y-4">
-          <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+          <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
             <FileText className="w-5 h-5" /> Agenda
           </h3>
 
@@ -583,7 +583,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   value={item}
                   onChange={(e) => handleAgendaChange(index, e.target.value)}
                   placeholder={`Agenda Item ${index + 1}`}
-                  className="flex-1 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                  className="flex-1 px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                 />
                 <Button
                   variant="ghost"
@@ -611,7 +611,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           <Button
             variant="ghost"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+            className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
           >
             Cancel
           </Button>

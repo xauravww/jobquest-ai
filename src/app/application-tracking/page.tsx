@@ -5,10 +5,10 @@ import AppLayout from '@/components/AppLayout';
 import {
   Briefcase, Plus, Search, RefreshCw, Edit, Bell, FileText,
   MapPin, Globe, Calendar, Trash2, ExternalLink, Filter, ChevronLeft, ChevronRight,
-  CheckCircle, XCircle, Clock, AlertCircle
+  CheckCircle, XCircle, Clock, AlertCircle, X
 } from 'lucide-react';
 import dayjs from 'dayjs';
-import { Select, DatePicker } from 'antd';
+import { Select, DatePicker, TimePicker } from 'antd';
 import toast from 'react-hot-toast';
 import CreateJobModal from '@/components/modals/CreateJobModal';
 import CoverLetterModal from '@/components/modals/CoverLetterModal';
@@ -263,10 +263,10 @@ const ApplicationTrackingPage = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'applied': return 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20';
-      case 'interviewing': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'interviewing': return 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40';
       case 'offered': return 'bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/20';
       case 'rejected': return 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20';
-      case 'submitted': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'submitted': return 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40';
       case 'expired': return 'bg-[var(--text-muted)]/10 text-[var(--text-muted)] border-[var(--text-muted)]/20';
       default: return 'bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border)]';
     }
@@ -293,7 +293,6 @@ const ApplicationTrackingPage = () => {
               </div>
               Application Tracking
             </h1>
-            <p className="text-[var(--text-muted)] mt-2 ml-16">Track and manage your job applications effectively</p>
           </div>
 
           <Button
@@ -303,7 +302,7 @@ const ApplicationTrackingPage = () => {
               setSelectedJob(undefined);
               setCreateJobModalVisible(true);
             }}
-            className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all flex items-center gap-2"
+            className="px-6 py-3 bg-[var(--primary)] text-[var(--bg-deep)] font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all flex items-center gap-2"
           >
             <Plus className="w-5 h-5" />
             <span>Add Application</span>
@@ -326,7 +325,7 @@ const ApplicationTrackingPage = () => {
                   placeholder="Search jobs, companies..."
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
                 />
               </div>
 
@@ -429,6 +428,7 @@ const ApplicationTrackingPage = () => {
                             rel="noopener noreferrer"
                             className="p-2 text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
                             title="View Job Post"
+                            aria-label="View Job Post"
                           >
                             <ExternalLink className="w-5 h-5" />
                           </a>
@@ -439,8 +439,8 @@ const ApplicationTrackingPage = () => {
                             setSelectedJobForCoverLetter(job);
                             setCoverLetterModalVisible(true);
                           }}
-                          className="p-2 text-purple-400 hover:text-purple-300 hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
-                          title="Generate Cover Letter"
+            className="p-2 text-[var(--accent)] hover:text-[var(--accent-dim)] hover:bg-[var(--bg-deep)] rounded-lg transition-colors"
+            title="Generate Cover Letter"
                           aria-label="Generate Cover Letter"
                         >
                           <FileText className="w-5 h-5" />
@@ -502,7 +502,7 @@ const ApplicationTrackingPage = () => {
                     variant="primary"
                     size="md"
                     onClick={() => { setSelectedJob(undefined); setCreateJobModalVisible(true); }}
-                    className="px-6 py-3 bg-[var(--primary)] text-black font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all"
+                    className="px-6 py-3 bg-[var(--primary)] text-[var(--bg-deep)] font-bold rounded-xl hover:bg-[var(--primary-dim)] transition-all"
                   >
                     Add Application
                   </Button>
@@ -563,14 +563,28 @@ const ApplicationTrackingPage = () => {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title</label>
-            <input
-              type="text"
-              value={reminderForm.title}
-              onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={reminderForm.title}
+                onChange={(e) => setReminderForm({ ...reminderForm, title: e.target.value })}
+                placeholder="Reminder title"
+                className="w-full h-8 pl-4 pr-9 bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200"
+              />
+              {reminderForm.title && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setReminderForm({ ...reminderForm, title: '' })}
+                  aria-label="Clear title"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 w-6 h-6 rounded-md text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-transparent"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
               <DatePicker
@@ -581,11 +595,11 @@ const ApplicationTrackingPage = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Time</label>
-              <input
-                type="time"
-                value={reminderForm.dueTime}
-                onChange={(e) => setReminderForm({ ...reminderForm, dueTime: e.target.value })}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
+              <TimePicker
+                value={reminderForm.dueTime ? dayjs(reminderForm.dueTime, 'HH:mm') : null}
+                onChange={(t) => setReminderForm({ ...reminderForm, dueTime: t ? t.format('HH:mm') : '' })}
+                format="HH:mm"
+                className="w-full"
               />
             </div>
           </div>
@@ -594,6 +608,8 @@ const ApplicationTrackingPage = () => {
             <Select
               value={reminderForm.priority}
               onChange={(v) => setReminderForm({ ...reminderForm, priority: v })}
+              allowClear
+              placeholder="Select priority"
               options={[
                 { value: 'low', label: 'Low' },
                 { value: 'medium', label: 'Medium' },
@@ -606,14 +622,12 @@ const ApplicationTrackingPage = () => {
             <Button
               variant="secondary"
               onClick={() => setReminderModalVisible(false)}
-              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleCreateReminder}
-              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-colors"
             >
               Set Reminder
             </Button>

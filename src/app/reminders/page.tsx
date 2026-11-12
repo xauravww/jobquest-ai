@@ -297,7 +297,7 @@ const RemindersPage = () => {
                 placeholder="Search your reminders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto">

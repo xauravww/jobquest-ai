@@ -45,7 +45,7 @@ interface FormTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaEle
 }
 
 const inputBase =
-  'w-full bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg px-4 text-[var(--text-main)] placeholder-[var(--text-dim)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200';
+  'w-full bg-[var(--bg-deep)] border border-[var(--border)] rounded-lg px-4 text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200';
 
 const errorBorder = 'border-[var(--accent-dim)] focus:border-[var(--accent-dim)]';
 

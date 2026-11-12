@@ -49,7 +49,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         components: {
           Button: { primaryShadow: "none", defaultShadow: "none" },
           Input: {
-            colorTextPlaceholder: "#5c6575",
+            colorTextPlaceholder: "#8a93a6",
             activeBg: "#1c2230",
             activeShadow: "none",
             hoverBg: "#1c2230",

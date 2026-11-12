@@ -36,7 +36,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       glass:
         "bg-[var(--bg-glass)] backdrop-blur-md border border-[var(--border-glass)] text-[var(--text-main)] hover:border-[var(--border-glass-hover)]",
       danger:
-        "bg-[var(--danger)] text-white border border-transparent hover:opacity-90",
+        "bg-[var(--danger)] text-[var(--bg-deep)] border border-transparent hover:opacity-90",
       white:
         "bg-[var(--text-main)] text-[#0e1116] border border-transparent hover:opacity-90",
     };

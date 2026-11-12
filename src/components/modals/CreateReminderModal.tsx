@@ -218,7 +218,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
             <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
                 {/* Basic Information */}
                 <section className="space-y-4">
-                    <h3 className="text-lg font-medium text-white pb-2">Basic Information</h3>
+                    <h3 className="text-lg font-medium text-[var(--text-main)] pb-2">Basic Information</h3>
 
                     <div>
                         <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Title <span className="text-[var(--danger)]">*</span></label>
@@ -227,7 +227,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             placeholder="Enter reminder title"
-                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                         />
                     </div>
 
@@ -238,7 +238,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             placeholder="Enter description (optional)"
                             rows={2}
-                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none resize-none"
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none resize-none"
                         />
                     </div>
 
@@ -257,7 +257,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                 type="time"
                                 value={formData.dueTime}
                                 onChange={(e) => setFormData({ ...formData, dueTime: e.target.value })}
-                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                             />
                         </div>
                     </div>
@@ -301,7 +301,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
                 {/* Associations */}
                 <section className="space-y-4">
-                    <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
                         <Tag className="w-5 h-5" /> Associations
                     </h3>
 
@@ -343,7 +343,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             value={formData.tags}
                             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                             placeholder="Enter tags separated by commas"
-                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                            className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                         />
                     </div>
                 </section>
@@ -358,7 +358,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                             onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
                             className="rounded border-[var(--border-glass)] bg-[var(--bg-deep)] text-[var(--primary)] focus:ring-[var(--primary)]"
                         />
-                        <label htmlFor="isRecurring" className="text-white font-medium flex items-center gap-2 cursor-pointer">
+                        <label htmlFor="isRecurring" className="text-[var(--text-main)] font-medium flex items-center gap-2 cursor-pointer">
                             <Repeat className="w-4 h-4" />
                             Recurring Reminder
                         </label>
@@ -386,7 +386,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                     value={formData.recurrenceInterval}
                                     onChange={(e) => setFormData({ ...formData, recurrenceInterval: parseInt(e.target.value) || 1 })}
                                     min="1"
-                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                                    className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
                                 />
                             </div>
                             <div>
@@ -403,7 +403,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
 
                 {/* Notifications */}
                 <section className="space-y-4">
-                    <h3 className="text-lg font-medium text-white pb-2 flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-[var(--text-main)] pb-2 flex items-center gap-2">
                         <Bell className="w-5 h-5" /> Notifications
                     </h3>
 
@@ -455,7 +455,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                                             setFormData({ ...formData, notifications: newNotifications });
                                         }}
                                         aria-label={`Remove notification ${index + 1}`}
-                                        className="absolute -top-2 -right-2 bg-[var(--danger)] text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute -top-2 -right-2 bg-[var(--danger)] text-[var(--bg-deep)] rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
                                         <Trash2 className="w-3 h-3" />
                                     </Button>
@@ -483,7 +483,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                     <Button
                         variant="ghost"
                         onClick={onClose}
-                        className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+                        className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
                     >
                         Cancel
                     </Button>
@@ -491,9 +491,9 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({
                         variant="primary"
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="px-6 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-6 py-2 rounded-xl bg-[var(--primary)] text-[var(--bg-deep)] font-bold hover:bg-[var(--primary)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                        {loading && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
+                        {loading && <div className="w-4 h-4 border-2 border-[var(--bg-deep)] border-t-transparent rounded-full animate-spin"></div>}
                         {editingReminder ? 'Update Reminder' : 'Create Reminder'}
                     </Button>
                 </div>

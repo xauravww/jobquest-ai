@@ -91,15 +91,12 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center gap-3">
             <div className="p-2 bg-[var(--warning)]/20 rounded-xl border border-[var(--warning)]/30">
               <Bell className="w-6 h-6 text-[var(--warning)]" />
             </div>
             Notifications
           </h2>
-          <p className="text-[var(--text-muted)] mt-1 ml-14">
-            Stay updated with your job search activities
-          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -107,7 +104,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
             variant="secondary"
             onClick={() => notificationService.markAllAsRead()}
             disabled={notificationService.getUnreadCount() === 0}
-            className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--primary)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Eye className="w-4 h-4" />
             <span className="hidden sm:inline">Mark All Read</span>
@@ -140,7 +137,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                 placeholder="Search notifications..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                className="w-full pl-10 pr-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
               />
             </div>
 
@@ -218,7 +215,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
               <div className="w-16 h-16 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mx-auto mb-4">
                 <Bell className="w-8 h-8 text-[var(--text-muted)]" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No notifications found</h3>
+              <h3 className="text-xl font-semibold text-[var(--text-main)] mb-2">No notifications found</h3>
               <p className="text-[var(--text-muted)]">
                 {searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
                   ? 'Try adjusting your filters to see more notifications'
@@ -241,19 +238,14 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
                     }`}
                   onClick={() => notificationService.markAsRead(notification.id)}
                 >
-                  {/* Unread indicator */}
-                  {!notification.read && (
-                    <div className="absolute left-0 top-4 bottom-4 w-1 bg-[var(--primary)] rounded-r-full"></div>
-                  )}
-
-                  <div className="flex items-start gap-4 pl-2">
+                  <div className="flex items-start gap-4">
                     <div className={`p-2.5 rounded-lg border ${getNotificationColor(notification.type)}`}>
                       {getNotificationIcon(notification.type)}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <h4 className={`font-semibold text-lg ${notification.read ? 'text-[var(--text-main)]' : 'text-white'}`}>
+                        <h4 className="font-semibold text-lg text-[var(--text-main)]">
                           {notification.title}
                         </h4>
                         <span className="text-xs text-[var(--text-muted)] flex items-center gap-1 whitespace-nowrap">
@@ -303,7 +295,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
               variant="ghost"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
               aria-label="Previous page"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -315,7 +307,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ notifications }
               variant="ghost"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--text-main)] transition-colors"
               aria-label="Next page"
             >
               <ChevronRight className="w-5 h-5" />

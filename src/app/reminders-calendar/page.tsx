@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar as AntCalendar, Input, Pagination, Tooltip, Tag, Select } from 'antd';
+import { Calendar as AntCalendar, Input, Pagination, Tooltip, Select } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import AppLayout from '@/components/AppLayout';
 import Button from '@/components/ui/Button';
@@ -245,9 +245,9 @@ const RemindersCalendarPage = () => {
               setDayViewDate(value);
               setShowDayViewModal(true);
             }}>
-              <Tag color="orange" className="text-xs font-medium">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--accent-soft)] text-[var(--accent)]">
                 {reminderCount} reminder{reminderCount > 1 ? 's' : ''}
-              </Tag>
+              </span>
             </li>
           )}
           {eventCount > 0 && (
@@ -258,9 +258,9 @@ const RemindersCalendarPage = () => {
               setDayViewDate(value);
               setShowDayViewModal(true);
             }}>
-              <Tag color="blue" className="text-xs font-medium">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--bg-raised)] text-[var(--text-main)] border border-[var(--border-strong)]">
                 {eventCount} event{eventCount > 1 ? 's' : ''}
-              </Tag>
+              </span>
             </li>
           )}
         </ul>
@@ -271,32 +271,29 @@ const RemindersCalendarPage = () => {
   if (loading) {
     return (
       <AppLayout>
-        <div className="p-8 bg-bg min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <p className="text-text-muted">Loading reminders and calendar...</p>
+          <div className="p-8 bg-[var(--bg-deep)] min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <LoadingSpinner size="lg" className="mx-auto mb-4" />
+              <p className="text-[var(--text-muted)]">Loading reminders and calendar...</p>
+            </div>
           </div>
-        </div>
       </AppLayout>
     );
   }
 
   return (
     <AppLayout showFooter={false}>
-      <div className="p-8 bg-bg min-h-screen">
+      <div className="p-6 lg:p-8 bg-[var(--bg-deep)] min-h-screen">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 bg-primary/15 rounded-xl border border-primary/30">
-              <Target className="w-8 h-8 text-primary" />
+            <div className="p-3 bg-[var(--accent-soft)] rounded-xl border border-[var(--accent)]/30">
+              <Target className="w-8 h-8 text-[var(--accent)]" />
             </div>
-            <h1 className="text-4xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-[var(--text-main)]">
               My Schedule
             </h1>
           </div>
-          <p className="text-text-muted text-lg max-w-2xl mx-auto">
-            Keep track of your job search activities, interviews, and important deadlines
-          </p>
         </div>
 
         {/* Quick Actions */}
@@ -314,13 +311,13 @@ const RemindersCalendarPage = () => {
             Add Reminder
           </Button>
 
-          <Button
-            variant="primary"
-            onClick={() => {
-              setCreateType('event');
-              setEditingEvent(undefined);
-              setShowCreateModal(true);
-            }}
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setCreateType('event');
+                setEditingEvent(undefined);
+                setShowCreateModal(true);
+              }}
             leftIcon={<Calendar className="w-5 h-5" />}
             className="px-6 py-4"
           >
@@ -372,7 +369,9 @@ const RemindersCalendarPage = () => {
         {/* Calendar */}
         <div className="max-w-4xl mx-auto">
           <AntCalendar
-            dateCellRender={dateCellRender}
+            cellRender={(current, info) =>
+              info.type === 'date' ? dateCellRender(current) : info.originNode
+            }
             fullscreen={false}
             headerRender={({ value, onChange }) => {
               const current = value.clone();
@@ -421,7 +420,7 @@ const RemindersCalendarPage = () => {
             onChange={(page) => setCurrentPage(page)}
             showSizeChanger={false}
             showQuickJumper
-            className="bg-bg-card rounded-lg p-4"
+            className="bg-[var(--bg-card)] rounded-lg p-4"
             disabled={totalPages <= 1}
           />
         </div>

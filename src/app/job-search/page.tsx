@@ -84,12 +84,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
                 {job.salary}
               </div>
             )}
-            <div className={`px-3 py-1 rounded-full text-xs font-medium border ${job.source === 'findwork'
-              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-              : job.source === 'jooble'
-                ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-                : 'bg-green-500/10 text-green-400 border-green-500/20'
-              }`}>
+            <div className="px-3 py-1 rounded-full text-xs font-medium bg-[var(--bg-raised)] text-[var(--text-main)] border border-[var(--border-strong)]">
               {job.source === 'findwork' ? 'FindWork' :
                 job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
             </div>
@@ -103,7 +98,7 @@ const JobCard = ({ job, onTrack, onSkip }: {
                 variant="primary"
                 size="sm"
                 onClick={() => onTrack(job)}
-                className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-[var(--success)] hover:bg-[var(--success)]/90 text-black font-bold rounded-lg transition-all shadow-sm"
+                className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-[var(--success)] hover:bg-[var(--success)]/90 text-[var(--bg-deep)] font-bold rounded-lg transition-all shadow-sm"
               >
                 <Save className="w-4 h-4" />
                 <span>Track</span>
@@ -303,17 +298,18 @@ const JobSearchPage = () => {
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                   placeholder="Keywords (e.g. React Developer)"
-                  className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder-[var(--text-dim)]"
+                  className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
                 />
                 {filters.search && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
                     aria-label="Clear search"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 w-7 h-7 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)]"
                   >
                     <X className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -333,7 +329,7 @@ const JobSearchPage = () => {
                 size="sm"
                 type="submit"
                 disabled={loading || !filters.search.trim()}
-                className="shrink-0 h-8 px-6 rounded-lg bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary-dim)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="shrink-0 h-8 px-6 rounded-lg bg-[var(--primary)] text-[var(--bg-deep)] font-bold hover:bg-[var(--primary-dim)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Search className="w-4 h-4" />
                 <span>{loading ? 'Searching...' : 'Search'}</span>
@@ -354,17 +350,18 @@ const JobSearchPage = () => {
                     value={filters.location}
                     onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
                     placeholder="Location (e.g. Remote)"
-                    className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder-[var(--text-dim)]"
+                    className="w-full h-8 pl-2 pr-8 bg-transparent border-none outline-none text-[var(--text-main)] placeholder:text-[var(--text-muted)]"
                   />
                   {filters.location && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => setFilters(prev => ({ ...prev, location: '' }))}
                       aria-label="Clear location"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 w-7 h-7 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)]"
                     >
                       <X className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -386,7 +383,7 @@ const JobSearchPage = () => {
 
                 <label className="flex items-center gap-3 text-[var(--text-main)] cursor-pointer group">
                   <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${filters.remote ? 'bg-[var(--primary)] border-[var(--primary)]' : 'border-[var(--text-muted)] group-hover:border-[var(--primary)]'}`}>
-                    {filters.remote && <CheckCircle className="w-3.5 h-3.5 text-black" />}
+                    {filters.remote && <CheckCircle className="w-3.5 h-3.5 text-[var(--bg-deep)]" />}
                   </div>
                   <input
                     type="checkbox"
@@ -407,7 +404,7 @@ const JobSearchPage = () => {
         ) : (
           <div className="space-y-6">
             {jobs.length > 0 && (
-              <div className="flex justify-between items-center px-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-2">
                 <h2 className="text-xl font-semibold text-[var(--text-main)] flex items-center gap-2">
                   <span className="w-2 h-8 bg-[var(--primary)] rounded-full"></span>
                   Found {jobs.length} jobs

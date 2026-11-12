@@ -30,16 +30,16 @@ const Header = () => {
   ];
 
   return (
-    <header className="bg-bg-dark border-b border-border sticky top-0 z-50">
+    <header className="bg-[var(--bg-deep)] border-b border-[var(--border)] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">J</span>
+              <div className="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center">
+                <span className="text-[var(--bg-deep)] font-bold text-lg">J</span>
               </div>
-              <span className="text-xl font-bold text-white">Jobquest AI</span>
+              <span className="text-xl font-bold text-[var(--text-main)]">Jobquest AI</span>
             </Link>
           </div>
 
@@ -49,7 +49,7 @@ const Header = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-text-muted hover:text-white px-3 py-2 text-sm font-medium transition-colors"
+                className="text-[var(--text-muted)] hover:text-[var(--text-main)] px-3 py-2 text-sm font-medium transition-colors"
               >
                 {item.name}
               </Link>
@@ -75,24 +75,24 @@ const Header = () => {
                 <Button
                   variant="ghost"
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 p-1"
+                  className="flex items-center space-x-2 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--accent)] p-1"
                   aria-label="Toggle user menu"
                 >
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 bg-[var(--accent)] rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-[var(--bg-deep)]" />
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <ChevronDown className="w-4 h-4 text-[var(--text-muted)]" />
                 </Button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-                    <div className="px-4 py-2 border-b border-gray-200">
-                      <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-                      <p className="text-sm text-gray-500">{session.user?.email}</p>
+                  <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-surface)] rounded-md shadow-lg py-1 z-10 border border-[var(--border)]">
+                    <div className="px-4 py-2 border-b border-[var(--border)]">
+                      <p className="text-sm font-medium text-[var(--text-main)]">{session.user?.name}</p>
+                      <p className="text-sm text-[var(--text-muted)]">{session.user?.email}</p>
                     </div>
                     <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-[var(--text-muted)] hover:bg-[var(--bg-raised)]"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <User className="w-4 h-4 inline mr-2" />
@@ -100,7 +100,7 @@ const Header = () => {
                     </Link>
                     <Link
                       href="/settings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-[var(--text-muted)] hover:bg-[var(--bg-raised)]"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Settings className="w-4 h-4 inline mr-2" />
@@ -112,7 +112,7 @@ const Header = () => {
                         signOut();
                         setIsUserMenuOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-[var(--text-muted)] hover:bg-[var(--bg-raised)]"
                     >
                       <LogOut className="w-4 h-4 inline mr-2" />
                       Sign out
@@ -147,13 +147,13 @@ const Header = () => {
         {/* Mobile Navigation */}
         {/* Removed to avoid duplicate mobile navigation */}
         {/* {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
+          <div className="md:hidden border-t border-[var(--border)] py-4">
             <nav className="flex flex-col space-y-2">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors"
+                  className="text-[var(--text-muted)] hover:text-[var(--text-main)] px-3 py-2 text-sm font-medium transition-colors"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}

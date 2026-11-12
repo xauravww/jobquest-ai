@@ -135,13 +135,13 @@ const FollowUpCard = ({ followUp, onComplete }: { followUp: FollowUp; onComplete
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-4 transition-all hover:shadow-lg hover:shadow-[var(--primary)]/5 group"
+        className="bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-4 transition-all group"
     >
         <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-                <div className={`p-2.5 rounded-lg border ${followUp.type === 'email' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                        followUp.type === 'linkedin' ? 'bg-blue-700/10 text-blue-600 border-blue-700/20' :
-                            followUp.type === 'phone' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                <div className={`p-2.5 rounded-lg border ${followUp.type === 'email' ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/20' :
+                        followUp.type === 'linkedin' ? 'bg-[var(--bg-raised)] text-[var(--text-muted)] border-[var(--border-strong)]' :
+                            followUp.type === 'phone' ? 'bg-[var(--bg-raised)] text-[var(--text-muted)] border-[var(--border-strong)]' :
                                 'bg-[var(--primary)]/10 text-[var(--primary)] border-[var(--primary)]/20'
                     }`}>
                     {followUp.type === 'email' ? <Mail className="w-4 h-4" /> :
@@ -150,7 +150,7 @@ const FollowUpCard = ({ followUp, onComplete }: { followUp: FollowUp; onComplete
                                 <MessageSquare className="w-4 h-4" />}
                 </div>
                 <div>
-                    <h4 className="font-semibold text-white group-hover:text-[var(--primary)] transition-colors">{followUp.subject}</h4>
+                    <h4 className="font-semibold text-[var(--text-main)] group-hover:text-[var(--primary)] transition-colors">{followUp.subject}</h4>
                     <div className="flex items-center gap-2 mt-1 text-xs text-[var(--text-muted)]">
                         <span className="flex items-center gap-1">
                             <User className="w-3 h-3" />
@@ -308,20 +308,19 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
             {/* Header */}
             <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                        <div className="p-2 bg-[var(--success)]/20 rounded-xl border border-[var(--success)]/30">
-                            <TrendingUp className="w-6 h-6 text-[var(--success)]" />
+                    <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center gap-3">
+                        <div className="p-2 bg-[var(--accent-soft)] rounded-xl border border-[var(--accent)]/30">
+                            <TrendingUp className="w-6 h-6 text-[var(--accent)]" />
                         </div>
                         Follow-up Tracker
                     </h2>
-                    <p className="text-[var(--text-muted)] mt-1 ml-14">Manage your networking and communications</p>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                     <Button
                         variant="secondary"
                         onClick={() => setShowContactModal(true)}
-                        className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white hover:border-[var(--primary)] transition-all flex items-center gap-2"
+                        className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--primary)] transition-all flex items-center gap-2"
                     >
                         <UserPlus className="w-4 h-4" />
                         <span>Add Contact</span>
@@ -329,7 +328,7 @@ const FollowUpTracker: React.FC<FollowUpTrackerProps> = ({ className = '' }) => 
                     <Button
                         variant="primary"
                         onClick={() => setShowFollowUpModal(true)}
-                        className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-all flex items-center gap-2 shadow-lg shadow-[var(--primary)]/25"
+                        className="px-4 py-2 rounded-xl flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Schedule Follow-up</span>

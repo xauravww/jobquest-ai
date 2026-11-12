@@ -6,7 +6,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
-import { Briefcase, MapPin, Globe, AlertCircle } from 'lucide-react';
+import { Briefcase, MapPin, Globe, AlertCircle, X } from 'lucide-react';
 
 interface Job {
   createdAt: string;
@@ -42,6 +42,18 @@ interface ValidationErrors {
   description?: string;
   notes?: string;
 }
+
+const ClearButton = ({ onClick, label, className = '' }: { onClick: () => void; label: string; className?: string }) => (
+  <Button
+    type="button"
+    variant="ghost"
+    onClick={onClick}
+    aria-label={label}
+    className={`absolute p-1 w-6 h-6 rounded-md text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-transparent ${className}`}
+  >
+    <X className="w-3.5 h-3.5" />
+  </Button>
+);
 
 const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalProps) => {
   const [title, setTitle] = useState('');
@@ -278,7 +290,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
       title={job ? "Edit Job Application" : "Add New Job Application"}
       width="max-w-2xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
@@ -291,8 +303,15 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={title}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
                 placeholder="e.g. Senior Frontend Developer"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.title ? 'border border-[var(--danger)]' : ''}`}
+                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.title ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
+              {title && (
+                <ClearButton
+                  onClick={() => handleFieldChange('title', '')}
+                  label="Clear title"
+                  className="right-2 top-1/2 -translate-y-1/2"
+                />
+              )}
             </div>
             {errors.title && <p className="text-[var(--danger)] text-xs mt-1">{errors.title}</p>}
           </div>
@@ -308,8 +327,15 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={company}
                 onChange={(e) => handleFieldChange('company', e.target.value)}
                 placeholder="e.g. Tech Corp"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.company ? 'border border-[var(--danger)]' : ''}`}
+                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.company ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
+              {company && (
+                <ClearButton
+                  onClick={() => handleFieldChange('company', '')}
+                  label="Clear company"
+                  className="right-2 top-1/2 -translate-y-1/2"
+                />
+              )}
             </div>
             {errors.company && <p className="text-[var(--danger)] text-xs mt-1">{errors.company}</p>}
           </div>
@@ -325,8 +351,15 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={location}
                 onChange={(e) => handleFieldChange('location', e.target.value)}
                 placeholder="e.g. Remote, New York"
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.location ? 'border border-[var(--danger)]' : ''}`}
+                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.location ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
+              {location && (
+                <ClearButton
+                  onClick={() => handleFieldChange('location', '')}
+                  label="Clear location"
+                  className="right-2 top-1/2 -translate-y-1/2"
+                />
+              )}
             </div>
             {errors.location && <p className="text-[var(--danger)] text-xs mt-1">{errors.location}</p>}
           </div>
@@ -340,8 +373,15 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
                 value={jobUrl}
                 onChange={(e) => handleFieldChange('jobUrl', e.target.value)}
                 placeholder="https://..."
-                className={`w-full pl-10 pr-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none ${errors.jobUrl ? 'border border-[var(--danger)]' : ''}`}
+                className={`w-full pl-10 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none transition-colors duration-200 ${errors.jobUrl ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
               />
+              {jobUrl && (
+                <ClearButton
+                  onClick={() => handleFieldChange('jobUrl', '')}
+                  label="Clear URL"
+                  className="right-2 top-1/2 -translate-y-1/2"
+                />
+              )}
             </div>
             {errors.jobUrl && <p className="text-[var(--danger)] text-xs mt-1">{errors.jobUrl}</p>}
           </div>
@@ -353,6 +393,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <Select
               value={status}
               onChange={(v) => setStatus(v)}
+              allowClear
               options={[
                 { value: 'saved', label: 'Saved' },
                 { value: 'applied', label: 'Applied' },
@@ -371,6 +412,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <Select
               value={priority}
               onChange={(v) => setPriority(v)}
+              allowClear
               options={[
                 { value: 'high', label: 'High' },
                 { value: 'medium', label: 'Medium' },
@@ -385,6 +427,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
             <Select
               value={platform}
               onChange={(v) => setPlatform(v)}
+              allowClear
               options={[
                 { value: 'linkedin', label: 'LinkedIn' },
                 { value: 'indeed', label: 'Indeed' },
@@ -405,6 +448,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
               <DatePicker
                 value={datePosted ? dayjs(datePosted) : null}
                 onChange={(d) => setDatePosted(d ? d.format('YYYY-MM-DD') : '')}
+                allowClear
                 className="w-full"
               />
             </div>
@@ -416,6 +460,7 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
               <Select
                 value={selectedResumeId}
                 onChange={(v) => setSelectedResumeId(v)}
+                allowClear
                 options={[
                   { value: '', label: 'Select a resume...' },
                   ...resumes.map((resume) => ({
@@ -431,26 +476,44 @@ const CreateJobModal = ({ visible, onClose, onJobCreated, job }: CreateJobModalP
 
         <div>
           <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => handleFieldChange('description', e.target.value)}
-            placeholder="Job description..."
-            rows={3}
-            className={`w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.description ? 'border border-[var(--danger)]' : ''}`}
-          />
+          <div className="relative">
+            <textarea
+              value={description}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
+              placeholder="Job description..."
+              rows={3}
+              className={`w-full px-4 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none resize-none transition-colors duration-200 ${errors.description ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+            />
+            {description && (
+              <ClearButton
+                onClick={() => handleFieldChange('description', '')}
+                label="Clear description"
+                className="right-2 top-2"
+              />
+            )}
+          </div>
           {errors.description && <p className="text-[var(--danger)] text-xs mt-1">{errors.description}</p>}
           <p className="text-[var(--text-dim)] text-xs text-right">{description.length}/5000</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Notes</label>
-          <textarea
-            value={notes}
-            onChange={(e) => handleFieldChange('notes', e.target.value)}
-            placeholder="Additional notes..."
-            rows={2}
-            className={`w-full px-4 py-2 bg-[var(--bg-surface)] rounded-lg text-[var(--text-main)] focus:outline-none resize-none ${errors.notes ? 'border border-[var(--danger)]' : ''}`}
-          />
+          <div className="relative">
+            <textarea
+              value={notes}
+              onChange={(e) => handleFieldChange('notes', e.target.value)}
+              placeholder="Additional notes..."
+              rows={2}
+              className={`w-full px-4 pr-9 py-2 bg-[var(--bg-deep)] border rounded-lg text-[var(--text-main)] placeholder-[var(--text-muted)] focus:border-[var(--accent)] focus:outline-none resize-none transition-colors duration-200 ${errors.notes ? 'border-[var(--danger)]' : 'border-[var(--border)]'}`}
+            />
+            {notes && (
+              <ClearButton
+                onClick={() => handleFieldChange('notes', '')}
+                label="Clear notes"
+                className="right-2 top-2"
+              />
+            )}
+          </div>
           {errors.notes && <p className="text-[var(--danger)] text-xs mt-1">{errors.notes}</p>}
           <p className="text-[var(--text-dim)] text-xs text-right">{notes.length}/2000</p>
         </div>

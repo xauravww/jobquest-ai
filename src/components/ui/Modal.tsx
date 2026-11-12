@@ -47,7 +47,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, width =
                             className={`w-full ${width} bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-2xl shadow-2xl pointer-events-auto flex flex-col max-h-[90vh]`}
                         >
                             <div className="flex items-center justify-between p-6 border-b border-[var(--border-glass)]">
-                                <h3 className="text-xl font-bold text-white">{title}</h3>
+                                <h3 className="text-xl font-bold text-[var(--text-main)]">{title}</h3>
                                 <Button
                                     variant="ghost"
                                     onClick={onClose}

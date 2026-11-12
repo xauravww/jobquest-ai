@@ -619,36 +619,37 @@ export default function NaukriAutomationPage() {
         },
         {
             title: 'Status', dataIndex: 'status', key: 'status', render: (status: string, record: any) => {
-                let color = 'blue';
                 let displayText = status.toUpperCase();
                 let tooltip = '';
 
                 if (status === 'applied') {
-                    color = 'green';
                     displayText = '✅ API APPLIED';
                     tooltip = 'Successfully applied via Naukri API';
                 } else if (status === 'external') {
-                    color = 'orange';
                     displayText = '🌐 EXTERNAL ONLY';
                     tooltip = 'Requires application on company website - not tracked by this system';
                 } else if (status === 'external_pending') {
-                    color = 'gold';
                     displayText = '⏳ EXTERNAL PENDING';
                     tooltip = 'External link opened - application status unknown';
                 } else if (status === 'external_applied') {
-                    color = 'green';
                     displayText = '✅ EXTERNAL APPLIED';
                     tooltip = 'User marked as applied externally (manual tracking)';
                 } else if (status === 'saved') {
-                    color = 'blue';
                     displayText = '💾 SAVED';
                     tooltip = 'Job saved for later application';
                 }
 
+                const chipClass = status === 'external' || status === 'external_pending'
+                    ? 'bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/30'
+                    : 'bg-[var(--bg-raised)] text-[var(--text-muted)] border border-[var(--border-strong)]';
+
                 return (
-                    <Tag color={color} title={tooltip}>
+                    <span
+                        title={tooltip}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${chipClass}`}
+                    >
                         {displayText}
-                    </Tag>
+                    </span>
                 );
             }
         },
@@ -721,7 +722,10 @@ export default function NaukriAutomationPage() {
                             Login to Naukri
                         </Button>
                     ) : (
-                        <Tag color="success" icon={<RobotOutlined />}>Connected to Naukri</Tag>
+                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-[var(--live)]/10 text-[var(--live)] border border-[var(--live)]/30">
+                            <RobotOutlined />
+                            Connected to Naukri
+                        </span>
                     )}
                 </Space>
             </div>
@@ -1004,9 +1008,9 @@ export default function NaukriAutomationPage() {
                 title={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         📋 Application Log: {selectedJob?.title}
-                        <Tag color={selectedJob?.isExternalApplication ? 'orange' : 'blue'}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${selectedJob?.isExternalApplication ? 'bg-[var(--warning)]/10 text-[var(--warning)] border border-[var(--warning)]/30' : 'bg-[var(--bg-raised)] text-[var(--text-main)] border border-[var(--border-strong)]'}`}>
                             {selectedJob?.isExternalApplication ? 'External' : 'API'}
-                        </Tag>
+                        </span>
                     </div>
                 }
                 open={applicationLogModalVisible}

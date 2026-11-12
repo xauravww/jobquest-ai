@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Table, 
-  Input, 
-  Select, 
-  DatePicker, 
-  Button, 
-  Tag, 
-  Space, 
+import {
+  Table,
+  Input,
+  Select,
+  DatePicker,
+  Button,
+  Space,
   Tooltip,
   Card,
   Statistic,
@@ -71,24 +70,30 @@ interface ApplicationStats {
 }
 
 const statusColors: Record<string, string> = {
-  draft: 'default',
-  applied: 'blue',
-  submitted: 'cyan',
-  under_review: 'orange',
-  phone_screening: 'purple',
-  technical_interview: 'magenta',
-  final_interview: 'pink',
-  offer_received: 'green',
-  accepted: 'success',
-  rejected: 'error',
-  withdrawn: 'default'
+  draft: 'bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]',
+  applied: 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40',
+  submitted: 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40',
+  under_review: 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/40',
+  phone_screening: 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40',
+  technical_interview: 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40',
+  final_interview: 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/40',
+  offer_received: 'bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]',
+  accepted: 'bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]',
+  rejected: 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/40',
+  withdrawn: 'bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]'
 };
 
 const priorityColors: Record<string, string> = {
-  low: 'default',
-  medium: 'warning',
-  high: 'error'
+  low: 'bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]',
+  medium: 'bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/40',
+  high: 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/40'
 };
+
+const StatusTag = ({ label, className }: { label: string; className: string }) => (
+  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${className}`}>
+    {label}
+  </span>
+);
 
 export default function ApplicationTrackingOptimized() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -207,8 +212,8 @@ export default function ApplicationTrackingOptimized() {
       ellipsis: true,
       render: (title: string, record: Application) => (
         <div>
-          <div className="font-medium text-gray-900">{title}</div>
-          <div className="text-sm text-gray-500">{record.jobId.company}</div>
+          <div className="font-medium text-[var(--text-main)]">{title}</div>
+          <div className="text-sm text-[var(--text-muted)]">{record.jobId.company}</div>
         </div>
       ),
     },
@@ -225,9 +230,10 @@ export default function ApplicationTrackingOptimized() {
       key: 'status',
       width: 120,
       render: (status: string) => (
-        <Tag color={statusColors[status] || 'default'}>
-          {status.replace('_', ' ').toUpperCase()}
-        </Tag>
+        <StatusTag
+          label={status.replace('_', ' ').toUpperCase()}
+          className={statusColors[status] || statusColors.draft}
+        />
       ),
     },
     {
@@ -236,9 +242,10 @@ export default function ApplicationTrackingOptimized() {
       key: 'priority',
       width: 100,
       render: (priority: string) => (
-        <Tag color={priorityColors[priority] || 'default'}>
-          {priority.toUpperCase()}
-        </Tag>
+        <StatusTag
+          label={priority.toUpperCase()}
+          className={priorityColors[priority] || priorityColors.low}
+        />
       ),
     },
     {
@@ -247,7 +254,10 @@ export default function ApplicationTrackingOptimized() {
       key: 'platform',
       width: 120,
       render: (platform: string) => (
-        <Tag>{platform.replace('_', ' ').toUpperCase()}</Tag>
+        <StatusTag
+          label={platform.replace('_', ' ').toUpperCase()}
+          className="bg-[var(--bg-raised)] text-[var(--text-main)] border-[var(--border-strong)]"
+        />
       ),
     },
     {
@@ -266,18 +276,20 @@ export default function ApplicationTrackingOptimized() {
       render: (_: any, record: Application) => (
         <Space size="small">
           <Tooltip title="View Details">
-            <Button 
-              type="text" 
-              icon={<EyeOutlined />} 
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
               size="small"
+              aria-label="View Details"
               onClick={() => window.open(record.jobId.url, '_blank')}
             />
           </Tooltip>
           <Tooltip title="Edit">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
+            <Button
+              type="text"
+              icon={<EditOutlined />}
               size="small"
+              aria-label="Edit"
               onClick={() => {
                 // TODO: Implement edit functionality
                 toast('Edit functionality coming soon');
@@ -285,11 +297,12 @@ export default function ApplicationTrackingOptimized() {
             />
           </Tooltip>
           <Tooltip title="Delete">
-            <Button 
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
               size="small"
+              aria-label="Delete"
               onClick={() => {/* Handle delete */}}
             />
           </Tooltip>
@@ -299,7 +312,7 @@ export default function ApplicationTrackingOptimized() {
   ], []);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-[var(--bg-deep)] min-h-screen">
       {/* Stats Cards */}
       <Row gutter={16} className="mb-6">
         <Col xs={24} sm={12} md={6}>
@@ -307,7 +320,7 @@ export default function ApplicationTrackingOptimized() {
             <Statistic
               title="Total Applications"
               value={stats.total}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: 'var(--text-main)' }}
             />
           </Card>
         </Col>
@@ -316,7 +329,7 @@ export default function ApplicationTrackingOptimized() {
             <Statistic
               title="Applied"
               value={stats.applied}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: 'var(--accent)' }}
             />
           </Card>
         </Col>
@@ -325,7 +338,7 @@ export default function ApplicationTrackingOptimized() {
             <Statistic
               title="Interviews"
               value={stats.interviews}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: 'var(--text-main)' }}
             />
           </Card>
         </Col>
@@ -335,7 +348,7 @@ export default function ApplicationTrackingOptimized() {
               title="Response Rate"
               value={stats.responseRate}
               suffix="%"
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: 'var(--warning)' }}
             />
           </Card>
         </Col>

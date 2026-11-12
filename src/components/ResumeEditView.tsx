@@ -722,7 +722,7 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
                   placeholder="Describe what to improve…"
                   aria-label="AI instruction"
                   disabled={aiFixing}
-                  className="flex-1 resize-none px-3 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-lg text-white text-sm placeholder:text-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+                  className="flex-1 resize-none px-3 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-lg text-white text-sm placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
                 />
                 <Button
                   type="submit"
@@ -755,7 +755,7 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
               value={draftTitle}
               onChange={(e) => setDraftTitle(e.target.value)}
               placeholder="e.g. Software Engineer Resume"
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white text-sm placeholder:text-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white text-sm placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
             />
           </div>
           <div>
@@ -765,7 +765,7 @@ const ResumeEditView = ({ resume, onBack, onSave }: Props) => {
               onChange={(e) => setDraftDescription(e.target.value)}
               rows={3}
               placeholder="Short description"
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white text-sm placeholder:text-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white text-sm placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors resize-none"
             />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-glass)]">

@@ -81,7 +81,7 @@ const ActivityCard = ({ activity, onClick, onDelete, onComplete }: { activity: A
     switch (type) {
       case 'reminder': return 'text-[var(--warning)] bg-[var(--warning)]/10 border-[var(--warning)]/20';
       case 'interview': return 'text-[var(--danger)] bg-[var(--danger)]/10 border-[var(--danger)]/20';
-      case 'event': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+      case 'event': return 'text-[var(--text-muted)] bg-[var(--bg-raised)] border-[var(--border-strong)]';
       case 'follow_up': return 'text-[var(--secondary)] bg-[var(--secondary)]/10 border-[var(--secondary)]/20';
       default: return 'text-[var(--primary)] bg-[var(--primary)]/10 border-[var(--primary)]/20';
     }
@@ -94,7 +94,7 @@ const ActivityCard = ({ activity, onClick, onDelete, onComplete }: { activity: A
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       onClick={onClick}
-      className="group relative bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg hover:shadow-[var(--primary)]/5 hover:-translate-y-0.5"
+      className="group relative bg-[var(--bg-surface)]/50 border border-[var(--border-glass)] hover:border-[var(--primary)]/30 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
@@ -102,7 +102,7 @@ const ActivityCard = ({ activity, onClick, onDelete, onComplete }: { activity: A
             {getTypeIcon(activity.type)}
           </div>
           <div>
-            <h4 className="font-semibold text-white group-hover:text-[var(--primary)] transition-colors line-clamp-1">{activity.title}</h4>
+            <h4 className="font-semibold text-[var(--text-main)] group-hover:text-[var(--primary)] transition-colors line-clamp-1">{activity.title}</h4>
             <div className="flex items-center gap-2 mt-1 text-xs text-[var(--text-muted)]">
               <span className="flex items-center gap-1">
                 <CalendarIcon className="w-3 h-3" />
@@ -169,12 +169,12 @@ const CustomCalendar = ({ activities, onDateSelect, selectedDate }: { activities
   return (
     <div className="bg-[var(--bg-surface)]/30 border border-[var(--border-glass)] rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white">{currentMonth.format('MMMM YYYY')}</h3>
+        <h3 className="text-xl font-bold text-[var(--text-main)]">{currentMonth.format('MMMM YYYY')}</h3>
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => setCurrentMonth(currentMonth.subtract(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors" aria-label="Previous month">
+          <Button variant="ghost" onClick={() => setCurrentMonth(currentMonth.subtract(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors" aria-label="Previous month">
             <ChevronLeft className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" onClick={() => setCurrentMonth(currentMonth.add(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-white transition-colors" aria-label="Next month">
+          <Button variant="ghost" onClick={() => setCurrentMonth(currentMonth.add(1, 'month'))} className="p-2 hover:bg-[var(--bg-surface)] rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors" aria-label="Next month">
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
@@ -202,7 +202,7 @@ const CustomCalendar = ({ activities, onDateSelect, selectedDate }: { activities
                 isToday ? 'bg-[var(--bg-surface)] border-[var(--primary)]/30' : 'bg-[var(--bg-surface)]/50 border-[var(--border-glass)]'
                 }`}
             >
-              <span className={`text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--primary)] text-black' : 'text-[var(--text-muted)]'}`}>
+              <span className={`text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--primary)] text-[var(--bg-deep)]' : 'text-[var(--text-muted)]'}`}>
                 {day}
               </span>
               <div className="flex flex-col gap-1 overflow-y-auto custom-scrollbar">
@@ -329,7 +329,7 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
         status: r.status,
         priority: r.priority,
         time: r.dueTime,
-        color: r.color || '#f59e0b',
+        color: r.color || 'var(--warning)',
         jobId: r.jobId,
         applicationId: r.applicationId,
         tags: r.tags || [],
@@ -346,7 +346,7 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
         priority: e.priority || 'medium',
         time: e.isAllDay ? 'All day' : dayjs(e.startDate).format('HH:mm'),
         endTime: e.isAllDay ? undefined : dayjs(e.endDate).format('HH:mm'),
-        color: e.color || '#3b82f6',
+        color: e.color || 'var(--accent)',
         location: e.location?.address,
         attendees: e.attendees,
         jobId: e.jobId,
@@ -434,13 +434,12 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row gap-6 justify-between items-start lg:items-center">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-[var(--text-main)] flex items-center gap-3">
             <div className="p-2 bg-[var(--primary)]/20 rounded-xl border border-[var(--primary)]/30">
               <TrendingUp className="w-6 h-6 text-[var(--primary)]" />
             </div>
             Activity Hub
           </h2>
-          <p className="text-[var(--text-muted)] mt-1 ml-14">Manage your schedule and tasks</p>
         </div>
 
         <div className="flex flex-wrap gap-3 w-full lg:w-auto">
@@ -460,7 +459,7 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
               placeholder="Search activities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl text-white placeholder-[var(--text-dim)] focus:border-[var(--primary)] focus:outline-none transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none transition-colors"
             />
           </div>
 
@@ -468,14 +467,14 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
             <Button
               variant="ghost"
               onClick={() => setViewMode('list')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-[var(--text-muted)] hover:text-white'}`}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'list' ? 'bg-[var(--primary)] text-[var(--bg-deep)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
             >
               List
             </Button>
             <Button
               variant="ghost"
               onClick={() => setViewMode('calendar')}
-              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'calendar' ? 'bg-[var(--primary)] text-black shadow-lg' : 'text-[var(--text-muted)] hover:text-white'}`}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${viewMode === 'calendar' ? 'bg-[var(--primary)] text-[var(--bg-deep)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}
             >
               Calendar
             </Button>
@@ -492,7 +491,7 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
             onClick={() => setFilterType(type)}
             className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${filterType === type
               ? 'bg-[var(--primary)]/10 border-[var(--primary)] text-[var(--primary)]'
-              : 'bg-[var(--bg-surface)] border-[var(--border-glass)] text-[var(--text-muted)] hover:border-[var(--primary)]/50 hover:text-white'
+              : 'bg-[var(--bg-surface)] border-[var(--border-glass)] text-[var(--text-muted)] hover:border-[var(--primary)]/50 hover:text-[var(--text-main)]'
               }`}
           >
             {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
@@ -572,11 +571,11 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
               type="text"
               value={activityForm.title}
               onChange={(e) => setActivityForm({ ...activityForm, title: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
               placeholder="e.g., Follow up with Google"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">Date</label>
               <DatePicker
@@ -591,7 +590,7 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
                 type="time"
                 value={activityForm.time}
                 onChange={(e) => setActivityForm({ ...activityForm, time: e.target.value })}
-                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none"
+                className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none"
               />
             </div>
           </div>
@@ -600,7 +599,7 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
             <textarea
               value={activityForm.description}
               onChange={(e) => setActivityForm({ ...activityForm, description: e.target.value })}
-              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-white focus:border-[var(--primary)] focus:outline-none h-24 resize-none"
+              className="w-full px-4 py-2 bg-[var(--bg-deep)] border border-[var(--border-glass)] rounded-xl text-[var(--text-main)] focus:border-[var(--primary)] focus:outline-none h-24 resize-none"
               placeholder="Add details..."
             />
           </div>
@@ -622,14 +621,14 @@ const ActivityHub: React.FC<ActivityHubProps> = ({ className = '' }) => {
             <Button
               variant="secondary"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-white transition-colors"
+              className="px-4 py-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-glass)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleCreateActivity}
-              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-black font-bold hover:bg-[var(--primary)]/90 transition-colors"
+              className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--bg-deep)] font-bold hover:bg-[var(--primary)]/90 transition-colors"
             >
               Create Activity
             </Button>
