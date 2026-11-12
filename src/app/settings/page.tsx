@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Settings,
@@ -19,10 +19,8 @@ import {
   Pause,
   Sliders,
   Chrome,
-  Key,
   Download,
   Copy,
-  ExternalLink,
   ShieldCheck
 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
@@ -33,7 +31,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import Toggle from '@/components/ui/Toggle';
 
-const SettingsPage = () => {
+const SettingsInner = () => {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('agent');
@@ -1208,4 +1206,10 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage;
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <SettingsInner />
+    </Suspense>
+  );
+}
