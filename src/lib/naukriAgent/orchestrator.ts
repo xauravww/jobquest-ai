@@ -11,8 +11,6 @@ import { getTokens, withFreshTokens, invalidateSession } from './session';
 import { applyToJob } from './applyEngine';
 import { browserKeywordSearch } from './browserSearch';
 
-const PROFILE_URL = 'https://www.naukri.com/jobapi/v3/profile';
-
 const JITTER_MIN_MS = 2000;
 const JITTER_MAX_MS = 4000;
 
@@ -91,6 +89,9 @@ Summary: ${p.summary || 'Not provided'}`;
   });
 
   // ---- Resume guard: Naukri applies with the resume attached to the Naukri ACCOUNT ----
+  // The resume lives in the resman dashboard (cvInfo.fileName); the legacy
+  // /jobapi/v3/profile endpoint 404s and is NOT a reliable source.
+  const PROFILE_URL = 'https://www.naukri.com/cloudgateway-mynaukri/resman-aggregator-services/v1/users/self/dashboard';
   let resumeUsed = 'unknown';
   try {
     const tokens0 = await getTokens(userId);
