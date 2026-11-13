@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       // Prefer harvested jobs from JobCache (agent-scored), fall back to logs.
       try {
         await connectDB();
-        const cached = await JobCache.find({ status: { $ne: 'skipped' } })
+        const cached = await JobCache.find({ status: { $nin: ['skipped', 'applied'] } })
           .sort({ matchScore: -1 })
           .limit(250)
           .lean();

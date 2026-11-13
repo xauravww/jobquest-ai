@@ -46,6 +46,11 @@ export async function POST(request: NextRequest) {
 
     // 2. Ensure a Job doc exists (for the tracking table reference)
     const cached = await JobCache.findOne({ jobId }).lean();
+    const fallbackDesc = cached?.description
+      ? String(cached.description)
+      : (Array.isArray(cached?.skills) && cached.skills.length
+          ? `Key Skills: ${cached.skills.join(', ')}`
+          : '');
     let jobDoc = await Job.findOne({ jobId, userId: user._id });
     if (!jobDoc && cached) {
       jobDoc = await Job.create({
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
         title: cached.title,
         company: cached.company,
         location: cached.location,
-        description: cached.description || '',
+        description: fallbackDesc,
         salary: cached.salary,
         skills: cached.skills || [],
         source: 'naukri',
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
         status: 'applied',
       });
     } else if (jobDoc) {
-      await Job.updateOne({ _id: jobDoc._id }, { $set: { status: 'applied' } });
+      await Job.updateOne({ _id: jobDoc._id }, { $set: { status: 'applied', description: fallbackDesc || jobDoc.description } });
     }
 
     // 3. Create / update Application record (idempotent per job)

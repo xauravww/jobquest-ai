@@ -128,6 +128,24 @@ function streamLogToDisk(logEntry) {
           body: JSON.stringify({ authorization: cleanAuth, cookies: cookie || '' }),
         }).catch(() => {});
       }
+
+      // If the apply WORK succeeded, record it so it shows in application
+      // tracking and is removed from the suggested feed.
+      if (logEntry.responseBody && /successfully applied/i.test(logEntry.responseBody)) {
+        let jobId = '';
+        try {
+          const req = JSON.parse(logEntry.requestBody || '{}');
+          jobId = (req.strJobsarr || [])[0] || '';
+        } catch {}
+        if (jobId) {
+          fetch(`${serverUrl}/api/agent/apply-result`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobId, outcome: 'applied' }),
+          }).catch(() => {});
+        }
+      }
     }
 
     // Notify open popup/web views with small lightweight event (no browser storage footprint)
