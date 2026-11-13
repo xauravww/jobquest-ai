@@ -32,12 +32,18 @@ export async function POST(request: NextRequest) {
 
         // Build user profile string for AI
         const profile = user.profile || {};
+        const pAny = profile as any;
+        const prefs = user.preferences || {};
         const userProfile = `Name: ${user.name || 'Not provided'}
 Email: ${user.email}
 Title: ${profile.title || 'Not specified'}
-Experience: ${profile.experience || 0} years
+Experience: ${profile.experience || profile.experienceYears || 0} years
+Expected CTC: ${pAny.expectedCtc || 'Not set'}
+Current CTC: ${pAny.currentCtc || 'Not set'}
+Notice period: ${pAny.noticePeriod || 'Not set'}
 Skills: ${profile.skills?.join(', ') || 'Not specified'}
 Education: ${profile.education?.map(e => `${e.degree} in ${e.field} from ${e.institution}`).join(', ') || 'Not specified'}
+Target role: ${prefs.targetRole || 'Not specified'}
 Bio: ${profile.bio || 'Not provided'}
 Summary: ${profile.summary || 'Not provided'}`;
 

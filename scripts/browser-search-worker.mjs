@@ -128,7 +128,19 @@ async function main() {
         const sal =
           jd.minSalary && jd.maxSalary ? `${jd.minSalary}-${jd.maxSalary}` : 'Not disclosed';
         const skills = jd.tagsAndSkills ? jd.tagsAndSkills.split(',').map((x) => x.trim()).filter(Boolean) : [];
-        jobs.set(String(jd.jobId), {
+        const isExternal =
+          String(jd.mode || '').toLowerCase() === 'crawled' ||
+          Boolean(jd.applyUrl) ||
+          jd.isExternal === true ||
+          jd.applicationType === 'external' ||
+          jd.mode === 'external' ||
+          (jd.staticUrl && String(jd.staticUrl).startsWith('http') && (String(jd.staticUrl).includes('.com') || !String(jd.staticUrl).includes('naukri.com'))) ||
+          (jd.footerPlaceholderLabel && /external|web job|posted on external/i.test(String(jd.footerPlaceholderLabel)));
+        const externalUrl =
+          isExternal && jd.applyUrl && String(jd.applyUrl).startsWith('http') ? jd.applyUrl
+            : isExternal && jd.staticUrl && String(jd.staticUrl).startsWith('http') ? jd.staticUrl
+              : undefined;
+        const job = {
           id: `naukri-${jd.jobId}`,
           jobId: String(jd.jobId),
           title,
@@ -140,7 +152,10 @@ async function main() {
           url: `https://www.naukri.com/job-listings-${jd.jobId}`,
           postedAgo: jd.footerPlaceholderLabel || 'Recent',
           source: 'naukri',
-        });
+          applicationType: isExternal ? 'external' : 'easy_apply',
+        };
+        if (externalUrl) job.externalApplyUrl = externalUrl;
+        jobs.set(String(jd.jobId), job);
       }
     } catch { /* ignore */ }
   });

@@ -246,6 +246,8 @@ Summary: ${p.summary || 'Not provided'}`;
             matchingSkills: skillScored.matchingSkills,
             missingSkills: skillScored.missingSkills,
             lastSeenAt: new Date(),
+            applicationType: job.applicationType || existing.applicationType || 'unknown',
+            ...(job.externalApplyUrl ? { externalApplyUrl: job.externalApplyUrl } : {}),
           },
           $addToSet: { harvestRuns: runId },
         }
@@ -266,6 +268,8 @@ Summary: ${p.summary || 'Not provided'}`;
       skills: job.skills,
       postedAgo: job.postedAgo,
       description: job.description,
+      applicationType: job.applicationType || 'unknown',
+      ...(job.externalApplyUrl ? { externalApplyUrl: job.externalApplyUrl } : {}),
       matchScore: skillScored.matchScore,
       reasons: skillScored.reasons,
       matchingSkills: skillScored.matchingSkills,

@@ -5,7 +5,7 @@ export interface IAgentRunApplication {
   title: string;
   company: string;
   matchScore: number;
-  outcome: 'applied' | 'already-applied-on-platform' | 'external' | 'failed' | 'dry-run' | 'skipped';
+  outcome: 'applied' | 'already-applied-on-platform' | 'external' | 'failed' | 'dry-run' | 'skipped' | 'questionnaire';
   httpStatus?: number;
   errorSnippet?: string;
   questionnaireCount: number;

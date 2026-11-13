@@ -18,6 +18,8 @@ function toJobShape(j: any) {
     postedAgo: j.postedAgo,
     description: j.description,
     source: 'naukri',
+    applicationType: j.applicationType || 'unknown',
+    externalApplyUrl: j.externalApplyUrl,
     matchScore: j.matchScore ?? 0,
     reasons: j.reasons || [],
     matchingSkills: j.matchingSkills || [],

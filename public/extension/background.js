@@ -115,6 +115,21 @@ function streamLogToDisk(logEntry) {
       // Offline/server not running; silently ignore
     });
 
+    // When a Naukri apply request is captured, refresh the stored agent session
+    // with the fresh token + cookies so server-side apply keeps working.
+    if (logEntry.url && logEntry.url.includes('apply-workflow')) {
+      const auth = logEntry.headers && logEntry.headers.authorization;
+      const cookie = logEntry.headers && logEntry.headers.cookie;
+      if (auth) {
+        const cleanAuth = String(auth).replace(/^ACCESSTOKEN\s*=\s*/i, '').trim();
+        fetch(`${serverUrl}/api/agent/session`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ authorization: cleanAuth, cookies: cookie || '' }),
+        }).catch(() => {});
+      }
+    }
+
     // Notify open popup/web views with small lightweight event (no browser storage footprint)
     try {
       chrome.runtime.sendMessage({
@@ -407,6 +422,111 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           });
         });
       });
+    });
+    return true;
+  }
+
+  // Return the user's display name (asked by the auto-apply flow). Tries the
+  // app's profile endpoint; falls back to an empty string.
+  if (request.type === 'JOBQUEST_GET_NAME') {
+    chrome.storage.local.get(['serverUrl'], (res) => {
+      const serverUrl = res.serverUrl || 'http://localhost:3000';
+      fetch(`${serverUrl}/api/user/profile`, { credentials: 'include' })
+        .then((r) => r.json().catch(() => ({})))
+        .then((data) => sendResponse({ name: data?.name || '' }))
+        .catch(() => sendResponse({ name: '' }));
+    });
+    return true;
+  }
+
+  // Return profile hints (CTC, experience, notice period) for answering
+  // application questions with real profile values.
+  if (request.type === 'JOBQUEST_GET_PROFILE') {
+    chrome.storage.local.get(['serverUrl'], (res) => {
+      const serverUrl = res.serverUrl || 'http://localhost:3000';
+      fetch(`${serverUrl}/api/user/profile`, { credentials: 'include' })
+        .then((r) => r.json().catch(() => ({})))
+        .then((data) => {
+          const p = data?.profile || {};
+          sendResponse({
+            expectedCtc: p.expectedCtc || '',
+            currentCtc: p.currentCtc || '',
+            experience: p.experience || p.experienceYears || '',
+            noticePeriod: p.noticePeriod || '',
+          });
+        })
+        .catch(() => sendResponse({ expectedCtc: '', currentCtc: '', experience: '', noticePeriod: '' }));
+    });
+    return true;
+  }
+
+  // Generate an answer for a chatbot question via the app's AI endpoint.
+  if (request.type === 'JOBQUEST_AI_ANSWER') {
+    chrome.storage.local.get(['serverUrl'], (res) => {
+      const serverUrl = res.serverUrl || 'http://localhost:3000';
+      const { question, options } = request.payload || {};
+      const questionnaire = [{
+        questionId: 'q1',
+        questionName: question || '',
+        questionType: options && options.length ? 'Radio Button' : 'Text',
+        answerOption: options && options.length
+          ? Object.fromEntries(options.map((o, i) => ['newOption' + (i + 1), o]))
+          : {},
+      }];
+      fetch(`${serverUrl}/api/naukri/ai-answers`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionnaire }),
+      })
+        .then((r) => r.json().catch(() => ({})))
+        .then((data) => {
+          const raw = data?.answers && data.answers['q1'];
+          sendResponse({ answer: raw || null });
+        })
+        .catch(() => sendResponse({ answer: null }));
+    });
+    return true;
+  }
+
+  // Record an auto-apply result: update the feed + application tracking.
+  if (request.type === 'JOBQUEST_RECORD_APPLY') {
+    chrome.storage.local.get(['serverUrl'], (res) => {
+      const serverUrl = res.serverUrl || 'http://localhost:3000';
+      const payload = request.payload || {};
+      fetch(`${serverUrl}/api/agent/apply-result`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobId: payload.jobId || '',
+          outcome: payload.success ? 'applied' : 'failed',
+          questionnaire: payload.filled ? payload.filled.filter((f) => f.question).map((f) => ({
+            questionId: f.step + ':' + f.question,
+            question: f.question,
+            answer: f.answer,
+            source: 'ai',
+            answeredAt: new Date().toISOString(),
+          })) : [],
+        }),
+      })
+        .then(() => sendResponse({ success: true }))
+        .catch(() => sendResponse({ success: false }));
+    });
+    return true;
+  }
+
+  // Debug: dump a probe snapshot from the auto-apply flow.
+  if (request.type === 'JOBQUEST_DEBUG_PROBE') {
+    chrome.storage.local.get(['serverUrl'], (res) => {
+      const serverUrl = res.serverUrl || 'http://localhost:3000';
+      fetch(`${serverUrl}/api/agent/probe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request.payload || {}),
+      })
+        .then(() => sendResponse({ ok: true }))
+        .catch(() => sendResponse({ ok: false }));
     });
     return true;
   }

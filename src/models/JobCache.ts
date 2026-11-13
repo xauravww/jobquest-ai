@@ -12,6 +12,8 @@ export interface IJobCache extends Document {
   skills: string[];
   postedAgo?: string;
   description?: string;
+  applicationType?: 'easy_apply' | 'external' | 'unknown';
+  externalApplyUrl?: string;
 
   matchScore: number;
   reasons: string[];
@@ -72,6 +74,8 @@ const JobCacheSchema = new Schema<IJobCache>(
     skills: { type: [String], default: [] },
     postedAgo: String,
     description: String,
+    applicationType: { type: String, enum: ['easy_apply', 'external', 'unknown'], default: 'easy_apply' },
+    externalApplyUrl: String,
 
     matchScore: { type: Number, default: 0 },
     reasons: { type: [String], default: [] },

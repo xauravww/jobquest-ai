@@ -26,6 +26,9 @@ interface Job {
   matchScore?: number;
   reasons?: string[];
   skills?: string[];
+  applicationType?: 'easy_apply' | 'external' | 'unknown';
+  externalApplyUrl?: string;
+  status?: string;
 }
 
 interface SearchFilters {
@@ -110,11 +113,42 @@ const JobCard = ({ job, onTrack, onSkip }: {
                 job.source === 'findwork' ? 'FindWork' :
                   job.source === 'jooble' ? 'Jooble' : 'USAJOBS'}
             </div>
+            {job.applicationType === 'external' ? (
+              <a
+                href={job.externalApplyUrl || job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 rounded-full text-xs font-medium border inline-flex items-center gap-1 bg-purple-500/10 text-purple-400 border-purple-500/30 hover:bg-purple-500/20 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                <span>External Apply ↗</span>
+              </a>
+            ) : job.applicationType === 'easy_apply' ? (
+              <div className="px-3 py-1 rounded-full text-xs font-medium border inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                <Zap className="w-3 h-3" />
+                <span>Easy Apply</span>
+              </div>
+            ) : null}
           </div>
         </div>
 
         <div className="flex flex-row md:flex-col items-center md:items-end gap-2 w-full md:w-auto ml-auto">
-          {!job.userAction ? (
+          {job.status === 'applied' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20">
+              <CheckCircle className="w-4 h-4" />
+              Applied
+            </div>
+          ) : job.userAction === 'track' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20">
+              <CheckCircle className="w-4 h-4" />
+              Tracked
+            </div>
+          ) : job.userAction === 'skip' ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20">
+              <X className="w-4 h-4" />
+              Skipped
+            </div>
+          ) : (
             <>
               <Button
                 variant="primary"
@@ -135,14 +169,6 @@ const JobCard = ({ job, onTrack, onSkip }: {
                 <span>Skip</span>
               </Button>
             </>
-          ) : (
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm ${job.userAction === 'track'
-              ? 'text-[var(--success)] bg-[var(--success)]/10 border border-[var(--success)]/20'
-              : 'text-[var(--danger)] bg-[var(--danger)]/10 border border-[var(--danger)]/20'
-              }`}>
-              {job.userAction === 'track' ? <CheckCircle className="w-4 h-4" /> : <X className="w-4 h-4" />}
-              {job.userAction === 'track' ? 'Tracked' : 'Skipped'}
-            </div>
           )}
           <a
             href={job.url}
@@ -153,6 +179,18 @@ const JobCard = ({ job, onTrack, onSkip }: {
             <ExternalLink className="w-4 h-4" />
             <span>View</span>
           </a>
+          {job.applicationType === 'easy_apply' && (
+            <a
+              href={`${job.url}${job.url.includes('?') ? '&' : '?'}jqA=1`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Auto-apply via the extension in your logged-in Naukri browser"
+              className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm bg-[var(--success)]/10 hover:bg-[var(--success)]/20 text-[var(--success)] border border-[var(--success)]/20 rounded-lg transition-all"
+            >
+              <Zap className="w-4 h-4" />
+              <span>Auto Apply</span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -204,6 +242,9 @@ const JobSearchPage = () => {
           matchScore: j.matchScore,
           reasons: j.reasons,
           skills: j.skills,
+          applicationType: j.applicationType,
+          externalApplyUrl: j.externalApplyUrl,
+          status: j.status,
           userAction: null
         }));
 
@@ -276,6 +317,8 @@ const JobSearchPage = () => {
         publishedDate: job.publishedDate || job.date_posted || job.updated,
         salary: job.salary || job.salary_range,
         source: job.source as 'findwork' | 'jooble' | 'usajobs',
+        applicationType: job.applicationType,
+        externalApplyUrl: job.externalApplyUrl,
         userAction: null
       }));
 

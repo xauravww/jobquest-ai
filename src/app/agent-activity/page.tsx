@@ -59,7 +59,7 @@ interface RunDetail {
   stats: Record<string, number>;
   queries: Array<{ keyword: string; location: string; page: number; jobsFound: number; newJobs: number; error?: string }>;
   applications: RunDetailApplication[];
-  harvested?: Array<{ jobId: string; title: string; company: string; location: string; matchScore: number; url: string; status: string; reasons?: string[] }>;
+  harvested?: Array<{ jobId: string; title: string; company: string; location: string; matchScore: number; url: string; status: string; reasons?: string[]; applicationType?: 'easy_apply' | 'external' | 'unknown'; externalApplyUrl?: string }>;
   errors: Array<{ at: string; context: string; message: string }>;
 }
 
@@ -68,6 +68,7 @@ const OUTCOME_META: Record<string, { label: string; icon: 'check' | 'x' | 'warn'
   'already-applied-on-platform': { label: 'Already on Naukri', icon: 'warn', cls: 'text-amber-400' },
   external: { label: 'External', icon: 'warn', cls: 'text-sky-400' },
   failed: { label: 'Failed', icon: 'x', cls: 'text-red-400' },
+  questionnaire: { label: 'Questionnaire', icon: 'warn', cls: 'text-amber-400' },
   'dry-run': { label: 'Dry-run', icon: 'check', cls: 'text-[var(--text-muted)]' },
   skipped: { label: 'Skipped', icon: 'warn', cls: 'text-[var(--text-muted)]' },
 };
@@ -472,6 +473,20 @@ function RunDetailView({
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {h.applicationType === 'external' ? (
+                      <a
+                        href={h.externalApplyUrl || h.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition-colors"
+                      >
+                        External ↗
+                      </a>
+                    ) : h.applicationType === 'easy_apply' ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        Easy Apply
+                      </span>
+                    ) : null}
                     <span className="text-[11px] font-mono text-emerald-400">{h.matchScore}%</span>
                     {h.url && (
                       <a

@@ -15,6 +15,47 @@ export interface NaukriParsedJob {
   source: 'naukri';
   matchScore?: number;
   description?: string;
+  applicationType?: 'easy_apply' | 'external' | 'unknown';
+  externalApplyUrl?: string;
+}
+
+/**
+ * Classifies a job as Naukri Easy Apply (in-site) vs external (apply on the
+ * company's own site). Mirrors the heuristic used by /api/naukri/search.
+ */
+export function detectApplyType(j: any): { applicationType: 'easy_apply' | 'external' | 'unknown'; externalApplyUrl?: string } {
+  // mode is the authoritative Naukri signal: "crawled" = apply on the company's
+  // own site (external), "jp" = native Naukri Easy Apply (in-site).
+  const isExternal =
+    String(j?.mode || '').toLowerCase() === 'crawled' ||
+    Boolean(j.applyUrl) ||
+    j.isExternal === true ||
+    j.applicationType === 'external' ||
+    j.mode === 'external' ||
+    (j.staticUrl &&
+      String(j.staticUrl).startsWith('http') &&
+      (String(j.staticUrl).includes('.com') ||
+        String(j.staticUrl).includes('.org') ||
+        String(j.staticUrl).includes('.net') ||
+        !String(j.staticUrl).includes('naukri.com'))) ||
+    (j.footerPlaceholderLabel && /external|web job|posted on external/i.test(String(j.footerPlaceholderLabel))) ||
+    (Array.isArray(j.placeholders) &&
+      j.placeholders.some(
+        (p: any) => typeof p === 'string' && /external|web job|posted on external/i.test(p)
+      )) ||
+    (j.title && /external|web job/i.test(String(j.title)));
+
+  const externalUrl =
+    isExternal && j.applyUrl && String(j.applyUrl).startsWith('http')
+      ? j.applyUrl
+      : isExternal && j.staticUrl && String(j.staticUrl).startsWith('http')
+        ? j.staticUrl
+        : undefined;
+
+  return {
+    applicationType: isExternal ? 'external' : 'easy_apply',
+    ...(externalUrl ? { externalApplyUrl: externalUrl } : {}),
+  };
 }
 
 export interface NaukriUserProfile {
@@ -91,6 +132,48 @@ export function getCapturedKeywordSearchJobs(): NaukriParsedJob[] {
   return readJobUrls((item) => item.url.includes('jobapi/v3/search') || item.url.includes('jobapi/v2/search'));
 }
 
+export interface CapturedRequest {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body: string;
+  responseStatus?: number;
+  responseBody?: string;
+  timestamp?: string;
+}
+
+/**
+ * Reads the most recent Naukri apply-workflow requests the extension captured
+ * from the user's real browser. These are the ground-truth examples of a
+ * successful Naukri application (headers, cookies, body, recaptcha tokens)
+ * that we use to learn/reproduce the apply flow.
+ */
+export function getCapturedApplyRequests(limit = 5): CapturedRequest[] {
+  const logFile = path.join(process.cwd(), 'data/agent-curl-logs/www.naukri.com.jsonl');
+  if (!fs.existsSync(logFile)) return [];
+
+  const out: CapturedRequest[] = [];
+  const lines = fs.readFileSync(logFile, 'utf-8').split('\n').filter(Boolean);
+  for (let i = lines.length - 1; i >= 0 && out.length < limit; i--) {
+    try {
+      const item = JSON.parse(lines[i]);
+      const url = item.url || '';
+      const isApply = url.includes('apply-workflow') || url.includes('cloudgateway-apply');
+      if (!isApply) continue;
+      out.push({
+        method: item.method || 'GET',
+        url,
+        headers: item.headers || {},
+        body: item.requestBody || '',
+        responseStatus: item.responseStatus,
+        responseBody: item.responseBody || '',
+        timestamp: item.timestamp,
+      });
+    } catch {}
+  }
+  return out;
+}
+
 export function formatNaukriJob(j: any): NaukriParsedJob {
   const placeholders = Array.isArray(j.placeholders) ? j.placeholders : [];
   const loc = placeholders.find((p: any) => p.type === 'location')?.label || 'India';
@@ -103,6 +186,7 @@ export function formatNaukriJob(j: any): NaukriParsedJob {
 
   const jdUrl = j.jdURL ? (j.jdURL.startsWith('http') ? j.jdURL : `https://www.naukri.com${j.jdURL}`) : `https://www.naukri.com/job-listings-${j.jobId}`;
   const exactDesc = getExactNaukriJd(String(j.jobId));
+  const { applicationType, externalApplyUrl } = detectApplyType(j);
 
   return {
     id: `naukri-${j.jobId}`,
@@ -116,6 +200,8 @@ export function formatNaukriJob(j: any): NaukriParsedJob {
     url: jdUrl,
     postedAgo: j.footerPlaceholderLabel || 'Recent',
     source: 'naukri',
+    applicationType,
+    ...(externalApplyUrl ? { externalApplyUrl } : {}),
     description: exactDesc || (skillList.length > 0 ? `Key Skills: ${skillList.join(', ')} • Experience: ${exp || 'Not specified'}` : '')
   };
 }
@@ -166,7 +252,7 @@ function extractJobsViaRegex(body: string): NaukriParsedJob[] {
  */
 export function cleanHtmlJd(rawHtml: string): string {
   if (!rawHtml) return '';
-  let text = rawHtml
+  const text = rawHtml
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/li>/gi, '\n')
     .replace(/<li>/gi, '• ')

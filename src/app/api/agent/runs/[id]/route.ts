@@ -43,7 +43,7 @@ export async function GET(
     const harvested = await JobCache.find({ harvestRuns: run._id })
       .sort({ matchScore: -1 })
       .limit(200)
-      .select('jobId title company location matchScore url status reasons')
+      .select('jobId title company location matchScore url status reasons applicationType externalApplyUrl')
       .lean();
 
     return NextResponse.json({ run: { ...run, applications, harvested } });
