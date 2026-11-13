@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JobQuest AI - Job Agent Autofill & Logger",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Autofill job application forms and capture exact browser HTTP requests and responses as cURL commands to train automation agents.",
   "permissions": [
     "storage",

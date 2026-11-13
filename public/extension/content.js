@@ -53,6 +53,15 @@ window.addEventListener('message', (event) => {
     });
   }
 
+  if (type === 'JOBQUEST_GET_NAUKRI_COOKIES') {
+    chrome.runtime.sendMessage({ type: 'GET_NAUKRI_COOKIES' }, (result) => {
+      window.postMessage({
+        type: 'JOBQUEST_NAUKRI_COOKIES_RESULT',
+        payload: result || { success: false, error: 'No response from extension' }
+      }, '*');
+    });
+  }
+
   if (type === 'JOBQUEST_CONNECT_EXTENSION') {
     chrome.runtime.sendMessage({
       type: 'SET_CONNECTION',

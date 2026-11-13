@@ -7,6 +7,7 @@ import AppLayout from '@/components/AppLayout';
 import SearchSkeleton from '@/components/ui/SearchSkeleton';
 import ProfileCompletionBanner from '@/components/ProfileCompletionBanner';
 import ExtensionBanner from '@/components/ExtensionBanner';
+import AgentActivityPanel from '@/components/agent/AgentActivityPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import Button from '@/components/ui/Button';
 import { Select } from 'antd';
@@ -343,6 +344,7 @@ const JobSearchPage = () => {
       <div className="p-6 lg:p-8 min-h-screen space-y-4 max-w-[1600px] mx-auto">
         <ProfileCompletionBanner />
         <ExtensionBanner />
+        <AgentActivityPanel />
 
         {/* Header with Navigation Tabs */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center border-b border-[var(--border)] pb-4">
@@ -388,38 +390,6 @@ const JobSearchPage = () => {
             </Button>
           </div>
         </div>
-
-        {/* Tailored Profile Overview Card (Active on Tailored Tab) */}
-        {activeTab === 'tailored' && (
-          <div className="p-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="space-y-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5" />
-                  Profile Matched
-                </span>
-                <span className="text-xs text-[var(--text-dim)]">•</span>
-                <span className="text-xs text-[var(--text-muted)] truncate">
-                  Target: <span className="text-white font-medium">{userProfile?.name || 'Saurav'}</span> ({userProfile?.headline || 'Full Stack Developer'})
-                </span>
-              </div>
-              <p className="text-xs text-[var(--text-muted)]">
-                Ranked by skill match, role fit, and location. Tracked and skipped jobs are omitted.
-              </p>
-            </div>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={fetchTailoredJobs}
-              disabled={refreshingTailored}
-              className="h-8 px-3 text-xs shrink-0 flex items-center gap-1.5"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${refreshingTailored ? 'animate-spin' : ''}`} />
-              <span>{refreshingTailored ? 'Refreshing' : 'Refresh'}</span>
-            </Button>
-          </div>
-        )}
 
         {/* Search Form (Only on Explore tab) */}
         {activeTab === 'explore' && (
@@ -546,11 +516,25 @@ const JobSearchPage = () => {
                   <span className="w-2 h-8 bg-[var(--primary)] rounded-full"></span>
                   Found {jobs.length} jobs
                 </h2>
-                <div className="text-sm text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1 rounded-full border border-[var(--border)]">
-                  {filters.source === 'all' ? 'Multiple Sources' :
-                    filters.source === 'naukri' ? 'Naukri Agent Feed' :
-                      filters.source === 'findwork' ? 'FindWork API' :
-                        filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
+                <div className="flex items-center gap-2">
+                  {activeTab === 'tailored' && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={fetchTailoredJobs}
+                      disabled={refreshingTailored}
+                      className="h-8 px-3 text-xs flex items-center gap-1.5"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${refreshingTailored ? 'animate-spin' : ''}`} />
+                      <span>{refreshingTailored ? 'Refreshing' : 'Refresh'}</span>
+                    </Button>
+                  )}
+                  <div className="text-sm text-[var(--text-muted)] bg-[var(--bg-surface)] px-3 py-1 rounded-full border border-[var(--border)]">
+                    {filters.source === 'all' ? 'Multiple Sources' :
+                      filters.source === 'naukri' ? 'Naukri Agent Feed' :
+                        filters.source === 'findwork' ? 'FindWork API' :
+                          filters.source === 'jooble' ? 'Jooble API' : 'USAJOBS API'}
+                  </div>
                 </div>
               </div>
             )}

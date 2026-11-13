@@ -221,7 +221,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 // Message Handler
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === 'PING') {
-    sendResponse({ status: 'ok', version: '1.3.0' });
+    sendResponse({ status: 'ok', version: chrome.runtime.getManifest().version || 'unknown' });
     return true;
   }
 
@@ -360,6 +360,50 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             hasAuthToken: Boolean(authCookie && authCookie.value),
             userEmail: userEmail || (isLoggedIn ? 'Active User' : null),
             lastChecked: new Date().toLocaleTimeString()
+          });
+        });
+      });
+    });
+    return true;
+  }
+
+  // Build the full session (cookies + auth token) for the agent backend
+  if (request.type === 'GET_NAUKRI_COOKIES') {
+    console.log('[JobQuest Agent] GET_NAUKRI_COOKIES requested');
+    chrome.cookies.getAll({ url: 'https://www.naukri.com' }, (urlCookies) => {
+      chrome.cookies.getAll({ domain: '.naukri.com' }, (domainCookies) => {
+        chrome.cookies.getAll({ domain: 'naukri.com' }, (plainDomainCookies) => {
+          const all = [
+            ...(urlCookies || []),
+            ...(domainCookies || []),
+            ...(plainDomainCookies || [])
+          ];
+          const uniqueMap = new Map();
+          for (const c of all) {
+            if (c && c.name) uniqueMap.set(c.name, c);
+          }
+          const cookies = Array.from(uniqueMap.values());
+          if (!cookies.length) {
+            sendResponse({ success: false, error: 'No Naukri cookies found. Are you logged in on naukri.com?' });
+            return;
+          }
+
+          const authCookie = cookies.find(c => c.name === 'nauk_at' || c.name === 'NKAUTH');
+          if (!authCookie || !authCookie.value) {
+            sendResponse({ success: false, error: 'No Naukri auth token found. Please log in on naukri.com.' });
+            return;
+          }
+
+          // Build the "name=value; name=value" cookie header
+          const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+
+          sendResponse({
+            success: true,
+            authorization: authCookie.value,
+            cookies: cookieString,
+            cookieCount: cookies.length,
+            userEmail: null,
+            isLoggedIn: true
           });
         });
       });

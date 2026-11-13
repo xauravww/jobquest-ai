@@ -34,36 +34,33 @@ export interface NaukriUserProfile {
   resumeFileName?: string;
 }
 
-/**
- * Extracts recommended jobs captured by the extension from Naukri logs
- */
-export function getLatestNaukriJobs(): NaukriParsedJob[] {
+function parseJobDetailsFromBody(body: string): NaukriParsedJob[] {
+  let list: NaukriParsedJob[] = [];
+  try {
+    const jsonBody = JSON.parse(body);
+    if (Array.isArray(jsonBody.jobDetails)) {
+      list = jsonBody.jobDetails.map((j: any) => formatNaukriJob(j));
+    }
+  } catch {}
+  if (list.length === 0) {
+    list = extractJobsViaRegex(body);
+  }
+  return list;
+}
+
+function readJobUrls(predicate: (item: any) => boolean): NaukriParsedJob[] {
   const logFile = path.join(process.cwd(), 'data/agent-curl-logs/www.naukri.com.jsonl');
   if (!fs.existsSync(logFile)) return [];
 
   const jobMap = new Map<string, NaukriParsedJob>();
-
   try {
     const lines = fs.readFileSync(logFile, 'utf-8').split('\n').filter(Boolean);
     // Read reverse to get all recent jobs across captures
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const item = JSON.parse(lines[i]);
-        if (item.url && item.url.includes('recom-jobs') && item.responseBody) {
-          const body = item.responseBody;
-          
-          let list: NaukriParsedJob[] = [];
-          try {
-            const jsonBody = JSON.parse(body);
-            if (Array.isArray(jsonBody.jobDetails)) {
-              list = jsonBody.jobDetails.map((j: any) => formatNaukriJob(j));
-            }
-          } catch {}
-
-          if (list.length === 0) {
-            list = extractJobsViaRegex(body);
-          }
-
+        if (item.url && predicate(item) && item.responseBody) {
+          const list = parseJobDetailsFromBody(item.responseBody);
           for (const j of list) {
             if (j.jobId && !jobMap.has(j.jobId)) {
               jobMap.set(j.jobId, j);
@@ -75,11 +72,26 @@ export function getLatestNaukriJobs(): NaukriParsedJob[] {
   } catch (err) {
     console.error('Error reading Naukri log jobs:', err);
   }
-
   return Array.from(jobMap.values());
 }
 
-function formatNaukriJob(j: any): NaukriParsedJob {
+/**
+ * Extracts recommended jobs captured by the extension from Naukri logs
+ */
+export function getLatestNaukriJobs(): NaukriParsedJob[] {
+  return readJobUrls((item) => item.url.includes('recom-jobs'));
+}
+
+/**
+ * Extracts jobs from in-browser keyword searches the user actually ran.
+ * Naukri's keyword-search API requires reCAPTCHA and cannot be called
+ * server-side, so we rely on these captured browser responses instead.
+ */
+export function getCapturedKeywordSearchJobs(): NaukriParsedJob[] {
+  return readJobUrls((item) => item.url.includes('jobapi/v3/search') || item.url.includes('jobapi/v2/search'));
+}
+
+export function formatNaukriJob(j: any): NaukriParsedJob {
   const placeholders = Array.isArray(j.placeholders) ? j.placeholders : [];
   const loc = placeholders.find((p: any) => p.type === 'location')?.label || 'India';
   const sal = placeholders.find((p: any) => p.type === 'salary')?.label || 'Not disclosed';

@@ -155,16 +155,17 @@ export class NaukriService {
     }
 
     async searchJobs(criteria: JobSearchCriteria, tokens: NaukriTokens) {
+            const location = criteria.location || "pune, mumbai, bengaluru, bangalore";
             const params = new URLSearchParams({
                 noOfResults: '20',
                 urlType: 'search_by_key_loc',
                 searchType: 'adv',
                 keyword: criteria.keyword,
-                location: "pune, mumbai, bengaluru, bangalore",
+                location: location,
                 pageNo: (criteria.pageNo || 1).toString(),
                 sort: 'p',
                 k: criteria.keyword,
-                l: "pune, mumbai, bengaluru, bangalore",
+                l: location,
                 nignbevent_src: 'jobsearchDeskGNB',
                 src: 'cluster',
                 latLong: '18.7506117_73.8764436',
@@ -173,9 +174,9 @@ export class NaukriService {
 
             // Add experience and salary filters
             params.append('experience', '3');
-            ['6to10', '10to15', '15to25', '25to50', '50to75', '75to100'].forEach(filter => {
-                params.append('ctcFilter', filter);
-            });
+            if (criteria.salary) {
+                params.append('ctcFilter', criteria.salary);
+            }
 
             const response = await fetch(`${NaukriService.SEARCH_URL}?${params.toString()}`, {
                 method: 'GET',
@@ -214,6 +215,55 @@ export class NaukriService {
             }
 
             return await response.json();
+    }
+
+    /**
+     * Server-side recommended-jobs harvest. Unlike the v3 keyword search, this
+     * endpoint is NOT gated behind reCAPTCHA, so it can be called autonomously.
+     */
+    async getRecommendedJobs(tokens: NaukriTokens): Promise<any> {
+        const headers: Record<string, string> = {
+            'accept': 'application/json',
+            'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+            'appid': '121',
+            'cache-control': 'no-cache',
+            'clientid': 'd3skt0p',
+            'content-type': 'application/json',
+            'gid': 'LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE',
+            'pragma': 'no-cache',
+            'priority': 'u=1, i',
+            'nkparam': 'jH9QnltH+MuGKLwVCzx6nuqLOex1fiLfmrNahP7GLA0SQihJC6d0hDFoJXV65lyEzWcAjLQ7SuUTKBlHw4Artw==',
+            'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'x-requested-with': 'XMLHttpRequest',
+            'systemid': 'Naukri',
+            'Referer-Policy': 'strict-origin-when-cross-origin',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Origin': 'https://www.naukri.com',
+            'Referer': 'https://www.naukri.com/',
+            'authorization': `Bearer ${tokens.authorization}`,
+            'cookie': tokens.cookies,
+        };
+
+        const response = await fetch(`${NaukriService.BASE_URL}/jobapi/v2/search/recom-jobs`, {
+            method: 'POST',
+            headers,
+            body: '{}',
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            const error = new Error(`Recommended jobs failed with status: ${response.status}`);
+            (error as any).status = response.status;
+            console.log('Recommended jobs failed response:', response.status, errorText);
+            throw error;
+        }
+
+        return response.json();
     }
 
     async applyJob(jobId: string, authToken: string, cookieString: string): Promise<any> {

@@ -105,3 +105,6 @@ page scroll or clipped content.
 
 - Update this file when a rule changes or a new pattern becomes a standing rule.
 - Verify changes with `npx tsc --noEmit` and `npx eslint` on the touched files.
+- **Never run `npm run build`** unless the user explicitly asks for it. It is
+  slow and wastes time; use `npx tsc --noEmit` (and, when relevant,
+  `npx eslint` on touched files) for verification instead.
