@@ -20,9 +20,19 @@ export interface NaukriParsedJob {
 }
 
 /**
- * Classifies a job as Naukri Easy Apply (in-site) vs external (apply on the
- * company's own site). Mirrors the heuristic used by /api/naukri/search.
+ * Returns true when a stored description is missing or is only a short
+ * synthetic fallback (e.g. "Key Skills: ..."), i.e. we don't yet have the real
+ * full job description. Full Naukri JDs are multi-paragraph (typically 300+
+ * chars), so anything under SHORT_JD_THRESHOLD or prefixed with "Key Skills:"
+ * counts as short.
  */
+export const SHORT_JD_THRESHOLD = 250;
+export function isShortJd(description?: string | null): boolean {
+  if (!description) return true;
+  const t = description.trim();
+  if (/^Key Skills:/i.test(t)) return true;
+  return t.length < SHORT_JD_THRESHOLD;
+}
 export function detectApplyType(j: any): { applicationType: 'easy_apply' | 'external' | 'unknown'; externalApplyUrl?: string } {
   // mode is the authoritative Naukri signal: "crawled" = apply on the company's
   // own site (external), "jp" = native Naukri Easy Apply (in-site).
